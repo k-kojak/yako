@@ -1,0 +1,10 @@
+*
+!*/
+
+!AndroidManifest.xml
+bin/AndroidManifest.xml
+!project.properties
+!ant.properties
+!.gitignore
+!README.md
+

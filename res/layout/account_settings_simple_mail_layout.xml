@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="5dip">
+  <ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical">
+      <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_email_address"
+        android:paddingTop="3dip"
+      />
+      <EditText
+        android:id="@+id/email_address"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/email_hint"
+        android:inputType="textEmailAddress" />
+
+
+      <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_password"
+        android:paddingTop="3dip"
+      />
+      <EditText
+        android:id="@+id/password"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/password_hint"
+        android:inputType="textPassword" />
+
+      <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_imap_address"
+        android:paddingTop="3dip"
+      />
+      <EditText
+        android:id="@+id/imap_server"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/imap_hint"
+        android:inputType="textUri" />
+
+      <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_smtp_address"
+        android:paddingTop="3dip"
+      />
+      <EditText
+        android:id="@+id/smtp_server"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/smtp_hint"
+        android:inputType="textUri" />
+
+      <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_initial_email_num"
+        android:paddingTop="3dip"
+      />
+      <Spinner
+        android:id="@+id/initial_emails_num"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+      <Button
+        android:id="@+id/save_account_button"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:text="@string/save"
+        android:onClick="saveAccountSettings" />
+    </LinearLayout>
+  </ScrollView>
+</LinearLayout>

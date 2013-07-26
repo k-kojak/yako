@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:background="#ffffffff">
+  <ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#ffffffff" >
+    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/email_content"
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content"
+            android:padding="10dip" > 
+    </WebView>
+  </ScrollView>
+
+</LinearLayout>

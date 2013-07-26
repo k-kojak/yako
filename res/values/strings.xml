@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">rgai service app</string>
+    <string name="account_settings">Account settings</string>
+    <string name="service_name">This is my service</string>
+    <string name="email_accounts">Manage accounts</string>
+    <string name="email_reply">Reply</string>
+    <string name="email_send_new">Send</string>
+    <string name="help">Help</string>
+    <string name="save">Save</string>
+    
+    <string name="email_hint">your@email.com</string>
+    <string name="imap_hint">imap.gmail.com</string>
+    <string name="smtp_hint">smtp.gmail.com</string>
+    <string name="password_hint">password</string>
+    
+    
+    <string name="settings_accounts">hu.rgai.android.settings.accounts</string>
+    <string name="settings_accounts_size">hu.rgai.android.settings.accounts.size</string>
+    <string name="settings_accounts_item">hu.rgai.android.settings.accounts.item</string>
+    <string name="settings_accounts_item_type">hu.rgai.android.settings.accounts.item</string>
+    <string name="settings_accounts_item_name">hu.rgai.android.settings.accounts.item.name</string>
+    <string name="settings_accounts_item_pass">hu.rgai.android.settings.accounts.item.pass</string>
+    <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
+    <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
+    <string name="settings_accounts_item_amount">hu.rgai.android.settings.accounts.item.amount</string>
+    
+    
+    <string name="settings_email_file_key">hu.rgai.android.settings.file.email</string>
+    <string name="settings_saved_pass">hu.rgai.android.settings.password</string>
+    <string name="settings_saved_email">hu.rgai.android.settings.email</string>
+    <string name="settings_saved_imap">hu.rgai.android.settings.imap</string>
+    <string name="settings_saved_initial_email_num">hu.rgai.android.settings.initial_email_num</string>
+    
+    <string name="exception_unknown_host">The provided host is unknown. Please check it again.</string>
+    <string name="exception_io">IO Exception.</string>
+    <string name="exception_unknown">IO Exception.</string>
+    <string name="exception_connect">Connect exception.</string>
+    <string name="exception_nosuch_provider">No such provider exception.</string>
+    <string name="exception_messaging">Messaging exception.</string>
+    <string name="exception_ssl_handshake">SSL Handshake exception.</string>
+    <string name="exception_cert_path_validator">Certification path validator exception.</string>
+    <string name="no_internet_access">Not connected to internet.</string>
+    <string name="no_account_set">No logon info provided. Go to settings.</string>
+    
+    <string name="label_email_address">Email address</string>
+    <string name="label_imap_address">IMAP address</string>
+    <string name="label_smtp_address">SMTP address</string>
+    <string name="label_password">Password</string>
+    <string name="label_initial_email_num">Initial amount of emails to load</string>
+    <string name="label_initial_msg_num">Initial amount of messages to load</string>
+    <string-array name="initial_emails_num">
+      <item>5</item>
+      <item>10</item>
+      <item>15</item>
+      <item>20</item>
+      <item>30</item>
+    </string-array>
+
+    
+    <string name="account_name_gmail">Gmail</string>
+    <string name="account_name_facebook">Facebook</string>
+    <string name="account_name_simplemail">Simple email</string>
+    
+    <string name="Fragment1">Content of tab 1</string>
+    <string name="Fragment2">Content of tab 2</string>
+    
+    <string name="add_account">Add Account</string>
+    <string name="remove_account">Remove Account</string>
+    
+    
+</resources>

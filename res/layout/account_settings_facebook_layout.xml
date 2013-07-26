@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="5dip">
+  
+  <EditText
+    android:id="@+id/email_address"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/email_hint"
+    android:inputType="textEmailAddress"
+    android:freezesText="true"  />
+  <EditText
+    android:id="@+id/password"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/password_hint"
+    android:inputType="textPassword" />
+  <TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/label_initial_msg_num"
+    android:paddingTop="3dip"
+  />
+  <Spinner
+    android:id="@+id/initial_items_num"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" />
+  
+  <Button
+    android:id="@+id/save_account_button"
+    android:layout_height="wrap_content"
+    android:layout_width="fill_parent"
+    android:text="@string/save"
+    android:onClick="saveAccountSettings" />
+</LinearLayout>
