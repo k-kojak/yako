@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -27,13 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import static hu.rgai.android.test.MyService.NO_ACCOUNT_SET;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Account;
-import hu.uszeged.inf.rgai.messagelog.beans.EmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.FullEmailMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.GmailAccount;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -242,6 +235,7 @@ public class MainActivity extends Activity {
               MessageListElementParc ele = s.getListElementById(emailID, a);
               Intent i = new Intent(MainActivity.this, EmailDisplayer.class);
               i.putExtra("email_id", emailID);
+              i.putExtra("subject", ele.getTitle());
               
 //              if (a.getAccountType().equals(MessageProvider.Type.EMAIL)) {
                 i.putExtra("account", (Parcelable)a);

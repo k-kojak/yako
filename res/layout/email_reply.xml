@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="5dip">
+  <ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical">
+      <MultiAutoCompleteTextView
+        android:id="@+id/recipients"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/email_hint"
+        android:completionThreshold="1"
+        android:inputType="textEmailAddress" />
+
+      <EditText
+        android:id="@+id/message_content"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Content"
+        android:minLines="6"
+        android:inputType="textMultiLine" />
+
+      <Button
+        android:id="@+id/save_account_button"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:text="@string/send"
+        android:onClick="sendEmail" />
+    </LinearLayout>
+  </ScrollView>
+</LinearLayout>
