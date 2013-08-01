@@ -93,6 +93,7 @@ public class MessageReply extends Activity implements TextWatcher {
     text.setText("\n\n" + content);
     subject = getIntent().getExtras().getString("subject");
     account = getIntent().getExtras().getParcelable("account");
+    recipients.setText(getIntent().getExtras().getString("from"));
     handler = new EmailReplyTaskHandler(this);
         
 //    String msgContent = getIntent().getExtras().getString("message_content");

@@ -36,6 +36,8 @@ public class EmailDisplayer extends Activity {
   private boolean loadedWithContent = false;
   private int emailID = -1;
   private AccountAndr account;
+  private String from;
+  
   private WebView webView = null;
   private String mailCharCode = "UTF-8";
   
@@ -52,6 +54,8 @@ public class EmailDisplayer extends Activity {
     emailID = getIntent().getExtras().getInt("email_id");
     account = getIntent().getExtras().getParcelable("account");
     subject = getIntent().getExtras().getString("subject");
+    from = getIntent().getExtras().getString("from");
+    
     if (getIntent().getExtras().containsKey("email_content")) {
       loadedWithContent = true;
       content = getIntent().getExtras().getString("email_content");
@@ -100,6 +104,7 @@ public class EmailDisplayer extends Activity {
         intent.putExtra("content", source.getRenderer().toString());
         intent.putExtra("subject", subject);
         intent.putExtra("account", (Parcelable)account);
+        intent.putExtra("from", from);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
 //        EmailReplySender replySender = new EmailReplySender();

@@ -236,14 +236,9 @@ public class MainActivity extends Activity {
               Intent i = new Intent(MainActivity.this, EmailDisplayer.class);
               i.putExtra("email_id", emailID);
               i.putExtra("subject", ele.getTitle());
+              i.putExtra("from", ele.getFromTemp());
               
-//              if (a.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-                i.putExtra("account", (Parcelable)a);
-//              } else if (a.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-//                i.putExtra("account", new GmailAccountParc((GmailAccount)a));
-//              } else if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-//                i.putExtra("account", new FacebookAccountParc((FacebookAccount)a));
-//              }
+              i.putExtra("account", (Parcelable)a);
               
               // TODO: getFull message now always converted to FullEmailMessage
               if (ele != null) {
