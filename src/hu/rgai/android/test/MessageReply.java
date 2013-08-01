@@ -7,11 +7,13 @@ package hu.rgai.android.test;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -50,6 +52,10 @@ import javax.mail.internet.InternetAddress;
  */
 public class MessageReply extends Activity implements TextWatcher {
 
+  public static final int MESSAGE_SENT_OK = 1;
+  public static final int MESSAGE_SENT_FAILED = 2;
+  
+  private int messageResult;
   private Handler handler = null;
 //  private String content = null;
   private String subject = null;
@@ -93,6 +99,10 @@ public class MessageReply extends Activity implements TextWatcher {
 //    
 //    AccountAndr account = getIntent().getExtras().getParcelable("account");
     
+  }
+
+  public void setMessageResult(int messageResult) {
+    this.messageResult = messageResult;
   }
   
   private String[] getEmailContacts() {
@@ -150,6 +160,12 @@ public class MessageReply extends Activity implements TextWatcher {
   public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
     validateEmailsField(recipients);
   }
+  
+  @Override
+  public void finish() {
+    setResult(messageResult);
+    super.finish();
+  }
 
   private static void validateEmailsField(TextView recipients) {
     String emails = (String) recipients.getText().toString();
@@ -167,9 +183,9 @@ public class MessageReply extends Activity implements TextWatcher {
   
   private class EmailReplyTaskHandler extends Handler {
     
-    Context cont;
+    MessageReply cont;
     
-    public EmailReplyTaskHandler(Context cont) {
+    public EmailReplyTaskHandler(MessageReply cont) {
       this.cont = cont;
     }
     
@@ -179,7 +195,10 @@ public class MessageReply extends Activity implements TextWatcher {
       if (bundle != null) {
         if (bundle.containsKey("result") && bundle.get("result") != null) {
           Log.d("rgai", bundle.getString("result"));
-          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG);
+          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG).show();
+        } else {
+          cont.setMessageResult(MESSAGE_SENT_OK);
+          cont.finish();
         }
       }
     }
@@ -211,7 +230,8 @@ public class MessageReply extends Activity implements TextWatcher {
       try {
         addr = InternetAddress.parse(this.recipients, true);
       } catch (AddressException ex) {
-        Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+        result = "Invalid address field";
+        return false;
       }
       if (addr != null && addr.length > 0) {
         for (InternetAddress a : addr) {
@@ -228,7 +248,7 @@ public class MessageReply extends Activity implements TextWatcher {
         try {
           mp.sendMessage(recipients, content, subject);
         } catch (AddressException ex) {
-          result = org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(ex);
+          result = "Invalid address field";
           return false;
         }
       } catch (NoSuchProviderException ex) {

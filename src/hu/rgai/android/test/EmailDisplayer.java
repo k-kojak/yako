@@ -12,7 +12,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.widget.Toast;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import static hu.rgai.android.test.MainActivity.EMAIL_CONTENT_RESULT;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailAccount;
@@ -36,6 +38,8 @@ public class EmailDisplayer extends Activity {
   private AccountAndr account;
   private WebView webView = null;
   private String mailCharCode = "UTF-8";
+  
+  public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
   @Override
   public void onCreate(Bundle icicle) {
@@ -73,6 +77,20 @@ public class EmailDisplayer extends Activity {
   }
   
   @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    switch (requestCode) {
+      case (MESSAGE_REPLY_REQ_CODE):
+        if (resultCode == MessageReply.MESSAGE_SENT_OK) {
+          Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
+        } else if (resultCode == MessageReply.MESSAGE_SENT_FAILED) {
+          Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG).show();
+        }
+        break;
+    }
+  }
+  
+  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle item selection
     switch (item.getItemId()) {
@@ -82,7 +100,7 @@ public class EmailDisplayer extends Activity {
         intent.putExtra("content", source.getRenderer().toString());
         intent.putExtra("subject", subject);
         intent.putExtra("account", (Parcelable)account);
-        startActivity(intent);
+        startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
 //        EmailReplySender replySender = new EmailReplySender();
 //        replySender.execute();
