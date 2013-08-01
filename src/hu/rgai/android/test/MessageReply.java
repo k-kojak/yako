@@ -5,11 +5,14 @@
 package hu.rgai.android.test;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -27,7 +30,10 @@ import hu.uszeged.inf.rgai.messagelog.beans.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,8 +73,13 @@ public class MessageReply extends Activity implements TextWatcher {
     text = (TextView) findViewById(R.id.message_content);
     recipients = (MultiAutoCompleteTextView) findViewById(R.id.recipients);
     
+    String[] emails = this.getEmailContacts();
+//    for (String s : emails) {
+//      Log.d("rgai", "item -> " + s);
+//    }
+    
     ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
+                 android.R.layout.simple_dropdown_item_1line, emails);
     recipients.setAdapter(adapter);
     recipients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
     recipients.addTextChangedListener(this);
@@ -82,6 +93,50 @@ public class MessageReply extends Activity implements TextWatcher {
 //    
 //    AccountAndr account = getIntent().getExtras().getParcelable("account");
     
+  }
+  
+  private String[] getEmailContacts() {
+    
+//    String[] contacts = null;
+    LinkedList<String> emails = new LinkedList<String>();
+    
+    String name;
+//    String mime;
+    String email;
+//    Map<String, String> emails = new HashMap<String, String>();
+    
+    ContentResolver cr = getContentResolver();
+    Cursor cursor = cr.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
+    int nameIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME);
+//    int mimeIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE);
+    int emailIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1);
+    
+    if (cursor.moveToFirst()) {
+      do {
+        name = cursor.getString(nameIdx);
+//        mime = cursor.getString(mimeIdx);
+        email = cursor.getString(emailIdx);
+//        if (mime.equals(ContactsContract.Data.))
+//        Log.d("rgai", name);
+//        Log.d("rgai", mime);
+//        Log.d("rgai", email);
+        
+        emails.add(name + " <"+ email +">");
+        
+        
+//        for (int i = 0; i < colSize; i++) {
+//        for (int i = 0; i < colSize; i++) {
+//          Log.d("rgai", cursor.getColumnName(i));
+//        }
+//        Log.d("rgai", " - - - - - - - - - - - - - - ");
+        
+//          ArrayAdapter arr = new ArrayAdapter(this, android.R.layout.simple_list_item_1,str);
+
+//          setListAdapter(arr);
+      } while (cursor.moveToNext());
+    }
+    
+    return emails.toArray(new String[emails.size()]);
   }
   
   public void sendEmail(View v) {
