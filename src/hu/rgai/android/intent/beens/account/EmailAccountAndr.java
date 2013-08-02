@@ -6,7 +6,7 @@ package hu.rgai.android.intent.beens.account;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import hu.uszeged.inf.rgai.messagelog.beans.EmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 
 
 /**

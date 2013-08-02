@@ -1,22 +1,16 @@
 package hu.rgai.android.intent.beens.account;
 
-import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
+import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
+
+
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public interface AccountAndr {
+public interface AccountAndr extends Account {
   
   public int getMessageLimit();
-  public Type getAccountType();
-  
-  /**
-   * Custom equals funciton.
-   * 
-   * @param account
-   * @return 
-   */
-  public boolean equals(Object account);
+//  public Type getAccountType();
   
 }

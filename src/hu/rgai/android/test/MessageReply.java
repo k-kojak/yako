@@ -1,46 +1,31 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package hu.rgai.android.test;
 
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.EmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.internet.AddressException;
@@ -62,9 +47,6 @@ public class MessageReply extends Activity implements TextWatcher {
   private TextView text;
   private MultiAutoCompleteTextView recipients;
   private AccountAndr account;
-  private static final String[] COUNTRIES = new String[] {
-         "Belgium", "France", "Italy", "Germany", "Spain"
-     };
   
   /**
    * Called when the activity is first created.

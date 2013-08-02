@@ -9,7 +9,6 @@ import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Account;
 
 import java.util.LinkedList;
 import java.util.List;
