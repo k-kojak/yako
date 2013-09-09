@@ -25,6 +25,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
@@ -158,7 +159,7 @@ public class MainActivity extends Activity {
           HashMap<String, Object> item = new HashMap<String, Object>();
           item.put("subject", newMessages[i].getTitle());
           // using only a temporary solution
-          item.put("from", newMessages[i].getFromTemp());
+          item.put("from", newMessages[i].getFrom().getName());
           item.put("date", "" + newMessages[i].getFormattedDate());
           item.put("seen", "" + newMessages[i].isSeen());
           item.put("id", "" + newMessages[i].getId());
@@ -234,11 +235,6 @@ public class MainActivity extends Activity {
               AccountAndr a = (AccountAndr)email.get("account");
               MessageListElementParc ele = s.getListElementById(emailID, a);
               Intent i = new Intent(MainActivity.this, EmailDisplayer.class);
-              i.putExtra("email_id", emailID);
-              i.putExtra("subject", ele.getTitle());
-              i.putExtra("from", ele.getFromTemp());
-              
-              i.putExtra("account", (Parcelable)a);
               
               // TODO: getFull message now always converted to FullEmailMessage
               if (ele != null) {
@@ -248,6 +244,12 @@ public class MainActivity extends Activity {
                   }
                 }
               }
+              
+              i.putExtra("email_id", emailID);
+              i.putExtra("subject", ele.getTitle());
+              i.putExtra("from", new PersonAndr(ele.getFrom()));
+              i.putExtra("account", (Parcelable)a);
+              
               startActivityForResult(i, EMAIL_CONTENT_RESULT);
               boolean changed = s.setMailSeen(emailID);
               if (changed) {

@@ -13,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -35,7 +36,7 @@ public class EmailDisplayer extends Activity {
   private boolean loadedWithContent = false;
   private int emailID = -1;
   private AccountAndr account;
-  private String from;
+  private PersonAndr from;
   
   private WebView webView = null;
   private String mailCharCode = "UTF-8";
@@ -53,13 +54,14 @@ public class EmailDisplayer extends Activity {
     emailID = getIntent().getExtras().getInt("email_id");
     account = getIntent().getExtras().getParcelable("account");
     subject = getIntent().getExtras().getString("subject");
-    from = getIntent().getExtras().getString("from");
+    from = getIntent().getExtras().getParcelable("from");
     
     if (getIntent().getExtras().containsKey("email_content")) {
       loadedWithContent = true;
       content = getIntent().getExtras().getString("email_content");
 //      webView.loadData(content, "text/html", mailCharCode);
-      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+//      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+      displayMessage(content);
     } else {
       handler = new EmailContentTaskHandler();
       EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
@@ -133,6 +135,12 @@ public class EmailDisplayer extends Activity {
     super.finish(); //To change body of generated methods, choose Tools | Templates.
   }
   
+  private void displayMessage(String content) {
+    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
+    content = from.getName() + mail + "<br/>" + content;
+    webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+  }
+  
   private class EmailContentTaskHandler extends Handler {
     
     @Override
@@ -142,7 +150,8 @@ public class EmailDisplayer extends Activity {
         if (bundle.get("content") != null) {
           content = bundle.getString("content");
 //          webView.loadData(content, "text/html", mailCharCode);
-          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+//          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+          displayMessage(content);
           if (pd != null) {
             pd.dismiss();
           }

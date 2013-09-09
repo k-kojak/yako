@@ -1,4 +1,5 @@
 /*
+ * 
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
@@ -27,7 +28,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 public class MessageListElementParc extends MessageListElement implements Parcelable {
 
   // TODO: replace fromTemp with Person object
-  String fromTemp;
+//  PersonAndr from;
   AccountAndr account;
   private static Map<String, ClassLoader> stringToClassLoader = null;
   
@@ -53,7 +54,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.seen = in.readByte() == 1;
     this.title = in.readString();
     this.subTitle = in.readString();
-    this.fromTemp = in.readString();
+    this.from = in.readParcelable(PersonAndr.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     
@@ -68,42 +69,42 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
     this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getFrom(), mle.getDate(), mle.getMessageType(), account);
-    setFromTemp();
+//    setFromTemp();
   }
   
   public MessageListElementParc(long id, boolean seen, String title, String subTitle, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
     super(id, seen, title, subTitle, from, date, messageType);
     this.account = account;
-    setFromTemp();
+//    setFromTemp();
   }
 
   public MessageListElementParc(long id, boolean seen, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
     super(id, seen, title, from, date, messageType);
     this.account = account;
-    setFromTemp();
+//    setFromTemp();
   }
 
   public MessageListElementParc(long id, String title, String subTitle, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
     super(id, title, subTitle, from, date, messageType);
     this.account = account;
-    setFromTemp();
+//    setFromTemp();
   }
 
   public MessageListElementParc(long id, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
     super(id, title, from, date, messageType);
     this.account = account;
-    setFromTemp();
+//    setFromTemp();
   }
 
   public MessageListElementParc(long id, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
     super(id, from, date, messageType);
     this.account = account;
-    setFromTemp();
+//    setFromTemp();
   }
   
-  private void setFromTemp() {
-    this.fromTemp = this.from.getName();
-  }
+//  private void setFromTemp() {
+//    this.fromTemp = this.from;
+//  }
   
   public int describeContents() {
     return 0;
@@ -114,9 +115,9 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     return pt.format(date);
   }
   
-  public String getFromTemp() {
-    return fromTemp;
-  }
+//  public String getFromTemp() {
+//    return fromTemp;
+//  }
   
   public AccountAndr getAccount() {
     return account;
@@ -127,7 +128,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
     out.writeString(subTitle);
-    out.writeString(fromTemp);
+    out.writeParcelable((Parcelable)new PersonAndr(from), flags);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeString(account.getAccountType().toString());
