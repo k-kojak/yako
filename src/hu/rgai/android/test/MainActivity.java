@@ -218,7 +218,6 @@ public class MainActivity extends Activity {
         if (currentView == null || currentView.getId() != R.id.list) {
           setContentView(R.layout.main);
           messages = new ArrayList<Map<String, Object>>();
-          Log.d("rgai", "instantiate messages ojjektum");
 
           ListView lv = (ListView) findViewById(R.id.list);
   //        String[] from = {"subject", "from"};

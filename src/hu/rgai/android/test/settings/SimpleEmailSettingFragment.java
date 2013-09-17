@@ -24,6 +24,7 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
   private EditText pass;
   private EditText imap;
   private EditText smtp;
+  private Spinner securityType;
   private Spinner messageAmount;
   private Map<String, String> domainMap;
   
@@ -45,8 +46,14 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
             R.array.initial_emails_num, android.R.layout.simple_spinner_item);
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
     messageAmount.setAdapter(adapter);
+    
+    securityType = (Spinner)v.findViewById(R.id.security_type);
+    adapter = ArrayAdapter.createFromResource(getActivity(),
+            R.array.security_types, android.R.layout.simple_spinner_item);
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    // Apply the adapter to the spinner
+    securityType.setAdapter(adapter);
     
     email = (EditText)v.findViewById(R.id.email_address);
     pass = (EditText)v.findViewById(R.id.password);
@@ -78,6 +85,7 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
       pass.setText(b.getString("pass"));
       imap.setText(b.getString("imap"));
       smtp.setText(b.getString("smtp"));
+      securityType.setSelection(AccountSettings.getSpinnerPosition(securityType.getAdapter(), b.getBoolean("ssl") ? "SSL" : "None"));
       messageAmount.setSelection(AccountSettings.getSpinnerPosition(messageAmount.getAdapter(), b.getInt("num")));
     }
     
@@ -112,6 +120,10 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
   
   public String getSmtp() {
     return smtp.getText().toString();
+  }
+  
+  public boolean isSsl() {
+    return ((String)securityType.getSelectedItem()).equals("SSL") ? true : false;
   }
   
   public int getMessageAmount() {

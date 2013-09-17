@@ -289,7 +289,18 @@ public class AccountSettings extends SherlockFragmentActivity {
   public static int getSpinnerPosition(SpinnerAdapter adapter, int value) {
     int ind = 0;
     for (int i = 0; i < adapter.getCount(); i++) {
-      Log.d("rgai", adapter.getItem(i).toString() + " vs " + value);
+//      Log.d("rgai", adapter.getItem(i).toString() + " vs " + value);
+      if (adapter.getItem(i).toString().equals(value+"")) {
+        return i;
+      }
+    }
+    
+    return ind;
+  }
+  
+  public static int getSpinnerPosition(SpinnerAdapter adapter, String value) {
+    int ind = 0;
+    for (int i = 0; i < adapter.getCount(); i++) {
       if (adapter.getItem(i).toString().equals(value+"")) {
         return i;
       }
@@ -334,8 +345,9 @@ public class AccountSettings extends SherlockFragmentActivity {
         String pass = se.getPass();
         String imap = se.getImap();
         String smtp = se.getSmtp();
+        boolean ssl = se.isSsl();
         int num = se.getMessageAmount();
-        a = new EmailAccountAndr(mail, pass, imap, smtp, false, num);
+        a = new EmailAccountAndr(mail, pass, imap, smtp, ssl, num);
       } else if (sf instanceof GmailSettingFragment) {
         GmailSettingFragment gm = (GmailSettingFragment)sf;
         String mail = gm.getEmail();

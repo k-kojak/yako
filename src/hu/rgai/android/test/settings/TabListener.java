@@ -76,6 +76,7 @@ public class TabListener<T extends SherlockFragment> implements ActionBar.TabLis
         b.putString("pass", ea.getPassword());
         b.putString("imap", ea.getImapAddress());
         b.putString("smtp", ea.getSmtpAddress());
+        b.putBoolean("ssl", ea.isSsl());
         b.putInt("num", ea.getMessageLimit());
       }
     }

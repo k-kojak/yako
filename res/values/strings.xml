@@ -48,6 +48,7 @@
     <string name="label_email_address">Email address</string>
     <string name="label_imap_address">IMAP address</string>
     <string name="label_smtp_address">SMTP address</string>
+    <string name="label_security_type">Security type</string>
     <string name="label_password">Password</string>
     <string name="label_initial_email_num">Initial amount of emails to load</string>
     <string name="label_initial_msg_num">Initial amount of messages to load</string>
@@ -57,6 +58,10 @@
       <item>15</item>
       <item>20</item>
       <item>30</item>
+    </string-array>
+    <string-array name="security_types">
+      <item>None</item>
+      <item>SSL</item>
     </string-array>
 
     
