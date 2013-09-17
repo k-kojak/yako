@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -47,6 +48,7 @@ public class MessageReply extends Activity implements TextWatcher {
   private TextView text;
   private MultiAutoCompleteTextView recipients;
   private AccountAndr account;
+  private PersonAndr from;
   
   /**
    * Called when the activity is first created.
@@ -75,7 +77,8 @@ public class MessageReply extends Activity implements TextWatcher {
     text.setText("\n\n" + content);
     subject = getIntent().getExtras().getString("subject");
     account = getIntent().getExtras().getParcelable("account");
-    recipients.setText(getIntent().getExtras().getString("from"));
+    from = getIntent().getExtras().getParcelable("from");
+    recipients.setText(from.getEmails().get(0));
     handler = new EmailReplyTaskHandler(this);
         
 //    String msgContent = getIntent().getExtras().getString("message_content");

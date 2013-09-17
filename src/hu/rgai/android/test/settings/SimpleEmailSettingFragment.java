@@ -3,7 +3,6 @@ package hu.rgai.android.test.settings;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +11,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import com.actionbarsherlock.app.SherlockFragment;
 import hu.rgai.android.test.R;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -24,9 +25,20 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
   private EditText imap;
   private EditText smtp;
   private Spinner messageAmount;
+  private Map<String, String> domainMap;
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    
+    domainMap = new HashMap<String, String>();
+    domainMap.put("vipmail.hu", "indamail.hu");
+    domainMap.put("csinibaba.hu", "indamail.hu");
+    domainMap.put("totalcar.hu", "indamail.hu");
+    domainMap.put("index.hu", "indamail.hu");
+    domainMap.put("velvet.hu", "indamail.hu");
+    domainMap.put("torzsasztal.hu", "indamail.hu");
+    domainMap.put("lamer.hu", "indamail.hu");
+    
     View v = inflater.inflate(R.layout.account_settings_simple_mail_layout, container, false);
     
     messageAmount = (Spinner)v.findViewById(R.id.initial_emails_num);
@@ -73,6 +85,19 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
     
   }
   
+  private void autoFillImapSmtpField(CharSequence email) {
+    String m = email.toString();
+    int pos = m.indexOf("@");
+    if (pos != -1) {
+      String domain = m.substring(pos + 1).toLowerCase();
+      if (domainMap.containsKey(domain)) {
+        domain = domainMap.get(domain);
+      }
+      imap.setText("imap."+domain);
+      smtp.setText("smtp."+domain);
+    }
+  }
+  
   public String getEmail() {
     return email.getText().toString();
   }
@@ -95,6 +120,7 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
 
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
     AccountSettings.validateEmailField(email, text.toString());
+    autoFillImapSmtpField(text);
   }
 
   public void afterTextChanged(Editable e) {}
