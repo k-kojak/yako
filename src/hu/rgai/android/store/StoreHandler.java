@@ -34,6 +34,7 @@ public class StoreHandler {
         editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, ga.getPassword());
         editor.putString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, ga.getImapAddress());
         editor.putString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, ga.getSmtpAddress());
+//        editor.putBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, ga.isSsl());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, ga.getMessageLimit());
       } else if (a.getAccountType() == MessageProvider.Type.FACEBOOK) {
         FacebookAccountAndr fa = (FacebookAccountAndr) a;
@@ -48,6 +49,7 @@ public class StoreHandler {
         editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, ea.getPassword());
         editor.putString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, ea.getImapAddress());
         editor.putString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, ea.getSmtpAddress());
+        editor.putBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, ea.isSsl());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, ea.getMessageLimit());
       } else {
         throw new Exception("Unsupported account type: " + a.getAccountType());
@@ -69,6 +71,7 @@ public class StoreHandler {
         editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_imap) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_smtp) + "_" + i);
+//        editor.remove(context.getString(R.string.settings_accounts_item_ssl) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_amount) + "_" + i);
       } else if (type.equals(context.getString(R.string.account_name_facebook))) {
         editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
@@ -81,6 +84,7 @@ public class StoreHandler {
         editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_imap) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_smtp) + "_" + i);
+        editor.remove(context.getString(R.string.settings_accounts_item_ssl) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_amount) + "_" + i);
       } else {
         throw new Exception("Unsupported account type: " + type);
@@ -98,6 +102,7 @@ public class StoreHandler {
       if (type.equals(context.getString(R.string.account_name_gmail))) {
         String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
+//        boolean ssl = prefs.getBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, true);
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
         accounts.add(new GmailAccountAndr(num, email, pass));
       } else if (type.equals(context.getString(R.string.account_name_facebook))) {
@@ -110,8 +115,9 @@ public class StoreHandler {
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
         String imap = prefs.getString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, null);
         String smtp = prefs.getString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, null);
+        boolean ssl = prefs.getBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, true);
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
-        accounts.add(new EmailAccountAndr(email, pass, imap, smtp, num));
+        accounts.add(new EmailAccountAndr(email, pass, imap, smtp, ssl, num));
       } else {
         Toast.makeText(context, "Unsupported account type: " + type, Toast.LENGTH_LONG);
       }

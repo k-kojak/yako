@@ -28,13 +28,17 @@ public class EmailAccountAndr extends EmailAccount implements AccountAndr, Parce
   };
   
   public EmailAccountAndr(Parcel in) {
-    super(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(), in.readInt());
+    super(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(), in.readInt(), in.readByte() == 1);
     this.messageLimit = in.readInt();
   }
   
-  public EmailAccountAndr(String email, String password, String imapAddress, String smtpAddress, int messageLimit) {
-    super(email, password, imapAddress, smtpAddress);
+  public EmailAccountAndr(String email, String password, String imapAddress, String smtpAddress, boolean ssl, int messageLimit) {
+    super(email, password, imapAddress, smtpAddress, ssl);
     this.messageLimit = messageLimit;
+  }
+  
+  public EmailAccountAndr(String email, String password, String imapAddress, String smtpAddress, int messageLimit) {
+    this(email, password, imapAddress, smtpAddress, true, messageLimit);
   }
 
   public int getMessageLimit() {
@@ -52,6 +56,7 @@ public class EmailAccountAndr extends EmailAccount implements AccountAndr, Parce
     out.writeString(this.smtpAddress);
     out.writeInt(this.imapPort);
     out.writeInt(this.smtpPort);
+    out.writeByte(this.ssl == true ? (byte)1 : 0);
     out.writeInt(messageLimit);
   }
 

@@ -335,7 +335,7 @@ public class AccountSettings extends SherlockFragmentActivity {
         String imap = se.getImap();
         String smtp = se.getSmtp();
         int num = se.getMessageAmount();
-        a = new EmailAccountAndr(mail, pass, imap, smtp, num);
+        a = new EmailAccountAndr(mail, pass, imap, smtp, false, num);
       } else if (sf instanceof GmailSettingFragment) {
         GmailSettingFragment gm = (GmailSettingFragment)sf;
         String mail = gm.getEmail();

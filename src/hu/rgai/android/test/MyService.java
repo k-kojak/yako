@@ -26,6 +26,7 @@ import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -297,9 +298,10 @@ public class MyService extends Service {
           
           messages.addAll(nonParcToParc(mle));
         } else if (acc instanceof EmailAccountAndr) {
-//          accountName = ((EmailAccount)acc).getEmail();
-//          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)acc);
-//          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+          
+          accountName = ((EmailAccount)acc).getEmail();
+          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)acc);
+          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         }
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();

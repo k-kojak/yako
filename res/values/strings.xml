@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">rgai service app</string>
+    <string name="app_name">Message Logger</string>
     <string name="account_settings">Account settings</string>
     <string name="service_name">This is my service</string>
     <string name="email_accounts">Manage accounts</string>
@@ -24,6 +24,7 @@
     <string name="settings_accounts_item_pass">hu.rgai.android.settings.accounts.item.pass</string>
     <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
     <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
+    <string name="settings_accounts_item_ssl">hu.rgai.android.settings.accounts.item.ssl</string>
     <string name="settings_accounts_item_amount">hu.rgai.android.settings.accounts.item.amount</string>
     
     
