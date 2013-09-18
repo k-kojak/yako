@@ -2,8 +2,13 @@ package hu.rgai.android.test.settings;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -23,6 +28,7 @@ import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.MyService;
 import hu.rgai.android.test.R;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -43,12 +49,27 @@ public class AccountSettings extends SherlockFragmentActivity {
   ActionBar actionBar;
   int i = 1;
   boolean fbAdded = false;
+  
+  private MyService s;
+  private ServiceConnection serviceConnection = new ServiceConnection() {
+    public void onServiceConnected(ComponentName className, IBinder binder) {
+      s = ((MyService.MyBinder) binder).getService();
+    }
+
+    public void onServiceDisconnected(ComponentName className) {
+      s = null;
+    }
+  };
+  
   /**
    * Called when the activity is first created.
    */
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
+    
+    // bindig main service
+    bindService(new Intent(this, MyService.class), serviceConnection, Context.BIND_AUTO_CREATE);
     
     accountFragments = new LinkedList<SherlockFragment>();
     tabToTablistener = new HashMap<Tab, TabListener>();
@@ -105,6 +126,12 @@ public class AccountSettings extends SherlockFragmentActivity {
 //    ((Spinner)findViewById(R.id.initial_emails_num)).setSelection(adapter.getPosition("" + initial_num));
     
     // ToDo add your GUI initialization code here        
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    unbindService(serviceConnection);
   }
   
   @Override
@@ -246,6 +273,10 @@ public class AccountSettings extends SherlockFragmentActivity {
   protected synchronized void removeAccount(SherlockFragment acc) {
     int ind = accountFragments.indexOf(acc);
     if (ind != -1) {
+      SettingFragment sf = (SettingFragment)accountFragments.get(ind);
+      AccountAndr andrAcc = sf.getAccount();
+      s.removeElementsFromList(andrAcc);
+//      s.re
       accountFragments.remove(ind);
       if (accountFragments.isEmpty()) {
         FragmentManager fm = getSupportFragmentManager();
@@ -332,29 +363,31 @@ public class AccountSettings extends SherlockFragmentActivity {
   public void saveAccountSettings(View v) {
     List<AccountAndr> accounts = new LinkedList<AccountAndr>();
     for (SherlockFragment sf : accountFragments) {
-      AccountAndr a = null;
-      if (sf instanceof FacebookSettingFragment) {
-        FacebookSettingFragment fb = (FacebookSettingFragment)sf;
-        String mail = fb.getEmail();
-        String pass = fb.getPass();
-        int num = fb.getMessageAmount();
-        a = new FacebookAccountAndr(num, mail, pass);
-      } else if (sf instanceof SimpleEmailSettingFragment) {
-        SimpleEmailSettingFragment se = (SimpleEmailSettingFragment)sf;
-        String mail = se.getEmail();
-        String pass = se.getPass();
-        String imap = se.getImap();
-        String smtp = se.getSmtp();
-        boolean ssl = se.isSsl();
-        int num = se.getMessageAmount();
-        a = new EmailAccountAndr(mail, pass, imap, smtp, ssl, num);
-      } else if (sf instanceof GmailSettingFragment) {
-        GmailSettingFragment gm = (GmailSettingFragment)sf;
-        String mail = gm.getEmail();
-        String pass = gm.getPass();
-        int num = gm.getMessageAmount();
-        a = new GmailAccountAndr(num, mail, pass);
-      }
+      AccountAndr a = ((SettingFragment)sf).getAccount();
+//      if (sf instanceof FacebookSettingFragment) {
+//        FacebookSettingFragment fb = (FacebookSettingFragment)sf;
+////        String mail = fb.getEmail();
+////        String pass = fb.getPass();
+////        int num = fb.getMessageAmount();
+////        a = new FacebookAccountAndr(num, mail, pass);
+//        a = fb.getAccount();
+//      } else if (sf instanceof SimpleEmailSettingFragment) {
+//        SimpleEmailSettingFragment se = (SimpleEmailSettingFragment)sf;
+////        String mail = se.getEmail();
+////        String pass = se.getPass();
+////        String imap = se.getImap();
+////        String smtp = se.getSmtp();
+////        boolean ssl = se.isSsl();
+////        int num = se.getMessageAmount();
+//        a = se.getAccount();
+//      } else if (sf instanceof GmailSettingFragment) {
+//        GmailSettingFragment gm = (GmailSettingFragment)sf;
+////        String mail = gm.getEmail();
+////        String pass = gm.getPass();
+////        int num = gm.getMessageAmount();
+////        a = new GmailAccountAndr(num, mail, pass);
+//        a = gm.getAccount();
+//      }
       if (a != null) {
         accounts.add(a);
       }

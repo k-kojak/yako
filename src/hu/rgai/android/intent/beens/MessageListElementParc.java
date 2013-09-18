@@ -171,4 +171,9 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     return true;
   }
   
+  @Override
+  public String toString() {
+    return id + "@" + account + "("+ title +")";
+  }
+  
 }

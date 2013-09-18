@@ -14,6 +14,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.io.Serializable;
 
 /**
@@ -83,5 +84,5 @@ public class TabListener<T extends SherlockFragment> implements ActionBar.TabLis
     
     return b;
   }
-  
+
 }

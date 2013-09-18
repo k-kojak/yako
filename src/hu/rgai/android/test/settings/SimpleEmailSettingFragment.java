@@ -10,7 +10,10 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import com.actionbarsherlock.app.SherlockFragment;
+import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.test.R;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +21,7 @@ import java.util.Map;
  *
  * @author Tamas Kojedzinszky
  */
-public class SimpleEmailSettingFragment extends SherlockFragment implements TextWatcher {
+public class SimpleEmailSettingFragment extends SherlockFragment implements SettingFragment, TextWatcher {
 
   private EditText email;
   private EditText pass;
@@ -106,30 +109,10 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
     }
   }
   
-  public String getEmail() {
-    return email.getText().toString();
-  }
-  
-  public String getPass() {
-    return pass.getText().toString();
-  }
-  
-  public String getImap() {
-    return imap.getText().toString();
-  }
-  
-  public String getSmtp() {
-    return smtp.getText().toString();
-  }
-  
-  public boolean isSsl() {
+  private boolean isSsl() {
     return ((String)securityType.getSelectedItem()).equals("SSL") ? true : false;
   }
   
-  public int getMessageAmount() {
-    return Integer.parseInt((String)messageAmount.getSelectedItem());
-  }
-
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
     AccountSettings.validateEmailField(email, text.toString());
     autoFillImapSmtpField(text);
@@ -137,6 +120,20 @@ public class SimpleEmailSettingFragment extends SherlockFragment implements Text
 
   public void afterTextChanged(Editable e) {}
   public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
+  
+  public MessageProvider.Type getType() {
+    return MessageProvider.Type.EMAIL;
+  }
+
+  public AccountAndr getAccount() {
+    String m = email.getText().toString();
+    String p = pass.getText().toString();
+    String im = imap.getText().toString();
+    String sm = smtp.getText().toString();
+    boolean ssl = this.isSsl();
+    int num = Integer.parseInt((String)messageAmount.getSelectedItem());
+    return new EmailAccountAndr(m, p, im, sm, ssl, num);
+  }
   
   
 }

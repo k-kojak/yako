@@ -67,5 +67,10 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
     }
     return true;
   }
+  
+  @Override
+  public String toString() {
+    return accountType.toString() + " -> " + userName;
+  }
 
 }

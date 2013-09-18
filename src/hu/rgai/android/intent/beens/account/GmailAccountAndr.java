@@ -68,4 +68,9 @@ public class GmailAccountAndr extends GmailAccount implements AccountAndr, Parce
     return true;
   }
   
+  @Override
+  public String toString() {
+    return accountType.toString() + " -> " + email;
+  }
+  
 }

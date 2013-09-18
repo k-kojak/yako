@@ -197,18 +197,21 @@ public class MainActivity extends Activity {
     registerReceiver(systemReceiver, systemIntentFilter);
     
     // setting content
-    setContent("onResume...");
+    setContent();
   }
 
   @Override
   protected void onDestroy() {
-    super.onDestroy(); //To change body of generated methods, choose Tools | Templates.
+    super.onDestroy();
     if (systemReceiver != null) {
       unregisterReceiver(systemReceiver);
     }
+    if (serviceConnection != null) {
+      unbindService(serviceConnection);
+    }
   }
   
-  private void setContent(String p) {
+  private void setContent() {
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem lehet csinalni semmit...
     boolean isNet = isNetworkAvailable();
 //    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {

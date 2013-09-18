@@ -78,4 +78,10 @@ public class EmailAccountAndr extends EmailAccount implements AccountAndr, Parce
     }
     return true;
   }
+  
+  @Override
+  public String toString() {
+    return this.accountType.toString() + " -> " + email;
+  }
+  
 }

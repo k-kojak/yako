@@ -11,6 +11,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 public interface AccountAndr extends Account {
   
   public int getMessageLimit();
-//  public Type getAccountType();
+  @Override
+  public String toString();
   
 }

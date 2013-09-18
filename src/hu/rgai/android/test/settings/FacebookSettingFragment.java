@@ -7,7 +7,6 @@ package hu.rgai.android.test.settings;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,15 +14,15 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import com.actionbarsherlock.app.SherlockFragment;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.test.R;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookSettingFragment extends SherlockFragment implements TextWatcher {
+public class FacebookSettingFragment extends SherlockFragment implements SettingFragment, TextWatcher {
 
   private EditText email;
   private EditText pass;
@@ -56,23 +55,22 @@ public class FacebookSettingFragment extends SherlockFragment implements TextWat
     return v;
   }
   
-  public String getEmail() {
-    return email.getText().toString();
-  }
-  
-  public String getPass() {
-    return pass.getText().toString();
-  }
-  
-  public int getMessageAmount() {
-    return Integer.parseInt((String)messageAmount.getSelectedItem());
-  }
-
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
     AccountSettings.validateEmailField(email, text.toString());
   }
 
   public void afterTextChanged(Editable e) {}
   public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
+
+  public MessageProvider.Type getType() {
+    return MessageProvider.Type.FACEBOOK;
+  }
+  
+  public FacebookAccountAndr getAccount() {
+    String m = email.getText().toString();
+    String p = pass.getText().toString();
+    int num = Integer.parseInt((String)messageAmount.getSelectedItem());
+    return new FacebookAccountAndr(num, m, p);
+  }
   
 }

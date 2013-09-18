@@ -168,6 +168,17 @@ public class MyService extends Service {
       return null;
     }
   }
+  
+  public void removeElementsFromList(AccountAndr acc) {
+    for (MessageListElementParc mle : messages) {
+      if (mle.getAccount().equals(acc)) {
+        Log.d("rgai", "removing message list element -> " + mle);
+        messages.remove(mle);
+        removeElementsFromList(acc);
+        break;
+      }
+    }
+  }
 
 //  @Override
 //  protected void onHandleIntent(Intent arg0) {
@@ -266,7 +277,7 @@ public class MyService extends Service {
   }
   
   public class MyBinder extends Binder {
-    MyService getService() {
+    public MyService getService() {
       return MyService.this;
     }
   }
