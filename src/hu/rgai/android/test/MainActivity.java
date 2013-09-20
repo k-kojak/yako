@@ -134,14 +134,15 @@ public class MainActivity extends Activity {
         break;
       case (EMAIL_SETTINGS_RESULT):
         if (resultCode == Activity.RESULT_OK) {
+          Log.d("rgai", "email setting result");
           Intent intent = new Intent(this, ScheduleStarter.class);
           intent.setAction(Context.ALARM_SERVICE);
           this.sendBroadcast(intent);
           
-          pd = new ProgressDialog(this);
-          pd.setMessage("Fetching emails...");
-          pd.setCancelable(false);
-          pd.show();
+//          pd = new ProgressDialog(this);
+//          pd.setMessage("Fetching emails...");
+//          pd.setCancelable(false);
+//          pd.show();
         }
         break;
       default:

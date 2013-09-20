@@ -170,12 +170,14 @@ public class MyService extends Service {
   }
   
   public void removeElementsFromList(AccountAndr acc) {
-    for (MessageListElementParc mle : messages) {
-      if (mle.getAccount().equals(acc)) {
-        Log.d("rgai", "removing message list element -> " + mle);
-        messages.remove(mle);
-        removeElementsFromList(acc);
-        break;
+    if (messages != null) {
+      for (MessageListElementParc mle : messages) {
+        if (mle.getAccount().equals(acc)) {
+          Log.d("rgai", "removing message list element -> " + mle);
+          messages.remove(mle);
+          removeElementsFromList(acc);
+          break;
+        }
       }
     }
   }

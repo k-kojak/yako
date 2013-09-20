@@ -1,5 +1,6 @@
 package hu.rgai.android.test.settings;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -270,6 +271,12 @@ public class AccountSettings extends SherlockFragmentActivity {
     accountFragments.add(acc);
   }
   
+  @Override
+  public void finish() {
+    setResult(Activity.RESULT_OK);
+    super.finish();
+  }
+  
   protected synchronized void removeAccount(SherlockFragment acc) {
     int ind = accountFragments.indexOf(acc);
     if (ind != -1) {
@@ -361,33 +368,10 @@ public class AccountSettings extends SherlockFragmentActivity {
   }
   
   public void saveAccountSettings(View v) {
+    Log.d("rgai", v == null ? "v is null" : "v is NOT null");
     List<AccountAndr> accounts = new LinkedList<AccountAndr>();
     for (SherlockFragment sf : accountFragments) {
       AccountAndr a = ((SettingFragment)sf).getAccount();
-//      if (sf instanceof FacebookSettingFragment) {
-//        FacebookSettingFragment fb = (FacebookSettingFragment)sf;
-////        String mail = fb.getEmail();
-////        String pass = fb.getPass();
-////        int num = fb.getMessageAmount();
-////        a = new FacebookAccountAndr(num, mail, pass);
-//        a = fb.getAccount();
-//      } else if (sf instanceof SimpleEmailSettingFragment) {
-//        SimpleEmailSettingFragment se = (SimpleEmailSettingFragment)sf;
-////        String mail = se.getEmail();
-////        String pass = se.getPass();
-////        String imap = se.getImap();
-////        String smtp = se.getSmtp();
-////        boolean ssl = se.isSsl();
-////        int num = se.getMessageAmount();
-//        a = se.getAccount();
-//      } else if (sf instanceof GmailSettingFragment) {
-//        GmailSettingFragment gm = (GmailSettingFragment)sf;
-////        String mail = gm.getEmail();
-////        String pass = gm.getPass();
-////        int num = gm.getMessageAmount();
-////        a = new GmailAccountAndr(num, mail, pass);
-//        a = gm.getAccount();
-//      }
       if (a != null) {
         accounts.add(a);
       }
@@ -395,9 +379,11 @@ public class AccountSettings extends SherlockFragmentActivity {
     try {
       StoreHandler.saveAccounts(accounts, this);
     } catch (Exception ex) {
-      // TODO: handle exception
+      ex.printStackTrace();
       Log.d("rgai", "TODO: handle exception");
     }
-    Log.d("rgai", accounts.toString());
+    if (v != null) {
+      finish();
+    }
   }
 }
