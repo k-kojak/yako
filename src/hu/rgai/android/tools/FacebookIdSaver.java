@@ -1,70 +1,151 @@
 package hu.rgai.android.tools;
 
+
+
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.OperationApplicationException;
+import android.database.Cursor;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
+import android.util.Log;
+import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
+ * This class saves Facebook id's to contact list, or updates if exists.
+ * Saves the Facebook id's as NORMAL Im types, like Skype, but of course this is a Custom type,
+ * since Android does not have built in Facebook type.
+ * 
  * @author Tamas Kojedzinszky
  */
 public class FacebookIdSaver {
 
-  // one item of a data has 2 elements: name, fbid
-  public FacebookIdSaver(Context context, List<String> data) {
-    ContentResolver cr = context.getContentResolver();
-//    String[] arr = {"DISPLAY_NAME", "MIMETYPE", "TYPE"};
-
-    String where = ContactsContract.Data.DISPLAY_NAME + " = ?";
+  public FacebookIdSaver() {
     
-    for (String s : data) {
-      String[] row = s.split(",");
-      String name = row[0];
-      String fbID = row[1];
-      
-      String[] params = new String[] {name};
-      
+  }
+  
+  public void integrate(Context context, FacebookIntegrateItem fbii) {
+    Long[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getName());
+    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
+    
+    String facebookName = fbii.getFbAliasId().length() > 0 ? fbii.getFbAliasId() : fbii.getFbId();
+    
+    // Updating facebook ids
+    for (long contactId : rawContactIdsToUpdate) {
+    
       ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+      String where = ContactsContract.Data.RAW_CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+      String[] params = new String[]{contactId + "", ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE};
+      ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
+              .withSelection(where, params)
+              .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+              .withValue(ContactsContract.Data.DATA1, facebookName)
+              .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
+              .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
+              .withValue(ContactsContract.Data.DATA6, "Facebook")
+              .build());
+      try {
+        context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+      } catch (RemoteException ex) {
+        Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (OperationApplicationException ex) {
+        Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+    
+    // If there was no update, then insert new
+    if (rawContactIdsToUpdate.length == 0) {
+      Log.d("rgai", "THERE WAS NO UPDATE");
+      Long[] rawContactIdsToInsert = this.getUserIdToInsert(context, fbii.getName());
+      Log.d("rgai", "INSERT COUNT -> " + rawContactIdsToInsert.length);
+    
+      for (long contactId : rawContactIdsToInsert) {
 
+        ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+    //    int insertPos = ops.size();
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValue(ContactsContract.Data.RAW_CONTACT_ID, contactId)
 
-        ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
-                .withSelection(where, params)
-                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, "5657")
-               // .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "Sample Name 21")
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.Data.DATA1, facebookName)
+                .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
+                .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
+                .withValue(ContactsContract.Data.DATA6, "Facebook")
                 .build());
-        
-//        String where1 = ContactsContract.Data.DISPLAY_NAME + " = ? AND " + 
-//        ContactsContract.Data.MIMETYPE + " = ?";
-//        String[] params1 = new String[] {name,"vnd.android.cursor.item/name"};
-//        ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
-//                .withSelection(where1, params1)
-//                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, "Sample Name")
-//                .build());
-//
-//
-//        String[] params2 = new String[] {name,"vnd.android.cursor.item/email_v2"};
-//        ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
-//                .withSelection(where1, params2)
-//                .withValue(ContactsContract.CommonDataKinds.Email.DATA, "Hi There")
-//                .build());
-   // phoneCur.close();
-
-    try {
-        cr.applyBatch(ContactsContract.AUTHORITY, ops);
-    } catch (RemoteException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-    } catch (OperationApplicationException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        try {
+          context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+        } catch (RemoteException ex) {
+          Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (OperationApplicationException ex) {
+          Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      }
     }
+    
+  }
+  
+  private Long[] getUserIdToUpdate(Context context, String name) {
+    return getUserIds(context, name, true);
+  }
+  
+  private Long[] getUserIdToInsert(Context context, String name) {
+    return getUserIds(context, name, false);
+  }
+  
+  private Long[] getUserIds(Context context, String name, boolean update) {
+    ContentResolver cr = context.getContentResolver();
+    name = name.toUpperCase();
+    String[] projection = new String[] {
+        ContactsContract.Data.RAW_CONTACT_ID,
+        ContactsContract.Data.DISPLAY_NAME_PRIMARY,
+        ContactsContract.Data.MIMETYPE,
+    };
+    
+    String selection = "";
+    String[] selectionArgs = null;
+    if (update) {
+      selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "
+            + " AND " + ContactsContract.Data.MIMETYPE + " = ? "
+            + " AND " + ContactsContract.Data.DATA2 + " = ? "
+            + " AND " + ContactsContract.Data.DATA5 + " = ?";
+      selectionArgs = new String[]{
+              "%" + name + "%",
+              ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
+              ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
+              ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + ""
+      };
+    } else {
+      selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "
+            + " AND " + ContactsContract.Data.MIMETYPE + " = ?";
+      selectionArgs = new String[]{
+              "%" + name + "%",
+              ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
+      };
+    }
+            
+    Cursor cu = cr.query(ContactsContract.Data.CONTENT_URI, projection, selection, selectionArgs, null);
+    
+    cu.moveToFirst();
+    String rid = "-1";
+    ArrayList<Long> ids = new ArrayList<Long>();
+    while (!cu.isAfterLast()) {
+      int ridIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
+      rid = cu.getString(ridIdx);
+      ids.add(Long.parseLong(rid));
       
+      Log.d("rgai", "MIME -> " + cu.getString(cu.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)));
+      
+      int nameIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME_PRIMARY);
+      Log.d("rgai", "NAME -> " + cu.getString(nameIdx));
+      cu.moveToNext();
     }
+    
+    return ids.toArray(new Long[ids.size()]);
+    
   }
   
 }

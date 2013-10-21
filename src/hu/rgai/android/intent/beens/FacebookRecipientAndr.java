@@ -5,7 +5,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
 
 /**
  *
- * @author Tamas Kojedzinszku
+ * @author Tamas Kojedzinszky
  */
 public class FacebookRecipientAndr extends FacebookMessageRecipient implements RecipientItem {
 

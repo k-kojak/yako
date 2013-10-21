@@ -4,7 +4,7 @@ import android.net.Uri;
 
 /**
  *
- * @author kojak
+ * @author Tamas Kojedzinszky
  */
 public interface RecipientItem {
   public String getData();
