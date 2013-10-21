@@ -36,6 +36,10 @@ public class PersonAndr extends Person implements Parcelable {
   public PersonAndr(int id, String name, List<String> emails) {
     super(id, name, emails);
   }
+  
+  public PersonAndr(int id, String name, String email) {
+    super(id, name, email);
+  }
 
   public int describeContents() {
     return 0;

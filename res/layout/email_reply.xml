@@ -16,13 +16,15 @@ and open the template in the editor.
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
-      <MultiAutoCompleteTextView
+      <hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView
         android:id="@+id/recipients"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/email_hint"
+        android:hint="hint text"
         android:completionThreshold="1"
-        android:inputType="textEmailAddress" />
+        android:maxLines="4"
+        android:scrollbars = "vertical"
+      />
 
       <EditText
         android:id="@+id/message_content"

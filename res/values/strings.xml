@@ -10,6 +10,7 @@
     <string name="save">Save</string>
     <string name="send">Send</string>
     
+    <string name="to_hint">To</string>
     <string name="email_hint">your@email.com</string>
     <string name="imap_hint">imap.gmail.com</string>
     <string name="smtp_hint">smtp.gmail.com</string>

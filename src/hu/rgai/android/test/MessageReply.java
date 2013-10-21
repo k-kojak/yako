@@ -18,6 +18,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.tools.adapter.ContactListAdapter;
+import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -46,7 +48,7 @@ public class MessageReply extends Activity implements TextWatcher {
 //  private String content = null;
   private String subject = null;
   private TextView text;
-  private MultiAutoCompleteTextView recipients;
+  private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
   private PersonAndr from;
   
@@ -58,27 +60,46 @@ public class MessageReply extends Activity implements TextWatcher {
     super.onCreate(icicle);
     
     setContentView(R.layout.email_reply);
-    
-    String content = getIntent().getExtras().getString("content");
+    String content = "";
+    if (getIntent().getExtras() != null) {
+      if (getIntent().getExtras().containsKey("content")) {
+        content = getIntent().getExtras().getString("content");
+      }
+      if (getIntent().getExtras().containsKey("subject")) {
+        subject = getIntent().getExtras().getString("subject");
+      }
+      if (getIntent().getExtras().containsKey("account")) {
+        account = getIntent().getExtras().getParcelable("account");
+      }
+      if (getIntent().getExtras().containsKey("from")) {
+        from = getIntent().getExtras().getParcelable("from");
+      }
+    }
     text = (TextView) findViewById(R.id.message_content);
-    recipients = (MultiAutoCompleteTextView) findViewById(R.id.recipients);
+    recipients = (ChipsMultiAutoCompleteTextView) findViewById(R.id.recipients);
     
     String[] emails = this.getEmailContacts();
 //    for (String s : emails) {
 //      Log.d("rgai", "item -> " + s);
 //    }
     
-    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                 android.R.layout.simple_dropdown_item_1line, emails);
+//    ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+//                 android.R.layout.simple_dropdown_item_1line, emails);
+//    recipients.setAdapter(adapter);
+//    recipients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+//    recipients.addTextChangedListener(this);
+    
+    Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
+    ContactListAdapter adapter = new ContactListAdapter(this, c);
+//    adapter.
+//    CustomAdapter adapter = new CustomAdapter(this, c);
     recipients.setAdapter(adapter);
     recipients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-    recipients.addTextChangedListener(this);
     
     text.setText("\n\n" + content);
-    subject = getIntent().getExtras().getString("subject");
-    account = getIntent().getExtras().getParcelable("account");
-    from = getIntent().getExtras().getParcelable("from");
-    recipients.setText(from.getEmails().get(0));
+    if (from != null) {
+      recipients.setText(from.getEmails().get(0));
+    }
     handler = new EmailReplyTaskHandler(this);
         
 //    String msgContent = getIntent().getExtras().getString("message_content");
@@ -144,7 +165,7 @@ public class MessageReply extends Activity implements TextWatcher {
   public void afterTextChanged(Editable arg0) {}
 
   public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
-    validateEmailsField(recipients);
+//    validateEmailsField(recipients);
   }
   
   @Override

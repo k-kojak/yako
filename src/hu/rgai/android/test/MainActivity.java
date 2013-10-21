@@ -9,11 +9,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -27,11 +30,15 @@ import android.widget.Toast;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.EmailAccountAndr;
+import hu.rgai.android.store.StoreHandler;
+import static hu.rgai.android.test.EmailDisplayer.MESSAGE_REPLY_REQ_CODE;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.htmlparser.jericho.Source;
 
 public class MainActivity extends Activity {
 
@@ -40,6 +47,8 @@ public class MainActivity extends Activity {
   
   public static final int EMAIL_CONTENT_RESULT = 1;
   public static final int EMAIL_SETTINGS_RESULT = 2;
+  
+  public static final int PICK_CONTACT = 101;
   
   private boolean serviceConnectionEstablished = false;
   private List<Map<String, Object>> messages;
@@ -108,10 +117,10 @@ public class MainActivity extends Activity {
         intent = new Intent(this, AccountSettings.class);
         startActivityForResult(intent, MainActivity.EMAIL_SETTINGS_RESULT);
         return true;
-//      case R.id.email_send_new:
-//        intent = new Intent(this, AccountSettings.class);
-//        startActivity(intent);
-//        return true;
+      case R.id.email_send_new:
+        intent = new Intent(this, MessageReply.class);
+        startActivity(intent);
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -144,6 +153,24 @@ public class MainActivity extends Activity {
 //          pd.setCancelable(false);
 //          pd.show();
         }
+        break;
+      case (PICK_CONTACT):
+        if (resultCode == Activity.RESULT_OK) {
+          Uri contactData = data.getData();
+          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
+          if (c.moveToFirst()) {
+            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+            AccountAndr account = StoreHandler.getAccounts(this).get(0);
+            Intent intent = new Intent(this, MessageReply.class);
+//            Source source = new Source("");
+            intent.putExtra("content", "");
+            intent.putExtra("subject", "");
+            intent.putExtra("account", (Parcelable)account);
+            intent.putExtra("from", new PersonAndr(1, name, name));
+            startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+          }
+        }
+        
         break;
       default:
         break;
