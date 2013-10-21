@@ -27,7 +27,7 @@
         android:layout_alignTop="@+id/thumbnail"
         android:layout_toRightOf="@+id/thumbnail"
         android:text="..."
-        android:textColor="#040404"
+        android:textColor="#ffffff"
         android:typeface="sans"
         android:textSize="12dip" />
  
@@ -37,7 +37,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/name"
-        android:textColor="#343434"
+        android:textColor="#bbbbbb"
         android:textSize="10dip"
         android:typeface="sans"
         android:layout_marginTop="1dip"

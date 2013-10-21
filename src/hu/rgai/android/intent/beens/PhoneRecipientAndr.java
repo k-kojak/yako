@@ -12,7 +12,7 @@ public class PhoneRecipientAndr extends PhoneRecipient implements RecipientItem 
   private Uri imgUri;
   private int contactId;
   
-  public PhoneRecipientAndr(String number, String displayName, Uri imgUri, int contactId) {
+  public PhoneRecipientAndr(String displayData, String number, String displayName, Uri imgUri, int contactId) {
     super(number);
     this.displayName = displayName;
     this.imgUri = imgUri;
@@ -33,6 +33,10 @@ public class PhoneRecipientAndr extends PhoneRecipient implements RecipientItem 
 
   public int getContactId() {
     return contactId;
+  }
+
+  public String getDisplayData() {
+    return getData();
   }
   
 }

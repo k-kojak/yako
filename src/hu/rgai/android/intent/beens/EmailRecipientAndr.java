@@ -12,16 +12,12 @@ public class EmailRecipientAndr extends EmailMessageRecipient implements Recipie
   private Uri imgUri;
   private int contactId;
   
-  public EmailRecipientAndr(String email, String displayName, Uri imgUri, int contactId) {
+  public EmailRecipientAndr(String displayData, String email, String displayName, Uri imgUri, int contactId) {
     super(displayName, email);
     this.imgUri = imgUri;
     this.contactId = contactId;
   }
   
-//  public EmailRecipientAndr(String name, String email) {
-//    super(name, email);
-//  }
-
   public String getData() {
     return this.getEmail();
   }
@@ -36,6 +32,10 @@ public class EmailRecipientAndr extends EmailMessageRecipient implements Recipie
 
   public int getContactId() {
     return contactId;
+  }
+
+  public String getDisplayData() {
+    return getData();
   }
 
 }

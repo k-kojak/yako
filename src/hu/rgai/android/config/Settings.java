@@ -21,15 +21,22 @@ public final class Settings {
       contactDataTypeToRecipientClass = new HashMap<String, Class>();
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailRecipientAndr.class);
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
-      contactDataTypeToRecipientClass.put(Contacts.DataTypes.FACEBOOK, FacebookRecipientAndr.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
     }
     return contactDataTypeToRecipientClass;
   }
   
   public static final class Contacts {
     
-    public static final class DataTypes {
-      public static final String FACEBOOK = "hu.rgai.android.cursor.item/facebook";
+    public static final class DataKinds {
+      
+      public static final class Facebook {
+        
+//        public static final String CONTENT_ITEM_TYPE = "hu.rgai.android.cursor.item/facebook";
+        public static final String CUSTOM_NAME = "Facebook";
+        
+      }
+      
     }
     
   }

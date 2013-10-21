@@ -59,11 +59,11 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
   public void bindView(View view, Context context, Cursor cursor) {
     
     String[] cols = new String[]{
-      ContactsContract.Data.DATA1,
-      ContactsContract.Data.DATA2,
-      ContactsContract.Data.DATA3,
-      ContactsContract.Data.DATA4,
-//      ContactsContract.Data.DATA5,
+//      ContactsContract.Data.DATA1,
+//      ContactsContract.Data.DATA2,
+//      ContactsContract.Data.DATA3,
+//      ContactsContract.Data.DATA4,
+//      ContactsContract.Data.DATA10,
 //      ContactsContract.Data.DATA6,
 //      ContactsContract.Data.DATA7,
 //      ContactsContract.Data.DATA8,
@@ -80,25 +80,29 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     };
 //    String[] cols = new String[0];
     
-    int[] idxes = new int[cols.length];
+//    int[] idxes = new int[cols.length];
     
 //    String[] colNames = cursor.getColumnNames();
 //    String colNamesString = "";
 //    for (String s : colNames) {
 //      colNamesString += s + ", ";
 //    }
-    int idIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.CONTACT_ID);
+    int idIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
     int nameIdx = cursor.getColumnIndexOrThrow(DISPLAY_NAME);
     int typeIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE);
+    int displayDataIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1);
+    int dataIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA10);
     
-    int i = 0;
-    for (String s : cols) {
-      idxes[i++] = cursor.getColumnIndexOrThrow(s);
-    }
+//    int i = 0;
+//    for (String s : cols) {
+//      idxes[i++] = cursor.getColumnIndexOrThrow(s);
+//    }
     
     String name = cursor.getString(nameIdx);
     String id = cursor.getString(idIdx);
     String type = cursor.getString(typeIdx);
+    String displayData = cursor.getString(displayDataIdx);
+    String data = cursor.getString(dataIdx);
     Uri photoUri = null;
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -118,13 +122,13 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     }
 //    Log.d("rgai", "photoUri -> " + (photoUri != null ? photoUri.toString() : "null"));
     
-    String data = "";
-    for (int k : idxes) {
-      if (data.length() > 0) {
-        data += " - ";
-      }
-      data += cursor.getString(k);
-    }
+//    String data = "";
+//    for (int k : idxes) {
+//      if (data.length() > 0) {
+//        data += " - ";
+//      }
+//      data += cursor.getString(k);
+//    }
     
 //    if (!allowedMimeTypes.contains(type)) {
 //      view.setVisibility(View.GONE);
@@ -140,8 +144,8 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     Constructor constructor = null;
     RecipientItem ri = null;
     try {
-      constructor = recipientClass.getConstructor(String.class, String.class, Uri.class, int.class);
-      ri = (RecipientItem) constructor.newInstance(data, name, photoUri, Integer.parseInt(id));
+      constructor = recipientClass.getConstructor(String.class, String.class, String.class, Uri.class, int.class);
+      ri = (RecipientItem) constructor.newInstance(displayData, data, name, photoUri, Integer.parseInt(id));
     } catch (NoSuchMethodException ex) {
       Log.d("rgai", "NoSuchMethodException");
     } catch (InstantiationException ex) {
@@ -151,6 +155,10 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     } catch (IllegalArgumentException ex) {
       Log.d("rgai", "IllegalArgumentException");
     } catch (InvocationTargetException ex) {
+      if(ri == null) {
+        Log.d("rgai", "ri == null");
+      }
+      ex.printStackTrace();
       Log.d("rgai", "InvocationTargetException");
     }
     if (ri != null) {
@@ -165,7 +173,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     subject.setText(name);
     
     TextView from = (TextView) view.findViewById(R.id.data);
-    from.setText(data);
+    from.setText(displayData);
     
     TextView date = (TextView) view.findViewById(R.id.type);
     date.setText(type.substring(type.indexOf("/") + 1));
@@ -211,28 +219,30 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       projection = new String[] {
         ContactsContract.Data._ID,
-        ContactsContract.Data.CONTACT_ID,
+        ContactsContract.Data.RAW_CONTACT_ID,
         DISPLAY_NAME,
         ContactsContract.Data.PHOTO_URI,
         ContactsContract.Data.PHOTO_THUMBNAIL_URI,
         ContactsContract.Data.MIMETYPE,
         ContactsContract.Data.DATA1,
-        ContactsContract.Data.DATA2,
-        ContactsContract.Data.DATA3,
-        ContactsContract.Data.DATA4,
-        ContactsContract.Data.DATA5
+//        ContactsContract.Data.DATA2,
+//        ContactsContract.Data.DATA3,
+//        ContactsContract.Data.DATA4,
+//        ContactsContract.Data.DATA5,
+        ContactsContract.Data.DATA10
       };
     } else {
       projection = new String[] {
         ContactsContract.Data._ID,
-        ContactsContract.Data.CONTACT_ID,
+        ContactsContract.Data.RAW_CONTACT_ID,
         DISPLAY_NAME,
         ContactsContract.Data.MIMETYPE,
         ContactsContract.Data.DATA1,
-        ContactsContract.Data.DATA2,
-        ContactsContract.Data.DATA3,
-        ContactsContract.Data.DATA4,
-        ContactsContract.Data.DATA5,
+//        ContactsContract.Data.DATA2,
+//        ContactsContract.Data.DATA3,
+//        ContactsContract.Data.DATA4,
+//        ContactsContract.Data.DATA5,
+        ContactsContract.Data.DATA10
       };
     }
     
@@ -241,13 +251,27 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     String selection = "UPPER(" + DISPLAY_NAME + ") LIKE ? "
             + " AND LENGTH(" + ContactsContract.Data.DATA1 +") != 0 "
             + " AND ("
-            + ContactsContract.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE +"'"
-            + " OR " + ContactsContract.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE +"'"
-//            + " OR " + ContactsContract.Data.MIMETYPE + " = '"+ ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE +"'"
+            + ContactsContract.Data.MIMETYPE + " = ?"
+            + " OR " + ContactsContract.Data.MIMETYPE + " = ?"
+            + " OR ("
+              + ContactsContract.Data.MIMETYPE + " = ? "
+              + " AND " + ContactsContract.Data.DATA2 + " = ?"
+              + " AND " + ContactsContract.Data.DATA5 + " = ?"
+              + " AND " + ContactsContract.Data.DATA6 + " = ?"
+              + " AND " + ContactsContract.Data.DATA10 + " IS NOT NULL"
+            + ")"
             + ")";
     
 
-    String[] selectionArgs = new String[]{"%"+ searchString +"%"};
+    String[] selectionArgs = new String[] {
+            "%"+ searchString +"%",
+            ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
+            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
+            ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
+            ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
+            ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
+            Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME,
+    };
     String sort = DISPLAY_NAME;
     
     return mContent.query(ContactsContract.Data.CONTENT_URI,

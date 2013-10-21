@@ -11,6 +11,7 @@ import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
+import hu.rgai.android.config.Settings;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,7 +47,8 @@ public class FacebookIdSaver {
               .withValue(ContactsContract.Data.DATA1, facebookName)
               .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
               .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
-              .withValue(ContactsContract.Data.DATA6, "Facebook")
+              .withValue(ContactsContract.Data.DATA6, Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME)
+              .withValue(ContactsContract.Data.DATA10, fbii.getFbId())
               .build());
       try {
         context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
@@ -74,7 +76,8 @@ public class FacebookIdSaver {
                 .withValue(ContactsContract.Data.DATA1, facebookName)
                 .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
                 .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
-                .withValue(ContactsContract.Data.DATA6, "Facebook")
+                .withValue(ContactsContract.Data.DATA6, Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME)
+                .withValue(ContactsContract.Data.DATA10, fbii.getFbId())
                 .build());
         try {
           context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
@@ -111,12 +114,14 @@ public class FacebookIdSaver {
       selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "
             + " AND " + ContactsContract.Data.MIMETYPE + " = ? "
             + " AND " + ContactsContract.Data.DATA2 + " = ? "
-            + " AND " + ContactsContract.Data.DATA5 + " = ?";
+            + " AND " + ContactsContract.Data.DATA5 + " = ?"
+            + " AND " + ContactsContract.Data.DATA6 + " = ?";
       selectionArgs = new String[]{
               "%" + name + "%",
               ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
               ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
-              ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + ""
+              ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
+              Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME + ""
       };
     } else {
       selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "

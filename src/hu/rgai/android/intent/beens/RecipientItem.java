@@ -7,6 +7,7 @@ import android.net.Uri;
  * @author Tamas Kojedzinszky
  */
 public interface RecipientItem {
+  public String getDisplayData();
   public String getData();
   public String getDisplayName();
   public Uri getImgUri();
