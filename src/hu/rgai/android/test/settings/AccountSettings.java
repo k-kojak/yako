@@ -8,12 +8,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -24,6 +26,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
@@ -31,6 +34,10 @@ import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MyService;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.FacebookFriendProvider;
+import hu.rgai.android.tools.FacebookIdSaver;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -374,6 +381,12 @@ public class AccountSettings extends SherlockFragmentActivity {
       AccountAndr a = ((SettingFragment)sf).getAccount();
       if (a != null) {
         accounts.add(a);
+        if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+          // Downloading facebook friends and integrating them to contact list
+//          handler = new IntegrationHandler();
+          FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(this, null);
+          integrator.execute((FacebookAccount)a);
+        }
       }
     }
     try {
@@ -386,4 +399,73 @@ public class AccountSettings extends SherlockFragmentActivity {
       finish();
     }
   }
+  
+  private class IntegrationHandler extends Handler {
+    
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle bundle = msg.getData();
+      if (bundle != null) {
+        if (bundle.get("content") != null) {
+//          content = bundle.getString("content");
+//          webView.loadData(content, "text/html", mailCharCode);
+//          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+//          displayMessage(content);
+//          if (pd != null) {
+//            pd.dismiss();
+//          }
+        }
+      }
+    }
+  }
+  
+  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookAccount, Integer, String> {
+
+//    Handler handler;
+//    FacebookAccount account;
+    private Context context;
+    
+    public FacebookIntegratorAsyncTask(Context context, Handler handler) {
+      this.context = context;
+//      this.handler = handler;
+//      this.account = account;
+    }
+    
+    @Override
+    protected String doInBackground(FacebookAccount... params) {
+      String content = null;
+      
+      FacebookFriendProvider fbfp = new FacebookFriendProvider(params[0]);
+      List<FacebookIntegrateItem> fbi = fbfp.getFacebookFriends();
+
+      FacebookIdSaver fbs = new FacebookIdSaver();
+      for (FacebookIntegrateItem fbii : fbi) {
+        fbs.integrate(context, fbii);
+      }
+      
+      return content;
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//      bundle.putString("content", result);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+    }
+
+
+//    @Override
+//    protected void onProgressUpdate(Integer... values) {
+//      Log.d(Constants.LOG, "onProgressUpdate");
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//
+//      bundle.putInt("progress", values[0]);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+//    }
+  }
+  
 }

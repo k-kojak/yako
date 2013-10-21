@@ -31,7 +31,7 @@ public class FacebookIdSaver {
   
   public void integrate(Context context, FacebookIntegrateItem fbii) {
     Long[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getName());
-    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
+//    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
     
     String facebookName = fbii.getFbAliasId().length() > 0 ? fbii.getFbAliasId() : fbii.getFbId();
     
@@ -61,9 +61,9 @@ public class FacebookIdSaver {
     
     // If there was no update, then insert new
     if (rawContactIdsToUpdate.length == 0) {
-      Log.d("rgai", "THERE WAS NO UPDATE");
+//      Log.d("rgai", "THERE WAS NO UPDATE");
       Long[] rawContactIdsToInsert = this.getUserIdToInsert(context, fbii.getName());
-      Log.d("rgai", "INSERT COUNT -> " + rawContactIdsToInsert.length);
+//      Log.d("rgai", "INSERT COUNT -> " + rawContactIdsToInsert.length);
     
       for (long contactId : rawContactIdsToInsert) {
 
@@ -142,11 +142,14 @@ public class FacebookIdSaver {
       rid = cu.getString(ridIdx);
       ids.add(Long.parseLong(rid));
       
-      Log.d("rgai", "MIME -> " + cu.getString(cu.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)));
+//      Log.d("rgai", "MIME -> " + cu.getString(cu.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)));
       
       int nameIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME_PRIMARY);
-      Log.d("rgai", "NAME -> " + cu.getString(nameIdx));
+//      Log.d("rgai", "NAME -> " + cu.getString(nameIdx));
       cu.moveToNext();
+    }
+    if (cu != null) {
+      cu.close();
     }
     
     return ids.toArray(new Long[ids.size()]);
