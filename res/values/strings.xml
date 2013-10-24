@@ -3,9 +3,9 @@
     <string name="app_name">Message Logger</string>
     <string name="account_settings">Account settings</string>
     <string name="service_name">This is my service</string>
-    <string name="email_accounts">Manage accounts</string>
-    <string name="email_reply">Reply</string>
-    <string name="email_send_new">Send</string>
+    <string name="manage_accounts">Manage accounts</string>
+    <string name="message_reply">Reply</string>
+    <string name="message_send_new">Send</string>
     <string name="help">Help</string>
     <string name="save">Save</string>
     <string name="send">Send</string>

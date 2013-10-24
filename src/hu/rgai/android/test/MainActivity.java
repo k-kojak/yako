@@ -30,15 +30,14 @@ import android.widget.Toast;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import static hu.rgai.android.test.EmailDisplayer.MESSAGE_REPLY_REQ_CODE;
+import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.htmlparser.jericho.Source;
 
 public class MainActivity extends Activity {
 
@@ -104,7 +103,7 @@ public class MainActivity extends Activity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.email_settings_menu, menu);
+    inflater.inflate(R.menu.main_settings_menu, menu);
     return true;
   }
 
@@ -113,11 +112,11 @@ public class MainActivity extends Activity {
     // Handle item selection
     Intent intent;
     switch (item.getItemId()) {
-      case R.id.email_accounts:
-        intent = new Intent(this, AccountSettings.class);
+      case R.id.accounts:
+        intent = new Intent(this, AccountSettingsList.class);
         startActivityForResult(intent, MainActivity.EMAIL_SETTINGS_RESULT);
         return true;
-      case R.id.email_send_new:
+      case R.id.message_send_new:
         intent = new Intent(this, MessageReply.class);
         startActivity(intent);
         return true;

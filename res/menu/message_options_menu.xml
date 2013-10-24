@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-  <item android:id="@+id/email_reply"
-          android:title="@string/email_reply"
+  <item android:id="@+id/message_reply"
+          android:title="@string/message_reply"
           />
 </menu>

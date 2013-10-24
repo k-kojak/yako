@@ -33,6 +33,10 @@
                   android:configChanges="keyboardHidden|orientation"
                   >
         </activity>
+        <activity android:name=".settings.AccountSettingsList"
+                  android:label="@string/account_settings"
+                  >
+        </activity>
         <service
             android:name=".MyService"
             android:icon="@drawable/ic_launcher"
