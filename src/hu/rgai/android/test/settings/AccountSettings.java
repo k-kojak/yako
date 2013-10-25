@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated 
  */
 public class AccountSettings extends SherlockFragmentActivity {
 

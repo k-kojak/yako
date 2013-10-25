@@ -4,6 +4,11 @@ import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PhoneRecipientAndr;
+import hu.rgai.android.test.settings.FacebookSettingActivity;
+import hu.rgai.android.test.settings.GmailSettingActivity;
+import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +19,7 @@ import java.util.Map;
 public final class Settings {
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
 //  private static String 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
@@ -25,6 +31,18 @@ public final class Settings {
     }
     return contactDataTypeToRecipientClass;
   }
+
+  public static Map<MessageProvider.Type, Class> getAccountTypeToSettingClass() {
+    if (accountTypeToSettingClass == null) {
+      accountTypeToSettingClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToSettingClass.put(MessageProvider.Type.EMAIL, SimpleEmailSettingActivity.class);
+      accountTypeToSettingClass.put(MessageProvider.Type.GMAIL, GmailSettingActivity.class);
+      accountTypeToSettingClass.put(MessageProvider.Type.FACEBOOK, FacebookSettingActivity.class);
+    }
+    return accountTypeToSettingClass;
+  }
+  
+  
   
   public static final class Contacts {
     
