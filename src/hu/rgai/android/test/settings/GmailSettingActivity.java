@@ -3,20 +3,17 @@ package hu.rgai.android.test.settings;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
-import com.actionbarsherlock.app.SherlockFragment;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  *
@@ -27,6 +24,7 @@ public class GmailSettingActivity extends Activity implements TextWatcher {
   private EditText email;
   private EditText pass;
   private Spinner messageAmount;
+  private GmailAccountAndr oldAccount = null;
 
   @Override
   public void onCreate(Bundle bundle) {
@@ -48,12 +46,47 @@ public class GmailSettingActivity extends Activity implements TextWatcher {
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      GmailAccountAndr acc = (GmailAccountAndr)b.getParcelable("account");
-      email.setText(acc.getEmail());
-      pass.setText(acc.getPassword());
-      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), acc.getMessageLimit()));
+      oldAccount = (GmailAccountAndr)b.getParcelable("account");
+      email.setText(oldAccount.getEmail());
+      pass.setText(oldAccount.getPassword());
+      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
     
+  }
+  
+  public void saveAccountSettings(View v) {
+    Log.d("rgai", "SAVE");
+    
+    String m = email.getText().toString();
+    String p = pass.getText().toString();
+    int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
+    GmailAccountAndr newAccount = new GmailAccountAndr(messageLimit, m, p);
+    
+    Intent resultIntent = new Intent();
+    resultIntent.putExtra("new_account", (Parcelable)newAccount);
+    
+    // If editing account, then old account exists
+    if (oldAccount != null) {
+      resultIntent.putExtra("old_account", (Parcelable)oldAccount);
+      setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY, resultIntent);
+    }
+    // If new account...
+    else {
+      resultIntent.putExtra("old_account", false);
+      setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW, resultIntent);
+    }
+    
+    finish();
+  }
+  
+  public void deleteAccountSettings(View v) {
+    Log.d("rgai", "DELETE");
+    
+    Intent resultIntent = new Intent();
+    resultIntent.putExtra("old_account", (Parcelable)oldAccount);
+    setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE, resultIntent);
+    
+    finish();
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {

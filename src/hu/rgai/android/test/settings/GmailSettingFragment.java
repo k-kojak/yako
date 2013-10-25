@@ -19,6 +19,7 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated 
  */
 public class GmailSettingFragment extends SherlockFragment implements SettingFragment, TextWatcher {
 

@@ -20,6 +20,7 @@ public final class Settings {
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
+  
 //  private static String 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
@@ -42,7 +43,15 @@ public final class Settings {
     return accountTypeToSettingClass;
   }
   
+  public static final class ActivityRequestCodes {
+    public static final int ACCOUNT_SETTING_RESULT = 1;
+  }
   
+  public static final class ActivityResultCodes {
+    public static final int ACCOUNT_SETTING_NEW = 1;
+    public static final int ACCOUNT_SETTING_MODIFY = 2;
+    public static final int ACCOUNT_SETTING_DELETE = 3;
+  }
   
   public static final class Contacts {
     

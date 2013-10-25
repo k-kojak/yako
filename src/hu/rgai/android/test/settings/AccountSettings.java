@@ -394,6 +394,7 @@ public class AccountSettings extends SherlockFragmentActivity {
       StoreHandler.saveAccounts(accounts, this);
     } catch (Exception ex) {
       ex.printStackTrace();
+      //TODO: handle exception
       Log.d("rgai", "TODO: handle exception");
     }
     if (v != null) {

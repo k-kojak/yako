@@ -5,19 +5,19 @@
 package hu.rgai.android.test.settings;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
-import com.actionbarsherlock.app.SherlockFragment;
+import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.test.R;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  *
@@ -28,6 +28,7 @@ public class FacebookSettingActivity extends Activity implements TextWatcher {
   private EditText email;
   private EditText pass;
   private Spinner messageAmount;
+  private FacebookAccountAndr oldAccount;
 
   @Override
   public void onCreate(Bundle bundle) {
@@ -50,16 +51,35 @@ public class FacebookSettingActivity extends Activity implements TextWatcher {
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      FacebookAccountAndr acc = (FacebookAccountAndr)b.getParcelable("account");
-      email.setText(acc.getUserName());
-      pass.setText(acc.getPassword());
-      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), acc.getMessageLimit()));
+      oldAccount = (FacebookAccountAndr)b.getParcelable("account");
+      email.setText(oldAccount.getUserName());
+      pass.setText(oldAccount.getPassword());
+      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
     
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
     AccountSettingsList.validateEmailField(email, text.toString());
+  }
+  
+  public void saveAccountSettings(View v) {
+    Log.d("rgai", "SAVE");
+    
+//    String 
+    
+//    FacebookAccountAndr newAccount = new FacebookAccountAndr(RESULT_OK, NFC_SERVICE, NFC_SERVICE);
+    Intent resultIntent = new Intent();
+//    resultIntent.putExtra("old_account", (Parcelable)oldAccount);
+//    resultIntent.putExtra("new_account", (Parcelable)oldAccount);
+      
+    setResult(Activity.RESULT_OK, resultIntent);
+    
+    finish();
+  }
+  
+  public void deleteAccountSettings(View v) {
+    Log.d("rgai", "DELETE");
   }
 
   public void afterTextChanged(Editable e) {}

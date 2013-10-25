@@ -21,6 +21,7 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated 
  */
 public class FacebookSettingFragment extends SherlockFragment implements SettingFragment, TextWatcher {
 

@@ -1,4 +1,3 @@
-
 package hu.rgai.android.test.settings;
 
 import android.app.Activity;
@@ -30,22 +29,28 @@ import java.util.regex.Pattern;
 public class AccountSettingsList extends Activity {
 
   boolean fbAdded = false;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
-    
+
     List<AccountAndr> accounts = null;
     try {
       accounts = StoreHandler.getAccounts(this);
       Log.d("rgai", accounts.toString());
     } catch (Exception ex) {
       // TODO: handle exception
+      ex.printStackTrace();
       Log.d("rgai", "TODO: handle exception");
     }
-    
+
     if (accounts == null || accounts.isEmpty()) {
       showAccountTypeChooser();
     } else {
@@ -53,34 +58,53 @@ public class AccountSettingsList extends Activity {
       AccountListAdapter adapter = new AccountListAdapter(this, accounts);
       lv.setAdapter(adapter);
       lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-          public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
+        public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-            AccountAndr account = (AccountAndr) av.getItemAtPosition(itemIndex);
+          AccountAndr account = (AccountAndr) av.getItemAtPosition(itemIndex);
 
-            Class classToLoad = Settings.getAccountTypeToSettingClass().get(account.getAccountType());
-            if (classToLoad == null) {
-              throw new RuntimeException("Account type does not have setting class.");
-            }
-            Intent i = new Intent(AccountSettingsList.this, classToLoad);
-
-            // TODO: getFull message now always converted to FullEmailMessage
-
-            i.putExtra("account", (Parcelable)account);
-//            i.pu
-            startActivity(i);
-//            startActivityForResult(i, EMAIL_CONTENT_RESULT);
-            
+          Class classToLoad = Settings.getAccountTypeToSettingClass().get(account.getAccountType());
+          if (classToLoad == null) {
+            throw new RuntimeException("Account type does not have setting class.");
           }
-        });
+          Intent i = new Intent(AccountSettingsList.this, classToLoad);
+
+          // TODO: getFull message now always converted to FullEmailMessage
+
+          i.putExtra("account", (Parcelable) account);
+          startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
+
+        }
+      });
     }
-    
   }
-  
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    Log.d("rgai", "ON ACTIVITY RESULT");
+    if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
+      try {
+        if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
+          StoreHandler.addAccount(this, (AccountAndr) data.getParcelableExtra("new_account"));
+        } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
+          StoreHandler.modifyAccount(this,
+                  (AccountAndr) data.getParcelableExtra("old_account"),
+                  (AccountAndr) data.getParcelableExtra("new_account"));
+        } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
+          StoreHandler.removeAccount(this, (AccountAndr) data.getParcelableExtra("old_account"));
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+        // TODO: handle exception
+        Log.d("rgai", "TODO: handle exception");
+      }
+    }
+  }
+
   private void showAccountTypeChooser() {
-    
+
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Choose account type");
-    
+
     String[] items;
     fbAdded = isFacebookAccountAdded();
     if (fbAdded) {
@@ -88,11 +112,11 @@ public class AccountSettingsList extends Activity {
     } else {
       items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_facebook), getString(R.string.account_name_simplemail)};
     }
-    
+
     builder.setItems(items, new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
-        
-        switch(which) {
+
+        switch (which) {
           case 0:
 //            addGmailAccountSettingTab(null);
             break;
@@ -112,11 +136,11 @@ public class AccountSettingsList extends Activity {
       }
     });
     Dialog dialog = builder.create();
-    
+
 //    if (accountFragments.isEmpty()) {
 //      dialog.setCancelable(false);
 //    }
-    
+
 //    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
 //      public void onCancel(DialogInterface arg0) {
 //        if (accountFragments.isEmpty()) {
@@ -124,22 +148,22 @@ public class AccountSettingsList extends Activity {
 //        }
 //      }
 //    });
-    
+
     dialog.show();
-    
+
   }
-  
+
   public static void validateEmailField(TextView tv, String text) {
     validatePatternAndShowErrorOnField(tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
-    
+
   }
-  
+
   public static void validateUriField(TextView tv, String text) {
     validatePatternAndShowErrorOnField(tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"));
   }
-  
+
   private static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
     Matcher matcher = p.matcher(text);
     if (!matcher.matches()) {
@@ -148,33 +172,31 @@ public class AccountSettingsList extends Activity {
       tv.setError(null);
     }
   }
-  
+
   public static int getSpinnerPosition(SpinnerAdapter adapter, int value) {
     int ind = 0;
     for (int i = 0; i < adapter.getCount(); i++) {
 //      Log.d("rgai", adapter.getItem(i).toString() + " vs " + value);
-      if (adapter.getItem(i).toString().equals(value+"")) {
+      if (adapter.getItem(i).toString().equals(value + "")) {
         return i;
       }
     }
-    
+
     return ind;
   }
-  
+
   public static int getSpinnerPosition(SpinnerAdapter adapter, String value) {
     int ind = 0;
     for (int i = 0; i < adapter.getCount(); i++) {
-      if (adapter.getItem(i).toString().equals(value+"")) {
+      if (adapter.getItem(i).toString().equals(value + "")) {
         return i;
       }
     }
-    
+
     return ind;
   }
-  
+
   private boolean isFacebookAccountAdded() {
     return false;
   }
-  
-
 }

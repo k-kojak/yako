@@ -20,6 +20,7 @@ import java.util.Map;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated 
  */
 public class SimpleEmailSettingFragment extends SherlockFragment implements SettingFragment, TextWatcher {
 

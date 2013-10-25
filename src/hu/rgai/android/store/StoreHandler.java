@@ -20,6 +20,31 @@ import java.util.List;
  */
 public class StoreHandler {
   
+  public static void modifyAccount(Context context, AccountAndr oldAccount, AccountAndr newAccount) throws Exception {
+    List<AccountAndr> accounts = getAccounts(context);
+    if (accounts.contains(oldAccount)) {
+      accounts.remove(oldAccount);
+      accounts.add(newAccount);
+      saveAccounts(accounts, context);
+    }
+  }
+  
+  public static void removeAccount(Context context, AccountAndr account) throws Exception {
+    List<AccountAndr> accounts = getAccounts(context);
+    if (accounts.contains(account)) {
+      accounts.remove(account);
+      saveAccounts(accounts, context);
+    }
+  }
+  
+  public static void addAccount(Context context, AccountAndr account) throws Exception {
+    List<AccountAndr> accounts = getAccounts(context);
+    if (!accounts.contains(account)) {
+      accounts.add(account);
+      saveAccounts(accounts, context);
+    }
+  }
+  
   public static void saveAccounts(List<AccountAndr> accounts, Context context) throws Exception {
     removeAccountSettings(context);
     int i = 0;
