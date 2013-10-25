@@ -157,14 +157,14 @@ public class AccountSettings extends SherlockFragmentActivity {
       case R.id.add_account:
         showAccountTypeChooser();
         break;
-      case R.id.remove_account:
-        Tab act = actionBar.getSelectedTab();
-        if (act != null) {
-          TabListener tl = tabToTablistener.remove(act);
-          removeAccount(tl.mFragment);
-          actionBar.removeTab(act);
-        }
-        break;
+//      case R.id.remove_account:
+//        Tab act = actionBar.getSelectedTab();
+//        if (act != null) {
+//          TabListener tl = tabToTablistener.remove(act);
+//          removeAccount(tl.mFragment);
+//          actionBar.removeTab(act);
+//        }
+//        break;
       default:
         break;
     }

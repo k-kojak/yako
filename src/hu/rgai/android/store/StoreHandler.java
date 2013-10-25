@@ -45,6 +45,17 @@ public class StoreHandler {
     }
   }
   
+  public static boolean isFacebookAccountAdded(Context context) {
+    List<AccountAndr> accounts = getAccounts(context);
+    
+    for (AccountAndr a : accounts) {
+      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static void saveAccounts(List<AccountAndr> accounts, Context context) throws Exception {
     removeAccountSettings(context);
     int i = 0;

@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -77,6 +80,24 @@ public class AccountSettingsList extends Activity {
       });
     }
   }
+  
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.account_options_menu, menu);
+    return true;
+  }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle item selection
+    switch (item.getItemId()) {
+      case R.id.add_account:
+        showAccountTypeChooser();
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -115,39 +136,25 @@ public class AccountSettingsList extends Activity {
 
     builder.setItems(items, new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
-
+        Class classToLoad = null;
         switch (which) {
           case 0:
-//            addGmailAccountSettingTab(null);
+            classToLoad = GmailSettingActivity.class;
             break;
           case 1:
-            if (!fbAdded) {
-//              addFacebookAccountSettingTab(null);
-            } else {
-//              addSimpleMailAccountSettingTab(null);
-            }
+            classToLoad = FacebookSettingActivity.class;
             break;
           case 2:
-//            addSimpleMailAccountSettingTab(null);
+            classToLoad = SimpleEmailSettingActivity.class;
             break;
           default:
             break;
         }
+        Intent i = new Intent(AccountSettingsList.this, classToLoad);
+        startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
       }
     });
     Dialog dialog = builder.create();
-
-//    if (accountFragments.isEmpty()) {
-//      dialog.setCancelable(false);
-//    }
-
-//    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-//      public void onCancel(DialogInterface arg0) {
-//        if (accountFragments.isEmpty()) {
-//          showAccountTypeChooser();
-//        }
-//      }
-//    });
 
     dialog.show();
 
@@ -197,6 +204,6 @@ public class AccountSettingsList extends Activity {
   }
 
   private boolean isFacebookAccountAdded() {
-    return false;
+    return StoreHandler.isFacebookAccountAdded(this);
   }
 }
