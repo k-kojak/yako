@@ -8,8 +8,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
+//import com.actionbarsherlock.app.ActionBar;
+//import com.actionbarsherlock.app.SherlockFragment;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
@@ -21,9 +21,9 @@ import java.io.Serializable;
  *
  * @author Tamas Kojedzinszky
  */
-public class TabListener<T extends SherlockFragment> implements ActionBar.TabListener, Serializable {
+public class TabListener<T >  {
   
-  protected SherlockFragment mFragment = null;
+//  protected SherlockFragment mFragment = null;
 
   AccountSettings activity;
   String tag;
@@ -31,31 +31,31 @@ public class TabListener<T extends SherlockFragment> implements ActionBar.TabLis
   AccountAndr account;
 
   public TabListener(Activity activity, String tag, Class<T> classname, AccountAndr account) {
-    this.activity = (AccountSettings)activity;
+//    this.activity = (AccountSettings)activity;
     this.tag = tag;
     this.classname = classname;
     this.account = account;
   }
   
-  public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-    if (mFragment == null) {
-      Bundle params = this.getBundle();
-      mFragment = (SherlockFragment)Fragment.instantiate(activity, classname.getName(), params);
-      ft.add(android.R.id.content, mFragment, tag);
-      activity.addAccount(mFragment);
-    } else {
-      ft.attach(mFragment);
-    }
-  }
+//  public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+//    if (mFragment == null) {
+//      Bundle params = this.getBundle();
+//      mFragment = (SherlockFragment)Fragment.instantiate(activity, classname.getName(), params);
+//      ft.add(android.R.id.content, mFragment, tag);
+//      activity.addAccount(mFragment);
+//    } else {
+//      ft.attach(mFragment);
+//    }
+//  }
   
-  public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-    if (mFragment != null) {
-      ft.detach(mFragment);
-    }
-  }
+//  public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+//    if (mFragment != null) {
+//      ft.detach(mFragment);
+//    }
+//  }
   
-  public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-  }
+//  public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+//  }
   
   private Bundle getBundle() {
     Bundle b = null;

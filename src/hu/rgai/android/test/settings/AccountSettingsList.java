@@ -16,6 +16,11 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.model.GraphUser;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
@@ -150,8 +155,26 @@ public class AccountSettingsList extends Activity {
           default:
             break;
         }
-        Intent i = new Intent(AccountSettingsList.this, classToLoad);
-        startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
+        if (classToLoad == FacebookSettingActivity.class) {
+          Session.openActiveSession(AccountSettingsList.this, true, new Session.StatusCallback() {
+
+          public void call(Session sn, SessionState ss, Exception excptn) {
+            if (sn.isOpened()) {
+              Request.executeMeRequestAsync(sn, new Request.GraphUserCallback() {
+
+                public void onCompleted(GraphUser gu, Response rspns) {
+                  Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO " + gu.getName());
+                }
+              });
+            } else {
+              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
+            }
+          }
+        });
+        } else {
+          Intent i = new Intent(AccountSettingsList.this, classToLoad);
+          startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
+        }
       }
     });
     Dialog dialog = builder.create();
