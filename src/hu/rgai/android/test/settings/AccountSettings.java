@@ -421,7 +421,7 @@ public class AccountSettings  {
 //    FacebookAccount account;
     private Context context;
     
-    public FacebookIntegratorAsyncTask(Context context, Handler handler) {
+    public FacebookIntegratorAsyncTask(Activity context, Handler handler) {
       this.context = context;
 //      this.handler = handler;
 //      this.account = account;
@@ -431,8 +431,8 @@ public class AccountSettings  {
     protected String doInBackground(FacebookAccount... params) {
       String content = null;
       
-      FacebookFriendProvider fbfp = new FacebookFriendProvider(params[0]);
-      List<FacebookIntegrateItem> fbi = fbfp.getFacebookFriends();
+      FacebookFriendProvider fbfp = new FacebookFriendProvider(null);
+      List<FacebookIntegrateItem> fbi = fbfp.getFacebookFriends(null);
 
       FacebookIdSaver fbs = new FacebookIdSaver();
       for (FacebookIntegrateItem fbii : fbi) {

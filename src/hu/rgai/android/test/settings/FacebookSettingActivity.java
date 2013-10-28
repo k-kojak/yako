@@ -9,31 +9,22 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
-import com.facebook.Request;
-import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import com.facebook.model.GraphUser;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
-import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookSettingActivity extends Activity implements TextWatcher {
+public class FacebookSettingActivity extends Activity {
 
   private EditText name;
   private EditText uniqueName;
@@ -55,8 +46,9 @@ public class FacebookSettingActivity extends Activity implements TextWatcher {
     messageAmount.setAdapter(adapter);
     
     name = (EditText)findViewById(R.id.display_name);
-    name.addTextChangedListener(this);
     uniqueName = (EditText)findViewById(R.id.unique_name);
+    name.setKeyListener(null);
+    uniqueName.setKeyListener(null);
     
     
     Bundle b = getIntent().getExtras();
@@ -67,10 +59,6 @@ public class FacebookSettingActivity extends Activity implements TextWatcher {
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
     
-  }
-  
-  public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-    AccountSettingsList.validateEmailField(name, text.toString());
   }
   
   public void deleteAccountSettings(View v) {

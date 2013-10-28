@@ -28,4 +28,9 @@ public class FacebookIntegrateItem {
     return fbId;
   }
 
+  @Override
+  public String toString() {
+    return "FacebookIntegrateItem{" + "name=" + name + ", fbAliasId=" + fbAliasId + ", fbId=" + fbId + '}';
+  }
+
 }

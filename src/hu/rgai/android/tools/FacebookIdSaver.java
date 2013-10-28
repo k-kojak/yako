@@ -33,7 +33,8 @@ public class FacebookIdSaver {
     Long[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getName());
 //    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
     
-    String facebookName = fbii.getFbAliasId().length() > 0 ? fbii.getFbAliasId() : fbii.getFbId();
+    Log.d("rgai", fbii.toString());
+    String facebookName = fbii.getFbAliasId() != null && fbii.getFbAliasId().length() > 0 ? fbii.getFbAliasId() : fbii.getFbId();
     
     // Updating facebook ids
     for (long contactId : rawContactIdsToUpdate) {
@@ -59,7 +60,7 @@ public class FacebookIdSaver {
       }
     }
     
-    // If there was no update, then insert new
+    // If there was no update, then insert new facebook id to existing user
     if (rawContactIdsToUpdate.length == 0) {
 //      Log.d("rgai", "THERE WAS NO UPDATE");
       Long[] rawContactIdsToInsert = this.getUserIdToInsert(context, fbii.getName());
@@ -86,6 +87,39 @@ public class FacebookIdSaver {
         } catch (OperationApplicationException ex) {
           Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
         }
+      }
+      // The user (even the name) does not exists in the contact list, so lets create it
+      if (rawContactIdsToInsert.length == 0) {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+          
+          ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                  .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                  .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
+          .build());
+          
+          ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                  .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                  .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                  .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, fbii.getName())
+                  .build());
+        
+          ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                  .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+
+                  .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+                  .withValue(ContactsContract.Data.DATA1, facebookName)
+                  .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
+                  .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
+                  .withValue(ContactsContract.Data.DATA6, Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME)
+                  .withValue(ContactsContract.Data.DATA10, fbii.getFbId())
+                  .build());
+          try {
+            context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+          } catch (RemoteException ex) {
+            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+          } catch (OperationApplicationException ex) {
+            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+          }
       }
     }
     
@@ -131,7 +165,7 @@ public class FacebookIdSaver {
               ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
       };
     }
-            
+    
     Cursor cu = cr.query(ContactsContract.Data.CONTENT_URI, projection, selection, selectionArgs, null);
     
     cu.moveToFirst();

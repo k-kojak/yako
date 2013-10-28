@@ -3,9 +3,13 @@ package hu.rgai.android.test.settings;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
@@ -21,12 +25,16 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
+import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.FacebookFriendProvider;
+import hu.rgai.android.tools.FacebookIdSaver;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -116,6 +124,7 @@ public class AccountSettingsList extends Activity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     
     // Facebook session result
+//    if (requestCode == )
     super.onActivityResult(requestCode, resultCode, data);
     Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
     
@@ -179,6 +188,8 @@ public class AccountSettingsList extends Activity {
                     if (gu != null) {
                       stillAddingFacebookAccount = false;
                       FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
+                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, null);
+                      integrator.execute(fbsa);
                       try {
                         StoreHandler.addAccount(AccountSettingsList.this, fbsa);
                         AccountSettingsList.this.onResume();
@@ -256,4 +267,73 @@ public class AccountSettingsList extends Activity {
   private boolean isFacebookAccountAdded() {
     return StoreHandler.isFacebookAccountAdded(this);
   }
+  
+  private class IntegrationHandler extends Handler {
+    
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle bundle = msg.getData();
+      if (bundle != null) {
+        if (bundle.get("content") != null) {
+//          content = bundle.getString("content");
+//          webView.loadData(content, "text/html", mailCharCode);
+//          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+//          displayMessage(content);
+//          if (pd != null) {
+//            pd.dismiss();
+//          }
+        }
+      }
+    }
+  }
+  
+  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
+
+//    Handler handler;
+//    FacebookAccount account;
+    private Activity activity;
+    
+    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
+      this.activity = activity;
+//      this.handler = handler;
+//      this.account = account;
+    }
+    
+    @Override
+    protected String doInBackground(FacebookSessionAccount... params) {
+      String content = null;
+      
+      FacebookFriendProvider fbfp = new FacebookFriendProvider(params[0]);
+      fbfp.getFacebookFriends(activity);
+
+//      FacebookIdSaver fbs = new FacebookIdSaver();
+//      for (FacebookIntegrateItem fbii : fbi) {
+//        fbs.integrate(activity, fbii);
+//      }
+      
+      return content;
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//      bundle.putString("content", result);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+    }
+
+
+//    @Override
+//    protected void onProgressUpdate(Integer... values) {
+//      Log.d(Constants.LOG, "onProgressUpdate");
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//
+//      bundle.putInt("progress", values[0]);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+//    }
+  }
+  
 }

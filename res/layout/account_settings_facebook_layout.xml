@@ -10,11 +10,13 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:inputType="text"
+    android:editable="false"
     android:freezesText="true"  />
   <EditText
     android:id="@+id/unique_name"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:editable="false"
     android:inputType="text" />
   <TextView
     android:layout_width="fill_parent"
