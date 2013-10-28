@@ -27,7 +27,7 @@ public class FacebookFriendProvider {
   
   public List<FacebookIntegrateItem> getFacebookFriends(final Activity activity) {
     Log.d("rgai", "getting facebook friends");
-    Session.openActiveSession(null, true, new Session.StatusCallback() {
+    Session.openActiveSession(activity, true, new Session.StatusCallback() {
       public void call(Session sn, SessionState ss, Exception excptn) {
         if (sn.isOpened()) {
           Log.d("rgai", "SESSION IS OPENED WHEN RETRIEVING FRIND LIST");
