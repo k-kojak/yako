@@ -20,6 +20,7 @@ import java.io.Serializable;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated
  */
 public class TabListener<T >  {
   

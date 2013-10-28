@@ -23,10 +23,13 @@ import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +40,7 @@ import java.util.regex.Pattern;
 public class AccountSettingsList extends Activity {
 
   boolean fbAdded = false;
+  boolean stillAddingFacebookAccount = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +50,10 @@ public class AccountSettingsList extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    if (stillAddingFacebookAccount) {
+//      stillAddingFacebookAccount = false;
+      return;
+    }
     Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
 
@@ -106,8 +114,13 @@ public class AccountSettingsList extends Activity {
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    Log.d("rgai", "ON ACTIVITY RESULT");
+    
+    // Facebook session result
+    super.onActivityResult(requestCode, resultCode, data);
+    Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+    
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
+      stillAddingFacebookAccount = false;
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
           StoreHandler.addAccount(this, (AccountAndr) data.getParcelableExtra("new_account"));
@@ -158,19 +171,33 @@ public class AccountSettingsList extends Activity {
         if (classToLoad == FacebookSettingActivity.class) {
           Session.openActiveSession(AccountSettingsList.this, true, new Session.StatusCallback() {
 
-          public void call(Session sn, SessionState ss, Exception excptn) {
-            if (sn.isOpened()) {
-              Request.executeMeRequestAsync(sn, new Request.GraphUserCallback() {
-
-                public void onCompleted(GraphUser gu, Response rspns) {
-                  Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO " + gu.getName());
-                }
-              });
-            } else {
-              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
+            public void call(Session sn, SessionState ss, Exception excptn) {
+              stillAddingFacebookAccount = true;
+              if (sn.isOpened()) {
+                Request.newMeRequest(sn, new Request.GraphUserCallback() {
+                  public void onCompleted(GraphUser gu, Response rspns) {
+                    if (gu != null) {
+                      stillAddingFacebookAccount = false;
+                      FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
+                      try {
+                        StoreHandler.addAccount(AccountSettingsList.this, fbsa);
+                        AccountSettingsList.this.onResume();
+                      } catch (Exception ex) {
+                        Logger.getLogger(AccountSettingsList.class.getName()).log(Level.SEVERE, null, ex);
+                      }
+                    } else {
+                      Log.d("rgai", "GRAPH USER IS NULL");
+                    }
+                  }
+                }).executeAsync();
+              } else {
+  //              Log.d("rgai", sn.toString());
+  //              Log.d("rgai", ss.toString());
+  //              
+  //              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
+              }
             }
-          }
-        });
+          });
         } else {
           Intent i = new Intent(AccountSettingsList.this, classToLoad);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
