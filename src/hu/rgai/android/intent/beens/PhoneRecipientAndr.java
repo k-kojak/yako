@@ -1,6 +1,7 @@
 package hu.rgai.android.intent.beens;
 
 import android.net.Uri;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  *
@@ -37,6 +38,10 @@ public class PhoneRecipientAndr extends PhoneRecipient implements RecipientItem 
 
   public String getDisplayData() {
     return getData();
+  }
+  
+  public MessageProvider.Type getType() {
+    return MessageProvider.Type.SMS;
   }
   
 }

@@ -1,6 +1,8 @@
 package hu.rgai.android.intent.beens;
 
 import android.net.Uri;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
 
 /**
@@ -36,6 +38,10 @@ public class EmailRecipientAndr extends EmailMessageRecipient implements Recipie
 
   public String getDisplayData() {
     return getData();
+  }
+  
+  public Type getType() {
+    return MessageProvider.Type.EMAIL;
   }
 
 }

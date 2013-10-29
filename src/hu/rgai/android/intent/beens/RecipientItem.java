@@ -1,6 +1,7 @@
 package hu.rgai.android.intent.beens;
 
 import android.net.Uri;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  *
@@ -12,4 +13,5 @@ public interface RecipientItem {
   public String getDisplayName();
   public Uri getImgUri();
   public int getContactId();
+  public MessageProvider.Type getType();
 }

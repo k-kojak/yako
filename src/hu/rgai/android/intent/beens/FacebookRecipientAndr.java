@@ -1,6 +1,7 @@
 package hu.rgai.android.intent.beens;
 
 import android.net.Uri;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
 
 /**
@@ -46,6 +47,10 @@ public class FacebookRecipientAndr extends FacebookMessageRecipient implements R
 
   public int getContactId() {
     return contactId;
+  }
+  
+  public MessageProvider.Type getType() {
+    return MessageProvider.Type.FACEBOOK;
   }
   
 }

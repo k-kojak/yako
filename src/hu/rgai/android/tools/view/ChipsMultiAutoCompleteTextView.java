@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -328,7 +329,10 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     setChips2(); // call generate chips when user select any item from auto complete
   }
   
-
+  public List<RecipientItem> getRecipients() {
+    return recipients;
+  }
+  
   public void setImageIcon(TextView textView, Uri imgUri, int id) {
     InputStream is = null;
     Bitmap bm = null;

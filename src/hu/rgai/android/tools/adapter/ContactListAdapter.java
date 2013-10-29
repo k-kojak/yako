@@ -103,6 +103,10 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     String type = cursor.getString(typeIdx);
     String displayData = cursor.getString(displayDataIdx);
     String data = cursor.getString(dataIdx);
+    // TODO: ugly if, fix it ASAP
+    if (data == null) {
+      data = displayData;
+    }
     Uri photoUri = null;
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
