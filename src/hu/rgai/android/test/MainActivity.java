@@ -1,6 +1,5 @@
 package hu.rgai.android.test;
 
-import hu.rgai.android.test.settings.AccountSettings;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -31,7 +30,6 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
-import static hu.rgai.android.test.EmailDisplayer.MESSAGE_REPLY_REQ_CODE;
 import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
@@ -166,7 +164,7 @@ public class MainActivity extends Activity {
             intent.putExtra("subject", "");
             intent.putExtra("account", (Parcelable)account);
             intent.putExtra("from", new PersonAndr(1, name, name));
-            startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
           }
         }
         

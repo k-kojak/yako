@@ -7,6 +7,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCursor;
+import android.database.sqlite.SQLiteCursorDriver;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteQuery;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
@@ -134,6 +139,7 @@ public class FacebookIdSaver {
   }
   
   private Long[] getUserIds(Context context, String name, boolean update) {
+    name = replaceAccents(name);
     ContentResolver cr = context.getContentResolver();
     name = name.toUpperCase();
     String[] projection = new String[] {
@@ -188,6 +194,17 @@ public class FacebookIdSaver {
     
     return ids.toArray(new Long[ids.size()]);
     
+  }
+  
+  private String replaceAccents(String val) {
+    char[] replaces = new char[]{
+      'ö','ü','ó','ő','ú','é','á','ű','í',
+      'Ö','Ü','Ó','Ő','Ú','É','Á','Ű','Í'};
+    for (char c : replaces) {
+      val = val.replaceAll(c+"", "_");
+    }
+    
+    return val;
   }
   
 }
