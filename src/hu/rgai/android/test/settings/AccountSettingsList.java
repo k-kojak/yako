@@ -127,7 +127,14 @@ public class AccountSettingsList extends Activity {
     // Facebook session result
 //    if (requestCode == )
     super.onActivityResult(requestCode, resultCode, data);
-    Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+    try {
+      Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+      // thrown when someone else returns here, and not facebook
+    } catch (RuntimeException ex) {
+      Log.d("rgai", "catching FB exception");
+      ex.printStackTrace();
+      
+    }
     
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
       stillAddingFacebookAccount = false;
