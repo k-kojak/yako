@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -186,9 +187,10 @@ public class AccountSettingsList extends Activity {
                 Request.newMeRequest(sn, new Request.GraphUserCallback() {
                   public void onCompleted(GraphUser gu, Response rspns) {
                     if (gu != null) {
+                      Toast.makeText(AccountSettingsList.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
                       stillAddingFacebookAccount = false;
                       FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, null);
+                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, new IntegrationHandler(AccountSettingsList.this));
                       integrator.execute(fbsa);
                       try {
                         StoreHandler.addAccount(AccountSettingsList.this, fbsa);
@@ -270,18 +272,18 @@ public class AccountSettingsList extends Activity {
   
   private class IntegrationHandler extends Handler {
     
+    private Context c;
+    
+    public IntegrationHandler(Context c) {
+      this.c = c;
+    }
+    
     @Override
     public void handleMessage(Message msg) {
       Bundle bundle = msg.getData();
       if (bundle != null) {
         if (bundle.get("content") != null) {
-//          content = bundle.getString("content");
-//          webView.loadData(content, "text/html", mailCharCode);
-//          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
-//          displayMessage(content);
-//          if (pd != null) {
-//            pd.dismiss();
-//          }
+          Toast.makeText(c, "Update complete.", Toast.LENGTH_LONG).show();
         }
       }
     }
@@ -289,13 +291,13 @@ public class AccountSettingsList extends Activity {
   
   private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
 
-//    Handler handler;
+    Handler handler;
 //    FacebookAccount account;
     private Activity activity;
     
     public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
       this.activity = activity;
-//      this.handler = handler;
+      this.handler = handler;
 //      this.account = account;
     }
     
@@ -303,24 +305,19 @@ public class AccountSettingsList extends Activity {
     protected String doInBackground(FacebookSessionAccount... params) {
       String content = null;
       
-      FacebookFriendProvider fbfp = new FacebookFriendProvider(params[0]);
+      FacebookFriendProvider fbfp = new FacebookFriendProvider();
       fbfp.getFacebookFriends(activity);
 
-//      FacebookIdSaver fbs = new FacebookIdSaver();
-//      for (FacebookIntegrateItem fbii : fbi) {
-//        fbs.integrate(activity, fbii);
-//      }
-      
       return content;
     }
 
     @Override
     protected void onPostExecute(String result) {
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//      bundle.putString("content", result);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
+      Message msg = handler.obtainMessage();
+      Bundle bundle = new Bundle();
+      bundle.putString("content", "1");
+      msg.setData(bundle);
+      handler.sendMessage(msg);
     }
 
 

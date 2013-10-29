@@ -1,57 +1,79 @@
 package hu.rgai.android.tools;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.util.Log;
+import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
+import com.facebook.Session.Builder;
+import com.facebook.Session.OpenRequest;
+import com.facebook.Session.StatusCallback;
 import com.facebook.SessionState;
+import com.facebook.internal.SessionTracker;
+import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
 import java.util.LinkedList;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
 public class FacebookFriendProvider {
-  
-//  private FacebookSessionAccount account;
 
-  public FacebookFriendProvider(FacebookSessionAccount account) {
-//    this.account = account;
+  public FacebookFriendProvider() {
   }
-  
-  public List<FacebookIntegrateItem> getFacebookFriends(final Activity activity) {
-    Log.d("rgai", "getting facebook friends");
-    Session.openActiveSession(activity, true, new Session.StatusCallback() {
-      public void call(Session sn, SessionState ss, Exception excptn) {
-        if (sn.isOpened()) {
-          Log.d("rgai", "SESSION IS OPENED WHEN RETRIEVING FRIND LIST");
-          Request.newMyFriendsRequest(sn, new Request.GraphUserListCallback() {
 
-            public void onCompleted(List<GraphUser> list, Response rspns) {
-//              Log.d("rgai", "friend list size -> " + list.size());
-              List <FacebookIntegrateItem> fbi = new LinkedList<FacebookIntegrateItem>();
-              for (GraphUser gu : list) {
-                Log.d("rgai", gu.getName() + " - " + gu.getFirstName() + " - " + gu.getUsername());
-                fbi.add(new FacebookIntegrateItem(gu.getName(), gu.getUsername(), gu.getId()));
-              }
-              FacebookIdSaver fbs = new FacebookIdSaver();
-              for (FacebookIntegrateItem fbii : fbi) {
-                fbs.integrate(activity, fbii);
-              }
-            }
-          }).executeAsync();
-        } else {
-          Log.d("rgai", "SESSION IS CLOSED WHEN RETRIEVING FRIND LIST");
+  public List<FacebookIntegrateItem> getFacebookFriends(final Activity activity) {
+    getUserDataWithFql(activity);
+
+    return null;
+  }
+
+  private static void getUserDataWithFql(final Activity activity) {
+    String fql = "SELECT uid, name, username FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
+
+    Bundle params = new Bundle();
+    params.putString("q", fql);
+    final FacebookIdSaver fbs = new FacebookIdSaver();
+    Session session = Session.getActiveSession();
+    Request request = new Request(session, "/fql", params, HttpMethod.GET,
+            new Request.Callback() {
+      public void onCompleted(Response response) {
+        try {
+          GraphObject go = response.getGraphObject();
+          JSONObject jso = go.getInnerJSONObject();
+          JSONArray arr = jso.getJSONArray("data");
+          for (int i = 0; i < (arr.length()); i++) {
+            JSONObject json_obj = arr.getJSONObject(i);
+
+            //ezek adják vissza a szükséges adatokat
+            String uid = json_obj.getString("uid");
+            String name = json_obj.getString("name");
+            String username = json_obj.getString("username");
+
+//              Log.d("rgai", name + " - " + username + " - " + uid);
+
+            FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid);
+            fbs.integrate(activity, fbii);
+
+          }
+
+        } catch (JSONException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
         }
       }
     });
-    
-    return null;
+
+    Request.executeAndWait(request);
   }
 }

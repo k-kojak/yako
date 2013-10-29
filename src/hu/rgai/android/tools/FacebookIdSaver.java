@@ -38,7 +38,7 @@ public class FacebookIdSaver {
     Long[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getName());
 //    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
     
-    Log.d("rgai", fbii.toString());
+//    Log.d("rgai", fbii.toString());
     String facebookName = fbii.getFbAliasId() != null && fbii.getFbAliasId().length() > 0 ? fbii.getFbAliasId() : fbii.getFbId();
     
     // Updating facebook ids
