@@ -12,6 +12,7 @@ import android.widget.TextView;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +58,11 @@ public class AccountListAdapter extends BaseAdapter {
     // Setting all values in listview
     name.setText((String)account.getDisplayName());
     type.setText((String)account.getAccountType().toString());
-    icon.setImageResource(R.drawable.gmail_icon);
+    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      icon.setImageResource(R.drawable.fb);
+    } else {
+      icon.setImageResource(R.drawable.gmail_icon);
+    }
     
     return view;
   }

@@ -28,6 +28,7 @@ import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
 import hu.rgai.android.store.StoreHandler;
@@ -191,9 +192,11 @@ public class AccountSettingsList extends Activity {
             public void call(Session sn, SessionState ss, Exception excptn) {
               stillAddingFacebookAccount = true;
               if (sn.isOpened()) {
+                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
                 Request.newMeRequest(sn, new Request.GraphUserCallback() {
                   public void onCompleted(GraphUser gu, Response rspns) {
                     if (gu != null) {
+                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
                       Toast.makeText(AccountSettingsList.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
                       stillAddingFacebookAccount = false;
                       FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
@@ -206,11 +209,13 @@ public class AccountSettingsList extends Activity {
                         Logger.getLogger(AccountSettingsList.class.getName()).log(Level.SEVERE, null, ex);
                       }
                     } else {
+                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
                       Log.d("rgai", "GRAPH USER IS NULL");
                     }
                   }
                 }).executeAsync();
               } else {
+                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "Session is NOT opened after openActiveSession");
   //              Log.d("rgai", sn.toString());
   //              Log.d("rgai", ss.toString());
   //              
@@ -291,6 +296,7 @@ public class AccountSettingsList extends Activity {
       if (bundle != null) {
         if (bundle.get("content") != null) {
           Toast.makeText(c, "Update complete.", Toast.LENGTH_LONG).show();
+          ErrorLog.dumpLogcat(c, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Updating contact list done");
         }
       }
     }
