@@ -18,6 +18,8 @@ import java.util.Map;
  */
 public final class Settings {
   
+  public static boolean DEBUG = false;
+  
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
   
