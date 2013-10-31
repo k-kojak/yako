@@ -16,7 +16,6 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.view.AutoCompleteRow;
@@ -24,8 +23,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

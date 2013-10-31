@@ -16,7 +16,7 @@ public class FacebookRecipientAndr extends FacebookMessageRecipient implements R
   private int contactId;
   
   public FacebookRecipientAndr(String displayData, String fbId, String displayName, Uri imgUri, int contactId) {
-    super(Long.parseLong(fbId));
+    super(fbId);
     this.displayData = displayData;
     this.displayName = displayName;
     this.imgUri = imgUri;

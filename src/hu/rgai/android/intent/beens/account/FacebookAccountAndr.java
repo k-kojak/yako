@@ -27,12 +27,12 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
   };
   
   public FacebookAccountAndr(Parcel in) {
-    super(in.readString(), in.readString());
+    super(in.readString(), in.readString(), in.readString());
     this.messageLimit = in.readInt();
   }
   
-  public FacebookAccountAndr(int messageLimit, String userName, String password) {
-    super(userName, password);
+  public FacebookAccountAndr(int messageLimit, String displayName, String uniqueName, String password) {
+    super(displayName, uniqueName, password);
     this.messageLimit = messageLimit;
   }
 
@@ -45,7 +45,8 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
   }
 
   public void writeToParcel(Parcel out, int flags) {
-    out.writeString(getUserName());
+    out.writeString(getDisplayName());
+    out.writeString(getUniqueName());
     out.writeString(getPassword());
     out.writeInt(messageLimit);
   }
@@ -59,7 +60,7 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
       return false;
     }
     final FacebookAccountAndr other = (FacebookAccountAndr) obj;
-    if ((this.getUserName() == null) ? (other.getUserName() != null) : !this.getUserName().equals(other.getUserName())) {
+    if ((this.getUniqueName() == null) ? (other.getUniqueName() != null) : !this.getUniqueName().equals(other.getUniqueName())) {
       return false;
     }
     if (this.getAccountType() != other.getAccountType()) {
@@ -68,9 +69,4 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
     return true;
   }
   
-  @Override
-  public String toString() {
-    return accountType.toString() + " -> " + userName;
-  }
-
 }

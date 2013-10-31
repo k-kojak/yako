@@ -51,6 +51,7 @@ public final class Settings {
     public static final int ACCOUNT_SETTING_NEW = 1;
     public static final int ACCOUNT_SETTING_MODIFY = 2;
     public static final int ACCOUNT_SETTING_DELETE = 3;
+    public static final int ACCOUNT_SETTING_CANCEL = 4;
   }
   
   public static final class Contacts {

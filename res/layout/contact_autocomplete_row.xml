@@ -27,7 +27,7 @@
         android:layout_alignTop="@+id/thumbnail"
         android:layout_toRightOf="@+id/thumbnail"
         android:text="..."
-        android:textColor="#ffffff"
+        android:textColor="#888888"
         android:typeface="sans"
         android:textSize="12dip" />
  

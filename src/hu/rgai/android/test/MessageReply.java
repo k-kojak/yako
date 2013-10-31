@@ -20,6 +20,7 @@ import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
@@ -27,7 +28,9 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
+import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -252,7 +255,9 @@ public class MessageReply extends Activity implements TextWatcher {
         MessageProvider mp = null;
         Set<MessageRecipient> recipients = null;
         if (recipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
-          // sending facebook message
+          mp = new FacebookMessageProvider((FacebookAccount)acc);
+          recipients = new HashSet<MessageRecipient>();
+          recipients.add(new FacebookMessageRecipient(recipient.getData()));
           Log.d("rgai", "SENDING FACEBOOK MESSAGE");
         } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
           mp = new SimpleEmailMessageProvider((EmailAccount)acc);

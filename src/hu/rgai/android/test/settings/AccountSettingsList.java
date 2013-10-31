@@ -21,25 +21,16 @@ import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.facebook.Request;
-import com.facebook.Response;
 import com.facebook.Session;
-import com.facebook.SessionState;
-import com.facebook.model.GraphUser;
-import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
-import hu.rgai.android.tools.FacebookIdSaver;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -148,6 +139,8 @@ public class AccountSettingsList extends Activity {
                   (AccountAndr) data.getParcelableExtra("new_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           StoreHandler.removeAccount(this, (AccountAndr) data.getParcelableExtra("old_account"));
+        } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
+          // do nothing
         }
       } catch (Exception ex) {
         ex.printStackTrace();
@@ -186,47 +179,47 @@ public class AccountSettingsList extends Activity {
           default:
             break;
         }
-        if (classToLoad == FacebookSettingActivity.class) {
-          Session.openActiveSession(AccountSettingsList.this, true, new Session.StatusCallback() {
-
-            public void call(Session sn, SessionState ss, Exception excptn) {
-              stillAddingFacebookAccount = true;
-              if (sn.isOpened()) {
-                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
-                Request.newMeRequest(sn, new Request.GraphUserCallback() {
-                  public void onCompleted(GraphUser gu, Response rspns) {
-                    if (gu != null) {
-                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
-                      Toast.makeText(AccountSettingsList.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
-                      stillAddingFacebookAccount = false;
-                      FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, new IntegrationHandler(AccountSettingsList.this));
-                      integrator.execute(fbsa);
-                      try {
-                        StoreHandler.addAccount(AccountSettingsList.this, fbsa);
-                        AccountSettingsList.this.onResume();
-                      } catch (Exception ex) {
-                        Logger.getLogger(AccountSettingsList.class.getName()).log(Level.SEVERE, null, ex);
-                      }
-                    } else {
-                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
-                      Log.d("rgai", "GRAPH USER IS NULL");
-                    }
-                  }
-                }).executeAsync();
-              } else {
-                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "Session is NOT opened after openActiveSession");
-  //              Log.d("rgai", sn.toString());
-  //              Log.d("rgai", ss.toString());
-  //              
-  //              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
-              }
-            }
-          });
-        } else {
+//        if (classToLoad == FacebookSettingActivity.class) {
+//          Session.openActiveSession(AccountSettingsList.this, true, new Session.StatusCallback() {
+//
+//            public void call(Session sn, SessionState ss, Exception excptn) {
+//              stillAddingFacebookAccount = true;
+//              if (sn.isOpened()) {
+//                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
+//                Request.newMeRequest(sn, new Request.GraphUserCallback() {
+//                  public void onCompleted(GraphUser gu, Response rspns) {
+//                    if (gu != null) {
+//                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
+//                      Toast.makeText(AccountSettingsList.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
+//                      stillAddingFacebookAccount = false;
+//                      FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
+//                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, new IntegrationHandler(AccountSettingsList.this));
+//                      integrator.execute(fbsa);
+//                      try {
+//                        StoreHandler.addAccount(AccountSettingsList.this, fbsa);
+//                        AccountSettingsList.this.onResume();
+//                      } catch (Exception ex) {
+//                        Logger.getLogger(AccountSettingsList.class.getName()).log(Level.SEVERE, null, ex);
+//                      }
+//                    } else {
+//                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
+//                      Log.d("rgai", "GRAPH USER IS NULL");
+//                    }
+//                  }
+//                }).executeAsync();
+//              } else {
+//                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "Session is NOT opened after openActiveSession");
+//  //              Log.d("rgai", sn.toString());
+//  //              Log.d("rgai", ss.toString());
+//  //              
+//  //              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
+//              }
+//            }
+//          });
+//        } else {
           Intent i = new Intent(AccountSettingsList.this, classToLoad);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
-        }
+//        }
       }
     });
     Dialog dialog = builder.create();

@@ -5,7 +5,7 @@ import android.os.Parcelable;
 import android.util.Log;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
@@ -41,7 +41,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     if (stringToClassLoader == null) {
       stringToClassLoader = new HashMap<String, ClassLoader>();
       stringToClassLoader.put(MessageProvider.Type.EMAIL.toString(), EmailAccountAndr.class.getClassLoader());
-      stringToClassLoader.put(MessageProvider.Type.FACEBOOK.toString(), FacebookSessionAccountAndr.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.FACEBOOK.toString(), FacebookAccountAndr.class.getClassLoader());
       stringToClassLoader.put(MessageProvider.Type.GMAIL.toString(), GmailAccountAndr.class.getClassLoader());
     }
     

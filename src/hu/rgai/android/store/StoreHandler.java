@@ -6,7 +6,6 @@ import android.widget.Toast;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookSessionAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -74,10 +73,11 @@ public class StoreHandler {
 //        editor.putBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, ga.isSsl());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, ga.getMessageLimit());
       } else if (a.getAccountType() == MessageProvider.Type.FACEBOOK) {
-        FacebookSessionAccountAndr fa = (FacebookSessionAccountAndr) a;
+        FacebookAccountAndr fa = (FacebookAccountAndr) a;
         editor.putString(context.getString(R.string.settings_accounts_item_type) + "_" + i, context.getString(R.string.account_name_facebook));
         editor.putString(context.getString(R.string.settings_accounts_item_name) + "_" + i, fa.getDisplayName());
         editor.putString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, fa.getUniqueName());
+        editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, fa.getPassword());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, fa.getMessageLimit());
       } else if (a.getAccountType() == MessageProvider.Type.EMAIL) {
         EmailAccountAndr ea = (EmailAccountAndr) a;
@@ -143,10 +143,11 @@ public class StoreHandler {
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
         accounts.add(new GmailAccountAndr(num, email, pass));
       } else if (type.equals(context.getString(R.string.account_name_facebook))) {
-        String name = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
+        String displayName = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String uniqueName = prefs.getString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, null);
+        String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
-        accounts.add(new FacebookSessionAccountAndr(num, name, uniqueName));
+        accounts.add(new FacebookAccountAndr(num, displayName, uniqueName, pass));
       } else if (type.equals(context.getString(R.string.account_name_simplemail))) {
         String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);

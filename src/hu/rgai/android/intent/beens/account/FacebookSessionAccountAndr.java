@@ -11,6 +11,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated
  */
 public class FacebookSessionAccountAndr extends FacebookSessionAccount implements AccountAndr, Parcelable {
   

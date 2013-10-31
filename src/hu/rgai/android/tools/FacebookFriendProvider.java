@@ -2,6 +2,7 @@ package hu.rgai.android.tools;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Response;
@@ -50,13 +51,10 @@ public class FacebookFriendProvider {
             String name = json_obj.getString("name");
             String username = json_obj.getString("username");
 
-//              Log.d("rgai", name + " - " + username + " - " + uid);
-
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid);
             fbs.integrate(activity, fbii);
-
+            
           }
-
         } catch (JSONException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
