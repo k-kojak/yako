@@ -23,6 +23,9 @@ import android.widget.Toast;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
+import com.facebook.Session.Builder;
+import com.facebook.Session.OpenRequest;
+import com.facebook.Session.StatusCallback;
 import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
 import hu.rgai.android.config.Settings;
@@ -31,6 +34,7 @@ import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,7 +56,7 @@ public class FacebookSettingActivity extends Activity {
     super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
     
     setContentView(R.layout.account_settings_facebook_layout);
-    
+
     messageAmount = (Spinner)findViewById(R.id.initial_items_num);
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
             R.array.initial_emails_num,
@@ -60,13 +64,13 @@ public class FacebookSettingActivity extends Activity {
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     // Apply the adapter to the spinner
     messageAmount.setAdapter(adapter);
-    
+
     name = (TextView)findViewById(R.id.display_name);
     uniqueName = (TextView)findViewById(R.id.unique_name);
     password = (EditText)findViewById(R.id.password);
     name.setKeyListener(null);
     uniqueName.setKeyListener(null);
-    
+
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
@@ -117,8 +121,18 @@ public class FacebookSettingActivity extends Activity {
         }
       });
     }
-    
   }
+  
+  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
+    OpenRequest openRequest = new OpenRequest(activity).setPermissions(permissions).setCallback(callback);
+    Session session = new Builder(activity).build();
+    if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
+        Session.setActiveSession(session);
+        session.openForRead(openRequest);
+        return session;
+    }
+    return null;
+}
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -191,6 +205,7 @@ public class FacebookSettingActivity extends Activity {
         if (sn.isOpened()) {
           Log.d("rgai", "Closing session and clearing token information");
           sn.closeAndClearTokenInformation();
+//          sn.
         } else {
           Log.d("rgai", "Session was not opened...");
           sn.closeAndClearTokenInformation();

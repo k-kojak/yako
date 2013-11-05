@@ -26,6 +26,16 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.facebook.AccessToken;
+import com.facebook.AccessTokenSource;
+import com.facebook.HttpMethod;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.model.GraphObject;
+import com.facebook.model.GraphObjectList;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -33,6 +43,7 @@ import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +82,42 @@ public class MainActivity extends Activity {
     }
   };
 
+  private void getFbMessages(Context context) {
+    String fqlQuery = "SELECT author_id, body, created_time, message_id, thread_id "
+            + "FROM message "
+            + "WHERE thread_id = 2225482129944;";
+//    String fqlQuery = "SELECT name FROM user WHERE uid = me();";
+    Bundle params = new Bundle();
+    params.putString("q", fqlQuery);
+
+    Session session = Session.getActiveSession();
+    Request request = new Request(
+            session,
+            "/fql", 
+            params, 
+            HttpMethod.GET, 
+            new Request.Callback(){
+              public void onCompleted(Response response) {
+                if (response != null) {
+                  Log.d("rgai", "Got results: " + response.toString());
+                  if (response.getGraphObject() != null) {
+                    
+                    Map<String, Object> m = response.getGraphObject().asMap();
+                    Log.d("rgai", m.keySet().toString());
+                    for (String s : m.keySet()) {
+                      Log.d("rgai", m.get(s).toString());
+                    }
+//                    Map<String, Object> m = response.getGraphObject().asMap();
+//                    Log.d("rgai", m.keySet().toString());
+                  }
+                } else {
+                  Log.d("rgai", "RESPONSE IS NULL");
+                }
+              }
+            });
+    Request.executeBatchAsync(request);
+  }
+  
   /**
    * Called when the activity is first created.
    */
@@ -79,7 +126,19 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
     bindService(new Intent(this, MyService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-
+    final String fbToken = StoreHandler.getFacebookAccessToken(this);
+    
+    if (fbToken != null) {
+      Session.openActiveSessionWithAccessToken(this,
+              AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+              new Session.StatusCallback() {
+        public void call(Session sn, SessionState ss, Exception excptn) {
+          Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+          Log.d("rgai", sn.toString());
+          Log.d("rgai", ss.toString());
+        }
+      });
+    }
 //    Log.d("rgai", "myService.running -> " + MyService.RUNNING);
 //    emails = new ArrayList<Map<String, String>>();
     if (!MyService.RUNNING) {
@@ -207,6 +266,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    getFbMessages(this);
     // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);

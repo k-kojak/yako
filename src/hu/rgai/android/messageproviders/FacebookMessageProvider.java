@@ -46,6 +46,7 @@ import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
+import java.util.Map;
 
 /**
  *
@@ -74,6 +75,41 @@ public class FacebookMessageProvider implements MessageProvider {
   public List<MessageListElement> getMessageList(int offset, int limit) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException, IOException,
           MessagingException, AuthenticationFailedException {
+    
+    String fqlQuery = "SELECT author_id, body, created_time, message_id, thread_id "
+            + "FROM message "
+            + "WHERE thread_id = 2225482129944;";
+//    String fqlQuery = "SELECT name FROM user WHERE uid = me();";
+    Bundle params = new Bundle();
+    params.putString("q", fqlQuery);
+
+    Session session = Session.getActiveSession();
+    Request request = new Request(
+            session,
+            "/fql", 
+            params, 
+            HttpMethod.GET, 
+            new Request.Callback(){
+              public void onCompleted(Response response) {
+                if (response != null) {
+                  Log.d("rgai", "Got results: " + response.toString());
+                  if (response.getGraphObject() != null) {
+                    
+                    Map<String, Object> m = response.getGraphObject().asMap();
+                    Log.d("rgai", m.keySet().toString());
+                    for (String s : m.keySet()) {
+                      Log.d("rgai", m.get(s).toString());
+                    }
+//                    Map<String, Object> m = response.getGraphObject().asMap();
+//                    Log.d("rgai", m.keySet().toString());
+                  }
+                } else {
+                  Log.d("rgai", "RESPONSE IS NULL");
+                }
+              }
+            });
+    Request.executeAndWait(request);
+    
     // EXAMPLE CODE FOR PETI
 
     ///facebook
@@ -121,7 +157,7 @@ public class FacebookMessageProvider implements MessageProvider {
     messages.add(new MessageListElement(1, false, "Title", "Subtitle", sender, new Date(), Type.FACEBOOK));
 
     sender = new Person(2, "Nagy Aladár");
-    messages.add(new MessageListElement(1, false, "Title2", "Subtitle2", sender, new Date(), Type.FACEBOOK));
+    messages.add(new MessageListElement(2, false, "Title2", "Subtitle2", sender, new Date(), Type.FACEBOOK));
 
     return messages;
   }

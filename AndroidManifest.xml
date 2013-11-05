@@ -35,6 +35,9 @@
         <activity android:name=".settings.FacebookSettingActivity"
                   android:label="@string/app_name">
         </activity>
+        <activity android:name=".settings.FacebookSettingFragment"
+                  android:label="@string/facebook_login_name">
+        </activity>
         <activity android:name="MessageReply"
                   android:label="@string/app_name">
         </activity>

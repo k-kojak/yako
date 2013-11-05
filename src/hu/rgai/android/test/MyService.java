@@ -19,7 +19,9 @@ import android.util.Log;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -27,6 +29,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -314,6 +317,10 @@ public class MyService extends Service {
           
           accountName = ((EmailAccount)acc).getEmail();
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)acc);
+          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+        } else if (acc instanceof FacebookAccountAndr) {
+          accountName = ((FacebookAccountAndr)acc).getDisplayName();
+          FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
           messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         }
       } catch (AuthenticationFailedException ex) {

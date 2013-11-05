@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_id">318300171641053</string>
+  <string name="app_id">549327858470212</string>
   <string name="app_name">Message Logger</string>
   <string name="facebook_login_name">Login to Facebook</string>
   
@@ -21,6 +21,7 @@
   <string name="password_hint">password</string>
     
     
+  <string name="settings_fb_access_token">hu.rgai.android.settings.accounts</string>
   <string name="settings_accounts">hu.rgai.android.settings.accounts</string>
   <string name="settings_accounts_size">hu.rgai.android.settings.accounts.size</string>
   <string name="settings_accounts_item">hu.rgai.android.settings.accounts.item</string>

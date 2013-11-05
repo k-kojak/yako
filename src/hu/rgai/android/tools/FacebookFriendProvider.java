@@ -52,7 +52,9 @@ public class FacebookFriendProvider {
             String username = json_obj.getString("username");
 
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid);
-            fbs.integrate(activity, fbii);
+            if (fbii.getName().contains("Zsibrita")) {
+              fbs.integrate(activity, fbii);
+            }
             
           }
         } catch (JSONException e) {

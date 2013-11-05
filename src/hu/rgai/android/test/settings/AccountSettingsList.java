@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,10 +39,11 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class AccountSettingsList extends Activity {
+public class AccountSettingsList extends FragmentActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
+  FacebookSettingFragment fbFragment = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +173,7 @@ public class AccountSettingsList extends Activity {
             classToLoad = GmailSettingActivity.class;
             break;
           case 1:
-            classToLoad = FacebookSettingActivity.class;
+            classToLoad = FacebookSettingFragment.class;
             break;
           case 2:
             classToLoad = SimpleEmailSettingActivity.class;
@@ -217,8 +219,13 @@ public class AccountSettingsList extends Activity {
 //            }
 //          });
 //        } else {
+//        if (classToLoad == FacebookSettingFragment.class) {
+//          fbFragment = new FacebookSettingFragment();
+//          getSupportFragmentManager().beginTransaction().add(android.R.id.content, fbFragment).commit();
+//        } else {
           Intent i = new Intent(AccountSettingsList.this, classToLoad);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
+//        }
 //        }
       }
     });
