@@ -27,6 +27,13 @@ public class StoreHandler {
     editor.commit();
   }
   
+  public static void clearFacebookAccessToken(Context context) {
+    SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.remove("fb_acc_token");
+    editor.commit();
+  }
+  
   public static String getFacebookAccessToken(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     String token = prefs.getString("fb_acc_token", null);

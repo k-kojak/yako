@@ -248,6 +248,31 @@ public class FacebookSettingFragment extends Activity {
     finish();
   }
   
+  public void deleteAccountSettings(View v) {
+//    Log.d("rgai", "DELETE");
+    
+    Session.openActiveSession(this, true, new Session.StatusCallback() {
+
+      public void call(Session sn, SessionState ss, Exception excptn) {
+        if (sn.isOpened()) {
+          Log.d("rgai", "Closing session and clearing token information");
+          sn.closeAndClearTokenInformation();
+//          sn.
+        } else {
+          Log.d("rgai", "Session was not opened...");
+          sn.closeAndClearTokenInformation();
+        }
+      }
+    });
+    
+    StoreHandler.clearFacebookAccessToken(this);
+    
+    Intent resultIntent = new Intent();
+    resultIntent.putExtra("old_account", (Parcelable)oldAccount);
+    setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE, resultIntent);
+    finish();
+  }
+  
   private class IntegrationHandler extends Handler {
 
     private Context c;
