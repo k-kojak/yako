@@ -266,7 +266,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
-    getFbMessages(this);
+//    getFbMessages(this);
     // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);

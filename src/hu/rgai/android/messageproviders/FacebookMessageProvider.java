@@ -75,91 +75,156 @@ public class FacebookMessageProvider implements MessageProvider {
   public List<MessageListElement> getMessageList(int offset, int limit) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException, IOException,
           MessagingException, AuthenticationFailedException {
-    
-    String fqlQuery = "SELECT author_id, body, created_time, message_id, thread_id "
-            + "FROM message "
-            + "WHERE thread_id = 2225482129944;";
-//    String fqlQuery = "SELECT name FROM user WHERE uid = me();";
     Bundle params = new Bundle();
-    params.putString("q", fqlQuery);
-
-    Session session = Session.getActiveSession();
-    Request request = new Request(
-            session,
-            "/fql", 
-            params, 
-            HttpMethod.GET, 
-            new Request.Callback(){
-              public void onCompleted(Response response) {
-                if (response != null) {
-                  Log.d("rgai", "Got results: " + response.toString());
-                  if (response.getGraphObject() != null) {
-                    
-                    Map<String, Object> m = response.getGraphObject().asMap();
-                    Log.d("rgai", m.keySet().toString());
-                    for (String s : m.keySet()) {
-                      Log.d("rgai", m.get(s).toString());
-                    }
-//                    Map<String, Object> m = response.getGraphObject().asMap();
-//                    Log.d("rgai", m.keySet().toString());
-                  }
-                } else {
-                  Log.d("rgai", "RESPONSE IS NULL");
-                }
-              }
-            });
-    Request.executeAndWait(request);
     
-    // EXAMPLE CODE FOR PETI
+//    try {
+//      JSONObject jsonFQL = new JSONObject();
+//      jsonFQL.put("q1", "SELECT author_id, body, created_time, message_id, thread_id "
+//              + "FROM message "
+//              + "WHERE thread_id = 2225482129944;");
+//      jsonFQL.put("q2", "SELECT username, uid FROM user WHERE uid IN (SELECT author_id FROM #q1)");
+//      
+//      params.putString("queries", jsonFQL.toString());
+//      params.putString("method", "fql.multiquery");
+//      params.putString("method", "fql.multiquery");
+//    } catch (JSONException ex) {
+//      ex.printStackTrace();
+//    }
+      final List<MessageListElement> messages = new LinkedList<MessageListElement>();
+      
+      String fqlQuery = "{" + 
+              "'msgs':'SELECT author_id, body, created_time, message_id, thread_id "
+              + "FROM message "
+              + "WHERE thread_id IN "
+                + "(SELECT thread_id FROM thread WHERE folder_id = 0 ORDER BY updated_time DESC LIMIT 10) ORDER BY created_time DESC LIMIT 20;',"
+              + "'friend':'SELECT name, username, uid FROM user WHERE uid IN (SELECT author_id FROM #msgs)'"
+              + "}";
+      params.putString("q", fqlQuery);
+    
+      Session session = Session.getActiveSession();
+      Request request = new Request(
+              session,
+              "/fql", 
+              params, 
+              HttpMethod.GET, 
+              new Request.Callback(){
+                public void onCompleted(Response response) {
+                  if (response != null) {
+//                    Log.d("rgai", "Got results: " + response.toString());
+                    if (response.getGraphObject() != null) {
+                      try {
+                        GraphObject go  = response.getGraphObject();
+                        JSONObject  jso = go.getInnerJSONObject();
+                        JSONArray   arr = jso.getJSONArray("data");
+                        
+                        // loop through result sets
+                        for (int i = 0; i < (arr.length()); i++) {
+                          JSONObject resultSet = arr.getJSONObject(i);
+                          String resSetName = resultSet.getString("name");
+                          String resSet = resultSet.getString("fql_result_set");
+                          if (resSetName.equals("msgs")) {
+                            JSONArray msgArr = new JSONArray(resSet);
+                            for (int j = 0; j < msgArr.length(); j++) {
+                              JSONObject msg = msgArr.getJSONObject(j);
+                              Log.d("rgai", msg.getString("message_id"));
+                              Log.d("rgai", msg.getString("body"));
+                              messages.add(new MessageListElement(
+                                      Long.parseLong(msg.getString("message_id").replaceAll("_", "")),
+                                      false,
+                                      msg.getString("body").substring(0, Math.min(10, msg.getString("body").length())),
+                                      new Person(Long.parseLong(msg.getString("author_id")), null),
+                                      new Date(),
+                                      MessageProvider.Type.FACEBOOK)
+                              );
+                            }
+                          } else if (resSetName.equals("friend")) {
+                            JSONArray userArr = new JSONArray(resSet);
+                            for (int j = 0; j < userArr.length(); j++) {
+                              JSONObject msg = userArr.getJSONObject(j);
+                              Log.d("rgai", msg.getString("uid"));
+                              Log.d("rgai", msg.getString("name"));
+                              for (int k = 0; k < messages.size(); k++) {
+                                if (messages.get(k).getFrom().getId() == Long.parseLong(msg.getString("uid"))) {
+                                  messages.get(k).getFrom().setName(msg.getString("name"));
+                                }
+                              }
+                            }
+                          }
+                          
+//                          String msg_id = json_obj.getString("message_id");
+//                          String body = json_obj.getString("body");
+//                          Log.d("rgai", "RES SET NAME -> " + resSetName);
+//                          Log.d("rgai", "RES SET -> " + resSet);
+                        }
 
-    ///facebook
-    System.out.println("333333333");
-    // start Facebook Login
-//         Session.
-//    Session.openActiveSession(this, true, new Session.StatusCallback() {
-      // callback when session changes state
-//         @Override
-//      public void call(Session session, SessionState state, Exception exception) {
-//        if (session.isOpened()) {
-//          System.out.println("44444");
-//          onClickPickQuery();
-//         // make request to the /me API
-//         Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
-          //
-//         // callback after Graph API response with user object
-//         @Override
-//         public void onCompleted(GraphUser user, Response response) {
-//         if (user != null) {
-//         TextView welcome = (TextView) findViewById(R.id.hello);
-//         welcome.setText("Hello " + user.getName() + "!");
-//         }
-//         }
-//         });
-//        } else {
+//                        Map<String, Object> m = response.getGraphObject().asMap();
+//                        Log.d("rgai", m.keySet().toString());
+//                        for (String s : m.keySet()) {
+//                          Log.d("rgai", m.get(s).toString());
+//                        }
+//                        Map<String, Object> m = response.getGraphObject().asMap();
+//                        Log.d("rgai", m.keySet().toString());
+                      } catch (Throwable t) {
+                        t.printStackTrace();
+                      }
+                    }
+                  } else {
+                    Log.d("rgai", "RESPONSE IS NULL");
+                  }
+                }
+              });
+      Request.executeAndWait(request);
+
+      // EXAMPLE CODE FOR PETI
+
+      ///facebook
+      System.out.println("333333333");
+      // start Facebook Login
+  //         Session.
+  //    Session.openActiveSession(this, true, new Session.StatusCallback() {
+        // callback when session changes state
+  //         @Override
+  //      public void call(Session session, SessionState state, Exception exception) {
+  //        if (session.isOpened()) {
+  //          System.out.println("44444");
+  //          onClickPickQuery();
+  //         // make request to the /me API
+  //         Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
+            //
+  //         // callback after Graph API response with user object
+  //         @Override
+  //         public void onCompleted(GraphUser user, Response response) {
+  //         if (user != null) {
+  //         TextView welcome = (TextView) findViewById(R.id.hello);
+  //         welcome.setText("Hello " + user.getName() + "!");
+  //         }
+  //         }
+  //         });
+  //        } else {
+  //
+  //          Log.i("FONTOS", "Nincs kapcsoalt");
+  //        }
+  //      }
+  //    });
+
+
+      //onClickPickQuery();
+      ///facebook
+
+
+
+
+
+//      List<MessageListElement> messages = new LinkedList<MessageListElement>();
+      // getting sender information, just give a random id, and the real name of the user
+//      Person sender = new Person(1, "Kis Zoltán");
 //
-//          Log.i("FONTOS", "Nincs kapcsoalt");
-//        }
-//      }
-//    });
+//      messages.add(new MessageListElement(1, false, "Title", "Subtitle", sender, new Date(), Type.FACEBOOK));
+//
+//      sender = new Person(2, "Nagy Aladár");
+//      messages.add(new MessageListElement(2, false, "Title2", "Subtitle2", sender, new Date(), Type.FACEBOOK));
 
-
-    //onClickPickQuery();
-    ///facebook
-
-
-
-
-
-    List<MessageListElement> messages = new LinkedList<MessageListElement>();
-    // getting sender information, just give a random id, and the real name of the user
-    Person sender = new Person(1, "Kis Zoltán");
-
-    messages.add(new MessageListElement(1, false, "Title", "Subtitle", sender, new Date(), Type.FACEBOOK));
-
-    sender = new Person(2, "Nagy Aladár");
-    messages.add(new MessageListElement(2, false, "Title2", "Subtitle2", sender, new Date(), Type.FACEBOOK));
-
-    return messages;
+      return messages;
   }
 
   @Override
