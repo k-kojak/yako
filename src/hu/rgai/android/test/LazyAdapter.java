@@ -10,6 +10,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 import java.util.List;
 import java.util.Map;
 
@@ -50,21 +52,25 @@ public class LazyAdapter extends BaseAdapter {
     TextView date = (TextView) vi.findViewById(R.id.date);
     ImageView icon = (ImageView) vi.findViewById(R.id.list_image);
 
-    Map<String, Object> email = data.get(position);
+    Map<String, Object> message = data.get(position);
 
     // Setting all values in listview
-    subject.setText((String)email.get("subject"));
-    from.setText((String)email.get("from"));
-    if (!Boolean.valueOf((String)email.get("seen"))) {
+    subject.setText((String)message.get("subject"));
+    from.setText((String)message.get("from"));
+    if (!Boolean.valueOf((String)message.get("seen"))) {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
-      icon.setImageResource(R.drawable.gmail_icon);
     } else {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
-      icon.setImageResource(R.drawable.gmail_icon_seen);
     }
-    date.setText((String)email.get("date"));
+    Account a = (Account)message.get("account");
+    if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      icon.setImageResource(R.drawable.fb);
+    } else {
+      icon.setImageResource(R.drawable.gmail_icon);
+    }
+    date.setText((String)message.get("date"));
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);
     return vi;
   }
