@@ -35,7 +35,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -43,10 +42,8 @@ import android.util.Log;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Session;
-import com.facebook.SessionState;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
-import java.util.Map;
 
 /**
  *
@@ -66,9 +63,6 @@ public class FacebookMessageProvider implements MessageProvider {
 //
   public FacebookMessageProvider(FacebookAccount account) {
     this.account = account;
-    System.out.println("1111111");
-//    this.activity = activity;
-    System.out.println("222222");
   }
 
   @Override
@@ -77,19 +71,6 @@ public class FacebookMessageProvider implements MessageProvider {
           MessagingException, AuthenticationFailedException {
     Bundle params = new Bundle();
     
-//    try {
-//      JSONObject jsonFQL = new JSONObject();
-//      jsonFQL.put("q1", "SELECT author_id, body, created_time, message_id, thread_id "
-//              + "FROM message "
-//              + "WHERE thread_id = 2225482129944;");
-//      jsonFQL.put("q2", "SELECT username, uid FROM user WHERE uid IN (SELECT author_id FROM #q1)");
-//      
-//      params.putString("queries", jsonFQL.toString());
-//      params.putString("method", "fql.multiquery");
-//      params.putString("method", "fql.multiquery");
-//    } catch (JSONException ex) {
-//      ex.printStackTrace();
-//    }
       final List<MessageListElement> messages = new LinkedList<MessageListElement>();
       
       String fqlQuery = "{" + 
@@ -124,6 +105,8 @@ public class FacebookMessageProvider implements MessageProvider {
                           String resSet = resultSet.getString("fql_result_set");
                           if (resSetName.equals("msgs")) {
                             JSONArray msgArr = new JSONArray(resSet);
+                            
+                            // loop through messages
                             for (int j = 0; j < msgArr.length(); j++) {
                               JSONObject msg = msgArr.getJSONObject(j);
                               Log.d("rgai", msg.getString("message_id"));
@@ -131,18 +114,20 @@ public class FacebookMessageProvider implements MessageProvider {
                               messages.add(new MessageListElement(
                                       Long.parseLong(msg.getString("message_id").replaceAll("_", "")),
                                       false,
-                                      msg.getString("body").substring(0, Math.min(10, msg.getString("body").length())),
+                                      msg.getString("body").substring(0, Math.min(40, msg.getString("body").length())),
                                       new Person(Long.parseLong(msg.getString("author_id")), null),
-                                      new Date(),
+                                      new Date(msg.getLong("created_time") * 1000),
                                       MessageProvider.Type.FACEBOOK)
                               );
                             }
                           } else if (resSetName.equals("friend")) {
                             JSONArray userArr = new JSONArray(resSet);
+                            // loop through friends
                             for (int j = 0; j < userArr.length(); j++) {
                               JSONObject msg = userArr.getJSONObject(j);
                               Log.d("rgai", msg.getString("uid"));
                               Log.d("rgai", msg.getString("name"));
+                              // matching friend names to messages by id
                               for (int k = 0; k < messages.size(); k++) {
                                 if (messages.get(k).getFrom().getId() == Long.parseLong(msg.getString("uid"))) {
                                   messages.get(k).getFrom().setName(msg.getString("name"));
@@ -150,20 +135,7 @@ public class FacebookMessageProvider implements MessageProvider {
                               }
                             }
                           }
-                          
-//                          String msg_id = json_obj.getString("message_id");
-//                          String body = json_obj.getString("body");
-//                          Log.d("rgai", "RES SET NAME -> " + resSetName);
-//                          Log.d("rgai", "RES SET -> " + resSet);
                         }
-
-//                        Map<String, Object> m = response.getGraphObject().asMap();
-//                        Log.d("rgai", m.keySet().toString());
-//                        for (String s : m.keySet()) {
-//                          Log.d("rgai", m.get(s).toString());
-//                        }
-//                        Map<String, Object> m = response.getGraphObject().asMap();
-//                        Log.d("rgai", m.keySet().toString());
                       } catch (Throwable t) {
                         t.printStackTrace();
                       }
