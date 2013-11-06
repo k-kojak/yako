@@ -182,11 +182,11 @@ public class EmailDisplayer extends Activity {
       try {
         if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)account);
-          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0]);
+          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0] + "");
           content = fm.getContent();
         } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)account);
-          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0]);
+          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0] + "");
           content = fm.getContent();
         } else if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
           // TODO: getting facebook message

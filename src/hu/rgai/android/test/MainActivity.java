@@ -33,8 +33,6 @@ import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import com.facebook.model.GraphObject;
-import com.facebook.model.GraphObjectList;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
@@ -60,7 +58,6 @@ public class MainActivity extends Activity {
   
   private boolean serviceConnectionEstablished = false;
   private List<Map<String, Object>> messages;
-//  private ArrayAdapter<String> adapter;
   private LazyAdapter adapter;
   private MyService s;
   private DataUpdateReceiver serviceReceiver;
@@ -82,42 +79,6 @@ public class MainActivity extends Activity {
     }
   };
 
-  private void getFbMessages(Context context) {
-    String fqlQuery = "SELECT author_id, body, created_time, message_id, thread_id "
-            + "FROM message "
-            + "WHERE thread_id = 2225482129944;";
-//    String fqlQuery = "SELECT name FROM user WHERE uid = me();";
-    Bundle params = new Bundle();
-    params.putString("q", fqlQuery);
-
-    Session session = Session.getActiveSession();
-    Request request = new Request(
-            session,
-            "/fql", 
-            params, 
-            HttpMethod.GET, 
-            new Request.Callback(){
-              public void onCompleted(Response response) {
-                if (response != null) {
-                  Log.d("rgai", "Got results: " + response.toString());
-                  if (response.getGraphObject() != null) {
-                    
-                    Map<String, Object> m = response.getGraphObject().asMap();
-                    Log.d("rgai", m.keySet().toString());
-                    for (String s : m.keySet()) {
-                      Log.d("rgai", m.get(s).toString());
-                    }
-//                    Map<String, Object> m = response.getGraphObject().asMap();
-//                    Log.d("rgai", m.keySet().toString());
-                  }
-                } else {
-                  Log.d("rgai", "RESPONSE IS NULL");
-                }
-              }
-            });
-    Request.executeBatchAsync(request);
-  }
-  
   /**
    * Called when the activity is first created.
    */
@@ -191,7 +152,7 @@ public class MainActivity extends Activity {
       case (EMAIL_CONTENT_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           // TODO: only saving simple string content
-          int emailID = data.getIntExtra("email_id", 0);
+          String emailID = data.getIntExtra("email_id", 0) + "";
           AccountAndr acc = data.getParcelableExtra("account");
           String content = data.getStringExtra("email_content");
           s.setMessageContent(emailID, acc, content);
@@ -255,9 +216,9 @@ public class MainActivity extends Activity {
     }
   }
   
-  public void setEmailSeen(int id) {
+  public void setEmailSeen(String id) {
     for (Map<String, Object> entry : messages) {
-      if(entry.get("id").equals(""+id)) {
+      if(entry.get("id").equals(id)) {
         entry.put("seen", "true");
       }
     }
@@ -318,7 +279,7 @@ public class MainActivity extends Activity {
 
               Map<String, Object> email = (Map) av.getItemAtPosition(itemIndex);
 
-              int emailID = Integer.parseInt((String)email.get("id"));
+              String emailID = (String)email.get("id");
               AccountAndr a = (AccountAndr)email.get("account");
               MessageListElementParc ele = s.getListElementById(emailID, a);
               Intent i = new Intent(MainActivity.this, EmailDisplayer.class);

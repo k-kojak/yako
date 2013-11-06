@@ -4,7 +4,6 @@ import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PhoneRecipientAndr;
-import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.FacebookSettingFragment;
 import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
@@ -21,11 +20,13 @@ import java.util.Map;
  */
 public final class Settings {
   
-  public static boolean DEBUG = false;
+  public static final boolean DEBUG = false;
+//  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
   private static List<String> facebookPermissions = null;
+  
   
 //  private static String 
 

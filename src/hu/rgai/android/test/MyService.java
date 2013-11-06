@@ -129,20 +129,20 @@ public class MyService extends Service {
   }
   
   // TODO: switch back setMessageComment function
-  public void setMessageContent(int id, AccountAndr account, String content) {
+  public void setMessageContent(String id, AccountAndr account, String content) {
   
     for (MessageListElementParc mlep : messages) {
-      if (mlep.getId() == id && mlep.getAccount().equals(account)) {
+      if (mlep.getId().equals(id) && mlep.getAccount().equals(account)) {
         mlep.setFullMessage(new FullEmailMessage(mlep.getTitle(), null, null, content, id, mlep.getFrom(), mlep.getDate(), MessageProvider.Type.EMAIL));
         break;
       }
     }
   }
   
-  public boolean setMailSeen(int id) {
+  public boolean setMailSeen(String id) {
     boolean changed = false;
     for (MessageListElementParc mlep : messages) {
-      if (mlep.getId() == id) {
+      if (mlep.getId().equals(id)) {
         if (mlep.isSeen()) {
           changed = true;
         }
@@ -152,9 +152,9 @@ public class MyService extends Service {
     return changed;
   }
   
-  public MessageListElementParc getListElementById(int id, AccountAndr a) {
+  public MessageListElementParc getListElementById(String id, AccountAndr a) {
     for (MessageListElementParc mlep : messages) {
-      if (mlep.getId() == id && mlep.getAccount().equals(a)) {
+      if (mlep.getId().equals(id) && mlep.getAccount().equals(a)) {
         return mlep;
       } else {
 //        Log.d("rgai", mlep.getId() + " != " + id + " && " + mlep.getAccount() + " != " + a);
@@ -271,9 +271,12 @@ public class MyService extends Service {
         } else {
           for (MessageListElementParc mlep : messages) {
             if (mle.equals(mlep)) {
-              if (mle.isSeen() != mlep.isSeen()) {
-                mlep.setSeen(mle.isSeen());
-              }
+              // update seen status
+              mlep.setSeen(mle.isSeen());
+              // updating date
+              mlep.setDate(mle.getDate());
+              // updating title
+              mlep.setTitle(mle.getTitle());
             }
           }
         }

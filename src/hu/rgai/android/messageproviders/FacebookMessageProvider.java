@@ -74,11 +74,16 @@ public class FacebookMessageProvider implements MessageProvider {
       final List<MessageListElement> messages = new LinkedList<MessageListElement>();
       
       String fqlQuery = "{" + 
-              "'msgs':'SELECT author_id, body, created_time, message_id, thread_id "
-              + "FROM message "
-              + "WHERE thread_id IN "
-                + "(SELECT thread_id FROM thread WHERE folder_id = 0 ORDER BY updated_time DESC LIMIT 10) ORDER BY created_time DESC LIMIT 20;',"
-              + "'friend':'SELECT name, username, uid FROM user WHERE uid IN (SELECT author_id FROM #msgs)'"
+              "'msgs':"
+                + "'SELECT thread_id, originator, unread, unseen, subject, snippet, updated_time "
+                + " FROM thread"
+                + " WHERE folder_id = 0"
+                + " ORDER BY updated_time DESC LIMIT "+ limit +"'"
+              + ","
+              + "'friend':"
+                + "'SELECT name, username, uid"
+                + " FROM user"
+                + " WHERE uid IN (SELECT originator FROM #msgs)'"
               + "}";
       params.putString("q", fqlQuery);
     
@@ -109,14 +114,22 @@ public class FacebookMessageProvider implements MessageProvider {
                             // loop through messages
                             for (int j = 0; j < msgArr.length(); j++) {
                               JSONObject msg = msgArr.getJSONObject(j);
-                              Log.d("rgai", msg.getString("message_id"));
-                              Log.d("rgai", msg.getString("body"));
+
+                              // building list item title
+                              int unreadCount = msg.getInt("unread");
+                              String snippet = msg.getString("snippet");
+                              if (snippet.length() > 30) {
+                                snippet = snippet.substring(0, 30) + "...";
+                              }
+                              if (unreadCount > 0) {
+                                snippet = "(" + unreadCount + ") " + snippet;
+                              }
                               messages.add(new MessageListElement(
-                                      Long.parseLong(msg.getString("message_id").replaceAll("_", "")),
-                                      false,
-                                      msg.getString("body").substring(0, Math.min(40, msg.getString("body").length())),
-                                      new Person(Long.parseLong(msg.getString("author_id")), null),
-                                      new Date(msg.getLong("created_time") * 1000),
+                                      msg.getString("thread_id"),
+                                      msg.getInt("unseen") == 0,
+                                      snippet,
+                                      new Person(Long.parseLong(msg.getString("originator")), null),
+                                      new Date(msg.getLong("updated_time") * 1000),
                                       MessageProvider.Type.FACEBOOK)
                               );
                             }
@@ -125,8 +138,8 @@ public class FacebookMessageProvider implements MessageProvider {
                             // loop through friends
                             for (int j = 0; j < userArr.length(); j++) {
                               JSONObject msg = userArr.getJSONObject(j);
-                              Log.d("rgai", msg.getString("uid"));
-                              Log.d("rgai", msg.getString("name"));
+//                              Log.d("rgai", msg.getString("uid"));
+//                              Log.d("rgai", msg.getString("name"));
                               // matching friend names to messages by id
                               for (int k = 0; k < messages.size(); k++) {
                                 if (messages.get(k).getFrom().getId() == Long.parseLong(msg.getString("uid"))) {
@@ -200,7 +213,7 @@ public class FacebookMessageProvider implements MessageProvider {
   }
 
   @Override
-  public FullSimpleMessage getMessage(long id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullSimpleMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
     // EXAMPLE CODE FOR PETI
     Person sender = new Person(3, "Zelk Zoltán");
     FullFacebookMessage ffm = new FullFacebookMessage(id, sender, Type.EMAIL);
