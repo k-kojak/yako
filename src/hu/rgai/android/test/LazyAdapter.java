@@ -66,7 +66,7 @@ public class LazyAdapter extends BaseAdapter {
     } else {
       icon.setImageResource(R.drawable.gmail_icon);
     }
-    date.setText(message.getDate().toString());
+    date.setText(message.getFormattedDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);
     return vi;
   }
