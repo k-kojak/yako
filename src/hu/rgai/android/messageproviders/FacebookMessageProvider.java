@@ -75,7 +75,7 @@ public class FacebookMessageProvider implements MessageProvider {
       
       String fqlQuery = "{" + 
               "'msgs':"
-                + "'SELECT thread_id, originator, unread, unseen, subject, snippet, updated_time "
+                + "'SELECT thread_id, originator, recipients, unread, unseen, subject, snippet, updated_time "
                 + " FROM thread"
                 + " WHERE folder_id = 0"
                 + " ORDER BY updated_time DESC LIMIT "+ limit +"'"
@@ -83,7 +83,7 @@ public class FacebookMessageProvider implements MessageProvider {
               + "'friend':"
                 + "'SELECT name, username, uid"
                 + " FROM user"
-                + " WHERE uid IN (SELECT originator FROM #msgs)'"
+                + " WHERE uid IN (SELECT recipients FROM #msgs)'"
               + "}";
       params.putString("q", fqlQuery);
     
@@ -114,7 +114,21 @@ public class FacebookMessageProvider implements MessageProvider {
                             // loop through messages
                             for (int j = 0; j < msgArr.length(); j++) {
                               JSONObject msg = msgArr.getJSONObject(j);
-
+                              
+                              // fetching recipients
+                              JSONArray recipientsArr = new JSONArray(msg.getString("recipients"));
+                              List<String> recipIds = new LinkedList<String>();
+                              for (int l = 0; l < recipientsArr.length(); l++) {
+//                                JSONObject recipient = new
+                                String id = recipientsArr.getString(l);
+                                if (!account.getId().equals(id) && recipIds.isEmpty()) {
+                                  recipIds.add(id);
+                                }
+                              }
+                              
+                              // recipipIds MUST contain an id which is not mine
+                              assert !recipIds.isEmpty();
+                                      
                               // building list item title
                               int unreadCount = msg.getInt("unread");
                               String snippet = msg.getString("snippet");
@@ -128,7 +142,7 @@ public class FacebookMessageProvider implements MessageProvider {
                                       msg.getString("thread_id"),
                                       msg.getInt("unseen") == 0,
                                       snippet,
-                                      new Person(Long.parseLong(msg.getString("originator")), null),
+                                      new Person(Long.parseLong(recipIds.get(0)), null),
                                       new Date(msg.getLong("updated_time") * 1000),
                                       MessageProvider.Type.FACEBOOK)
                               );

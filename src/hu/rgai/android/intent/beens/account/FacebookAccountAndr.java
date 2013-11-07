@@ -27,12 +27,12 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
   };
   
   public FacebookAccountAndr(Parcel in) {
-    super(in.readString(), in.readString(), in.readString());
+    super(in.readString(), in.readString(), in.readString(), in.readString());
     this.messageLimit = in.readInt();
   }
   
-  public FacebookAccountAndr(int messageLimit, String displayName, String uniqueName, String password) {
-    super(displayName, uniqueName, password);
+  public FacebookAccountAndr(int messageLimit, String displayName, String uniqueName, String id, String password) {
+    super(displayName, uniqueName, id, password);
     this.messageLimit = messageLimit;
   }
 
@@ -47,6 +47,7 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
   public void writeToParcel(Parcel out, int flags) {
     out.writeString(getDisplayName());
     out.writeString(getUniqueName());
+    out.writeString(getId());
     out.writeString(getPassword());
     out.writeInt(messageLimit);
   }

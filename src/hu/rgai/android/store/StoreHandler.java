@@ -98,6 +98,7 @@ public class StoreHandler {
         editor.putString(context.getString(R.string.settings_accounts_item_name) + "_" + i, fa.getDisplayName());
         editor.putString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, fa.getUniqueName());
         editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, fa.getPassword());
+        editor.putString(context.getString(R.string.settings_accounts_item_id) + "_" + i, fa.getId());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, fa.getMessageLimit());
       } else if (a.getAccountType() == MessageProvider.Type.EMAIL) {
         EmailAccountAndr ea = (EmailAccountAndr) a;
@@ -134,6 +135,8 @@ public class StoreHandler {
         editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_name) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i);
+        editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
+        editor.remove(context.getString(R.string.settings_accounts_item_id) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_amount) + "_" + i);
       } else if (type.equals(context.getString(R.string.account_name_simplemail))) {
         editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
@@ -166,8 +169,9 @@ public class StoreHandler {
         String displayName = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String uniqueName = prefs.getString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, null);
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
+        String id = prefs.getString(context.getString(R.string.settings_accounts_item_id) + "_" + i, null);
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
-        accounts.add(new FacebookAccountAndr(num, displayName, uniqueName, pass));
+        accounts.add(new FacebookAccountAndr(num, displayName, uniqueName, id, pass));
       } else if (type.equals(context.getString(R.string.account_name_simplemail))) {
         String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);

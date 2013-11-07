@@ -60,6 +60,7 @@ public class FacebookSettingFragment extends Activity {
   private TextView name;
   private TextView uniqueName;
   private EditText password;
+  private String id = null;
   private Spinner messageAmount;
   private FacebookAccountAndr oldAccount;
   private UiLifecycleHelper uiHelper;
@@ -88,7 +89,7 @@ public class FacebookSettingFragment extends Activity {
               integrator.execute();
               try {
 //                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
-              setFieldsByAccount(gu.getName(), gu.getUsername(), null, -1);
+              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
 //                    FacebookSettingActivity.this.onResume();
               } catch (Exception ex) {
                 Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
@@ -153,23 +154,24 @@ public class FacebookSettingFragment extends Activity {
 
   private void setFieldsByAccount(FacebookAccountAndr fba) {
     if (fba != null) {
-      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getMessageLimit());
+      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getId(), fba.getMessageLimit());
     }
   }
   
-  private void setFieldsByAccount(String displayName, String uName, String p, int messageLimit) {
+  private void setFieldsByAccount(String displayName, String uName, String pass, String id, int messageLimit) {
     if (displayName != null) {
       name.setText(displayName);
     }
     if (uniqueName != null) {
       uniqueName.setText(uName);
     }
-    if (p != null) {
-      password.setText(p);
+    if (pass != null) {
+      password.setText(pass);
     }
     if (messageLimit != -1) {
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), messageLimit));
     }
+    this.id = id;
   }
   
 //  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
@@ -228,7 +230,7 @@ public class FacebookSettingFragment extends Activity {
   public void saveAccountSettings(View v) {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
-            name.getText().toString(), uniqueName.getText().toString(),
+            name.getText().toString(), uniqueName.getText().toString(), id,
             password.getText().toString());
     
     Intent resultIntent = new Intent();

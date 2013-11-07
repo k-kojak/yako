@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 /**
  *
  * @author Tamas Kojedzinszky
+ * @deprecated
  */
 public class FacebookSettingActivity extends Activity {
 
@@ -48,6 +49,7 @@ public class FacebookSettingActivity extends Activity {
   private TextView name;
   private TextView uniqueName;
   private EditText password;
+  private String id = null;
   private Spinner messageAmount;
   private FacebookAccountAndr oldAccount;
 
@@ -123,16 +125,16 @@ public class FacebookSettingActivity extends Activity {
     }
   }
   
-  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
-    OpenRequest openRequest = new OpenRequest(activity).setPermissions(permissions).setCallback(callback);
-    Session session = new Builder(activity).build();
-    if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
-        Session.setActiveSession(session);
-        session.openForRead(openRequest);
-        return session;
-    }
-    return null;
-}
+//  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
+//    OpenRequest openRequest = new OpenRequest(activity).setPermissions(permissions).setCallback(callback);
+//    Session session = new Builder(activity).build();
+//    if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
+//        Session.setActiveSession(session);
+//        session.openForRead(openRequest);
+//        return session;
+//    }
+//    return null;
+//  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -155,7 +157,7 @@ public class FacebookSettingActivity extends Activity {
   public void saveAccountSettings(View v) {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
-            name.getText().toString(), uniqueName.getText().toString(),
+            name.getText().toString(), uniqueName.getText().toString(), id,
             password.getText().toString());
     
     Intent resultIntent = new Intent();

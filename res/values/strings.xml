@@ -29,6 +29,7 @@
   <string name="settings_accounts_item_name">hu.rgai.android.settings.accounts.item.name</string>
   <string name="settings_accounts_item_unique_name">hu.rgai.android.settings.accounts.item.unique.name</string>
   <string name="settings_accounts_item_pass">hu.rgai.android.settings.accounts.item.pass</string>
+  <string name="settings_accounts_item_id">hu.rgai.android.settings.accounts.item.id</string>
   <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
   <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
   <string name="settings_accounts_item_ssl">hu.rgai.android.settings.accounts.item.ssl</string>
