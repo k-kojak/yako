@@ -131,7 +131,7 @@ public class FacebookMessageProvider implements MessageProvider {
                                       
                               // building list item title
                               int unreadCount = msg.getInt("unread");
-                              String snippet = msg.getString("snippet");
+                              String snippet = msg.getString("snippet").replaceAll("\n", " ").replaceAll(" {2,}", " ");
                               if (snippet.length() > 30) {
                                 snippet = snippet.substring(0, 30) + "...";
                               }
