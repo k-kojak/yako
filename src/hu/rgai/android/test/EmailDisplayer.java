@@ -20,6 +20,8 @@ import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +36,7 @@ public class EmailDisplayer extends Activity {
   private String content = null;
   private String subject = null;
   private boolean loadedWithContent = false;
-  private int emailID = -1;
+  private String emailID = "-1";
   private AccountAndr account;
   private PersonAndr from;
   
@@ -51,7 +53,7 @@ public class EmailDisplayer extends Activity {
     webView = (WebView) findViewById(R.id.email_content);
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
-    emailID = getIntent().getExtras().getInt("email_id");
+    emailID = getIntent().getExtras().getString("email_id");
     account = getIntent().getExtras().getParcelable("account");
     subject = getIntent().getExtras().getString("subject");
     from = getIntent().getExtras().getParcelable("from");
@@ -160,7 +162,7 @@ public class EmailDisplayer extends Activity {
     }
   }
   
-  private class EmailContentGetter extends AsyncTask<Integer, Integer, String> {
+  private class EmailContentGetter extends AsyncTask<String, Integer, String> {
 
     Handler handler;
     AccountAndr account;
@@ -171,7 +173,7 @@ public class EmailDisplayer extends Activity {
     }
     
     @Override
-    protected String doInBackground(Integer... params) {
+    protected String doInBackground(String... params) {
 //      SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
 //      String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
 //      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
@@ -182,11 +184,11 @@ public class EmailDisplayer extends Activity {
       try {
         if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)account);
-          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0] + "");
+          FullSimpleMessage fm = (FullSimpleMessage)semp.getMessage(params[0]);
           content = fm.getContent();
         } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)account);
-          FullEmailMessage fm = (FullEmailMessage)semp.getMessage(params[0] + "");
+          FullSimpleMessage fm = (FullSimpleMessage)semp.getMessage(params[0]);
           content = fm.getContent();
         } else if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
           // TODO: getting facebook message
@@ -207,6 +209,7 @@ public class EmailDisplayer extends Activity {
 //      }
 //
       return content;
+//      return "";
     }
 
     @Override

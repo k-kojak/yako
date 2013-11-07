@@ -12,6 +12,7 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import org.ocpsoft.prettytime.PrettyTime;
@@ -25,7 +26,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   // TODO: replace fromTemp with Person object
 //  PersonAndr from;
   AccountAndr account;
-  private static Map<String, ClassLoader> stringToClassLoader = null;
+  private static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
   
   public static final Parcelable.Creator<MessageListElementParc> CREATOR = new Parcelable.Creator<MessageListElementParc>() {
     public MessageListElementParc createFromParcel(Parcel in) {
@@ -39,10 +40,10 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   public MessageListElementParc(Parcel in) {
     if (stringToClassLoader == null) {
-      stringToClassLoader = new HashMap<String, ClassLoader>();
-      stringToClassLoader.put(MessageProvider.Type.EMAIL.toString(), EmailAccountAndr.class.getClassLoader());
-      stringToClassLoader.put(MessageProvider.Type.FACEBOOK.toString(), FacebookAccountAndr.class.getClassLoader());
-      stringToClassLoader.put(MessageProvider.Type.GMAIL.toString(), GmailAccountAndr.class.getClassLoader());
+      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
+      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccountAndr.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccountAndr.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccountAndr.class.getClassLoader());
     }
     
     this.id = in.readString();
@@ -52,13 +53,14 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.from = in.readParcelable(PersonAndr.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
+    this.fullMessage = in.readParcelable(FullMessageParc.class.getClassLoader());
     
-    MessageProvider.Type accountType = Type.valueOf(in.readString());
-    if (!stringToClassLoader.containsKey(accountType.toString())) {
-      Log.d("rgai", "Unsupported account type -> " + accountType);
+    if (!stringToClassLoader.containsKey(messageType)) {
+      // TODO: display error message
+      Log.d("rgai", "Unsupported account type -> " + messageType);
       System.exit(1);
     } else {
-      this.account = (AccountAndr)in.readParcelable(stringToClassLoader.get(accountType.toString()));
+      this.account = (AccountAndr)in.readParcelable(stringToClassLoader.get(messageType));
     }
   }
   
@@ -126,7 +128,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeParcelable((Parcelable)new PersonAndr(from), flags);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
-    out.writeString(account.getAccountType().toString());
+    out.writeParcelable((Parcelable)fullMessage, flags);
     
     out.writeParcelable((Parcelable)account, flags);
     

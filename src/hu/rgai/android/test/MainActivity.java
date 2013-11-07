@@ -1,3 +1,4 @@
+//TODO: refresh button at main setting panel
 package hu.rgai.android.test;
 
 import android.app.Activity;
@@ -39,6 +40,7 @@ import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,7 +59,7 @@ public class MainActivity extends Activity {
   public static final int PICK_CONTACT = 101;
   
   private boolean serviceConnectionEstablished = false;
-  private List<Map<String, Object>> messages;
+  private List<MessageListElementParc> messages;
   private LazyAdapter adapter;
   private MyService s;
   private DataUpdateReceiver serviceReceiver;
@@ -155,7 +157,7 @@ public class MainActivity extends Activity {
           String emailID = data.getIntExtra("email_id", 0) + "";
           AccountAndr acc = data.getParcelableExtra("account");
           String content = data.getStringExtra("email_content");
-          s.setMessageContent(emailID, acc, content);
+//          s.setMessageContent(emailID, acc, content);
         }
         break;
       case (EMAIL_SETTINGS_RESULT):
@@ -201,15 +203,7 @@ public class MainActivity extends Activity {
       messages.clear();
       if (newMessages != null) {
         for (int i = 0; i < newMessages.length; i++) {
-          HashMap<String, Object> item = new HashMap<String, Object>();
-          item.put("subject", newMessages[i].getTitle());
-          // using only a temporary solution
-          item.put("from", newMessages[i].getFrom().getName());
-          item.put("date", "" + newMessages[i].getFormattedDate());
-          item.put("seen", "" + newMessages[i].isSeen());
-          item.put("id", "" + newMessages[i].getId());
-          item.put("account", newMessages[i].getAccount());
-          messages.add(item);
+          messages.add(newMessages[i]);
         }
         adapter.notifyDataSetChanged();
       }
@@ -217,9 +211,9 @@ public class MainActivity extends Activity {
   }
   
   public void setEmailSeen(String id) {
-    for (Map<String, Object> entry : messages) {
-      if(entry.get("id").equals(id)) {
-        entry.put("seen", "true");
+    for (MessageListElementParc mlep : messages) {
+      if(mlep.getId().equals(id)) {
+        mlep.setSeen(true);
       }
     }
   }
@@ -266,7 +260,7 @@ public class MainActivity extends Activity {
         View currentView = this.findViewById(R.id.list);
         if (currentView == null || currentView.getId() != R.id.list) {
           setContentView(R.layout.main);
-          messages = new ArrayList<Map<String, Object>>();
+          messages = new ArrayList<MessageListElementParc>();
 
           ListView lv = (ListView) findViewById(R.id.list);
   //        String[] from = {"subject", "from"};
@@ -277,33 +271,39 @@ public class MainActivity extends Activity {
           lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-              Map<String, Object> email = (Map) av.getItemAtPosition(itemIndex);
+              MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
 
-              String emailID = (String)email.get("id");
-              AccountAndr a = (AccountAndr)email.get("account");
-              MessageListElementParc ele = s.getListElementById(emailID, a);
-              Intent i = new Intent(MainActivity.this, EmailDisplayer.class);
-              
-              // TODO: getFull message now always converted to FullEmailMessage
-              if (ele != null) {
-                if (ele.getFullMessage() != null) {
-                  if (ele.getFullMessage() instanceof FullEmailMessage) {
-                    i.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
+              String messageId = (String)message.getId();
+              AccountAndr a = (AccountAndr)message.getAccount();
+              Intent intent = null;
+              if (a instanceof FacebookAccount) {
+                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+                intent = new Intent(MainActivity.this, classToLoad);
+              } else {
+                MessageListElementParc ele = s.getListElementById(messageId, a);
+                intent = new Intent(MainActivity.this, EmailDisplayer.class);
+
+                // TODO: getFull message now always converted to FullEmailMessage
+                if (ele != null) {
+                  if (ele.getFullMessage() != null) {
+                    if (ele.getFullMessage() instanceof FullEmailMessage) {
+                      intent.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
+                    }
                   }
                 }
+
+                intent.putExtra("email_id", messageId);
+                intent.putExtra("subject", ele.getTitle());
+                intent.putExtra("from", new PersonAndr(ele.getFrom()));
+                intent.putExtra("account", (Parcelable)a);
+
+                boolean changed = s.setMailSeen(messageId);
+                if (changed) {
+                  setEmailSeen(messageId);
+                  adapter.notifyDataSetChanged();
+                }
               }
-              
-              i.putExtra("email_id", emailID);
-              i.putExtra("subject", ele.getTitle());
-              i.putExtra("from", new PersonAndr(ele.getFrom()));
-              i.putExtra("account", (Parcelable)a);
-              
-              startActivityForResult(i, EMAIL_CONTENT_RESULT);
-              boolean changed = s.setMailSeen(emailID);
-              if (changed) {
-                setEmailSeen(emailID);
-                adapter.notifyDataSetChanged();
-              }
+              startActivityForResult(intent, EMAIL_CONTENT_RESULT);
             }
           });
           if (serviceConnectionEstablished) {

@@ -30,6 +30,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -129,11 +130,11 @@ public class MyService extends Service {
   }
   
   // TODO: switch back setMessageComment function
-  public void setMessageContent(String id, AccountAndr account, String content) {
+  public void setMessageContent(String id, AccountAndr account, FullMessage fullMessage) {
   
     for (MessageListElementParc mlep : messages) {
       if (mlep.getId().equals(id) && mlep.getAccount().equals(account)) {
-        mlep.setFullMessage(new FullEmailMessage(mlep.getTitle(), null, null, content, id, mlep.getFrom(), mlep.getDate(), MessageProvider.Type.EMAIL));
+        mlep.setFullMessage(fullMessage);
         break;
       }
     }

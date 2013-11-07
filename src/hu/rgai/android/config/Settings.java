@@ -4,10 +4,14 @@ import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PhoneRecipientAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.test.EmailDisplayer;
+import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingFragment;
 import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -25,6 +29,8 @@ public final class Settings {
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static List<String> facebookPermissions = null;
   
   
@@ -38,6 +44,26 @@ public final class Settings {
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
     }
     return contactDataTypeToRecipientClass;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
+    if (accountTypeToMessageDisplayer == null) {
+      accountTypeToMessageDisplayer = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.EMAIL, EmailDisplayer.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.FACEBOOK, ThreadDisplayer.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.GMAIL, EmailDisplayer.class);
+    }
+    return accountTypeToMessageDisplayer;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToMessageProvider() {
+    if (accountTypeToMessageProvider == null) {
+      accountTypeToMessageProvider = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToMessageProvider.put(MessageProvider.Type.EMAIL, SimpleEmailMessageProvider.class);
+      accountTypeToMessageProvider.put(MessageProvider.Type.FACEBOOK, FacebookMessageProvider.class);
+      accountTypeToMessageProvider.put(MessageProvider.Type.GMAIL, SimpleEmailMessageProvider.class);
+    }
+    return accountTypeToMessageProvider;
   }
 
   public static Map<MessageProvider.Type, Class> getAccountTypeToSettingClass() {
