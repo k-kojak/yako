@@ -266,19 +266,26 @@ public class MyService extends Service {
       if (messages == null) {
         messages = new TreeSet<MessageListElementParc>();
       }
-      for (MessageListElementParc mle : newMessages) {
-        if (!messages.contains(mle)) {
-          messages.add(mle);
+      for (MessageListElementParc newMessage : newMessages) {
+        if (!messages.contains(newMessage)) {
+          messages.add(newMessage);
         } else {
-          for (MessageListElementParc mlep : messages) {
-            if (mle.equals(mlep)) {
-              // update seen status
-              mlep.setSeen(mle.isSeen());
-              // updating date
-              mlep.setDate(mle.getDate());
-              // updating title
-              mlep.setTitle(mle.getTitle());
+          MessageListElementParc itemToUpdate = null;
+          for (MessageListElementParc oldMessage : messages) {
+            if (newMessage.equals(oldMessage)) {
+              itemToUpdate = oldMessage;
+              break;
             }
+          }
+          if (itemToUpdate != null) {
+            messages.remove(itemToUpdate);
+            // updating seen status
+            itemToUpdate.setSeen(newMessage.isSeen());
+          // updating date
+            itemToUpdate.setDate(newMessage.getDate());
+          // updating title
+            itemToUpdate.setTitle(newMessage.getTitle());
+            messages.add(itemToUpdate);
           }
         }
       }
