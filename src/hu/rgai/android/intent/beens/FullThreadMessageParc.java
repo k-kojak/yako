@@ -30,6 +30,10 @@ public class FullThreadMessageParc extends FullThreadMessage implements FullMess
     }
   }
   
+  public FullThreadMessageParc(FullThreadMessage ftm) {
+    super(ftm.getMessages());
+  }
+  
   public int describeContents() {
     return 0;
   }

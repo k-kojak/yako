@@ -26,6 +26,9 @@
         <activity android:name="EmailDisplayer"
                   android:label="@string/app_name">
         </activity>
+        <activity android:name="ThreadDisplayer"
+                  android:label="@string/app_name">
+        </activity>
         <activity android:name=".settings.SimpleEmailSettingActivity"
                   android:label="@string/app_name">
         </activity>

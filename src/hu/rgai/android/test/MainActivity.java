@@ -279,6 +279,9 @@ public class MainActivity extends Activity {
               if (a instanceof FacebookAccount) {
                 Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
                 intent = new Intent(MainActivity.this, classToLoad);
+                
+                intent.putExtra("msg_list_element", (Parcelable)message);
+                intent.putExtra("account", (Parcelable)a);
               } else {
                 MessageListElementParc ele = s.getListElementById(messageId, a);
                 intent = new Intent(MainActivity.this, EmailDisplayer.class);

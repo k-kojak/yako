@@ -12,6 +12,9 @@ import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,6 +34,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
   private static List<String> facebookPermissions = null;
   
   
@@ -44,6 +48,16 @@ public final class Settings {
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
     }
     return contactDataTypeToRecipientClass;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToAccountClass() {
+    if (accountTypeToAccountClass == null) {
+      accountTypeToAccountClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToAccountClass.put(MessageProvider.Type.EMAIL, EmailAccount.class);
+      accountTypeToAccountClass.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class);
+      accountTypeToAccountClass.put(MessageProvider.Type.GMAIL, GmailAccount.class);
+    }
+    return accountTypeToAccountClass;
   }
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
