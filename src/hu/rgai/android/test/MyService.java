@@ -308,10 +308,12 @@ public class MyService extends Service {
             messages.remove(itemToUpdate);
             // updating seen status
             itemToUpdate.setSeen(newMessage.isSeen());
-          // updating date
+            // updating date
             itemToUpdate.setDate(newMessage.getDate());
-          // updating title
+            // updating title
             itemToUpdate.setTitle(newMessage.getTitle());
+            // update item count
+            itemToUpdate.setUnreadCount(newMessage.getUnreadCount());
             messages.add(itemToUpdate);
           }
         }

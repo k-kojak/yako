@@ -243,6 +243,7 @@ public class FacebookMessageProvider implements MessageProvider {
                             body,
                             new Date(msg.getLong("created_time") * 1000),
                             new Person(Long.parseLong(msg.getString("author_id")), null),
+                            msg.getString("author_id").equals(account.getId()),
                             MessageProvider.Type.FACEBOOK,
                             null));
                   }

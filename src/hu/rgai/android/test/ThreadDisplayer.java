@@ -12,7 +12,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.widget.ListView;
 import android.widget.Toast;
+import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -40,6 +42,8 @@ public class ThreadDisplayer extends Activity {
   private String threadId = "-1";
   private AccountAndr account;
   private PersonAndr from;
+  private ListView lv = null;
+  private ThreadViewAdapter adapter = null;
   
   private WebView webView = null;
   private String mailCharCode = "UTF-8";
@@ -50,9 +54,11 @@ public class ThreadDisplayer extends Activity {
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     
-    setContentView(R.layout.email_displayer);
-    webView = (WebView) findViewById(R.id.email_content);
-    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
+    setContentView(R.layout.threadview_main);
+    lv = (ListView) findViewById(R.id.main);
+    
+//    webView = (WebView) findViewById(R.id.email_content);
+//    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
     
@@ -60,6 +66,9 @@ public class ThreadDisplayer extends Activity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = new PersonAndr(mlep.getFrom());
+    
+    adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
+    lv.setAdapter(adapter);
     
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use  that here
@@ -153,10 +162,14 @@ public class ThreadDisplayer extends Activity {
   }
   
   private void displayMessage(FullThreadMessageParc content) {
-    String c = "";
-    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
-    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
-    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
+//    String c = "";
+//    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
+//    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
+//    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
+    for (MessageAtom ma : content.getMessages()) {
+      adapter.add(ma);
+    }
+    lv.setSelection(lv.getAdapter().getCount() - 1);
   }
   
   private class ThreadContentTaskHandler extends Handler {
