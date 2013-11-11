@@ -210,10 +210,11 @@ public class MainActivity extends Activity {
     }
   }
   
-  public void setEmailSeen(String id) {
+  private void setMessageSeen(MessageListElementParc message) {
     for (MessageListElementParc mlep : messages) {
-      if(mlep.getId().equals(id)) {
+      if(mlep.equals(message)) {
         mlep.setSeen(true);
+        break;
       }
     }
   }
@@ -300,11 +301,16 @@ public class MainActivity extends Activity {
                 intent.putExtra("from", new PersonAndr(ele.getFrom()));
                 intent.putExtra("account", (Parcelable)a);
 
-                boolean changed = s.setMailSeen(messageId);
-                if (changed) {
-                  setEmailSeen(messageId);
-                  adapter.notifyDataSetChanged();
-                }
+//                boolean changed = s.setMailSeen(messageId);
+//                if (changed) {
+//                  setMessageSeen(messageId);
+//                  adapter.notifyDataSetChanged();
+//                }
+              }
+              boolean changed = s.setMessageSeen(message);
+              if (changed) {
+                setMessageSeen(message);
+                adapter.notifyDataSetChanged();
               }
               startActivityForResult(intent, EMAIL_CONTENT_RESULT);
             }

@@ -135,18 +135,20 @@ public class FacebookMessageProvider implements MessageProvider {
                     assert !recipIds.isEmpty();
 
                     // building list item title
+                    boolean seen = msg.getInt("unseen") == 0;
                     int unreadCount = msg.getInt("unread");
-                    String snippet = msg.getString("snippet").replaceAll("\n", " ").replaceAll(" {2,}", " ");
-                    if (snippet.length() > 30) {
-                      snippet = snippet.substring(0, 30) + "...";
-                    }
-                    if (unreadCount > 0) {
-                      snippet = "(" + unreadCount + ") " + snippet;
-                    }
+                    String snippet = msg.getString("snippet")/*.replaceAll("\n", " ").replaceAll(" {2,}", " ")*/;
+//                    if (snippet.length() > 30) {
+//                      snippet = snippet.substring(0, 30) + "...";
+//                    }
+//                    if (!seen && unreadCount > 0) {
+//                      snippet = "(" + unreadCount + ") " + snippet;
+//                    }
                     messages.add(new MessageListElement(
                             msg.getString("thread_id"),
-                            msg.getInt("unseen") == 0,
+                            seen,
                             snippet,
+                            unreadCount,
                             new Person(Long.parseLong(recipIds.get(0)), null),
                             new Date(msg.getLong("updated_time") * 1000),
                             MessageProvider.Type.FACEBOOK));

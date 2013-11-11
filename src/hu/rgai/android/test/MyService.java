@@ -28,6 +28,7 @@ import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
+import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
@@ -140,6 +141,12 @@ public class MyService extends Service {
     }
   }
   
+  /**
+   * 
+   * @param id
+   * @return 
+   * @deprecated use setMessageSeen instead
+   */
   public boolean setMailSeen(String id) {
     boolean changed = false;
     for (MessageListElementParc mlep : messages) {
@@ -148,6 +155,18 @@ public class MyService extends Service {
           changed = true;
         }
         mlep.setSeen(true);
+      }
+    }
+    return changed;
+  }
+  
+  public boolean setMessageSeen(MessageListElementParc m) {
+    boolean changed = false;
+    for (MessageListElementParc mlep : messages) {
+      if (mlep.equals(m) && !mlep.isSeen()) {
+        changed = true;
+        mlep.setSeen(true);
+        break;
       }
     }
     return changed;
@@ -273,8 +292,16 @@ public class MyService extends Service {
           MessageListElementParc itemToUpdate = null;
           for (MessageListElementParc oldMessage : messages) {
             if (newMessage.equals(oldMessage)) {
-              itemToUpdate = oldMessage;
-              break;
+              /* "Marking" FB message seen here.
+               * Do not change info of the item, if the date is the same, so the queried
+               * data will not override the displayed object.
+               * Facebook does not marks messages as seen when opening them, so we have to
+               * handle it at client side.
+               */
+              if (newMessage.getDate().after(oldMessage.getDate())) {
+                itemToUpdate = oldMessage;
+                break;
+              }
             }
           }
           if (itemToUpdate != null) {

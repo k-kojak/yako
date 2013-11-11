@@ -13,7 +13,6 @@ import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -24,7 +23,6 @@ import org.ocpsoft.prettytime.PrettyTime;
 public class MessageListElementParc extends MessageListElement implements Parcelable, Comparable<MessageListElementParc> {
 
   // TODO: replace fromTemp with Person object
-//  PersonAndr from;
   AccountAndr account;
   private static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
   
@@ -50,6 +48,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.seen = in.readByte() == 1;
     this.title = in.readString();
     this.subTitle = in.readString();
+    this.unreadCount = in.readInt();
     this.from = in.readParcelable(PersonAndr.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
@@ -65,44 +64,19 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
-    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getFrom(), mle.getDate(), mle.getMessageType(), account);
-//    setFromTemp();
+    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(), mle.getFrom(), mle.getDate(), mle.getMessageType(), account);
   }
   
-  public MessageListElementParc(String id, boolean seen, String title, String subTitle, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, seen, title, subTitle, from, date, messageType);
+  public MessageListElementParc(String id, boolean seen, String title, String subTitle, int unreadCount, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
+    super(id, seen, title, subTitle, unreadCount, from, date, messageType);
     this.account = account;
-//    setFromTemp();
   }
 
-  public MessageListElementParc(String id, boolean seen, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, seen, title, from, date, messageType);
-    this.account = account;
-//    setFromTemp();
-  }
-
-  public MessageListElementParc(String id, String title, String subTitle, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, title, subTitle, from, date, messageType);
-    this.account = account;
-//    setFromTemp();
-  }
-
-  public MessageListElementParc(String id, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, title, from, date, messageType);
-    this.account = account;
-//    setFromTemp();
-  }
-
-  public MessageListElementParc(String id, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, from, date, messageType);
-    this.account = account;
-//    setFromTemp();
-  }
-  
-//  private void setFromTemp() {
-//    this.fromTemp = this.from;
+//  public MessageListElementParc(String id, boolean seen, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
+//    super(id, seen, title, from, date, messageType);
+//    this.account = account;
 //  }
-  
+
   public int describeContents() {
     return 0;
   }
@@ -111,10 +85,6 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     PrettyTime pt = new PrettyTime();
     return pt.format(date);
   }
-  
-//  public String getFromTemp() {
-//    return fromTemp;
-//  }
   
   public AccountAndr getAccount() {
     return account;
@@ -125,6 +95,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
     out.writeString(subTitle);
+    out.writeInt(unreadCount);
     out.writeParcelable((Parcelable)new PersonAndr(from), flags);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
@@ -132,17 +103,6 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     
     out.writeParcelable((Parcelable)account, flags);
     
-//    if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-//      out.writeParcelable(new EmailAccountAndr((EmailAccountAndr)account), flags);
-//    } else if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-//      out.writeParcelable(new FacebookAccountParc((FacebookAccount)account), flags);
-//    } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-//      out.writeParcelable(new GmailAccountParc((GmailAccount)account), flags);
-//    } else {
-//      // TODO: throw normal exception
-//      Log.d("rgai", "Unsupported account type -> " + account.getAccountType());
-//      System.exit(1);
-//    }
   }
   
   @Override

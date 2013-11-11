@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.util.List;
@@ -52,7 +53,14 @@ public class LazyAdapter extends BaseAdapter {
     MessageListElementParc message = data.get(position);
 
     // Setting all values in listview
-    subject.setText(message.getTitle());
+    String subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
+    if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
+      subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH);
+    }
+    if (!message.isSeen() && message.getUnreadCount() > 0) {
+      subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+    }
+    subject.setText(subjectText);
     from.setText(message.getFrom().getName());
     if (!message.isSeen()) {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
