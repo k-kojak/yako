@@ -23,12 +23,9 @@ import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.store.StoreHandler;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
@@ -286,10 +283,18 @@ public class MyService extends Service {
         messages = new TreeSet<MessageListElementParc>();
       }
       for (MessageListElementParc newMessage : newMessages) {
-        if (!messages.contains(newMessage)) {
+        boolean contains = false;
+        // .contains not work, because the date of new item != date of old item and 
+        // tree search does not return a valid value
+        for (MessageListElementParc storedMessage : messages) {
+          if (storedMessage.equals(newMessage)) {
+            contains = true;
+          }
+        }
+        if (!contains) {
           messages.add(newMessage);
         } else {
-          MessageListElementParc itemToUpdate = null;
+          MessageListElementParc itemToRemove = null;
           for (MessageListElementParc oldMessage : messages) {
             if (newMessage.equals(oldMessage)) {
               /* "Marking" FB message seen here.
@@ -297,24 +302,27 @@ public class MyService extends Service {
                * data will not override the displayed object.
                * Facebook does not marks messages as seen when opening them, so we have to
                * handle it at client side.
+               * OR if we check the message at FB, then turn it seen at the app
                */
-              if (newMessage.getDate().after(oldMessage.getDate())) {
-                itemToUpdate = oldMessage;
+              if (newMessage.getDate().after(oldMessage.getDate())
+                      || newMessage.isSeen() && !oldMessage.isSeen()) {
+                itemToRemove = oldMessage;
                 break;
               }
             }
           }
-          if (itemToUpdate != null) {
-            messages.remove(itemToUpdate);
+          if (itemToRemove != null) {
+            boolean removed = messages.remove(itemToRemove);
+            Log.d("rgai", "ITEM REMOVED RESULT -> " + removed);
             // updating seen status
-            itemToUpdate.setSeen(newMessage.isSeen());
+//            itemToRemove.setSeen(newMessage.isSeen());
             // updating date
-            itemToUpdate.setDate(newMessage.getDate());
+//            itemToRemove.setDate(newMessage.getDate());
             // updating title
-            itemToUpdate.setTitle(newMessage.getTitle());
+//            itemToRemove.setTitle(newMessage.getTitle());
             // update item count
-            itemToUpdate.setUnreadCount(newMessage.getUnreadCount());
-            messages.add(itemToUpdate);
+//            itemToRemove.setUnreadCount(newMessage.getUnreadCount());
+            messages.add(newMessage);
           }
         }
       }
