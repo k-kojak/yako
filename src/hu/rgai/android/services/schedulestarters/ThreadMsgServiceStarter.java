@@ -16,7 +16,6 @@ public class ThreadMsgServiceStarter extends BroadcastReceiver {
   @Override
   public void onReceive(Context context, Intent intent) {
     if (intent != null && intent.getAction() != null && intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
-      Log.d("rgai", "ThreadMsgServiceStarter-t futtatgatjuk x mp-nkent");
       Intent service = new Intent(context, ThreadMsgService.class);
       service.setAction(Settings.Intents.THREAD_SERVICE_INTENT);
       context.startService(service);

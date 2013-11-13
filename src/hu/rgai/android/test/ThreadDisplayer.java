@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -78,14 +79,14 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = new PersonAndr(mlep.getFrom());
     
-    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
-    serviceIntent.putExtra("account", (Parcelable)account);
-    serviceIntent.putExtra("threadId", threadId);
-    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-    
-    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM);
-    this.sendBroadcast(intent);
+//    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
+//    serviceIntent.putExtra("account", (Parcelable)account);
+//    serviceIntent.putExtra("threadId", threadId);
+//    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+//    
+//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
+//    this.sendBroadcast(intent);
     
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
@@ -122,6 +123,15 @@ public class ThreadDisplayer extends Activity {
   protected void onResume() {
     super.onResume(); //To change body of generated methods, choose Tools | Templates.
     
+    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
+    serviceIntent.putExtra("account", (Parcelable)account);
+    serviceIntent.putExtra("threadId", threadId);
+    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    
+    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
+    this.sendBroadcast(intent);
+    
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
     }
@@ -132,14 +142,16 @@ public class ThreadDisplayer extends Activity {
   @Override
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    Log.d("rgai", "ThreadDisplayer onPause");
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
+    
+    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
+    this.sendBroadcast(intent);
+    
   }
-  
-  
-  
-  
   
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {

@@ -43,6 +43,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
         if (account == null) {
           Log.d("rgai", "account is NULL @ threadContentGetter");
         } else {
+          Log.d("rgai", "Getting thread messages...");
           Class providerClass = Settings.getAccountTypeToMessageProvider().get(account.getAccountType());
           Class accountClass = Settings.getAccountTypeToAccountClass().get(account.getAccountType());
           Constructor constructor = null;

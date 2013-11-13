@@ -132,7 +132,8 @@ public final class Settings {
   }
   
   public static final class Alarms {
-    public static final String THREAD_MSG_ALARM = "hu.rgai.android.alarm.thread_msg";
+    public static final String THREAD_MSG_ALARM_START = "hu.rgai.android.alarm.thread_msg.start";
+    public static final String THREAD_MSG_ALARM_STOP = "hu.rgai.android.alarm.thread_msg.stop";
   }
   
 }

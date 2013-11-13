@@ -316,7 +316,6 @@ public class MainService extends Service {
           }
           if (itemToRemove != null) {
             boolean removed = messages.remove(itemToRemove);
-            Log.d("rgai", "ITEM REMOVED RESULT -> " + removed);
             // updating seen status
 //            itemToRemove.setSeen(newMessage.isSeen());
             // updating date
