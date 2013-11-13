@@ -45,7 +45,7 @@ import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.test.MyService;
+import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import java.util.TreeSet;

@@ -12,14 +12,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.facebook.AccessToken;
+import com.facebook.AccessTokenSource;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -27,13 +33,18 @@ import com.facebook.Session.Builder;
 import com.facebook.Session.OpenRequest;
 import com.facebook.Session.StatusCallback;
 import com.facebook.SessionState;
+import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
+import com.facebook.widget.LoginButton;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,10 +52,11 @@ import java.util.logging.Logger;
 /**
  *
  * @author Tamas Kojedzinszky
- * @deprecated
+ 
  */
 public class FacebookSettingActivity extends Activity {
 
+//  private MainActivity mainActivity;
 //  boolean stillAddingFacebookAccount = false;
   private TextView name;
   private TextView uniqueName;
@@ -52,13 +64,69 @@ public class FacebookSettingActivity extends Activity {
   private String id = null;
   private Spinner messageAmount;
   private FacebookAccountAndr oldAccount;
+  private UiLifecycleHelper uiHelper;
+  private Session.StatusCallback callback = new Session.StatusCallback() {
+    @Override
+    public void call(Session session, SessionState state, Exception exception) {
+      Log.d("rgai", "CALLBACK CALLED");
+      onSessionStateChange(session, state, exception);
+    }
+  };
+
+  private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+    if (state.isOpened()) {
+      if (session.isOpened()) {
+        StoreHandler.storeFacebookAccessToken(FacebookSettingActivity.this, session.getAccessToken());
+//            ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
+        Request.newMeRequest(session, new Request.GraphUserCallback() {
+          public void onCompleted(GraphUser gu, Response rspns) {
+            if (gu != null) {
+//                  ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
+              Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
+//                  stillAddingFacebookAccount = false;
+//                  FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
+              FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
+                      new IntegrationHandler(FacebookSettingActivity.this));
+              integrator.execute();
+              try {
+//                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
+              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
+//                    FacebookSettingActivity.this.onResume();
+              } catch (Exception ex) {
+                Logger.getLogger(FacebookSettingActivity_depr.class.getName()).log(Level.SEVERE, null, ex);
+              }
+            } else {
+//              ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
+              Log.d("rgai", "GRAPH USER IS NULL");
+            }
+          }
+        }).executeAsync();
+      } 
+    } else if (state.isClosed()) {
+      Log.i("rgai", "Logged out...");
+    }
+  }
 
   @Override
-  public void onCreate(Bundle bundle) {
-    super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.account_settings_facebook_layout_2);
+//    final String fbToken = StoreHandler.getFacebookAccessToken(this);
+//    
+//    if (fbToken != null) {
+//      Session.openActiveSessionWithAccessToken(this,
+//              AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+//              new StatusCallback() {
+//        public void call(Session sn, SessionState ss, Exception excptn) {
+//          Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+//          Log.d("rgai", sn.toString());
+//          Log.d("rgai", ss.toString());
+//          
+//        }
+//      });
+//    }
     
-    setContentView(R.layout.account_settings_facebook_layout);
-
+    
     messageAmount = (Spinner)findViewById(R.id.initial_items_num);
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
             R.array.initial_emails_num,
@@ -66,94 +134,100 @@ public class FacebookSettingActivity extends Activity {
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     // Apply the adapter to the spinner
     messageAmount.setAdapter(adapter);
-
+    
     name = (TextView)findViewById(R.id.display_name);
     uniqueName = (TextView)findViewById(R.id.unique_name);
     password = (EditText)findViewById(R.id.password);
-    name.setKeyListener(null);
-    uniqueName.setKeyListener(null);
-
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
       oldAccount = (FacebookAccountAndr)b.getParcelable("account");
       setFieldsByAccount(oldAccount);
-//      name.setText(oldAccount.getDisplayName());
-//      uniqueName.setText(oldAccount.getUniqueName());
-//      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
-    } else {
-      Session.openActiveSession(this, true, new Session.StatusCallback() {
-        public void call(Session sn, SessionState ss, Exception excptn) {
-          Log.d("rgai", "SESSION -> " + (sn != null ? sn.toString() : "NULL"));
-          Log.d("rgai", "SESSIONSTATE -> " + (ss != null ? ss.toString() : "NULL"));
-          Log.d("rgai", "EXCEPTION -> " + (excptn != null ? excptn.getMessage() : "NULL"));
-//          stillAddingFacebookAccount = true;
-          if (sn.isOpened()) {
-            ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
-            Request.newMeRequest(sn, new Request.GraphUserCallback() {
-              public void onCompleted(GraphUser gu, Response rspns) {
-                if (gu != null) {
-                  ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
-                  Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
-//                  stillAddingFacebookAccount = false;
-//                  FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-                  FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
-                          new IntegrationHandler(FacebookSettingActivity.this));
-                  integrator.execute();
-                  try {
-//                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
-                    setFieldsByAccount(gu.getName(), gu.getUsername(), null, -1);
-//                    FacebookSettingActivity.this.onResume();
-                  } catch (Exception ex) {
-                    Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
-                  }
-                } else {
-                  ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
-                  Log.d("rgai", "GRAPH USER IS NULL");
-                }
-              }
-            }).executeAsync();
-          } else {
-            ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "Session is NOT opened after openActiveSession");
-//              Log.d("rgai", sn.toString());
-//              Log.d("rgai", ss.toString());
-//              
-//              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
-          }
-        }
-      });
     }
+    
+    LoginButton lb = (LoginButton)findViewById(R.id.authButton);
+    
+    lb.setReadPermissions(Settings.getFacebookPermissions());
+//    lb.performClick();
+    uiHelper = new UiLifecycleHelper(this, callback);
+    uiHelper.onCreate(savedInstanceState);
+  }
+
+  private void setFieldsByAccount(FacebookAccountAndr fba) {
+    if (fba != null) {
+      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getId(), fba.getMessageLimit());
+    }
+  }
+  
+  private void setFieldsByAccount(String displayName, String uName, String pass, String id, int messageLimit) {
+    if (displayName != null) {
+      name.setText(displayName);
+    }
+    if (uniqueName != null) {
+      uniqueName.setText(uName);
+    }
+    if (pass != null) {
+      password.setText(pass);
+    }
+    if (messageLimit != -1) {
+      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), messageLimit));
+    }
+    this.id = id;
   }
   
 //  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
 //    OpenRequest openRequest = new OpenRequest(activity).setPermissions(permissions).setCallback(callback);
 //    Session session = new Builder(activity).build();
 //    if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
-//        Session.setActiveSession(session);
-//        session.openForRead(openRequest);
-//        return session;
+//      Session.setActiveSession(session);
+//      session.openForRead(openRequest);
+//      return session;
 //    }
 //    return null;
 //  }
 
   @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data); //To change body of generated methods, choose Tools | Templates.
-//    Log.d("rgai", "ON ACTIVITY RESULT -> " + requestCode + ", " + resultCode);
-    if (resultCode == Activity.RESULT_OK && Session.getActiveSession() != null) {
-      try {
-        Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
-        // thrown when someone else returns here, and not facebook
-      } catch (RuntimeException ex) {
-        Log.d("rgai", "catching FB exception");
-        ex.printStackTrace();
-      }
-    } else {
-      setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL);
-      finish();
-    }
+  public void onResume() {
+    super.onResume();
+    
+//    Session session = Session.getActiveSession();
+//    if (session != null && (session.isOpened() || session.isClosed())) {
+//      onSessionStateChange(session, session.getState(), null);
+//    }
+//    uiHelper.onResume();
   }
-  
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    Log.d("rgai", "ON ACT. RESULT");
+    uiHelper.onActivityResult(requestCode, resultCode, data);
+    Session session = Session.getActiveSession();
+    if (session != null && (session.isOpened() || session.isClosed())) {
+      onSessionStateChange(session, session.getState(), null);
+    }
+//    uiHelper.onResume();
+    
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+//    uiHelper.onPause();
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+//    uiHelper.onDestroy();
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+//    uiHelper.onSaveInstanceState(outState);
+  }
+
   public void saveAccountSettings(View v) {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
@@ -177,29 +251,8 @@ public class FacebookSettingActivity extends Activity {
     finish();
   }
   
-  private void setFieldsByAccount(FacebookAccountAndr fba) {
-    if (fba != null) {
-      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getMessageLimit());
-    }
-  }
-  
-  private void setFieldsByAccount(String displayName, String uName, String p, int messageLimit) {
-    if (displayName != null) {
-      name.setText(displayName);
-    }
-    if (uniqueName != null) {
-      uniqueName.setText(uName);
-    }
-    if (p != null) {
-      password.setText(p);
-    }
-    if (messageLimit != -1) {
-      messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), messageLimit));
-    }
-  }
-
   public void deleteAccountSettings(View v) {
-    Log.d("rgai", "DELETE");
+//    Log.d("rgai", "DELETE");
     
     Session.openActiveSession(this, true, new Session.StatusCallback() {
 
@@ -215,23 +268,22 @@ public class FacebookSettingActivity extends Activity {
       }
     });
     
+    StoreHandler.clearFacebookAccessToken(this);
+    
     Intent resultIntent = new Intent();
     resultIntent.putExtra("old_account", (Parcelable)oldAccount);
     setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE, resultIntent);
     finish();
   }
-
-  public void afterTextChanged(Editable e) {}
-  public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
-
+  
   private class IntegrationHandler extends Handler {
-    
+
     private Context c;
-    
+
     public IntegrationHandler(Context c) {
       this.c = c;
     }
-    
+
     @Override
     public void handleMessage(Message msg) {
       Bundle bundle = msg.getData();
@@ -243,23 +295,23 @@ public class FacebookSettingActivity extends Activity {
       }
     }
   }
-  
+
   private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
 
     Handler handler;
 //    FacebookAccount account;
     private Activity activity;
-    
+
     public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
       this.activity = activity;
       this.handler = handler;
 //      this.account = account;
     }
-    
+
     @Override
     protected String doInBackground(FacebookSessionAccount... params) {
       String content = null;
-      
+
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
       fbfp.getFacebookFriends(activity);
 
@@ -274,8 +326,6 @@ public class FacebookSettingActivity extends Activity {
       msg.setData(bundle);
       handler.sendMessage(msg);
     }
-
-
 //    @Override
 //    protected void onProgressUpdate(Integer... values) {
 //      Log.d(Constants.LOG, "onProgressUpdate");
@@ -287,7 +337,6 @@ public class FacebookSettingActivity extends Activity {
 //      handler.sendMessage(msg);
 //    }
   }
-  
 //  public MessageProvider.Type getType() {
 //    return MessageProvider.Type.FACEBOOK;
 //  }
@@ -298,5 +347,4 @@ public class FacebookSettingActivity extends Activity {
 //    int num = Integer.parseInt((String)messageAmount.getSelectedItem());
 //    return new FacebookAccountAndr(num, m, p);
 //  }
-  
 }

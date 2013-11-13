@@ -1,4 +1,4 @@
-package hu.rgai.android.test;
+package hu.rgai.android.services;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,6 +23,9 @@ import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.Constants;
+import hu.rgai.android.test.MainActivity;
+import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
@@ -42,7 +45,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
 
-public class MyService extends Service {
+public class MainService extends Service {
 
   public static boolean RUNNING = false;
   
@@ -65,7 +68,7 @@ public class MyService extends Service {
   private final IBinder mBinder = new MyBinder();
   private Set<MessageListElementParc> messages = null;
   
-  public MyService() {
+  public MainService() {
 //    super("valami nev");
 //    Log.d("rgai", "myservice default constructor");
   }
@@ -330,8 +333,8 @@ public class MyService extends Service {
   }
   
   public class MyBinder extends Binder {
-    public MyService getService() {
-      return MyService.this;
+    public MainService getService() {
+      return MainService.this;
     }
   }
   

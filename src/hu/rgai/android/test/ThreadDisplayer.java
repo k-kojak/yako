@@ -2,16 +2,20 @@ package hu.rgai.android.test;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.webkit.WebView;
 import android.widget.ListView;
 import android.widget.Toast;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
@@ -20,16 +24,10 @@ import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.services.ThreadMsgService;
+import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
 import net.htmlparser.jericho.Source;
 
 public class ThreadDisplayer extends Activity {
@@ -45,20 +43,33 @@ public class ThreadDisplayer extends Activity {
   private ListView lv = null;
   private ThreadViewAdapter adapter = null;
   
-  private WebView webView = null;
+//  private WebView webView = null;
   private String mailCharCode = "UTF-8";
   
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
+  private DataUpdateReceiver serviceReceiver;
+  private ThreadMsgService service;
+  private boolean serviceConnectionEstablished = false;
+  private ServiceConnection serviceConnection = new ServiceConnection() {
+    public void onServiceConnected(ComponentName className, IBinder binder) {
+      service = ((ThreadMsgService.MyBinder) binder).getService();
+
+//      updateList(service.getEmails());
+//      if ((messages == null || !messages.isEmpty()) && pd != null) {
+//        pd.dismiss();
+//      }
+      serviceConnectionEstablished = true;
+    }
+
+    public void onServiceDisconnected(ComponentName className) {
+      service = null;
+    }
+  };
+  
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    
-    setContentView(R.layout.threadview_main);
-    lv = (ListView) findViewById(R.id.main);
-    
-//    webView = (WebView) findViewById(R.id.email_content);
-//    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
     
@@ -67,28 +78,68 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = new PersonAndr(mlep.getFrom());
     
+    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
+    serviceIntent.putExtra("account", (Parcelable)account);
+    serviceIntent.putExtra("threadId", threadId);
+    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    
+    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM);
+    this.sendBroadcast(intent);
+    
+    setContentView(R.layout.threadview_main);
+    lv = (ListView) findViewById(R.id.main);
+    
+//    webView = (WebView) findViewById(R.id.email_content);
+//    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
+    
+    
+    
     adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
     lv.setAdapter(adapter);
     
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use  that here
-      content = (FullThreadMessageParc)mlep.getFullMessage();
+//      content = (FullThreadMessageParc)mlep.getFullMessage();
       loadedWithContent = true;
 //      content = getIntent().getExtras().getString("email_content");
 //      webView.loadData(content, "text/html", mailCharCode);
 //      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
-      displayMessage(content);
+//      displayMessage(content);
     } else {
-      handler = new ThreadContentTaskHandler();
-      ThreadContentGetter contentGetter = new ThreadContentGetter(handler, account);
-      contentGetter.execute(threadId);
-
+//      handler = new ThreadContentTaskHandler();
+//      ThreadContentGetter contentGetter = new ThreadContentGetter(handler, account);
+//      contentGetter.execute(threadId);
+//
       pd = new ProgressDialog(this);
-      pd.setMessage("Fetching email content...");
+      pd.setMessage("Fetching content...");
       pd.setCancelable(false);
       pd.show();
     }
   }
+
+  @Override
+  protected void onResume() {
+    super.onResume(); //To change body of generated methods, choose Tools | Templates.
+    
+    if (serviceReceiver == null) {
+      serviceReceiver = new DataUpdateReceiver(this);
+    }
+    IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
+    registerReceiver(serviceReceiver, intentFilter);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    if (serviceReceiver != null) {
+      unregisterReceiver(serviceReceiver);
+    }
+  }
+  
+  
+  
+  
   
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
@@ -166,10 +217,49 @@ public class ThreadDisplayer extends Activity {
 //    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
 //    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
 //    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
-    for (MessageAtom ma : content.getMessages()) {
-      adapter.add(ma);
+    if (content != null) {
+      adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
+      for (MessageAtom ma : content.getMessages()) {
+        adapter.add(ma);
+      }
+      lv.setAdapter(adapter);
+      lv.setSelection(lv.getAdapter().getCount() - 1);
     }
-    lv.setSelection(lv.getAdapter().getCount() - 1);
+  }
+  
+  private class DataUpdateReceiver extends BroadcastReceiver {
+
+    private ThreadDisplayer activity;
+    
+    public DataUpdateReceiver(ThreadDisplayer activity) {
+      this.activity = activity;
+    }
+    
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
+        if (intent.getExtras().getInt("result") != ThreadMsgService.OK) {
+          String msg = "Error";
+          Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+          if (pd != null) {
+            pd.dismiss();
+          }
+        } else {
+          content = intent.getExtras().getParcelable("threadMessage");
+          displayMessage(content);
+//          Parcelable[] messagesParc = intent.getExtras().getParcelableArray("messages");
+//          MessageListElementParc[] messages = new MessageListElementParc[messagesParc.length];
+//          for (int i = 0; i < messagesParc.length; i++) {
+//            messages[i] = (MessageListElementParc) messagesParc[i];
+//          }
+//
+//          updateList(messages);
+          if (pd != null) {
+            pd.dismiss();
+          }
+        }
+      }
+    }
   }
   
   private class ThreadContentTaskHandler extends Handler {
@@ -191,7 +281,7 @@ public class ThreadDisplayer extends Activity {
     }
   }
   
-  private class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessageParc> {
+ /* private class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessageParc> {
 
     Handler handler;
     AccountAndr account;
@@ -273,6 +363,6 @@ public class ThreadDisplayer extends Activity {
 //      msg.setData(bundle);
 //      handler.sendMessage(msg);
 //    }
-  }
+  }*/
   
 }

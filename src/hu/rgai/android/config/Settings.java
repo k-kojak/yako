@@ -7,7 +7,7 @@ import hu.rgai.android.intent.beens.PhoneRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.test.EmailDisplayer;
 import hu.rgai.android.test.ThreadDisplayer;
-import hu.rgai.android.test.settings.FacebookSettingFragment;
+import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -86,7 +86,7 @@ public final class Settings {
       accountTypeToSettingClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
       accountTypeToSettingClass.put(MessageProvider.Type.EMAIL, SimpleEmailSettingActivity.class);
       accountTypeToSettingClass.put(MessageProvider.Type.GMAIL, GmailSettingActivity.class);
-      accountTypeToSettingClass.put(MessageProvider.Type.FACEBOOK, FacebookSettingFragment.class);
+      accountTypeToSettingClass.put(MessageProvider.Type.FACEBOOK, FacebookSettingActivity.class);
     }
     return accountTypeToSettingClass;
   }
@@ -125,6 +125,14 @@ public final class Settings {
       
     }
     
+  }
+  
+  public static final class Intents {
+    public static final String THREAD_SERVICE_INTENT = "hu.rgai.android.threadmsg_service_intent";
+  }
+  
+  public static final class Alarms {
+    public static final String THREAD_MSG_ALARM = "hu.rgai.android.alarm.thread_msg";
   }
   
 }

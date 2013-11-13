@@ -1,6 +1,8 @@
 //TODO: refresh button at main setting panel
 package hu.rgai.android.test;
 
+import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -61,13 +63,13 @@ public class MainActivity extends Activity {
   private boolean serviceConnectionEstablished = false;
   private List<MessageListElementParc> messages;
   private LazyAdapter adapter;
-  private MyService s;
+  private MainService s;
   private DataUpdateReceiver serviceReceiver;
   private SystemBroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
-      s = ((MyService.MyBinder) binder).getService();
+      s = ((MainService.MyBinder) binder).getService();
 
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
@@ -88,9 +90,8 @@ public class MainActivity extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-    bindService(new Intent(this, MyService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-    final String fbToken = StoreHandler.getFacebookAccessToken(this);
     
+    final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
               AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
@@ -102,10 +103,13 @@ public class MainActivity extends Activity {
         }
       });
     }
+    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+    
+    
 //    Log.d("rgai", "myService.running -> " + MyService.RUNNING);
 //    emails = new ArrayList<Map<String, String>>();
-    if (!MyService.RUNNING) {
-      Intent intent = new Intent(this, ScheduleStarter.class);
+    if (!MainService.RUNNING) {
+      Intent intent = new Intent(this, MainScheduler.class);
       intent.setAction(Context.ALARM_SERVICE);
       this.sendBroadcast(intent);
       // disaplying loading dialog, since the mails are not ready, but the user opened the list
@@ -163,7 +167,7 @@ public class MainActivity extends Activity {
       case (EMAIL_SETTINGS_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           Log.d("rgai", "email setting result");
-          Intent intent = new Intent(this, ScheduleStarter.class);
+          Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           this.sendBroadcast(intent);
           
@@ -390,35 +394,35 @@ public class MainActivity extends Activity {
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(Constants.MAIL_SERVICE_INTENT)) {
-        if (intent.getExtras().getInt("result") != MyService.OK) {
+        if (intent.getExtras().getInt("result") != MainService.OK) {
           int result = intent.getExtras().getInt("result");
           String msg = null;
           switch (result) {
-            case MyService.AUTHENTICATION_FAILED_EXCEPTION:
+            case MainService.AUTHENTICATION_FAILED_EXCEPTION:
               msg = "Authentication failed: " + intent.getExtras().getString("errorMessage");
               break;
-            case MyService.UNKNOWN_HOST_EXCEPTION:
+            case MainService.UNKNOWN_HOST_EXCEPTION:
               msg = getString(R.string.exception_unknown_host);
               break;
-            case MyService.IOEXCEPTION:
+            case MainService.IOEXCEPTION:
               msg = getString(R.string.exception_io);
               break;
-            case MyService.CONNECT_EXCEPTION:
+            case MainService.CONNECT_EXCEPTION:
               msg = getString(R.string.exception_connect);
               break;
-            case MyService.NO_SUCH_PROVIDER_EXCEPTION:
+            case MainService.NO_SUCH_PROVIDER_EXCEPTION:
               msg = getString(R.string.exception_nosuch_provider);
               break;
-            case MyService.MESSAGING_EXCEPTION:
+            case MainService.MESSAGING_EXCEPTION:
               msg = getString(R.string.exception_messaging);
               break;
-            case MyService.SSL_HANDSHAKE_EXCEPTION:
+            case MainService.SSL_HANDSHAKE_EXCEPTION:
               msg = getString(R.string.exception_ssl_handshake);
               break;
-            case MyService.NO_INTERNET_ACCESS:
+            case MainService.NO_INTERNET_ACCESS:
               msg = getString(R.string.no_internet_access);
               break;
-            case MyService.NO_ACCOUNT_SET:
+            case MainService.NO_ACCOUNT_SET:
               TextView text = new TextView(context);
               text.setText(getString(R.string.no_account_set));
               text.setGravity(Gravity.CENTER);

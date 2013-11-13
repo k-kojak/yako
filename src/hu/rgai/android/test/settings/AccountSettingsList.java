@@ -43,7 +43,7 @@ public class AccountSettingsList extends FragmentActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
-  FacebookSettingFragment fbFragment = null;
+  FacebookSettingActivity fbFragment = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -173,7 +173,7 @@ public class AccountSettingsList extends FragmentActivity {
             classToLoad = GmailSettingActivity.class;
             break;
           case 1:
-            classToLoad = FacebookSettingFragment.class;
+            classToLoad = FacebookSettingActivity.class;
             break;
           case 2:
             classToLoad = SimpleEmailSettingActivity.class;
