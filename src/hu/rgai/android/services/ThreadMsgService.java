@@ -42,6 +42,7 @@ public class ThreadMsgService extends Service {
 //    String threadId = intent.getStringExtra("threadId");
     if (intent != null && intent.getAction() != null && intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
       if (isNetworkAvailable()) {
+        Log.d("rgai", "# ON START COMMAND ThreadMsgService");
         ThreadContentGetter myThread = new ThreadContentGetter(handler, account);
         myThread.execute(threadId);
   //      myThread = new LongOperation(handler);
@@ -58,6 +59,14 @@ public class ThreadMsgService extends Service {
     return Service.START_STICKY;
   }
   
+  public void setAccount(AccountAndr account) {
+    this.account = account;
+  }
+  
+  public void setThreadId(String threadId) {
+    this.threadId = threadId;
+  }
+  
   private boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
@@ -66,6 +75,7 @@ public class ThreadMsgService extends Service {
   
   @Override
   public IBinder onBind(Intent intent) {
+    Log.d("rgai", "# BIND ThreadMsgService");
     account = intent.getParcelableExtra("account");
     threadId = intent.getStringExtra("threadId");
     return mBinder;

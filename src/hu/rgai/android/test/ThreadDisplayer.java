@@ -54,7 +54,10 @@ public class ThreadDisplayer extends Activity {
   private boolean serviceConnectionEstablished = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
+      Log.d("rgai", "# ON ServiceConnected callback");
       service = ((ThreadMsgService.MyBinder) binder).getService();
+      service.setAccount(account);
+      service.setThreadId(threadId);
 
 //      updateList(service.getEmails());
 //      if ((messages == null || !messages.isEmpty()) && pd != null) {
@@ -145,6 +148,9 @@ public class ThreadDisplayer extends Activity {
     Log.d("rgai", "ThreadDisplayer onPause");
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
+    }
+    if (serviceConnection != null) {
+      unbindService(serviceConnection);
     }
     
     Intent intent = new Intent(this, ThreadMsgScheduler.class);
