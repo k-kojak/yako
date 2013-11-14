@@ -28,10 +28,20 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
             android:nextFocusUp="@id/text"
             android:nextFocusLeft="@id/text"
-            android:inputType="textMultiLine" />
+            android:inputType="textMultiLine"
+            android:layout_toLeftOf="@+id/sendButton"
+        />
+        <Button android:text="Send"
+            android:id="@+id/sendButton" 
+            android:textSize="14dp"
+            android:layout_alignParentRight="true" 
+            android:layout_height="wrap_content" 
+            android:layout_width="80dp"
+            android:onClick="sendMessage"
+            >
+        </Button>
     </RelativeLayout>
 
 </RelativeLayout>

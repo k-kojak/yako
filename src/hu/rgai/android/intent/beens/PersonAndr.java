@@ -27,17 +27,17 @@ public class PersonAndr extends Person implements Parcelable {
   }
   
   public PersonAndr(Parcel in) {
-    this.id = in.readLong();
+    this.id = in.readString();
     this.name = in.readString();
     emails = new ArrayList<String>();
     in.readStringList(emails);
   }
   
-  public PersonAndr(long id, String name, List<String> emails) {
+  public PersonAndr(String id, String name, List<String> emails) {
     super(id, name, emails);
   }
   
-  public PersonAndr(long id, String name, String email) {
+  public PersonAndr(String id, String name, String email) {
     super(id, name, email);
   }
 
@@ -46,7 +46,7 @@ public class PersonAndr extends Person implements Parcelable {
   }
 
   public void writeToParcel(Parcel out, int flags) {
-    out.writeLong(this.id);
+    out.writeString(this.id);
     out.writeString(this.name);
     out.writeStringList(this.emails);
   }

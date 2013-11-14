@@ -149,7 +149,7 @@ public class FacebookMessageProvider implements MessageProvider {
                             seen,
                             snippet,
                             unreadCount,
-                            new Person(Long.parseLong(recipIds.get(0)), null),
+                            new Person(recipIds.get(0), null),
                             new Date(msg.getLong("updated_time") * 1000),
                             MessageProvider.Type.FACEBOOK));
                   }
@@ -162,7 +162,7 @@ public class FacebookMessageProvider implements MessageProvider {
 //                              Log.d("rgai", msg.getString("name"));
                     // matching friend names to messages by id
                     for (int k = 0; k < messages.size(); k++) {
-                      if (messages.get(k).getFrom().getId() == Long.parseLong(msg.getString("uid"))) {
+                      if (messages.get(k).getFrom().getId().equals(msg.getString("uid"))) {
                         messages.get(k).getFrom().setName(msg.getString("name"));
                       }
                     }
@@ -242,7 +242,7 @@ public class FacebookMessageProvider implements MessageProvider {
                             "",
                             body,
                             new Date(msg.getLong("created_time") * 1000),
-                            new Person(Long.parseLong(msg.getString("author_id")), null),
+                            new Person(msg.getString("author_id"), null),
                             msg.getString("author_id").equals(account.getId()),
                             MessageProvider.Type.FACEBOOK,
                             null));
@@ -256,7 +256,7 @@ public class FacebookMessageProvider implements MessageProvider {
 //                              Log.d("rgai", msg.getString("name"));
                     // matching friend names to messages by id
                     for (MessageAtom ma : ftm.getMessages()) {
-                      if (ma.getFrom().getId() == Long.parseLong(user.getString("uid"))) {
+                      if (ma.getFrom().getId().equals(user.getString("uid"))) {
                         ma.getFrom().setName(user.getString("name"));
                       }
                     }

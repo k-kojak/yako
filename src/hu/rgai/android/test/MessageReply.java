@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.asynctasks.MessageSender;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -170,7 +171,7 @@ public class MessageReply extends Activity implements TextWatcher {
     List<AccountAndr> accs = StoreHandler.getAccounts(this);
     
     for (RecipientItem ri : to) {
-      MessageReplySender rs = new MessageReplySender(ri, accs, handler, text.getText().toString());
+      MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString());
       rs.execute();
     }
 //    EmailReplySender replySender = new EmailReplySender(account, handler, text.getText().toString(), subject, recipients.getText().toString());
@@ -227,139 +228,139 @@ public class MessageReply extends Activity implements TextWatcher {
     }
   }
   
-  private class MessageReplySender extends AsyncTask<Integer, Integer, Boolean> {
-
-    RecipientItem recipient;
-    private Handler handler;
-    private List<AccountAndr> accounts;
-    private String content;
-//    private String subject;
-//    private String recipients;
-    
-    private String result = null;
-    
-    public MessageReplySender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler, String content) {
-      this.recipient = recipient;
-      this.accounts = accounts;
-      this.handler = handler;
-      this.content = content;
-//      this.subject = subject;
-//      this.recipients = recipients;
-    }
-    
-    @Override
-    protected Boolean doInBackground(Integer... params) {
-      AccountAndr acc = getAccountForType(recipient.getType());
-
-      if (acc != null) {
-        MessageProvider mp = null;
-        Set<MessageRecipient> recipients = null;
-        if (recipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
-          mp = new FacebookMessageProvider((FacebookAccount)acc);
-          recipients = new HashSet<MessageRecipient>();
-          recipients.add(new FacebookMessageRecipient(recipient.getData()));
-          Log.d("rgai", "SENDING FACEBOOK MESSAGE");
-        } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
-          mp = new SimpleEmailMessageProvider((EmailAccount)acc);
-          recipients = new HashSet<MessageRecipient>();
-          recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
-        }
-        if (mp != null && recipients != null) {
-          try {
-            mp.sendMessage(recipients, content, content.substring(0, Math.min(content.length(), 10)));
-          } catch (NoSuchProviderException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
-          } catch (MessagingException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
-          } catch (IOException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
-          }
-        }
-      }
-//      MessageProvider mp = new SimpleEmailMessageProvider((EmailAccount)account);
-//      Set<MessageRecipient> recipients = new HashSet<MessageRecipient>();
-//      InternetAddress[] addr = null;
-//      try {
-//        addr = InternetAddress.parse(this.recipients, true);
-//      } catch (AddressException ex) {
-//        result = "Invalid address field";
-//        return false;
-//      }
-//      if (addr != null && addr.length > 0) {
-//        for (InternetAddress a : addr) {
-//          recipients.add(new EmailMessageRecipient(a.getPersonal(), a.getAddress()));
-//        }
-//      }
-//      
-//      if (recipients.isEmpty()) {
-//        return false;
-//      }
-//      
-//      // TODO: handle exceptions
-//      try {
-//        try {
-//          mp.sendMessage(recipients, content, subject);
-//        } catch (AddressException ex) {
-//          result = "Invalid address field";
-//          return false;
-//        }
-//      } catch (NoSuchProviderException ex) {
-//        Log.d("rgai", ex.getMessage());
-//        Log.d("rgai", ex.getLocalizedMessage());
-//        Log.d("rgai", ex.toString());
-//      } catch (MessagingException ex) {
-//        Log.d("rgai", ex.getMessage());
-//        Log.d("rgai", ex.getLocalizedMessage());
-//        Log.d("rgai", ex.toString());
-//      } catch (IOException ex) {
-//        Log.d("rgai", ex.getMessage());
-//        Log.d("rgai", ex.getLocalizedMessage());
-//        Log.d("rgai", ex.toString());
-//      }
-      return true;
-    }
-    
-    // TODO: gmail != email
-    private AccountAndr getAccountForType(MessageProvider.Type type) {
-      boolean m = type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL);
-      for (AccountAndr acc : accounts) {
-        if (m) {
-          if (acc.getAccountType().equals(MessageProvider.Type.EMAIL) || acc.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-            return acc;
-          }
-        } else {
-          if (acc.getAccountType().equals(type)) {
-            return acc;
-          }
-        }
-      }
-      return null;
-    }
-
-    @Override
-    protected void onPostExecute(Boolean success) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      if (!success) {
-        bundle.putString("result", result);
-      }
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
-
-
+//  private class MessageReplySender extends AsyncTask<Integer, Integer, Boolean> {
+//
+//    RecipientItem recipient;
+//    private Handler handler;
+//    private List<AccountAndr> accounts;
+//    private String content;
+////    private String subject;
+////    private String recipients;
+//    
+//    private String result = null;
+//    
+//    public MessageReplySender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler, String content) {
+//      this.recipient = recipient;
+//      this.accounts = accounts;
+//      this.handler = handler;
+//      this.content = content;
+////      this.subject = subject;
+////      this.recipients = recipients;
+//    }
+//    
 //    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
+//    protected Boolean doInBackground(Integer... params) {
+//      AccountAndr acc = getAccountForType(recipient.getType());
+//
+//      if (acc != null) {
+//        MessageProvider mp = null;
+//        Set<MessageRecipient> recipients = null;
+//        if (recipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
+//          mp = new FacebookMessageProvider((FacebookAccount)acc);
+//          recipients = new HashSet<MessageRecipient>();
+//          recipients.add(new FacebookMessageRecipient(recipient.getData()));
+//          Log.d("rgai", "SENDING FACEBOOK MESSAGE");
+//        } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
+//          mp = new SimpleEmailMessageProvider((EmailAccount)acc);
+//          recipients = new HashSet<MessageRecipient>();
+//          recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
+//        }
+//        if (mp != null && recipients != null) {
+//          try {
+//            mp.sendMessage(recipients, content, content.substring(0, Math.min(content.length(), 10)));
+//          } catch (NoSuchProviderException ex) {
+//            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+//          } catch (MessagingException ex) {
+//            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+//          } catch (IOException ex) {
+//            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+//          }
+//        }
+//      }
+////      MessageProvider mp = new SimpleEmailMessageProvider((EmailAccount)account);
+////      Set<MessageRecipient> recipients = new HashSet<MessageRecipient>();
+////      InternetAddress[] addr = null;
+////      try {
+////        addr = InternetAddress.parse(this.recipients, true);
+////      } catch (AddressException ex) {
+////        result = "Invalid address field";
+////        return false;
+////      }
+////      if (addr != null && addr.length > 0) {
+////        for (InternetAddress a : addr) {
+////          recipients.add(new EmailMessageRecipient(a.getPersonal(), a.getAddress()));
+////        }
+////      }
+////      
+////      if (recipients.isEmpty()) {
+////        return false;
+////      }
+////      
+////      // TODO: handle exceptions
+////      try {
+////        try {
+////          mp.sendMessage(recipients, content, subject);
+////        } catch (AddressException ex) {
+////          result = "Invalid address field";
+////          return false;
+////        }
+////      } catch (NoSuchProviderException ex) {
+////        Log.d("rgai", ex.getMessage());
+////        Log.d("rgai", ex.getLocalizedMessage());
+////        Log.d("rgai", ex.toString());
+////      } catch (MessagingException ex) {
+////        Log.d("rgai", ex.getMessage());
+////        Log.d("rgai", ex.getLocalizedMessage());
+////        Log.d("rgai", ex.toString());
+////      } catch (IOException ex) {
+////        Log.d("rgai", ex.getMessage());
+////        Log.d("rgai", ex.getLocalizedMessage());
+////        Log.d("rgai", ex.toString());
+////      }
+//      return true;
+//    }
+//    
+//    // TODO: gmail != email
+//    private AccountAndr getAccountForType(MessageProvider.Type type) {
+//      boolean m = type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL);
+//      for (AccountAndr acc : accounts) {
+//        if (m) {
+//          if (acc.getAccountType().equals(MessageProvider.Type.EMAIL) || acc.getAccountType().equals(MessageProvider.Type.GMAIL)) {
+//            return acc;
+//          }
+//        } else {
+//          if (acc.getAccountType().equals(type)) {
+//            return acc;
+//          }
+//        }
+//      }
+//      return null;
+//    }
+//
+//    @Override
+//    protected void onPostExecute(Boolean success) {
 //      Message msg = handler.obtainMessage();
 //      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
+//      if (!success) {
+//        bundle.putString("result", result);
+//      }
 //      msg.setData(bundle);
 //      handler.sendMessage(msg);
 //    }
-
-  }
+//
+//
+////    @Override
+////    protected void onProgressUpdate(Integer... values) {
+////      Log.d(Constants.LOG, "onProgressUpdate");
+////      Message msg = handler.obtainMessage();
+////      Bundle bundle = new Bundle();
+////
+////      bundle.putInt("progress", values[0]);
+////      msg.setData(bundle);
+////      handler.sendMessage(msg);
+////    }
+//
+//  }
   
   private class EmailReplySender extends AsyncTask<Integer, Integer, Boolean> {
 

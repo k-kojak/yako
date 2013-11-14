@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,18 +18,25 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+import hu.rgai.android.asynctasks.MessageSender;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
+import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.util.LinkedList;
+import java.util.List;
 import net.htmlparser.jericho.Source;
 
 public class ThreadDisplayer extends Activity {
@@ -39,9 +47,12 @@ public class ThreadDisplayer extends Activity {
   private String subject = null;
   private boolean loadedWithContent = false;
   private String threadId = "-1";
+  private String userId = null;
+  private String recipientName = null;
   private AccountAndr account;
   private PersonAndr from;
   private ListView lv = null;
+  private EditText text = null;
   private ThreadViewAdapter adapter = null;
   
 //  private WebView webView = null;
@@ -82,17 +93,11 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = new PersonAndr(mlep.getFrom());
     
-//    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
-//    serviceIntent.putExtra("account", (Parcelable)account);
-//    serviceIntent.putExtra("threadId", threadId);
-//    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-//    
-//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
-//    this.sendBroadcast(intent);
+    handler = new MessageSendTaskHandler(this);
     
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
+    text = (EditText) findViewById(R.id.text);
     
 //    webView = (WebView) findViewById(R.id.email_content);
 //    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
@@ -140,6 +145,17 @@ public class ThreadDisplayer extends Activity {
     }
     IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
     registerReceiver(serviceReceiver, intentFilter);
+  }
+  
+  public void sendMessage(View view) {
+//    List<RecipientItem> to = recipients.getRecipients();
+    List<AccountAndr> accs = new LinkedList<AccountAndr>();
+    accs.add(account);
+    
+    RecipientItem ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
+    MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString());
+    rs.execute();
+//    }
   }
 
   @Override
@@ -242,6 +258,29 @@ public class ThreadDisplayer extends Activity {
       }
       lv.setAdapter(adapter);
       lv.setSelection(lv.getAdapter().getCount() - 1);
+    }
+  }
+  
+  private class MessageSendTaskHandler extends Handler {
+    
+    ThreadDisplayer cont;
+    
+    public MessageSendTaskHandler(ThreadDisplayer cont) {
+      this.cont = cont;
+    }
+    
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle bundle = msg.getData();
+      if (bundle != null) {
+        if (bundle.containsKey("success") && bundle.get("success") != null) {
+          boolean succ = bundle.getBoolean("success");
+          if (succ) {
+            cont.text.setText("");
+          }
+          
+        }
+      }
     }
   }
   

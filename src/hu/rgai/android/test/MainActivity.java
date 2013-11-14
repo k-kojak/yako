@@ -31,9 +31,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
-import com.facebook.HttpMethod;
-import com.facebook.Request;
-import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import hu.rgai.android.config.Settings;
@@ -46,9 +43,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends Activity {
 
@@ -189,7 +184,7 @@ public class MainActivity extends Activity {
             intent.putExtra("content", "");
             intent.putExtra("subject", "");
             intent.putExtra("account", (Parcelable)account);
-            intent.putExtra("from", new PersonAndr(1, name, name));
+            intent.putExtra("from", new PersonAndr("1", name, name));
             startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
           }
         }
