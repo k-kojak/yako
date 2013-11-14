@@ -3,8 +3,9 @@
 
 !src/
 !src/*
+!res
+!res/*
 !AndroidManifest.xml
-!project.properties
 !ant.properties
 !.gitignore
 !README.md

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:padding="5dip">
+  
+  <TextView
+    android:id="@+id/display_name"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:inputType="text"
+    android:editable="false"
+    android:freezesText="true"  />
+  <TextView
+    android:id="@+id/unique_name"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:editable="false"
+    android:inputType="text" />
+  <EditText
+    android:id="@+id/password"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:editable="false"
+    android:hint="@string/password_hint"
+    android:inputType="textPassword" />
+  
+  <TextView
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/label_initial_msg_num"
+    android:paddingTop="3dip"
+  />
+  <Spinner
+    android:id="@+id/initial_items_num"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" />
+  
+  <Button
+    android:id="@+id/save_account_button"
+    android:layout_height="wrap_content"
+    android:layout_width="fill_parent"
+    android:text="@string/save"
+    android:onClick="saveAccountSettings" />
+  
+  <Button
+    android:id="@+id/delete_account_button"
+    android:layout_height="wrap_content"
+    android:layout_width="fill_parent"
+    android:text="@string/delete"
+    android:onClick="deleteAccountSettings" />
+  
+  <com.facebook.widget.LoginButton
+        android:id="@+id/authButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30dp"
+        />
+  
+</LinearLayout>
