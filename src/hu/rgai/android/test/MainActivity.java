@@ -1,4 +1,5 @@
 //TODO: refresh button at main setting panel
+//TODO: batched contact list update
 package hu.rgai.android.test;
 
 import hu.rgai.android.services.MainService;
@@ -34,6 +35,7 @@ import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -49,9 +51,6 @@ public class MainActivity extends Activity {
 
 //  private Boolean isInternetAvailable = null;
   
-  
-  public static final int EMAIL_CONTENT_RESULT = 1;
-  public static final int EMAIL_SETTINGS_RESULT = 2;
   
   public static final int PICK_CONTACT = 101;
   
@@ -133,7 +132,7 @@ public class MainActivity extends Activity {
     switch (item.getItemId()) {
       case R.id.accounts:
         intent = new Intent(this, AccountSettingsList.class);
-        startActivityForResult(intent, MainActivity.EMAIL_SETTINGS_RESULT);
+        startActivityForResult(intent, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
         return true;
       case R.id.message_send_new:
         intent = new Intent(this, MessageReply.class);
@@ -150,16 +149,20 @@ public class MainActivity extends Activity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     switch (requestCode) {
-      case (EMAIL_CONTENT_RESULT):
+      case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           // TODO: only saving simple string content
-          String emailID = data.getIntExtra("email_id", 0) + "";
+          FullMessageParc fm = data.getParcelableExtra("message_data");
+          String messageId = data.getStringExtra("message_id");
           AccountAndr acc = data.getParcelableExtra("account");
-          String content = data.getStringExtra("email_content");
-//          s.setMessageContent(emailID, acc, content);
+          
+//          String emailID = data.getIntExtra("email_id", 0) + "";
+          
+//          String content = data.getStringExtra("email_content");
+          s.setMessageContent(messageId, acc, fm);
         }
         break;
-      case (EMAIL_SETTINGS_RESULT):
+      case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           Log.d("rgai", "email setting result");
           Intent intent = new Intent(this, MainScheduler.class);
@@ -311,7 +314,7 @@ public class MainActivity extends Activity {
                 setMessageSeen(message);
                 adapter.notifyDataSetChanged();
               }
-              startActivityForResult(intent, EMAIL_CONTENT_RESULT);
+              startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
             }
           });
           if (serviceConnectionEstablished) {
