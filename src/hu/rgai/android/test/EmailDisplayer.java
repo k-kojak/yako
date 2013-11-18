@@ -13,6 +13,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -33,7 +35,7 @@ public class EmailDisplayer extends Activity {
 
   private ProgressDialog pd = null;
   private Handler handler = null;
-  private String content = null;
+  private FullSimpleMessageParc content = null;
   private String subject = null;
   private boolean loadedWithContent = false;
   private String emailID = "-1";
@@ -53,17 +55,19 @@ public class EmailDisplayer extends Activity {
     webView = (WebView) findViewById(R.id.email_content);
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
-    emailID = getIntent().getExtras().getString("email_id");
-    account = getIntent().getExtras().getParcelable("account");
-    subject = getIntent().getExtras().getString("subject");
-    from = getIntent().getExtras().getParcelable("from");
+    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
     
-    if (getIntent().getExtras().containsKey("email_content")) {
+    emailID = mlep.getId();
+    account = getIntent().getExtras().getParcelable("account");
+    subject = mlep.getTitle();
+    from = new PersonAndr(mlep.getFrom());
+    
+    if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
-      content = getIntent().getExtras().getString("email_content");
+      content = (FullSimpleMessageParc)mlep.getFullMessage();
 //      webView.loadData(content, "text/html", mailCharCode);
 //      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
-      displayMessage(content);
+      displayMessage();
     } else {
       handler = new EmailContentTaskHandler();
       EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
@@ -103,7 +107,7 @@ public class EmailDisplayer extends Activity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReply.class);
-        Source source = new Source(content);
+        Source source = new Source(content.getContent());
         intent.putExtra("content", source.getRenderer().toString());
         intent.putExtra("subject", subject);
         intent.putExtra("account", (Parcelable)account);
@@ -122,8 +126,8 @@ public class EmailDisplayer extends Activity {
   public void finish() {
     if (!loadedWithContent) {
       Intent resultIntent = new Intent();
-      resultIntent.putExtra("email_content", content);
-      resultIntent.putExtra("email_id", emailID);
+      resultIntent.putExtra("message_data", content);
+      resultIntent.putExtra("message_id", emailID);
       
 //      if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
         resultIntent.putExtra("account", (Parcelable)account);
@@ -137,10 +141,10 @@ public class EmailDisplayer extends Activity {
     super.finish(); //To change body of generated methods, choose Tools | Templates.
   }
   
-  private void displayMessage(String content) {
+  private void displayMessage() {
     String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
-    content = from.getName() + mail + "<br/>" + content;
-    webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+    String c = from.getName() + mail + "<br/>" + content.getContent();
+    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
   }
   
   private class EmailContentTaskHandler extends Handler {
@@ -150,10 +154,10 @@ public class EmailDisplayer extends Activity {
       Bundle bundle = msg.getData();
       if (bundle != null) {
         if (bundle.get("content") != null) {
-          content = bundle.getString("content");
+          content = bundle.getParcelable("content");
 //          webView.loadData(content, "text/html", mailCharCode);
 //          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
-          displayMessage(content);
+          displayMessage();
           if (pd != null) {
             pd.dismiss();
           }
@@ -162,7 +166,7 @@ public class EmailDisplayer extends Activity {
     }
   }
   
-  private class EmailContentGetter extends AsyncTask<String, Integer, String> {
+  private class EmailContentGetter extends AsyncTask<String, Integer, FullSimpleMessageParc> {
 
     Handler handler;
     AccountAndr account;
@@ -173,23 +177,22 @@ public class EmailDisplayer extends Activity {
     }
     
     @Override
-    protected String doInBackground(String... params) {
+    protected FullSimpleMessageParc doInBackground(String... params) {
 //      SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
 //      String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
 //      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
 //      String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
 //      MailProvider2 em = new MailProvider2(email, pass, imap, Pass.smtp);
-      String content = null;
+      FullSimpleMessageParc fsm = null;
       
       try {
         if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)account);
-          FullSimpleMessage fm = (FullSimpleMessage)semp.getMessage(params[0]);
-          content = fm.getContent();
+          fsm = new FullSimpleMessageParc((FullSimpleMessage)semp.getMessage(params[0]));
+//          content = fm.getContent();
         } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)account);
-          FullSimpleMessage fm = (FullSimpleMessage)semp.getMessage(params[0]);
-          content = fm.getContent();
+          fsm = new FullSimpleMessageParc((FullSimpleMessage)semp.getMessage(params[0]));
         } else if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
           // TODO: getting facebook message
         }
@@ -208,15 +211,15 @@ public class EmailDisplayer extends Activity {
 //        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
 //      }
 //
-      return content;
+      return fsm;
 //      return "";
     }
 
     @Override
-    protected void onPostExecute(String result) {
+    protected void onPostExecute(FullSimpleMessageParc result) {
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
-      bundle.putString("content", result);
+      bundle.putParcelable("content", result);
       msg.setData(bundle);
       handler.sendMessage(msg);
     }

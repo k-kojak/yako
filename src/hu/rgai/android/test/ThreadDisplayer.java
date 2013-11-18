@@ -112,7 +112,7 @@ public class ThreadDisplayer extends Activity {
 //      content = getIntent().getExtras().getString("email_content");
 //      webView.loadData(content, "text/html", mailCharCode);
 //      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
-//      displayMessage(content);
+      displayMessage();
     } else {
 //      handler = new ThreadContentTaskHandler();
 //      ThreadContentGetter contentGetter = new ThreadContentGetter(handler, account);

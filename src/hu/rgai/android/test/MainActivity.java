@@ -286,22 +286,28 @@ public class MainActivity extends Activity {
                 intent.putExtra("msg_list_element", (Parcelable)message);
                 intent.putExtra("account", (Parcelable)a);
               } else {
-                MessageListElementParc ele = s.getListElementById(messageId, a);
-                intent = new Intent(MainActivity.this, EmailDisplayer.class);
-
-                // TODO: getFull message now always converted to FullEmailMessage
-                if (ele != null) {
-                  if (ele.getFullMessage() != null) {
-                    if (ele.getFullMessage() instanceof FullEmailMessage) {
-                      intent.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
-                    }
-                  }
-                }
-
-                intent.putExtra("email_id", messageId);
-                intent.putExtra("subject", ele.getTitle());
-                intent.putExtra("from", new PersonAndr(ele.getFrom()));
+                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+                intent = new Intent(MainActivity.this, classToLoad);
+                
+                intent.putExtra("msg_list_element", (Parcelable)message);
                 intent.putExtra("account", (Parcelable)a);
+                
+//                MessageListElementParc ele = s.getListElementById(messageId, a);
+//                intent = new Intent(MainActivity.this, EmailDisplayer.class);
+//
+//                // TODO: getFull message now always converted to FullEmailMessage
+//                if (ele != null) {
+//                  if (ele.getFullMessage() != null) {
+//                    if (ele.getFullMessage() instanceof FullEmailMessage) {
+//                      intent.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
+//                    }
+//                  }
+//                }
+//
+//                intent.putExtra("email_id", messageId);
+//                intent.putExtra("subject", ele.getTitle());
+//                intent.putExtra("from", new PersonAndr(ele.getFrom()));
+//                intent.putExtra("account", (Parcelable)a);
 
 //                boolean changed = s.setMailSeen(messageId);
 //                if (changed) {
