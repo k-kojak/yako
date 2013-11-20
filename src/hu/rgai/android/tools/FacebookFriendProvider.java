@@ -1,6 +1,8 @@
 package hu.rgai.android.tools;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import com.facebook.HttpMethod;
@@ -9,7 +11,14 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,7 +39,7 @@ public class FacebookFriendProvider {
   }
 
   private static void getUserDataWithFql(final Activity activity) {
-    String fql = "SELECT uid, name, username FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
+    String fql = "SELECT uid, name, username, pic, pic_big FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
 
     Bundle params = new Bundle();
     params.putString("q", fql);
@@ -50,12 +59,26 @@ public class FacebookFriendProvider {
             String uid = json_obj.getString("uid");
             String name = json_obj.getString("name");
             String username = json_obj.getString("username");
-
-            FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid);
-//            if (fbii.getName().contains("Zsibrita")) {
+            InputStream is;
+            Bitmap img = null;
+            Bitmap fullImg = null;
+            try {
+              is = (InputStream) new URL(json_obj.getString("pic")).getContent();
+              img = BitmapFactory.decodeStream(is);
+              is = (InputStream) new URL(json_obj.getString("pic_big")).getContent();
+              fullImg = BitmapFactory.decodeStream(is);
+            } catch (MalformedURLException ex) {
+              Log.d("rgai", "Exception @ user -> " + name);
+              Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+              Log.d("rgai", "Exception @ user -> " + name);
+              Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
+            }
+//            if (i % 37 == 0) {
+              FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, img, fullImg);
               fbs.integrate(activity, fbii);
+              Log.d("rgai", "Integrating user -> " + name);
 //            }
-            
           }
         } catch (JSONException e) {
           // TODO Auto-generated catch block

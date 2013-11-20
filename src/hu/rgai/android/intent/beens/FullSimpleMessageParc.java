@@ -3,6 +3,7 @@ package hu.rgai.android.intent.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
 
 /**
  *
@@ -19,6 +20,10 @@ public class FullSimpleMessageParc extends MessageAtomParc {
       return new FullSimpleMessageParc[size];
     }
   };
+  
+  public FullSimpleMessageParc(FullSimpleMessage fsm) {
+    super(fsm.getId(),fsm.getSubject(), fsm.getContent(), fsm.getDate(), fsm.getFrom(), fsm.isIsMe(), fsm.getMessageType(), fsm.getAttachments());
+  }
   
   public FullSimpleMessageParc(Parcel in) {
     super(in);

@@ -3,7 +3,9 @@ package hu.rgai.android.tools;
 
 
 import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
@@ -12,11 +14,18 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteQuery;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.util.Log;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.config.Settings;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -97,34 +106,75 @@ public class FacebookIdSaver {
       if (rawContactIdsToInsert.length == 0) {
         ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
           
-          ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                  .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                  .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
-          .build());
-          
-          ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                  .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                  .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                  .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, fbii.getName())
-                  .build());
-        
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
+        .build());
+
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, fbii.getName())
+                .build());
+
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+
+                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.Data.DATA1, facebookName)
+                .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
+                .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
+                .withValue(ContactsContract.Data.DATA6, Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME)
+                .withValue(ContactsContract.Data.DATA10, fbii.getFbId())
+                .build());
+        if (fbii.getImg() != null) {
+          // insert thumbnail img
+          ByteArrayOutputStream stream = new ByteArrayOutputStream();
+          fbii.getImg().compress(Bitmap.CompressFormat.JPEG, 100, stream);
           ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                   .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
 
-                  .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
-                  .withValue(ContactsContract.Data.DATA1, facebookName)
-                  .withValue(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER)
-                  .withValue(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM)
-                  .withValue(ContactsContract.Data.DATA6, Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME)
-                  .withValue(ContactsContract.Data.DATA10, fbii.getFbId())
+                  .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+                  .withValue(ContactsContract.CommonDataKinds.Photo.PHOTO, stream.toByteArray())
                   .build());
-          try {
-            context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-          } catch (RemoteException ex) {
-            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-          } catch (OperationApplicationException ex) {
-            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+          // insert full img
+//            ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+//                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+//
+//                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+//                    .withValue(ContactsContract.CommonDataKinds.Photo.DI, stream.toByteArray())
+//                    .build());
+          if (fbii.getFullImg() != null) {
+            try {
+              stream = new ByteArrayOutputStream();
+              fbii.getFullImg().compress(Bitmap.CompressFormat.JPEG, 100, stream);
+              byte[] fullImgArray = stream.toByteArray();
+              final ContentProviderResult[] results = context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+              long rawContactId = ContentUris.parseId(results[0].uri);
+              final Uri displayPhotoUri = Uri.withAppendedPath(
+                      ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId),
+                      ContactsContract.RawContacts.DisplayPhoto.CONTENT_DIRECTORY);
+              final FileOutputStream photoStream = context.getContentResolver().openAssetFileDescriptor(displayPhotoUri, "rw").createOutputStream();
+              try {
+                int bufferSize = 16 * 1024;
+                for (int offset = 0; offset < fullImgArray.length; offset += bufferSize) {
+                  bufferSize = Math.min(bufferSize, (fullImgArray.length - offset));
+                  photoStream.write(fullImgArray, offset, bufferSize);
+                }
+              } finally {
+                photoStream.close();
+              }
+            } catch (RemoteException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (OperationApplicationException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (FileNotFoundException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            }
           }
+        }
       }
     }
     
