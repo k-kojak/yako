@@ -36,13 +36,17 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     }
   };
   
+  private void initStringToClassLoader() {
+	  if (stringToClassLoader == null) {
+	      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
+	      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccountAndr.class.getClassLoader());
+	      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccountAndr.class.getClassLoader());
+	      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccountAndr.class.getClassLoader());
+	    }	  
+  }
+  
   public MessageListElementParc(Parcel in) {
-    if (stringToClassLoader == null) {
-      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
-      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccountAndr.class.getClassLoader());
-      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccountAndr.class.getClassLoader());
-      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccountAndr.class.getClassLoader());
-    }
+	initStringToClassLoader();
     
     this.id = in.readString();
     this.seen = in.readByte() == 1;
@@ -56,8 +60,8 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     
     if (!stringToClassLoader.containsKey(messageType)) {
       // TODO: display error message
-      Log.d("rgai", "Unsupported account type -> " + messageType);
-      System.exit(1);
+//      Log.d("rgai", "Unsupported account type -> " + messageType);
+//      System.exit(1);
     } else {
       this.account = (AccountAndr)in.readParcelable(stringToClassLoader.get(messageType));
     }
@@ -91,6 +95,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public void writeToParcel(Parcel out, int flags) {
+	initStringToClassLoader();
     out.writeString(this.id);
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
@@ -100,8 +105,11 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable((Parcelable)fullMessage, flags);
-    
-    out.writeParcelable((Parcelable)account, flags);
+    if (!stringToClassLoader.containsKey(messageType)) {
+    	
+    } else {
+    	out.writeParcelable((Parcelable)account, flags);
+    }
     
   }
   

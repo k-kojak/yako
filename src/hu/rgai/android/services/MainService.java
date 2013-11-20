@@ -22,6 +22,7 @@ import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.Constants;
 import hu.rgai.android.test.MainActivity;
@@ -102,7 +103,7 @@ public class MainService extends Service {
         handler.sendMessage(msg);
       } else {
         for (AccountAndr acc : accounts) {
-          LongOperation myThread = new LongOperation(handler, acc);
+          LongOperation myThread = new LongOperation(handler, acc, this);
           myThread.execute();
         }
       }
@@ -344,11 +345,13 @@ public class MainService extends Service {
     private String errorMessage = null;
     private Handler handler;
     private AccountAndr acc;
+    private Context context;
     
     
-    public LongOperation(Handler handler, AccountAndr acc) {
+    public LongOperation(Handler handler, AccountAndr acc, Context context) {
       this.handler = handler;
       this.acc = acc;
+      this.context = context;
     }
     
     @Override
@@ -373,6 +376,8 @@ public class MainService extends Service {
           FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
           messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         }
+        SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
+        messages.addAll(nonParcToParc(smsmp.getMessageList(0, 10)));
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
         this.result = AUTHENTICATION_FAILED_EXCEPTION;
