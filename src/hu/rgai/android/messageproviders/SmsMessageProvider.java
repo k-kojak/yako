@@ -46,7 +46,7 @@ public class SmsMessageProvider implements MessageProvider{
 			ConnectException, NoSuchProviderException, UnknownHostException,
 			IOException, MessagingException, AuthenticationFailedException {
 		// TODO Auto-generated method stub
-		
+
 		final List<MessageListElement> messages = new LinkedList<MessageListElement>();
 
 
@@ -76,23 +76,23 @@ public class SmsMessageProvider implements MessageProvider{
 
 		while (cur.moveToNext()) {
 
-			
-	        messages.add(new MessageListElement(
-	        		cur.getString(1),
-	                true,
-	                "gf",
-	                1,
-	                new Person("0","én"),
-	                new Date(),
-	                MessageProvider.Type.SMS));
+
+			messages.add(new MessageListElement(
+					cur.getString(1),
+					true,
+					"gf",
+					1,
+					new Person("0","én"),
+					new Date(),
+					MessageProvider.Type.SMS));
 		}
 
 
-		
-		
+
+
 		return messages;
-		
-		
+
+
 	}
 
 
@@ -131,25 +131,21 @@ public class SmsMessageProvider implements MessageProvider{
 
 
 		while (cur.moveToNext()) {
-			if(cur.getString(1)== id){
+			if(cur.getString(1).equals(id)){
 
-				message_stream += " From : " + cur.getString(2) + " : " + cur.getString(12) + "\n"; 
+
+				ftm.addMessage(new MessageAtomParc(
+						cur.getString(0),
+						"vmi",
+						cur.getString(12),
+						new Date(),
+						new Person("0","en"),
+						true, //vmit ezzel kezdeni
+						MessageProvider.Type.SMS,
+						null));
 
 			}
 		}
-
-		ftm.addMessage(new MessageAtomParc(
-				cur.getString(0),
-				"",
-				cur.getString(12),
-				new Date(cur.getString(4)),
-				null,
-				true, //vmit ezzel kezdeni
-				MessageProvider.Type.SMS,
-				null));
-
-
-
 
 		return ftm;
 	}
@@ -163,9 +159,9 @@ public class SmsMessageProvider implements MessageProvider{
 		// TODO Auto-generated method stub
 
 		for (MessageRecipient mr : to) {
-			
+
 			SmsMessageRecipient smr = (SmsMessageRecipient) mr;
-			
+
 			SmsManager smsman = SmsManager.getDefault();
 			smsman.sendTextMessage(smr.getAddress(), null, content, null, null);
 

@@ -5,6 +5,7 @@ import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PhoneRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.EmailDisplayer;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
@@ -67,6 +68,7 @@ public final class Settings {
       accountTypeToMessageDisplayer.put(MessageProvider.Type.EMAIL, EmailDisplayer.class);
       accountTypeToMessageDisplayer.put(MessageProvider.Type.FACEBOOK, ThreadDisplayer.class);
       accountTypeToMessageDisplayer.put(MessageProvider.Type.GMAIL, EmailDisplayer.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.SMS, ThreadDisplayer.class);
     }
     return accountTypeToMessageDisplayer;
   }
@@ -77,6 +79,7 @@ public final class Settings {
       accountTypeToMessageProvider.put(MessageProvider.Type.EMAIL, SimpleEmailMessageProvider.class);
       accountTypeToMessageProvider.put(MessageProvider.Type.FACEBOOK, FacebookMessageProvider.class);
       accountTypeToMessageProvider.put(MessageProvider.Type.GMAIL, SimpleEmailMessageProvider.class);
+      accountTypeToMessageProvider.put(MessageProvider.Type.SMS, SmsMessageProvider.class);
     }
     return accountTypeToMessageProvider;
   }

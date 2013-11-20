@@ -1,5 +1,6 @@
 package hu.rgai.android.asynctasks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +9,7 @@ import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -24,10 +26,12 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
 
     Handler handler;
     AccountAndr account;
+    Context context;
     
-    public ThreadContentGetter(Handler handler, AccountAndr account) {
+    public ThreadContentGetter(Handler handler, AccountAndr account, Context context) {
       this.handler = handler;
       this.account = account;
+      this.context = context;
     }
     
     @Override
@@ -51,10 +55,17 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           if (providerClass == null) {
             throw new RuntimeException("Provider class is null, " + account.getAccountType() + " is not a valid TYPE.");
           }
-          constructor = providerClass.getConstructor(accountClass);
-
-          MessageProvider mp = (MessageProvider) constructor.newInstance(account);
-          // force result to ThreadMessage, since this is a thread displayer
+          
+          MessageProvider mp = null;
+          if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
+        	  constructor = providerClass.getConstructor(Context.class);
+        	  mp = (MessageProvider) constructor.newInstance(context);        	  
+          } else {
+        	  constructor = providerClass.getConstructor(accountClass);
+	          mp = (MessageProvider) constructor.newInstance(account);
+	          // force result to ThreadMessage, since this is a thread displayer
+	          
+          }
           threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0]));
         }
 

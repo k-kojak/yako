@@ -21,6 +21,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
@@ -106,6 +107,9 @@ public class MainService extends Service {
           LongOperation myThread = new LongOperation(handler, acc, this);
           myThread.execute();
         }
+        AccountAndr smsAcc = new SmsAccountAndr();
+        LongOperation myThread = new LongOperation(handler, smsAcc, this);
+        myThread.execute();
       }
 //      myThread = new LongOperation(handler);
 //      myThread.execute();
@@ -375,9 +379,11 @@ public class MainService extends Service {
           accountName = ((FacebookAccountAndr)acc).getDisplayName();
           FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
           messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+        } else if (acc instanceof SmsAccountAndr) {
+	      accountName = "SMS";
+	      SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
+	      messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
-        SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
-        messages.addAll(nonParcToParc(smsmp.getMessageList(0, 10)));
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
         this.result = AUTHENTICATION_FAILED_EXCEPTION;

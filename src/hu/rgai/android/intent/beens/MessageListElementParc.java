@@ -7,6 +7,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
@@ -42,6 +43,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
 	      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccountAndr.class.getClassLoader());
 	      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccountAndr.class.getClassLoader());
 	      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccountAndr.class.getClassLoader());
+	      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccountAndr.class.getClassLoader());
 	    }	  
   }
   
