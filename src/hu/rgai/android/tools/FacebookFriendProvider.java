@@ -82,14 +82,6 @@ public class FacebookFriendProvider {
             String uid = json_obj.getString("uid");
             String name = json_obj.getString("name");
             String username = json_obj.getString("username");
-            // JUST TO SLOW DOWN THE PROCESS
-            try {
-              new URL(json_obj.getString("pic")).getContent();
-            } catch (MalformedURLException ex) {
-              Log.d("rgai", "Exception @ user -> " + name);
-            } catch (IOException ex) {
-              Log.d("rgai", "Exception @ user -> " + name);
-            }
 
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"));
             fbs.integrate(activity, fbii);
