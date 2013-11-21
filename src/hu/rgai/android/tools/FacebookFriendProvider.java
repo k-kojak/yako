@@ -11,7 +11,6 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -59,25 +58,22 @@ public class FacebookFriendProvider {
             String uid = json_obj.getString("uid");
             String name = json_obj.getString("name");
             String username = json_obj.getString("username");
-            InputStream is;
-            Bitmap img = null;
-            Bitmap fullImg = null;
-            try {
-              is = (InputStream) new URL(json_obj.getString("pic")).getContent();
-              img = BitmapFactory.decodeStream(is);
-              is = (InputStream) new URL(json_obj.getString("pic_big")).getContent();
-              fullImg = BitmapFactory.decodeStream(is);
-            } catch (MalformedURLException ex) {
-              Log.d("rgai", "Exception @ user -> " + name);
-              Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-              Log.d("rgai", "Exception @ user -> " + name);
-              Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
-            }
 //            if (i % 37 == 0) {
-              FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, img, fullImg);
+//              try {
+//                is = (InputStream) new URL(json_obj.getString("pic")).getContent();
+//                img = BitmapFactory.decodeStream(is);
+  //              is = (InputStream) new URL(json_obj.getString("pic_big")).getContent();
+  //              fullImg = BitmapFactory.decodeStream(is);
+//              } catch (MalformedURLException ex) {
+//                Log.d("rgai", "Exception @ user -> " + name);
+//                Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
+//              } catch (IOException ex) {
+//                Log.d("rgai", "Exception @ user -> " + name);
+//                Logger.getLogger(FacebookFriendProvider.class.getName()).log(Level.SEVERE, null, ex);
+//              }
+              FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"));
               fbs.integrate(activity, fbii);
-              Log.d("rgai", "Integrating user -> " + name);
+              Log.d("rgai", "Integrating user ("+ i +"/"+ arr.length() +") -> " + name);
 //            }
           }
         } catch (JSONException e) {
