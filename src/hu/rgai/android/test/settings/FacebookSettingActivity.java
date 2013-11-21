@@ -296,7 +296,7 @@ public class FacebookSettingActivity extends Activity {
     }
   }
 
-  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
+  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, String, String> {
 
     Handler handler;
 //    FacebookAccount account;
@@ -313,7 +313,12 @@ public class FacebookSettingActivity extends Activity {
       String content = null;
 
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
-      fbfp.getFacebookFriends(activity);
+      fbfp.getFacebookFriends(activity, new ToastHelper() {
+
+        public void showToast(String msg) {
+          publishProgress(msg);
+        }
+      });
 
       return content;
     }
@@ -326,17 +331,17 @@ public class FacebookSettingActivity extends Activity {
       msg.setData(bundle);
       handler.sendMessage(msg);
     }
-//    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
+    
+    @Override
+    protected void onProgressUpdate(String... values) {
+      Toast.makeText(activity, values[0], Toast.LENGTH_LONG).show();
+    }
   }
+  
+  public interface ToastHelper {
+    public void showToast(String msg);
+  }
+  
 //  public MessageProvider.Type getType() {
 //    return MessageProvider.Type.FACEBOOK;
 //  }
