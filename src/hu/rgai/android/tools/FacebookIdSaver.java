@@ -154,11 +154,11 @@ public class FacebookIdSaver {
           }
           // insert full img
 //          if (fbii.getFullImg() != null) {
-//            try {
+            try {
 //              stream = new ByteArrayOutputStream();
 //              fbii.getFullImg().compress(Bitmap.CompressFormat.JPEG, 100, stream);
 //              byte[] fullImgArray = stream.toByteArray();
-//              final ContentProviderResult[] results = context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+              context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
 //              long rawContactId = ContentUris.parseId(results[0].uri);
 //              final Uri displayPhotoUri = Uri.withAppendedPath(
 //                      ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId),
@@ -173,15 +173,15 @@ public class FacebookIdSaver {
 //              } finally {
 //                photoStream.close();
 //              }
-//            } catch (RemoteException ex) {
-//              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (OperationApplicationException ex) {
-//              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (RemoteException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (OperationApplicationException ex) {
+              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
 //            } catch (FileNotFoundException ex) {
 //              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
 //            } catch (IOException ex) {
 //              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-//            }
+            }
 //          }
         }
       }

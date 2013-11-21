@@ -31,16 +31,16 @@ import java.util.Set;
 public class ContactListAdapter extends CursorAdapter implements Filterable {
 
   private ContentResolver mContent;
-  private Set<String> allowedMimeTypes = null;
+//  private Set<String> allowedMimeTypes = null;
   private static final String DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
 
   public ContactListAdapter(Context context, Cursor c) {
     super(context, c);
     mContent = context.getContentResolver();
-    allowedMimeTypes = new HashSet<String>();
-    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
+//    allowedMimeTypes = new HashSet<String>();
+//    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+//    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+//    allowedMimeTypes.add(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
   }
 
   @Override

@@ -38,7 +38,7 @@ public final class Settings {
   private static List<String> facebookPermissions = null;
   
   public static final int MAX_SNIPPET_LENGTH = 30;
-  
+
 //  private static String 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
@@ -95,7 +95,6 @@ public final class Settings {
     if (facebookPermissions == null) {
       facebookPermissions = new LinkedList<String>();
       facebookPermissions.add("email");
-      facebookPermissions.add("read_mailbox");
       facebookPermissions.add("read_mailbox");
     }
     return facebookPermissions;

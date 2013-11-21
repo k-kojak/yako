@@ -1,6 +1,7 @@
 package hu.rgai.android.test;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.util.List;
 
@@ -69,10 +71,12 @@ public class LazyAdapter extends BaseAdapter {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
     }
+    Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getMessageType(), message.getFrom().getId());
     if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
-      icon.setImageResource(R.drawable.fb);
+      icon.setImageBitmap(img);
+//      icon.setI
     } else {
-      icon.setImageResource(R.drawable.gmail_icon);
+      icon.setImageBitmap(img);
     }
     date.setText(message.getFormattedDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);

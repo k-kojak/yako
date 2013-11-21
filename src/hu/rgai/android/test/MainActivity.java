@@ -275,7 +275,7 @@ public class MainActivity extends Activity {
 
               MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
 
-              String messageId = (String)message.getId();
+//              String messageId = (String)message.getId();
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
               if (a instanceof FacebookAccount) {
@@ -291,28 +291,6 @@ public class MainActivity extends Activity {
                 intent.putExtra("msg_list_element", (Parcelable)message);
                 intent.putExtra("account", (Parcelable)a);
                 
-//                MessageListElementParc ele = s.getListElementById(messageId, a);
-//                intent = new Intent(MainActivity.this, EmailDisplayer.class);
-//
-//                // TODO: getFull message now always converted to FullEmailMessage
-//                if (ele != null) {
-//                  if (ele.getFullMessage() != null) {
-//                    if (ele.getFullMessage() instanceof FullEmailMessage) {
-//                      intent.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
-//                    }
-//                  }
-//                }
-//
-//                intent.putExtra("email_id", messageId);
-//                intent.putExtra("subject", ele.getTitle());
-//                intent.putExtra("from", new PersonAndr(ele.getFrom()));
-//                intent.putExtra("account", (Parcelable)a);
-
-//                boolean changed = s.setMailSeen(messageId);
-//                if (changed) {
-//                  setMessageSeen(messageId);
-//                  adapter.notifyDataSetChanged();
-//                }
               }
               boolean changed = s.setMessageSeen(message);
               if (changed) {
@@ -330,17 +308,6 @@ public class MainActivity extends Activity {
           adapter.notifyDataSetChanged();
         }
         
-        // if no pass or email or imap provided, then redirect to settings panel
-//        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
-//        String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
-//        String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
-//        String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
-//        if (email.length() + pass.length() + imap.length() == 0) {
-//          TextView text = new TextView(this);
-//          text.setText(getString(R.string.no_account_set));
-//          text.setGravity(Gravity.CENTER);
-//          this.setContentView(text);
-//        }
       } else {
         TextView text = new TextView(this);
         text.setText(getString(R.string.no_internet_access));
