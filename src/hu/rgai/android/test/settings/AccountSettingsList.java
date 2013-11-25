@@ -173,7 +173,11 @@ public class AccountSettingsList extends FragmentActivity {
             classToLoad = GmailSettingActivity.class;
             break;
           case 1:
-            classToLoad = FacebookSettingActivity.class;
+            if (fbAdded) {
+              classToLoad = SimpleEmailSettingActivity.class;
+            } else {
+              classToLoad = FacebookSettingActivity.class;
+            }
             break;
           case 2:
             classToLoad = SimpleEmailSettingActivity.class;
