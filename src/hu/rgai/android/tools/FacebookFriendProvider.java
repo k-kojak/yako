@@ -70,7 +70,7 @@ public class FacebookFriendProvider {
               Log.d("rgai", "timeleftinsec -> " + timeLeftInSec);
               int timeLeftInMin = timeLeftInSec / 60;
               if (timeLeftInMin > 0) timeLeftInSec -= timeLeftInMin * 60;
-              timeleftStr = (timeLeftInMin > 0 ? timeLeftInMin + " min" + (timeLeftInMin > 1 ? "s" : "") : "") + timeLeftInSec + " sec" + (timeLeftInSec > 1 ? "s" : "");
+              timeleftStr = (timeLeftInMin > 0 ? timeLeftInMin + " min" + (timeLeftInMin > 1 ? "s " : " ") : "") + timeLeftInSec + " sec" + (timeLeftInSec > 1 ? "s" : "");
               String toastStr = "Still updating, " + timeleftStr + " left";
               th.showToast(toastStr);
 //              Toast.makeText(activity, timeleftStr + , Toast.LENGTH_LONG).show();
@@ -85,7 +85,7 @@ public class FacebookFriendProvider {
 
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"));
             fbs.integrate(activity, fbii);
-            Log.d("rgai", "Integrating user ("+ i +"/"+ arr.length() +") -> " + name);
+            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
           }
         } catch (JSONException e) {
           // TODO Auto-generated catch block

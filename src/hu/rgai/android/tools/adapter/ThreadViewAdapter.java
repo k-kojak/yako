@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import hu.rgai.android.intent.beens.FullMessageParc;
@@ -18,6 +19,7 @@ import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
 public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
@@ -26,6 +28,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 	private List<MessageAtom> messages = new ArrayList<MessageAtom>();
 	private LinearLayout wrapper;
   private AccountAndr account = null;
+  private Context context;
 
 	@Override
 	public void add(MessageAtom object) {
@@ -36,6 +39,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 	public ThreadViewAdapter(Context context, int textViewResourceId, AccountAndr account) {
 		super(context, textViewResourceId);
     this.account = account;
+    this.context = context;
 	}
 
   @Override
@@ -59,13 +63,17 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 		wrapper = (LinearLayout) row.findViewById(R.id.wrapper);
 
 		MessageAtom coment = getItem(position);
-
+    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+    
 		countryName = (TextView) row.findViewById(R.id.comment);
 
 		countryName.setText(coment.getContent());
     
 		countryName.setBackgroundResource(coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
 		wrapper.setGravity(coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
+    
+    ImageView iv = (ImageView)row.findViewById(R.id.img);
+    iv.setImageBitmap(img);
 
 		return row;
 	}

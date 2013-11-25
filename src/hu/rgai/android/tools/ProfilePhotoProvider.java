@@ -22,9 +22,9 @@ public class ProfilePhotoProvider {
 
   private static Map<String, Bitmap> photos = null;
   
-  public static Bitmap getImageToUser(Context context, MessageProvider.Type type, String id) {
+  public static Bitmap getImageToUser(Context context, MessageProvider.Type type, String userIdentifier) {
     Bitmap img = null;
-    String key = type.toString() + "_" + id;
+    String key = type.toString() + "_" + userIdentifier;
     if (photos == null) {
       photos = new HashMap<String, Bitmap>();
     }
@@ -32,7 +32,7 @@ public class ProfilePhotoProvider {
     if (photos.containsKey(key)) {
       return photos.get(key);
     } else {
-      long uId = getUserId(context, type, id);
+      long uId = getUserId(context, type, userIdentifier);
       img = getImgToUserId(context, uId);
       photos.put(key, img);
     }
