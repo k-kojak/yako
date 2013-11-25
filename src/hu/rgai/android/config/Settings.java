@@ -28,6 +28,9 @@ import java.util.Map;
 public final class Settings {
   
   public static final boolean DEBUG = false;
+  public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
+  public static final String FACEBOOK_ME_IMG_NAME = "me.png";
+  
 //  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
@@ -39,7 +42,6 @@ public final class Settings {
   
   public static final int MAX_SNIPPET_LENGTH = 30;
 
-//  private static String 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
     if (contactDataTypeToRecipientClass == null) {

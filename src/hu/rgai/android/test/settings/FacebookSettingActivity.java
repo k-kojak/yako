@@ -7,6 +7,8 @@ package hu.rgai.android.test.settings;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,6 +46,10 @@ import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -87,7 +93,7 @@ public class FacebookSettingActivity extends Activity {
 //                  FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
               FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
                       new IntegrationHandler(FacebookSettingActivity.this));
-              integrator.execute();
+              integrator.execute(gu.getId());
               try {
 //                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
               setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
@@ -296,7 +302,7 @@ public class FacebookSettingActivity extends Activity {
     }
   }
 
-  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, String, String> {
+  private class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
 
     Handler handler;
 //    FacebookAccount account;
@@ -309,9 +315,23 @@ public class FacebookSettingActivity extends Activity {
     }
 
     @Override
-    protected String doInBackground(FacebookSessionAccount... params) {
+    protected String doInBackground(String... params) {
       String content = null;
 
+      // getting my facebook profile image
+      String url = String.format("https://graph.facebook.com/%s/picture", params[0]);
+
+      InputStream inputStream = null;
+      try {
+        inputStream = new URL(url).openStream();
+      } catch (MalformedURLException ex) {
+        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IOException ex) {
+        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+      StoreHandler.saveUserFbImage(activity, bitmap);
+      
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
       fbfp.getFacebookFriends(activity, new ToastHelper() {
 

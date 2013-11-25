@@ -18,6 +18,7 @@ import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
@@ -63,7 +64,8 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 		wrapper = (LinearLayout) row.findViewById(R.id.wrapper);
 
 		MessageAtom coment = getItem(position);
-    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+//    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
 		countryName = (TextView) row.findViewById(R.id.comment);
 
@@ -73,6 +75,12 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 		wrapper.setGravity(coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
+    Bitmap img = null;
+    if (coment.isIsMe()) {
+      img = StoreHandler.getUserFbImage(context);
+    } else {
+      img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+    }
     iv.setImageBitmap(img);
 
 		return row;
