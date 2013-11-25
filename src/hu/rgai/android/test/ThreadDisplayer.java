@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -34,11 +32,16 @@ import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
-import hu.rgai.android.tools.ProfilePhotoProvider;
+import hu.rgai.android.tools.Utils;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import net.htmlparser.jericho.Source;
 
 public class ThreadDisplayer extends Activity {
@@ -55,6 +58,7 @@ public class ThreadDisplayer extends Activity {
   private ListView lv = null;
   private EditText text = null;
   private ThreadViewAdapter adapter = null;
+  private Set<String> tempMessageIds = null;
   
 //  private WebView webView = null;
   private String mailCharCode = "UTF-8";
@@ -86,7 +90,7 @@ public class ThreadDisplayer extends Activity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    
+    tempMessageIds = new HashSet<String>();
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
     
     threadId = mlep.getId();
@@ -155,6 +159,13 @@ public class ThreadDisplayer extends Activity {
     RecipientItem ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
     MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString());
     rs.execute();
+    
+    String tempId = Utils.generateString(32);
+    content.getMessages().add(new MessageAtom(tempId, null, text.getText().toString(), new Date(),
+            new Person("1", "me"), true, account.getAccountType(), null));
+    displayMessage();
+    text.setText("");
+    tempMessageIds.add(tempId);
 //    }
   }
 
@@ -172,7 +183,6 @@ public class ThreadDisplayer extends Activity {
     Intent intent = new Intent(this, ThreadMsgScheduler.class);
     intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
     this.sendBroadcast(intent);
-    
   }
   
   @Override
@@ -274,7 +284,7 @@ public class ThreadDisplayer extends Activity {
         if (bundle.containsKey("success") && bundle.get("success") != null) {
           boolean succ = bundle.getBoolean("success");
           if (succ) {
-            cont.text.setText("");
+//            cont.text.setText("");
             Intent intent = new Intent(ThreadDisplayer.this, ThreadMsgScheduler.class);
             intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
             ThreadDisplayer.this.sendBroadcast(intent);
@@ -305,6 +315,15 @@ public class ThreadDisplayer extends Activity {
           FullThreadMessageParc newMessages = intent.getExtras().getParcelable("threadMessage");
           if (content != null) {
             content.getMessages().addAll(newMessages.getMessages());
+            if (!tempMessageIds.isEmpty()) {
+              for (Iterator<MessageAtom> it = content.getMessages().iterator(); it.hasNext(); ) {
+                MessageAtom ma = it.next();
+                if (tempMessageIds.contains(ma.getId())) {
+                  tempMessageIds.remove(ma.getId());
+                  it.remove();
+                }
+              }
+            }
           } else {
             content = newMessages;
           }
