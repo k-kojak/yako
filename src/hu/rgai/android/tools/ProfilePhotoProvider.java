@@ -34,7 +34,9 @@ public class ProfilePhotoProvider {
     } else {
       long uId = getUserId(context, type, userIdentifier);
       img = getImgToUserId(context, uId);
-      photos.put(key, img);
+      if (img != null) {
+        photos.put(key, img);
+      }
     }
     
     return img;

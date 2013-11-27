@@ -1,5 +1,6 @@
 //TODO: refresh button at main setting panel
 //TODO: batched contact list update
+//TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
 import hu.rgai.android.services.MainService;

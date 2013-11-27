@@ -56,14 +56,20 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View row = convertView;
+    MessageAtom coment = getItem(position);
+    LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		if (row == null) {
-			LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-			row = inflater.inflate(R.layout.threadview_list_item, parent, false);
+      if (coment.isIsMe()) {
+        row = inflater.inflate(R.layout.threadview_list_item, parent, false);
+      } else {
+        // TODO: display different view when showing partner's message
+        row = inflater.inflate(R.layout.threadview_list_item, parent, false);
+      }
 		}
 
 		wrapper = (LinearLayout) row.findViewById(R.id.wrapper);
 
-		MessageAtom coment = getItem(position);
+		
 //    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
 //    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
