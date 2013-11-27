@@ -26,7 +26,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.telephony.SmsManager;
+import android.util.Log;
 
 
 public class SmsMessageProvider implements MessageProvider{
@@ -51,7 +53,7 @@ public class SmsMessageProvider implements MessageProvider{
 
 
 		Uri uriSMSURI = Uri.parse("content://sms");
-		Cursor cur = context.getContentResolver().query(uriSMSURI, null, null, null, "date DESC LIMIT " + limit);
+		Cursor cur = context.getContentResolver().query(uriSMSURI, new String[]{"_id", "body", "date", "seen"}, null, null, "date DESC LIMIT " + limit);
 
 
 		/**
@@ -76,14 +78,14 @@ public class SmsMessageProvider implements MessageProvider{
 
 		while (cur.moveToNext()) {
 
-
+      Log.d("rgai", cur.getString(2));
 			messages.add(new MessageListElement(
-					cur.getString(1),
+					cur.getString(0),
 					true,
-					"gf",
+					cur.getString(1),
 					1,
 					new Person("0","én"),
-					new Date(),
+					new Date(Long.parseLong(cur.getString(2))),
 					MessageProvider.Type.SMS));
 		}
 

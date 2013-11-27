@@ -51,4 +51,16 @@ public class SmsAccountAndr implements AccountAndr, Parcelable {
 		// TODO Auto-generated method stub
 		return 10;
 	}
+  
+  // There are only 1 account to SMS (to SIM card), so yes, 2 SMS accounts are always the same
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    return true;
+  }
+  
 }
