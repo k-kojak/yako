@@ -105,10 +105,10 @@ public class SmsMessageProvider implements MessageProvider{
 		// TODO Auto-generated method stub
 
 		final FullThreadMessage ftm = new FullThreadMessage();
-		String message_stream = "";
+		String selection = "thread_id = " + id;
 
 		Uri uriSMSURI = Uri.parse("content://sms");
-		Cursor cur = context.getContentResolver().query(uriSMSURI, null, null, null,null);
+		Cursor cur = context.getContentResolver().query(uriSMSURI, null, selection, null,null);
 
 		/**
 		 * 0: _id
