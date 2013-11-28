@@ -5,12 +5,16 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
 public class FullThreadMessageParc extends FullThreadMessage implements FullMessageParc, Parcelable {
+  
+  private Set<MessageAtomParc> messages = null;
 
   public static final Parcelable.Creator<FullThreadMessageParc> CREATOR = new Parcelable.Creator<FullThreadMessageParc>() {
     public FullThreadMessageParc createFromParcel(Parcel in) {
@@ -22,16 +26,21 @@ public class FullThreadMessageParc extends FullThreadMessage implements FullMess
     }
   };
   
+  public FullThreadMessageParc(FullThreadMessage ftm) {
+    super(ftm.getMessages());
+    messages = new TreeSet<MessageAtomParc>();
+  }
+  
   public FullThreadMessageParc(Parcel in) {
-    super();
+    messages = new TreeSet<MessageAtomParc>();
     Parcelable[] pArr = in.readParcelableArray(MessageAtom.class.getClassLoader());
     for (Parcelable msga : pArr) {
       messages.add((MessageAtomParc)msga);
     }
   }
   
-  public FullThreadMessageParc(FullThreadMessage ftm) {
-    super(ftm.getMessages());
+  public Set<MessageAtomParc> getMessagesParc() {
+    return messages;
   }
   
   public int describeContents() {

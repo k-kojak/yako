@@ -17,6 +17,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
@@ -102,7 +103,7 @@ public class MainService extends Service {
         handler.sendMessage(msg);
       } else {
         for (AccountAndr acc : accounts) {
-          LongOperation myThread = new LongOperation(handler, acc);
+          LongOperation myThread = new LongOperation(this, handler, acc);
           myThread.execute();
         }
       }
@@ -289,6 +290,7 @@ public class MainService extends Service {
         boolean contains = false;
         // .contains not work, because the date of new item != date of old item and 
         // tree search does not return a valid value
+        // causes problem at thread type messages like Facebook
         for (MessageListElementParc storedMessage : messages) {
           if (storedMessage.equals(newMessage)) {
             contains = true;
@@ -296,6 +298,8 @@ public class MainService extends Service {
         }
         if (!contains) {
           messages.add(newMessage);
+          // searching PersonAndr here for new messages
+//          newMessage.setFrom(PersonAndr.searchPersonAndr(context, newMessage.getFrom()));
         } else {
           MessageListElementParc itemToRemove = null;
           for (MessageListElementParc oldMessage : messages) {
@@ -303,7 +307,7 @@ public class MainService extends Service {
               /* "Marking" FB message seen here.
                * Do not change info of the item, if the date is the same, so the queried
                * data will not override the displayed object.
-               * Facebook does not marks messages as seen when opening them, so we have to
+               * Facebook does not mark messages as seen when opening them, so we have to
                * handle it at client side.
                * OR if we check the message at FB, then turn it seen at the app
                */
@@ -340,13 +344,15 @@ public class MainService extends Service {
   private class LongOperation extends AsyncTask<String, Integer, List<MessageListElementParc> > {
 
     
+    private Context context;
     private int result;
     private String errorMessage = null;
     private Handler handler;
     private AccountAndr acc;
     
     
-    public LongOperation(Handler handler, AccountAndr acc) {
+    public LongOperation(Context context, Handler handler, AccountAndr acc) {
+      this.context = context;
       this.handler = handler;
       this.acc = acc;
     }
@@ -414,7 +420,9 @@ public class MainService extends Service {
     private List<MessageListElementParc> nonParcToParc(List<MessageListElement> origi) {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
-        parc.add(new MessageListElementParc(mle, acc));
+        MessageListElementParc mlep = new MessageListElementParc(mle, acc);
+        mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
+        parc.add(mlep);
       }
       
       return parc;

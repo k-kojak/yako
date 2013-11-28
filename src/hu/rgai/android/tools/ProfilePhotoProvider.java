@@ -1,16 +1,12 @@
 
 package hu.rgai.android.tools;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.ContactsContract;
-import android.util.Log;
-import hu.rgai.android.config.Settings;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import java.util.ArrayList;
+import hu.rgai.android.test.R;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,25 +16,31 @@ import java.util.Map;
  */
 public class ProfilePhotoProvider {
 
-  private static Map<String, Bitmap> photos = null;
+  private static Map<Long, Bitmap> photos = null;
   
-  public static Bitmap getImageToUser(Context context, MessageProvider.Type type, String userIdentifier) {
+  /**
+   * 
+   * @param context
+   * @param type type of 
+   * @param contactId android contact id
+   * @return 
+   */
+  public static Bitmap getImageToUser(Context context, long contactId) {
     Bitmap img = null;
-    String key = type.toString() + "_" + userIdentifier;
     if (photos == null) {
-      photos = new HashMap<String, Bitmap>();
+      photos = new HashMap<Long, Bitmap>();
     }
-    
-    if (photos.containsKey(key)) {
-      return photos.get(key);
+    if (photos.containsKey(contactId)) {
+      return photos.get(contactId);
     } else {
-      long uId = getUserId(context, type, userIdentifier);
-      img = getImgToUserId(context, uId);
+      img = getImgToUserId(context, contactId);
       if (img != null) {
-        photos.put(key, img);
+        photos.put(contactId, img);
       }
     }
-    
+    if (img == null) {
+      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
+    }
     return img;
   }
   
@@ -77,70 +79,70 @@ public class ProfilePhotoProvider {
     return bm;
   }
   
-  private static Long getUserId(Context context, MessageProvider.Type type, String id) {
-    ContentResolver cr = context.getContentResolver();
-    String[] projection = new String[] {
-//        ContactsContract.Data._ID,
-        ContactsContract.Data.RAW_CONTACT_ID,
-//        ContactsContract.Data.DISPLAY_NAME_PRIMARY
-    };
-    
-    String selection = "";
-    String[] selectionArgs = null;
-    if (type.equals(MessageProvider.Type.FACEBOOK)) {
-      selection = ContactsContract.Data.MIMETYPE + " = ?"
-              + " AND " + ContactsContract.Data.DATA2 + " = ?"
-              + " AND " + ContactsContract.Data.DATA5 + " = ?"
-              + " AND " + ContactsContract.Data.DATA6 + " = ?"
-              + " AND " + ContactsContract.Data.DATA10 + " = ?";
-      selectionArgs = new String[]{
-        ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-        ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
-        ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
-        Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME,
-        id
-      };
-    } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
-      selection = ContactsContract.Data.MIMETYPE + " = ?"
-              + " AND " + ContactsContract.Data.DATA1 + " = ? ";
-      selectionArgs = new String[]{
-        ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
-        id
-      };
-    } else if (type.equals(MessageProvider.Type.SMS)) {
-      throw new RuntimeException("Need to implement query for SMS messages!");
-    }
-    
-    Cursor cu = cr.query(ContactsContract.Data.CONTENT_URI, projection, selection, selectionArgs, null);
-    
-    cu.moveToFirst();
-    String _id = "-1";
-//    String rawId = "-1";
-    ArrayList<Long> ids = new ArrayList<Long>();
-    while (!cu.isAfterLast()) {
-      int idIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
-      _id = cu.getString(idIdx);
-      ids.add(Long.parseLong(_id));
-      
-//      int rawIdIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
-//      rawId = cu.getString(rawIdIdx);
+//  private static Long getUserId(Context context, MessageProvider.Type type, String id) {
+//    ContentResolver cr = context.getContentResolver();
+//    String[] projection = new String[] {
+////        ContactsContract.Data._ID,
+//        ContactsContract.Data.RAW_CONTACT_ID,
+////        ContactsContract.Data.DISPLAY_NAME_PRIMARY
+//    };
+//    
+//    String selection = "";
+//    String[] selectionArgs = null;
+//    if (type.equals(MessageProvider.Type.FACEBOOK)) {
+//      selection = ContactsContract.Data.MIMETYPE + " = ?"
+//              + " AND " + ContactsContract.Data.DATA2 + " = ?"
+//              + " AND " + ContactsContract.Data.DATA5 + " = ?"
+//              + " AND " + ContactsContract.Data.DATA6 + " = ?"
+//              + " AND " + ContactsContract.Data.DATA10 + " = ?";
+//      selectionArgs = new String[]{
+//        ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
+//        ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
+//        ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
+//        Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME,
+//        id
+//      };
+//    } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
+//      selection = ContactsContract.Data.MIMETYPE + " = ?"
+//              + " AND " + ContactsContract.Data.DATA1 + " = ? ";
+//      selectionArgs = new String[]{
+//        ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
+//        id
+//      };
+//    } else if (type.equals(MessageProvider.Type.SMS)) {
+//      throw new RuntimeException("Need to implement query for SMS messages!");
+//    }
+//    
+//    Cursor cu = cr.query(ContactsContract.Data.CONTENT_URI, projection, selection, selectionArgs, null);
+//    
+//    cu.moveToFirst();
+//    String _id = "-1";
+////    String rawId = "-1";
+//    ArrayList<Long> ids = new ArrayList<Long>();
+//    while (!cu.isAfterLast()) {
+//      int idIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
+//      _id = cu.getString(idIdx);
+//      ids.add(Long.parseLong(_id));
 //      
-//      int nameIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME_PRIMARY);
-//      String n = cu.getString(nameIdx);
-//      Log.d("rgai", "_id, rawId, name -> " + _id + " - " + rawId + " - " + n);
-      
-      cu.moveToNext();
-    }
-    if (cu != null) {
-      cu.close();
-    }
-    
-    if (ids.size() > 0) {
-      return ids.get(0);
-    } else {
-      return -1L;
-    }
-    
-  }
+////      int rawIdIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
+////      rawId = cu.getString(rawIdIdx);
+////      
+////      int nameIdx = cu.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME_PRIMARY);
+////      String n = cu.getString(nameIdx);
+////      Log.d("rgai", "_id, rawId, name -> " + _id + " - " + rawId + " - " + n);
+//      
+//      cu.moveToNext();
+//    }
+//    if (cu != null) {
+//      cu.close();
+//    }
+//    
+//    if (ids.size() > 0) {
+//      return ids.get(0);
+//    } else {
+//      return -1L;
+//    }
+//    
+//  }
   
 }

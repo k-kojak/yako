@@ -23,16 +23,16 @@ import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
-public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
+public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
 	private TextView countryName;
-	private List<MessageAtom> messages = new ArrayList<MessageAtom>();
+	private List<MessageAtomParc> messages = new ArrayList<MessageAtomParc>();
 	private LinearLayout wrapper;
   private AccountAndr account = null;
   private Context context;
 
 	@Override
-	public void add(MessageAtom object) {
+	public void add(MessageAtomParc object) {
 		messages.add(object);
 		super.add(object);
 	}
@@ -49,14 +49,14 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
 	}
 
   @Override
-	public MessageAtom getItem(int index) {
+	public MessageAtomParc getItem(int index) {
 		return this.messages.get(index);
 	}
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View row = convertView;
-    MessageAtom coment = getItem(position);
+    MessageAtomParc coment = getItem(position);
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		if (row == null) {
       if (coment.isIsMe()) {
@@ -85,7 +85,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtom> {
     if (coment.isIsMe()) {
       img = StoreHandler.getUserFbImage(context);
     } else {
-      img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+      img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
     }
     iv.setImageBitmap(img);
 

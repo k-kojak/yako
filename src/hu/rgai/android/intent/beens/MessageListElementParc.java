@@ -90,13 +90,18 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     return account;
   }
   
+  @Override
+  public PersonAndr getFrom() {
+    return (PersonAndr)from;
+  }
+  
   public void writeToParcel(Parcel out, int flags) {
     out.writeString(this.id);
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
     out.writeString(subTitle);
     out.writeInt(unreadCount);
-    out.writeParcelable((Parcelable)new PersonAndr(from), flags);
+    out.writeParcelable((Parcelable)from, flags);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable((Parcelable)fullMessage, flags);

@@ -1,5 +1,6 @@
 package hu.rgai.android.config;
 
+import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
@@ -30,6 +31,7 @@ public final class Settings {
   public static final boolean DEBUG = false;
   public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
   public static final String FACEBOOK_ME_IMG_NAME = "me.png";
+  public static final String CONTACT_DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
   
 //  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;
   
@@ -120,7 +122,6 @@ public final class Settings {
       
       public static final class Facebook {
         
-//        public static final String CONTENT_ITEM_TYPE = "hu.rgai.android.cursor.item/facebook";
         public static final String CUSTOM_NAME = "Facebook";
         
       }

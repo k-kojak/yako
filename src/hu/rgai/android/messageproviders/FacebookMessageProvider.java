@@ -149,7 +149,7 @@ public class FacebookMessageProvider implements MessageProvider {
                             seen,
                             snippet,
                             unreadCount,
-                            new Person(recipIds.get(0), null),
+                            new Person(recipIds.get(0), null, MessageProvider.Type.FACEBOOK),
                             new Date(msg.getLong("updated_time") * 1000),
                             MessageProvider.Type.FACEBOOK));
                   }
@@ -237,12 +237,12 @@ public class FacebookMessageProvider implements MessageProvider {
 //                    int unreadCount = msg.getInt("unread");
                     String body = msg.getString("body");
                     
-                    ftm.addMessage(new MessageAtomParc(
+                    ftm.addMessage(new MessageAtom(
                             msg.getString("message_id"),
                             "",
                             body,
                             new Date(msg.getLong("created_time") * 1000),
-                            new Person(msg.getString("author_id"), null),
+                            new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
                             msg.getString("author_id").equals(account.getId()),
                             MessageProvider.Type.FACEBOOK,
                             null));

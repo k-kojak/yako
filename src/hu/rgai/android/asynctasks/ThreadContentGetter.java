@@ -1,5 +1,6 @@
 package hu.rgai.android.asynctasks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7,25 +8,31 @@ import android.os.Message;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
+import hu.rgai.android.intent.beens.MessageAtomParc;
+import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 
 public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessageParc> {
-
-    Handler handler;
-    AccountAndr account;
+  
+    private Context context;
+    private Handler handler;
+    private AccountAndr account;
     
-    public ThreadContentGetter(Handler handler, AccountAndr account) {
+    public ThreadContentGetter(Context context, Handler handler, AccountAndr account) {
+      this.context = context;
       this.handler = handler;
       this.account = account;
     }
@@ -56,6 +63,14 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           MessageProvider mp = (MessageProvider) constructor.newInstance(account);
           // force result to ThreadMessage, since this is a thread displayer
           threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0]));
+          Iterator<MessageAtom> iterator = threadMessage.getMessages().iterator();
+          while (iterator.hasNext()) {
+            MessageAtom ma = iterator.next();
+            MessageAtomParc map = new MessageAtomParc(ma);
+            map.setFrom(PersonAndr.searchPersonAndr(context, ma.getFrom()));
+            threadMessage.getMessagesParc().add(map);
+            iterator.remove();
+          }
         }
 
       // TODO: handle exceptions

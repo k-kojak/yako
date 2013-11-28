@@ -13,14 +13,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -38,7 +35,6 @@ import com.facebook.SessionState;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
@@ -175,24 +171,24 @@ public class MainActivity extends Activity {
 //          pd.show();
         }
         break;
-      case (PICK_CONTACT):
-        if (resultCode == Activity.RESULT_OK) {
-          Uri contactData = data.getData();
-          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
-          if (c.moveToFirst()) {
-            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            AccountAndr account = StoreHandler.getAccounts(this).get(0);
-            Intent intent = new Intent(this, MessageReply.class);
-//            Source source = new Source("");
-            intent.putExtra("content", "");
-            intent.putExtra("subject", "");
-            intent.putExtra("account", (Parcelable)account);
-            intent.putExtra("from", new PersonAndr("1", name, name));
-            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
-          }
-        }
-        
-        break;
+//      case (PICK_CONTACT):
+//        if (resultCode == Activity.RESULT_OK) {
+//          Uri contactData = data.getData();
+//          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
+//          if (c.moveToFirst()) {
+//            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+//            AccountAndr account = StoreHandler.getAccounts(this).get(0);
+//            Intent intent = new Intent(this, MessageReply.class);
+////            Source source = new Source("");
+//            intent.putExtra("content", "");
+//            intent.putExtra("subject", "");
+//            intent.putExtra("account", (Parcelable)account);
+//            intent.putExtra("from", new PersonAndr("1", name, name));
+//            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
+//          }
+//        }
+//        
+//        break;
       default:
         break;
     }

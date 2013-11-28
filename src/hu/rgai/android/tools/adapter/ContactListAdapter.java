@@ -32,7 +32,6 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 
   private ContentResolver mContent;
 //  private Set<String> allowedMimeTypes = null;
-  private static final String DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
 
   public ContactListAdapter(Context context, Cursor c) {
     super(context, c);
@@ -85,7 +84,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 //      colNamesString += s + ", ";
 //    }
     int idIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID);
-    int nameIdx = cursor.getColumnIndexOrThrow(DISPLAY_NAME);
+    int nameIdx = cursor.getColumnIndexOrThrow(Settings.CONTACT_DISPLAY_NAME);
     int typeIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE);
     int displayDataIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1);
     int dataIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA10);
@@ -204,7 +203,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 
   @Override
   public CharSequence convertToString(Cursor cursor) {
-    int nameIdx = cursor.getColumnIndexOrThrow(DISPLAY_NAME);
+    int nameIdx = cursor.getColumnIndexOrThrow(Settings.CONTACT_DISPLAY_NAME);
     String name = cursor.getString(nameIdx);
     return name;
   }
@@ -221,7 +220,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
       projection = new String[] {
         ContactsContract.Data._ID,
         ContactsContract.Data.RAW_CONTACT_ID,
-        DISPLAY_NAME,
+        Settings.CONTACT_DISPLAY_NAME,
         ContactsContract.Data.PHOTO_URI,
         ContactsContract.Data.PHOTO_THUMBNAIL_URI,
         ContactsContract.Data.MIMETYPE,
@@ -236,7 +235,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
       projection = new String[] {
         ContactsContract.Data._ID,
         ContactsContract.Data.RAW_CONTACT_ID,
-        DISPLAY_NAME,
+        Settings.CONTACT_DISPLAY_NAME,
         ContactsContract.Data.MIMETYPE,
         ContactsContract.Data.DATA1,
 //        ContactsContract.Data.DATA2,
@@ -249,7 +248,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 //    String[] projection = null;
     //TODO: Select dataKinds by Settings.java
-    String selection = "UPPER(" + DISPLAY_NAME + ") LIKE ? "
+    String selection = "UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
             + " AND LENGTH(" + ContactsContract.Data.DATA1 +") != 0 "
             + " AND ("
             + ContactsContract.Data.MIMETYPE + " = ?"
@@ -273,7 +272,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
             ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
             Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME,
     };
-    String sort = DISPLAY_NAME;
+    String sort = Settings.CONTACT_DISPLAY_NAME;
     
     return mContent.query(ContactsContract.Data.CONTENT_URI,
             projection, selection, selectionArgs, sort);

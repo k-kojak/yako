@@ -71,13 +71,10 @@ public class LazyAdapter extends BaseAdapter {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
     }
-    Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getMessageType(), message.getFrom().getId());
-    if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
-      icon.setImageBitmap(img);
-//      icon.setI
-    } else {
-      icon.setImageBitmap(img);
-    }
+    Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
+    icon.setImageBitmap(img);
+    icon.setImageBitmap(img);
+    
     date.setText(message.getFormattedDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);
     return vi;
