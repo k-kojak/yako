@@ -11,6 +11,7 @@ import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -35,6 +36,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
       this.context = context;
       this.handler = handler;
       this.account = account;
+      this.context = context;
     }
     
     @Override
@@ -58,10 +60,17 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           if (providerClass == null) {
             throw new RuntimeException("Provider class is null, " + account.getAccountType() + " is not a valid TYPE.");
           }
-          constructor = providerClass.getConstructor(accountClass);
-
-          MessageProvider mp = (MessageProvider) constructor.newInstance(account);
-          // force result to ThreadMessage, since this is a thread displayer
+          
+          MessageProvider mp = null;
+          if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
+        	  constructor = providerClass.getConstructor(Context.class);
+        	  mp = (MessageProvider) constructor.newInstance(context);        	  
+          } else {
+        	  constructor = providerClass.getConstructor(accountClass);
+	          mp = (MessageProvider) constructor.newInstance(account);
+	          // force result to ThreadMessage, since this is a thread displayer
+	          
+          }
           threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0]));
           Iterator<MessageAtom> iterator = threadMessage.getMessages().iterator();
           while (iterator.hasNext()) {

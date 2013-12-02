@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -15,6 +16,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
@@ -22,7 +24,9 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.Constants;
 import hu.rgai.android.test.MainActivity;
@@ -104,6 +108,15 @@ public class MainService extends Service {
       } else {
         for (AccountAndr acc : accounts) {
           LongOperation myThread = new LongOperation(this, handler, acc);
+          myThread.execute();
+        }
+        
+        
+        TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        int simState = telMgr.getSimState();
+        if (simState == TelephonyManager.SIM_STATE_READY) {
+          AccountAndr smsAcc = new SmsAccountAndr();
+          LongOperation myThread = new LongOperation(this, handler, smsAcc);
           myThread.execute();
         }
       }
@@ -355,6 +368,7 @@ public class MainService extends Service {
       this.context = context;
       this.handler = handler;
       this.acc = acc;
+      this.context = context;
     }
     
     @Override
@@ -378,6 +392,10 @@ public class MainService extends Service {
           accountName = ((FacebookAccountAndr)acc).getDisplayName();
           FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
           messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+        } else if (acc instanceof SmsAccountAndr) {
+          accountName = "SMS";
+          SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
+          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
@@ -421,6 +439,7 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
+        Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
         parc.add(mlep);
       }
