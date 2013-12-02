@@ -35,7 +35,6 @@ public class SmsMessageProvider implements MessageProvider {
 
   public SmsMessageProvider(Context myContext) {
     context = myContext;
-
   }
 
   @Override
@@ -50,7 +49,7 @@ public class SmsMessageProvider implements MessageProvider {
 
     Uri uriSMSURI = Uri.parse("content://sms");
     Cursor cur = context.getContentResolver().query(uriSMSURI,
-            new String[]{"_id", "body", "date", "seen", "person", "address"},
+            new String[]{"thread_id", "body", "date", "seen", "person", "address"},
             null,
             null,
             "date DESC LIMIT " + limit);
@@ -106,7 +105,7 @@ public class SmsMessageProvider implements MessageProvider {
                 cur.getString(12),
                 new Date(cur.getLong(4)),
                 new Person(cur.getLong(3) + "", cur.getString(2), MessageProvider.Type.SMS),
-                false, //vmit ezzel kezdeni
+                cur.getLong(9) == 2, //vmit ezzel kezdeni
                 MessageProvider.Type.SMS,
                 null));
 
