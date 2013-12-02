@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
@@ -111,18 +112,13 @@ public class MainService extends Service {
         }
         
         
-		if ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= 
-				Configuration.SCREENLAYOUT_SIZE_LARGE) {
-
-		}else{
-
-	        AccountAndr smsAcc = new SmsAccountAndr();
-	        LongOperation myThread = new LongOperation(this, handler, smsAcc);
-	        myThread.execute();
-
-		}
-
-      
+        TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        int simState = telMgr.getSimState();
+        if (simState == TelephonyManager.SIM_STATE_READY) {
+          AccountAndr smsAcc = new SmsAccountAndr();
+          LongOperation myThread = new LongOperation(this, handler, smsAcc);
+          myThread.execute();
+        }
       }
 //      myThread = new LongOperation(handler);
 //      myThread.execute();
@@ -397,9 +393,9 @@ public class MainService extends Service {
           FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
           messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof SmsAccountAndr) {
-	      accountName = "SMS";
-	      SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
-	      messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
+          accountName = "SMS";
+          SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
+          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
@@ -443,6 +439,7 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
+        Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
         parc.add(mlep);
       }

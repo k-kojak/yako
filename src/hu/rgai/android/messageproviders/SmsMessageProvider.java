@@ -27,6 +27,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
 public class SmsMessageProvider implements MessageProvider {
 
@@ -95,10 +96,11 @@ public class SmsMessageProvider implements MessageProvider {
     while (cur.moveToNext()) {
       if (cur.getString(1).equals(id)) {
 
-
-        ftm.addMessage(new MessageAtomParc(
+        Log.d("rgai", "SMS DATE -> " + cur.getString(4));
+        Log.d("rgai", "SMS PERSON -> " + cur.getString(3));
+        ftm.addMessage(new MessageAtom(
                 cur.getString(0),
-                "vmi",
+                cur.getString(11),
                 cur.getString(12),
                 new Date(),
                 new Person("0", "en", MessageProvider.Type.SMS),
