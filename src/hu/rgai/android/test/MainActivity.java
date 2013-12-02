@@ -1,5 +1,6 @@
 //TODO: refresh button at main setting panel
 //TODO: batched contact list update
+//TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
 import hu.rgai.android.services.MainService;
@@ -12,14 +13,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -37,7 +35,6 @@ import com.facebook.SessionState;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
@@ -174,24 +171,24 @@ public class MainActivity extends Activity {
 //          pd.show();
         }
         break;
-      case (PICK_CONTACT):
-        if (resultCode == Activity.RESULT_OK) {
-          Uri contactData = data.getData();
-          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
-          if (c.moveToFirst()) {
-            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            AccountAndr account = StoreHandler.getAccounts(this).get(0);
-            Intent intent = new Intent(this, MessageReply.class);
-//            Source source = new Source("");
-            intent.putExtra("content", "");
-            intent.putExtra("subject", "");
-            intent.putExtra("account", (Parcelable)account);
-            intent.putExtra("from", new PersonAndr("1", name, name));
-            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
-          }
-        }
-        
-        break;
+//      case (PICK_CONTACT):
+//        if (resultCode == Activity.RESULT_OK) {
+//          Uri contactData = data.getData();
+//          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
+//          if (c.moveToFirst()) {
+//            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+//            AccountAndr account = StoreHandler.getAccounts(this).get(0);
+//            Intent intent = new Intent(this, MessageReply.class);
+////            Source source = new Source("");
+//            intent.putExtra("content", "");
+//            intent.putExtra("subject", "");
+//            intent.putExtra("account", (Parcelable)account);
+//            intent.putExtra("from", new PersonAndr("1", name, name));
+//            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
+//          }
+//        }
+//        
+//        break;
       default:
         break;
     }
@@ -275,7 +272,7 @@ public class MainActivity extends Activity {
 
               MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
 
-              String messageId = (String)message.getId();
+//              String messageId = (String)message.getId();
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
               if (a instanceof FacebookAccount) {
@@ -291,28 +288,6 @@ public class MainActivity extends Activity {
                 intent.putExtra("msg_list_element", (Parcelable)message);
                 intent.putExtra("account", (Parcelable)a);
                 
-//                MessageListElementParc ele = s.getListElementById(messageId, a);
-//                intent = new Intent(MainActivity.this, EmailDisplayer.class);
-//
-//                // TODO: getFull message now always converted to FullEmailMessage
-//                if (ele != null) {
-//                  if (ele.getFullMessage() != null) {
-//                    if (ele.getFullMessage() instanceof FullEmailMessage) {
-//                      intent.putExtra("email_content", ((FullEmailMessage)ele.getFullMessage()).getContent());
-//                    }
-//                  }
-//                }
-//
-//                intent.putExtra("email_id", messageId);
-//                intent.putExtra("subject", ele.getTitle());
-//                intent.putExtra("from", new PersonAndr(ele.getFrom()));
-//                intent.putExtra("account", (Parcelable)a);
-
-//                boolean changed = s.setMailSeen(messageId);
-//                if (changed) {
-//                  setMessageSeen(messageId);
-//                  adapter.notifyDataSetChanged();
-//                }
               }
               boolean changed = s.setMessageSeen(message);
               if (changed) {
@@ -330,17 +305,6 @@ public class MainActivity extends Activity {
           adapter.notifyDataSetChanged();
         }
         
-        // if no pass or email or imap provided, then redirect to settings panel
-//        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
-//        String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
-//        String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
-//        String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
-//        if (email.length() + pass.length() + imap.length() == 0) {
-//          TextView text = new TextView(this);
-//          text.setText(getString(R.string.no_account_set));
-//          text.setGravity(Gravity.CENTER);
-//          this.setContentView(text);
-//        }
       } else {
         TextView text = new TextView(this);
         text.setText(getString(R.string.no_internet_access));

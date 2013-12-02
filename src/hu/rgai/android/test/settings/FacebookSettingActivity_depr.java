@@ -261,7 +261,7 @@ public class FacebookSettingActivity_depr extends Activity {
       String content = null;
       
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
-      fbfp.getFacebookFriends(activity);
+//      fbfp.getFacebookFriends(activity);
 
       return content;
     }

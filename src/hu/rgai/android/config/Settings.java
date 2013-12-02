@@ -1,5 +1,6 @@
 package hu.rgai.android.config;
 
+import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
@@ -29,6 +30,10 @@ import java.util.Map;
 public final class Settings {
   
   public static final boolean DEBUG = false;
+  public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
+  public static final String FACEBOOK_ME_IMG_NAME = "me.png";
+  public static final String CONTACT_DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
+  
 //  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;
   
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
@@ -39,8 +44,7 @@ public final class Settings {
   private static List<String> facebookPermissions = null;
   
   public static final int MAX_SNIPPET_LENGTH = 30;
-  
-//  private static String 
+
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
     if (contactDataTypeToRecipientClass == null) {
@@ -99,7 +103,6 @@ public final class Settings {
       facebookPermissions = new LinkedList<String>();
       facebookPermissions.add("email");
       facebookPermissions.add("read_mailbox");
-      facebookPermissions.add("read_mailbox");
     }
     return facebookPermissions;
   }
@@ -122,7 +125,6 @@ public final class Settings {
       
       public static final class Facebook {
         
-//        public static final String CONTENT_ITEM_TYPE = "hu.rgai.android.cursor.item/facebook";
         public static final String CUSTOM_NAME = "Facebook";
         
       }

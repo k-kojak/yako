@@ -173,7 +173,11 @@ public class AccountSettingsList extends FragmentActivity {
             classToLoad = GmailSettingActivity.class;
             break;
           case 1:
-            classToLoad = FacebookSettingActivity.class;
+            if (fbAdded) {
+              classToLoad = SimpleEmailSettingActivity.class;
+            } else {
+              classToLoad = FacebookSettingActivity.class;
+            }
             break;
           case 2:
             classToLoad = SimpleEmailSettingActivity.class;
@@ -302,48 +306,48 @@ public class AccountSettingsList extends FragmentActivity {
     }
   }
   
-  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
-
-    Handler handler;
-//    FacebookAccount account;
-    private Activity activity;
-    
-    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
-      this.activity = activity;
-      this.handler = handler;
-//      this.account = account;
-    }
-    
-    @Override
-    protected String doInBackground(FacebookSessionAccount... params) {
-      String content = null;
-      
-      FacebookFriendProvider fbfp = new FacebookFriendProvider();
-      fbfp.getFacebookFriends(activity);
-
-      return content;
-    }
-
-    @Override
-    protected void onPostExecute(String result) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putString("content", "1");
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
-
-
+//  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
+//
+//    Handler handler;
+////    FacebookAccount account;
+//    private Activity activity;
+//    
+//    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
+//      this.activity = activity;
+//      this.handler = handler;
+////      this.account = account;
+//    }
+//    
 //    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
+//    protected String doInBackground(FacebookSessionAccount... params) {
+//      String content = null;
+//      
+//      FacebookFriendProvider fbfp = new FacebookFriendProvider();
+//      fbfp.getFacebookFriends(activity);
+//
+//      return content;
+//    }
+//
+//    @Override
+//    protected void onPostExecute(String result) {
 //      Message msg = handler.obtainMessage();
 //      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
+//      bundle.putString("content", "1");
 //      msg.setData(bundle);
 //      handler.sendMessage(msg);
 //    }
-  }
+//
+//
+////    @Override
+////    protected void onProgressUpdate(Integer... values) {
+////      Log.d(Constants.LOG, "onProgressUpdate");
+////      Message msg = handler.obtainMessage();
+////      Bundle bundle = new Bundle();
+////
+////      bundle.putInt("progress", values[0]);
+////      msg.setData(bundle);
+////      handler.sendMessage(msg);
+////    }
+//  }
   
 }

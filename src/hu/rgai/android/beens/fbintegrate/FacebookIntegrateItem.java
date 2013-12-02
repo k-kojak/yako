@@ -1,6 +1,5 @@
 package hu.rgai.android.beens.fbintegrate;
 
-import android.graphics.Bitmap;
 
 /**
  *
@@ -11,15 +10,13 @@ public class FacebookIntegrateItem {
   private String name;
   private String fbAliasId;
   private String fbId;
-  private Bitmap img;
-  private Bitmap fullImg;
+  private String thumbImgUrl;
 
-  public FacebookIntegrateItem(String name, String fbAliasId, String fbId, Bitmap img, Bitmap fullImg) {
+  public FacebookIntegrateItem(String name, String fbAliasId, String fbId, String thumbImgUrl) {
     this.name = name;
     this.fbAliasId = fbAliasId;
     this.fbId = fbId;
-    this.img = img;
-    this.fullImg = fullImg;
+    this.thumbImgUrl = thumbImgUrl;
   }
 
   public String getName() {
@@ -34,12 +31,8 @@ public class FacebookIntegrateItem {
     return fbId;
   }
 
-  public Bitmap getImg() {
-    return img;
-  }
-  
-  public Bitmap getFullImg() {
-    return fullImg;
+  public String getThumbImgUlr() {
+    return thumbImgUrl;
   }
   
   @Override

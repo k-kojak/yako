@@ -46,6 +46,11 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
     super(id, subject, content, date, from, isMe, type, attachments);
   }
   
+  @Override
+  public PersonAndr getFrom() {
+    return (PersonAndr)from;
+  }
+  
   public int describeContents() {
     return 0;
   }
@@ -55,7 +60,8 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
     out.writeString(subject);
     out.writeString(content);
     out.writeLong(date.getTime());
-    out.writeParcelable((Parcelable)new PersonAndr(from), flags);
+    // from MUST be parcelable here
+    out.writeParcelable((Parcelable)from, flags);
     out.writeByte(isMe ? (byte)1 : (byte)0);
     out.writeString(messageType.toString());
     // TODO: write attachments

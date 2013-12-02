@@ -1,17 +1,28 @@
 package hu.rgai.android.store;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.widget.Toast;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 
 import java.util.LinkedList;
 import java.util.List;
+import org.jivesoftware.smackx.bytestreams.BytestreamSession;
 
 
 /**
@@ -19,6 +30,61 @@ import java.util.List;
  * @author Tamas Kojedzinszky
  */
 public class StoreHandler {
+  
+  private static Bitmap fbImgMe = null;
+  
+  public static void saveUserFbImage(Context context, Bitmap bitmap) {
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+    byte[] byteArray = stream.toByteArray();
+    saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
+  }
+  
+  public static Bitmap getUserFbImage(Context context) {
+    if (fbImgMe == null) {
+      byte[] data = getByteArray(context, Settings.FACEBOOK_ME_IMG_FOLDER + "/" + Settings.FACEBOOK_ME_IMG_NAME);
+      fbImgMe = BitmapFactory.decodeByteArray(data, 0, data.length);
+    }
+    
+    return fbImgMe;
+  }
+  
+  private static byte[] getByteArray(Context context, String file) {
+    byte[] data = null;
+    try {
+      ContextWrapper cw = new ContextWrapper(context);
+      File mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
+      mainFilePath = new File(mainFilePath, file);
+      FileInputStream in = new FileInputStream(mainFilePath);
+      data = new byte[(int)mainFilePath.length()];
+      in.read(data, 0, (int)mainFilePath.length());
+      in.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+    return data;
+  }
+  
+  private static void saveByteArray(Context context, byte[] data, String folder, String filename) {
+
+    try {
+      ContextWrapper cw = new ContextWrapper(context);
+      File mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
+      mainFilePath = new File(mainFilePath, folder);
+      if (!mainFilePath.isDirectory()) {
+        mainFilePath.mkdirs();
+      }
+      Log.d("rgai", mainFilePath.getAbsolutePath());
+      File file = new File(mainFilePath, filename);
+      file.createNewFile();
+      FileOutputStream outs = new FileOutputStream(file);
+      outs.write(data);
+      outs.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
   
   public static void storeFacebookAccessToken(Context context, String token) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);

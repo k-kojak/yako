@@ -43,7 +43,7 @@ public class ThreadMsgService extends Service {
     if (intent != null && intent.getAction() != null && intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
       if (isNetworkAvailable()) {
         Log.d("rgai", "# ON START COMMAND ThreadMsgService");
-        ThreadContentGetter myThread = new ThreadContentGetter(handler, account, this);
+        ThreadContentGetter myThread = new ThreadContentGetter(this, handler, account);
         myThread.execute(threadId);
   //      myThread = new LongOperation(handler);
   //      myThread.execute();

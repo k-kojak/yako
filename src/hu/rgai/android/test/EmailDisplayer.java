@@ -2,6 +2,7 @@ package hu.rgai.android.test;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -60,7 +61,7 @@ public class EmailDisplayer extends Activity {
     emailID = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
-    from = new PersonAndr(mlep.getFrom());
+    from = (PersonAndr)mlep.getFrom();
     
     if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
@@ -70,7 +71,7 @@ public class EmailDisplayer extends Activity {
       displayMessage();
     } else {
       handler = new EmailContentTaskHandler();
-      EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
+      EmailContentGetter contentGetter = new EmailContentGetter(this, handler, account);
       contentGetter.execute(emailID);
 
       pd = new ProgressDialog(this);
@@ -142,7 +143,7 @@ public class EmailDisplayer extends Activity {
   }
   
   private void displayMessage() {
-    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
+    String mail = from.getId();
     String c = from.getName() + mail + "<br/>" + content.getContent();
     webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
   }
@@ -155,8 +156,12 @@ public class EmailDisplayer extends Activity {
       if (bundle != null) {
         if (bundle.get("content") != null) {
           content = bundle.getParcelable("content");
-//          webView.loadData(content, "text/html", mailCharCode);
-//          webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
+          
+          // content holds a simple Person object, but "from" is came from the MainActivity
+          // which is already a PersonAndr, so override it with it, so when creating parcelable
+          // there will not be an error
+          content.setFrom(from);
+
           displayMessage();
           if (pd != null) {
             pd.dismiss();
@@ -168,10 +173,12 @@ public class EmailDisplayer extends Activity {
   
   private class EmailContentGetter extends AsyncTask<String, Integer, FullSimpleMessageParc> {
 
+    private Context context;
     Handler handler;
     AccountAndr account;
     
-    public EmailContentGetter(Handler handler, AccountAndr account) {
+    public EmailContentGetter(Context context, Handler handler, AccountAndr account) {
+      this.context = context;
       this.handler = handler;
       this.account = account;
     }
