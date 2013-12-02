@@ -50,7 +50,7 @@ public class SmsMessageProvider implements MessageProvider {
 
     Uri uriSMSURI = Uri.parse("content://sms");
     Cursor cur = context.getContentResolver().query(uriSMSURI,
-            new String[]{"_id", "body", "date", "seen"},
+            new String[]{"_id", "body", "date", "seen", "person", "address"},
             null,
             null,
             "date DESC LIMIT " + limit);
@@ -64,13 +64,10 @@ public class SmsMessageProvider implements MessageProvider {
               true,
               cur.getString(1),
               1,
-              new Person("0", "én", MessageProvider.Type.SMS),
+              new Person(cur.getLong(4) + "", cur.getString(5), MessageProvider.Type.SMS),
               new Date(Long.parseLong(cur.getString(2))),
               MessageProvider.Type.SMS));
     }
-
-
-
 
     return messages;
 
@@ -97,14 +94,19 @@ public class SmsMessageProvider implements MessageProvider {
       if (cur.getString(1).equals(id)) {
 
         Log.d("rgai", "SMS DATE -> " + cur.getString(4));
-        Log.d("rgai", "SMS PERSON -> " + cur.getString(3));
+        Log.d("rgai", "SMS ADDRESS -> " + cur.getString(2));
+        Log.d("rgai", "SMS PERSON -> " + cur.getLong(3));
+        Log.d("rgai", "SMS READ -> " + cur.getLong(7));
+        Log.d("rgai", "SMS STATUS -> " + cur.getLong(8));
+        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
+        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
         ftm.addMessage(new MessageAtom(
                 cur.getString(0),
                 cur.getString(11),
                 cur.getString(12),
-                new Date(),
-                new Person("0", "en", MessageProvider.Type.SMS),
-                true, //vmit ezzel kezdeni
+                new Date(cur.getLong(4)),
+                new Person(cur.getLong(3) + "", cur.getString(2), MessageProvider.Type.SMS),
+                false, //vmit ezzel kezdeni
                 MessageProvider.Type.SMS,
                 null));
 

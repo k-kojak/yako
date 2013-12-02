@@ -141,6 +141,8 @@ public final class PersonAndr extends Person implements Parcelable {
       }
       if (pa != null) {
         storedPerson.put(key, pa);
+      } else {
+        pa = new PersonAndr(-1, "CHANGE THIS");
       }
       return pa;
     }
@@ -224,11 +226,9 @@ public final class PersonAndr extends Person implements Parcelable {
     String selection = "";
     String[] selectionArgs = null;
     if (type.equals(MessageProvider.Type.SMS)) {
-      selection = ContactsContract.Data.MIMETYPE + " = ? "
-              + " AND " + ContactsContract.CommonDataKinds.Phone.DATA + " = ? " ;
-      selectionArgs = new String[]{
-              ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
-              id};
+//      return Long.parseLong(id);
+      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? ";
+      selectionArgs = new String[]{id};
     } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
       selection = ContactsContract.Data.MIMETYPE + " = ? "
               + " AND " + ContactsContract.CommonDataKinds.Email.DATA + " = ? ";

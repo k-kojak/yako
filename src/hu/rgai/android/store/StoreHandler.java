@@ -43,7 +43,9 @@ public class StoreHandler {
   public static Bitmap getUserFbImage(Context context) {
     if (fbImgMe == null) {
       byte[] data = getByteArray(context, Settings.FACEBOOK_ME_IMG_FOLDER + "/" + Settings.FACEBOOK_ME_IMG_NAME);
-      fbImgMe = BitmapFactory.decodeByteArray(data, 0, data.length);
+      if (data != null) {
+        fbImgMe = BitmapFactory.decodeByteArray(data, 0, data.length);
+      }
     }
     
     return fbImgMe;
@@ -55,10 +57,12 @@ public class StoreHandler {
       ContextWrapper cw = new ContextWrapper(context);
       File mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
       mainFilePath = new File(mainFilePath, file);
-      FileInputStream in = new FileInputStream(mainFilePath);
-      data = new byte[(int)mainFilePath.length()];
-      in.read(data, 0, (int)mainFilePath.length());
-      in.close();
+      if (mainFilePath.isFile()) {
+        FileInputStream in = new FileInputStream(mainFilePath);
+        data = new byte[(int)mainFilePath.length()];
+        in.read(data, 0, (int)mainFilePath.length());
+        in.close();
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -87,6 +87,9 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
     } else {
       img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
     }
+    if (img == null) {
+      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
+    }
     iv.setImageBitmap(img);
 
 		return row;

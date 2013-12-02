@@ -99,7 +99,7 @@ public class MainService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
     if (isNetworkAvailable()) {
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
-      if (accounts.isEmpty()) {
+      if (accounts.isEmpty() && !isPhone()) {
         Message msg = handler.obtainMessage();
         Bundle bundle = new Bundle();
         bundle.putInt("result", NO_ACCOUNT_SET);
@@ -111,14 +111,10 @@ public class MainService extends Service {
           myThread.execute();
         }
         
+        AccountAndr smsAcc = new SmsAccountAndr();
+        LongOperation myThread = new LongOperation(this, handler, smsAcc);
+        myThread.execute();
         
-        TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        int simState = telMgr.getSimState();
-        if (simState == TelephonyManager.SIM_STATE_READY) {
-          AccountAndr smsAcc = new SmsAccountAndr();
-          LongOperation myThread = new LongOperation(this, handler, smsAcc);
-          myThread.execute();
-        }
       }
 //      myThread = new LongOperation(handler);
 //      myThread.execute();
@@ -131,6 +127,16 @@ public class MainService extends Service {
     }
     
     return Service.START_STICKY;
+  }
+  
+  private boolean isPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    if (simState == TelephonyManager.SIM_STATE_READY) {
+      return true;
+    } else {
+      return false;
+    }
   }
   
   private boolean isNetworkAvailable() {
