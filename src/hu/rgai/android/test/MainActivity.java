@@ -275,20 +275,20 @@ public class MainActivity extends Activity {
 //              String messageId = (String)message.getId();
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
-              if (a instanceof FacebookAccount) {
+//              if (a instanceof FacebookAccount) {
                 Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
                 intent = new Intent(MainActivity.this, classToLoad);
                 
                 intent.putExtra("msg_list_element", (Parcelable)message);
                 intent.putExtra("account", (Parcelable)a);
-              } else {
-                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-                intent = new Intent(MainActivity.this, classToLoad);
-                
-                intent.putExtra("msg_list_element", (Parcelable)message);
-                intent.putExtra("account", (Parcelable)a);
-                
-              }
+//              } else {
+//                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+//                intent = new Intent(MainActivity.this, classToLoad);
+//                
+//                intent.putExtra("msg_list_element", (Parcelable)message);
+//                intent.putExtra("account", (Parcelable)a);
+//                
+//              }
               boolean changed = s.setMessageSeen(message);
               if (changed) {
                 setMessageSeen(message);

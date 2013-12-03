@@ -1,5 +1,6 @@
 package hu.rgai.android.messageproviders;
 
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -42,13 +43,22 @@ public class SmsMessageProvider implements MessageProvider {
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
-    // TODO Auto-generated method stub
 
     final List<MessageListElement> messages = new LinkedList<MessageListElement>();
 
-
     Uri uriSMSURI = Uri.parse("content://sms");
     Cursor cur = context.getContentResolver().query(uriSMSURI,
+            new String[]{"thread_id", "_id", "body", "date"},
+            null,
+            null,
+            "date DESC");
+    while (cur.moveToNext()) {
+      MessageItem ti = new MessageItem(cur.getString(0), cur.getString(1), cur.getString(2), cur.getLong(3));
+      Log.d("rgai", ti.toString());
+    }
+
+    uriSMSURI = Uri.parse("content://sms");
+    cur = context.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "body", "date", "seen", "person", "address"},
             null,
             null,
@@ -123,14 +133,14 @@ public class SmsMessageProvider implements MessageProvider {
 
     for (MessageRecipient mr : to) {
 
-      SmsMessageRecipient smr = (SmsMessageRecipient) mr;
+      SmsMessageRecipientAndr smr = (SmsMessageRecipientAndr) mr;
 
       SmsManager smsman = SmsManager.getDefault();
-      smsman.sendTextMessage(smr.getAddress(), null, content, null, null);
+      smsman.sendTextMessage(smr.getData(), null, content, null, null);
 
 
       ContentValues sentSms = new ContentValues();
-      sentSms.put("address", smr.getAddress());
+      sentSms.put("address", smr.getData());
       sentSms.put("body", content);
 
 
@@ -141,4 +151,24 @@ public class SmsMessageProvider implements MessageProvider {
     }
 
   }
+  private class MessageItem {
+    private String threadId;
+    private String msgId;
+    private String msgBody;
+    private long date;
+
+    public MessageItem(String threadId, String msgId, String msgBody, long date) {
+      this.threadId = threadId;
+      this.msgId = msgId;
+      this.msgBody = msgBody;
+      this.date = date;
+    }
+
+    @Override
+    public String toString() {
+      return "MessageItem{" + "threadId=" + threadId + ", msgId=" + msgId + ", msgBody=" + msgBody + ", date=" + date + '}';
+    }
+
+  }
+  
 }

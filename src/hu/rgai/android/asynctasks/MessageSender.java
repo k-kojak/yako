@@ -1,6 +1,7 @@
 
 package hu.rgai.android.asynctasks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,6 +10,8 @@ import android.util.Log;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.test.MessageReply;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -32,7 +35,8 @@ import javax.mail.NoSuchProviderException;
  */
   public class MessageSender extends AsyncTask<Integer, Integer, Boolean> {
 
-    RecipientItem recipient;
+    private Context context;
+    private RecipientItem recipient;
     private Handler handler;
     private List<AccountAndr> accounts;
     private String content;
@@ -41,11 +45,12 @@ import javax.mail.NoSuchProviderException;
     
     private String result = null;
     
-    public MessageSender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler, String content) {
+    public MessageSender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler, String content, Context context) {
       this.recipient = recipient;
       this.accounts = accounts;
       this.handler = handler;
       this.content = content;
+      this.context = context;
 //      this.subject = subject;
 //      this.recipients = recipients;
     }
@@ -66,6 +71,10 @@ import javax.mail.NoSuchProviderException;
           mp = new SimpleEmailMessageProvider((EmailAccount)acc);
           recipients = new HashSet<MessageRecipient>();
           recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
+        } else if (recipient.getType().equals(MessageProvider.Type.SMS)) {
+          mp = new SmsMessageProvider(context);
+          recipients = new HashSet<MessageRecipient>();
+          recipients.add((MessageRecipient)recipient);
         }
         if (mp != null && recipients != null) {
           try {

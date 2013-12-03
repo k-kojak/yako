@@ -39,9 +39,15 @@ public final class PersonAndr extends Person implements Parcelable {
     }
   };
   
-  public PersonAndr(long contactId, String name) {
+//  public PersonAndr(long contactId, String name) {
+//    this.contactId = contactId;
+//    this.name = name;
+//  }
+  
+  public PersonAndr(long contactId, String name, String id) {
     this.contactId = contactId;
     this.name = name;
+    this.id = id;
   }
   
   public void addId(MessageProvider.Type type, String id) {
@@ -132,23 +138,31 @@ public final class PersonAndr extends Person implements Parcelable {
       return storedPerson.get(key);
     } else {
       
-      long uid = getUid(context, p.getType(), p.getId());
+      long uid = getUid(context, p.getType(), p.getId(), p.getName());
       PersonAndr pa = null;
       if (uid != -1) {
-        pa = getUserData(context, uid);
-      } else {
-        pa = new PersonAndr(-1, p.getName());
-      }
-      if (pa != null) {
+        // if dealing with sms, than p.getName() contains the phone number, so that is the user id for sending message
+        if (p.getType().equals(MessageProvider.Type.SMS)) {
+          pa = getUserData(context, uid, p.getName());
+        // if not using sms, than p.getId() can be used for communication (fb id, email addr, etc.)
+        } else {
+          pa = getUserData(context, uid, p.getId());
+        }
         storedPerson.put(key, pa);
       } else {
-        pa = new PersonAndr(-1, "CHANGE THIS");
+        pa = new PersonAndr(-1, p.getName(), p.getName());
+//        pa = new PersonAndr(-1, p.getName());
       }
+//      if (pa != null) {
+//        
+//      } else {
+//        
+//      }
       return pa;
     }
   }
   
-  private static PersonAndr getUserData(Context context, long uid) {
+  private static PersonAndr getUserData(Context context, long uid, String userAddrId) {
     PersonAndr pa = null;
     
     // selecting name
@@ -160,7 +174,7 @@ public final class PersonAndr extends Person implements Parcelable {
               null);
     if (cursor.getCount() > 0) {
       cursor.moveToNext();
-      pa = new PersonAndr(uid, cursor.getString(0));
+      pa = new PersonAndr(uid, cursor.getString(0), userAddrId);
     }
     cursor.close();
     if (pa != null) {
@@ -221,14 +235,19 @@ public final class PersonAndr extends Person implements Parcelable {
   }
   
   private static long getUid(Context context, MessageProvider.Type type, String id) {
+    return getUid(context, type, id, null);
+  }
+  
+  private static long getUid(Context context, MessageProvider.Type type, String id, String id2) {
     long uid = -1;
     
     String selection = "";
     String[] selectionArgs = null;
     if (type.equals(MessageProvider.Type.SMS)) {
 //      return Long.parseLong(id);
-      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? ";
-      selectionArgs = new String[]{id};
+      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? OR ("
+              + ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.Phone.DATA + " = ? )";
+      selectionArgs = new String[]{id, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, id2};
     } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
       selection = ContactsContract.Data.MIMETYPE + " = ? "
               + " AND " + ContactsContract.CommonDataKinds.Email.DATA + " = ? ";

@@ -31,9 +31,11 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.rgai.android.tools.Utils;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
@@ -156,14 +158,18 @@ public class ThreadDisplayer extends Activity {
 //    List<RecipientItem> to = recipients.getRecipients();
     List<AccountAndr> accs = new LinkedList<AccountAndr>();
     accs.add(account);
-    
-    RecipientItem ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
-    MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString());
+    RecipientItem ri = null;
+    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
+    } else {
+      ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
+    }
+    MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString(), this);
     rs.execute();
     
     String tempId = Utils.generateString(32);
     content.getMessagesParc().add(new MessageAtomParc(tempId, null, text.getText().toString(), new Date(),
-            new Person("-1", "me", account.getAccountType()), true, account.getAccountType(), null));
+            new PersonAndr(-1, "me", from.getId()), true, account.getAccountType(), null));
     displayMessage();
     text.setText("");
     tempMessageIds.add(tempId);
@@ -317,7 +323,7 @@ public class ThreadDisplayer extends Activity {
           if (content != null) {
             content.getMessagesParc().addAll(newMessages.getMessagesParc());
             if (!tempMessageIds.isEmpty()) {
-              for (Iterator<MessageAtom> it = content.getMessages().iterator(); it.hasNext(); ) {
+              for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext(); ) {
                 MessageAtom ma = it.next();
                 if (tempMessageIds.contains(ma.getId())) {
                   tempMessageIds.remove(ma.getId());

@@ -164,7 +164,7 @@ public class MessageReply extends Activity implements TextWatcher {
     List<AccountAndr> accs = StoreHandler.getAccounts(this);
     
     for (RecipientItem ri : to) {
-      MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString());
+      MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString(), this);
       rs.execute();
     }
 //    EmailReplySender replySender = new EmailReplySender(account, handler, text.getText().toString(), subject, recipients.getText().toString());
