@@ -447,6 +447,7 @@ public class MainService extends Service {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
         Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
+        Log.d("rgai", "A message from REPLACED user -> " + mle.getFrom());
         parc.add(mlep);
       }
       

@@ -76,7 +76,9 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           while (iterator.hasNext()) {
             MessageAtom ma = iterator.next();
             MessageAtomParc map = new MessageAtomParc(ma);
+            Log.d("rgai", "PERSON BEFORE repl (thread) -> " + ma.getFrom());
             map.setFrom(PersonAndr.searchPersonAndr(context, ma.getFrom()));
+            Log.d("rgai", "PERSON AFTER  repl (thread) -> " + map.getFrom());
             threadMessage.getMessagesParc().add(map);
             iterator.remove();
           }

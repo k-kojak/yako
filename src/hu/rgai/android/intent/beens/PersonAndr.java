@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.ContactsContract;
+import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
@@ -131,6 +132,7 @@ public final class PersonAndr extends Person implements Parcelable {
   
   public static PersonAndr searchPersonAndr(Context context, Person p) {
     String key = p.getType().toString() + "_" + p.getId();
+    Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {
       storedPerson = new HashMap<String, PersonAndr>();
     }
@@ -139,26 +141,27 @@ public final class PersonAndr extends Person implements Parcelable {
     } else {
       
       long uid = getUid(context, p.getType(), p.getId(), p.getName());
-      PersonAndr pa = null;
-      if (uid != -1) {
-        // if dealing with sms, than p.getName() contains the phone number, so that is the user id for sending message
-        if (p.getType().equals(MessageProvider.Type.SMS)) {
-          pa = getUserData(context, uid, p.getName());
-        // if not using sms, than p.getId() can be used for communication (fb id, email addr, etc.)
-        } else {
-          pa = getUserData(context, uid, p.getId());
-        }
-        storedPerson.put(key, pa);
+      key = p.getType().toString() + "_" + uid;
+      if (storedPerson.containsKey(key)) {
+        return storedPerson.get(key);
       } else {
-        pa = new PersonAndr(-1, p.getName(), p.getName());
-//        pa = new PersonAndr(-1, p.getName());
+        PersonAndr pa = null;
+        if (uid != -1) {
+          // if dealing with sms, than p.getName() contains the phone number, so that is the user id for sending message
+          if (p.getType().equals(MessageProvider.Type.SMS)) {
+            pa = getUserData(context, uid, p.getName());
+          // if not using sms, than p.getId() can be used for communication (fb id, email addr, etc.)
+          } else {
+            pa = getUserData(context, uid, p.getId());
+          }
+          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
+          storedPerson.put(key, pa);
+        } else {
+          pa = new PersonAndr(-1, p.getName(), p.getName());
+  //        pa = new PersonAndr(-1, p.getName());
+        }
+        return pa;
       }
-//      if (pa != null) {
-//        
-//      } else {
-//        
-//      }
-      return pa;
     }
   }
   
