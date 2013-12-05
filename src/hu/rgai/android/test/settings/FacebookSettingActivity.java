@@ -16,6 +16,7 @@ import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -60,7 +61,7 @@ import java.util.logging.Logger;
  * @author Tamas Kojedzinszky
  
  */
-public class FacebookSettingActivity extends Activity {
+public class FacebookSettingActivity extends ActionBarActivity {
 
 //  private MainActivity mainActivity;
 //  boolean stillAddingFacebookAccount = false;

@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class AccountSettingsList extends FragmentActivity {
+public class AccountSettingsList extends ActionBarActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;

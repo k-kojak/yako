@@ -132,7 +132,7 @@ public final class PersonAndr extends Person implements Parcelable {
   
   public static PersonAndr searchPersonAndr(Context context, Person p) {
     String key = p.getType().toString() + "_" + p.getId();
-    Log.d("rgai", "MAP KEY -> " + key);
+//    Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {
       storedPerson = new HashMap<String, PersonAndr>();
     }
@@ -154,7 +154,7 @@ public final class PersonAndr extends Person implements Parcelable {
           } else {
             pa = getUserData(context, uid, p.getId());
           }
-          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
+//          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
         } else {
           pa = new PersonAndr(-1, p.getName(), p.getName());

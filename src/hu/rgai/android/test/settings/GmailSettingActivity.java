@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -19,7 +20,7 @@ import hu.rgai.android.test.R;
  *
  * @author Tamas Kojedzinszky
  */
-public class GmailSettingActivity extends Activity implements TextWatcher {
+public class GmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;

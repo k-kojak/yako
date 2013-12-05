@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,7 +22,7 @@ import java.util.Map;
  *
  * @author Tamas Kojedzinszky
  */
-public class SimpleEmailSettingActivity extends Activity implements TextWatcher {
+public class SimpleEmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;
