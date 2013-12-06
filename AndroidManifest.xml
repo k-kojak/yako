@@ -85,6 +85,15 @@
             </intent-filter>
         </receiver>
         
+        <receiver android:name="hu.rgai.android.messageproviders.SmsMessageProvider">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"></action>
+            </intent-filter>
+        </receiver>
+        
+        <receiver android:name="hu.rgai.android.test.ThreadDisplayer$NewMessageReceiver">
+        </receiver>
+        
         <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgScheduler" >
         </receiver>
         <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgServiceStarter" >

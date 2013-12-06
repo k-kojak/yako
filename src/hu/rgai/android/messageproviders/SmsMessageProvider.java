@@ -1,5 +1,6 @@
 package hu.rgai.android.messageproviders;
 
+import android.content.BroadcastReceiver;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -15,7 +16,6 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
 
-import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
@@ -24,17 +24,24 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class SmsMessageProvider implements MessageProvider {
+public class SmsMessageProvider extends BroadcastReceiver implements MessageProvider {
 
   Context context;
 
+  public SmsMessageProvider(){};
+  
   public SmsMessageProvider(Context myContext) {
     context = myContext;
   }
@@ -118,7 +125,7 @@ public class SmsMessageProvider implements MessageProvider {
 //              new Date(Long.parseLong(cur.getString(2))),
 //              MessageProvider.Type.SMS));
 //    }
-    Log.d("rgai", messages.toString());
+//    Log.d("rgai", messages.toString());
     return messages;
 
 
@@ -192,6 +199,32 @@ public class SmsMessageProvider implements MessageProvider {
     }
 
   }
+
+  @Override
+  public void onReceive(Context context, Intent intent) {
+    if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
+      
+      // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
+      // a bit the reading from inbox
+      try {
+        Thread.sleep(750);
+      } catch (InterruptedException ex) {
+        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+      context.sendBroadcast(res);
+      
+//      // in case the first attempt was too quick, request the display again a little bit later
+//      try {
+//        Thread.sleep(2000);
+//      } catch (InterruptedException ex) {
+//        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+//      }
+//      res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+//      context.sendBroadcast(res);
+    }
+  }
+
   private class MessageItem {
     private String threadId;
     private String title;

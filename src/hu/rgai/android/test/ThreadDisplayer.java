@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,6 +23,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import hu.rgai.android.asynctasks.MessageSender;
+import hu.rgai.android.asynctasks.ThreadContentGetter;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
@@ -32,11 +34,13 @@ import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.rgai.android.tools.Utils;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.util.Date;
@@ -50,7 +54,8 @@ import net.htmlparser.jericho.Source;
 public class ThreadDisplayer extends Activity {
 
   private ProgressDialog pd = null;
-  private Handler handler = null;
+  private Handler messageSendHandler = null;
+  private Handler messageArrivedHandler = null;
   private FullThreadMessageParc content = null;
   private String subject = null;
   private String threadId = "-1";
@@ -68,41 +73,53 @@ public class ThreadDisplayer extends Activity {
   
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
-  private DataUpdateReceiver serviceReceiver;
-  private ThreadMsgService service;
-  private boolean serviceConnectionEstablished = false;
-  private ServiceConnection serviceConnection = new ServiceConnection() {
-    public void onServiceConnected(ComponentName className, IBinder binder) {
-      Log.d("rgai", "# ON ServiceConnected callback");
-      service = ((ThreadMsgService.MyBinder) binder).getService();
-      service.setAccount(account);
-      service.setThreadId(threadId);
-
-//      updateList(service.getEmails());
-//      if ((messages == null || !messages.isEmpty()) && pd != null) {
-//        pd.dismiss();
-//      }
-      serviceConnectionEstablished = true;
-    }
-
-    public void onServiceDisconnected(ComponentName className) {
-      service = null;
-    }
-  };
+  private NewMessageReceiver nmr = null;
+//  private DataUpdateReceiver serviceReceiver;
+//  private ThreadMsgService service;
+//  private boolean serviceConnectionEstablished = false;
+//  private ServiceConnection serviceConnection = new ServiceConnection() {
+//    public void onServiceConnected(ComponentName className, IBinder binder) {
+//      Log.d("rgai", "# ON ServiceConnected callback");
+//      service = ((ThreadMsgService.MyBinder) binder).getService();
+//      service.setAccount(account);
+//      service.setThreadId(threadId);
+//
+////      updateList(service.getEmails());
+////      if ((messages == null || !messages.isEmpty()) && pd != null) {
+////        pd.dismiss();
+////      }
+//      serviceConnectionEstablished = true;
+//    }
+//
+//    public void onServiceDisconnected(ComponentName className) {
+//      service = null;
+//    }
+//  };
   
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     tempMessageIds = new HashSet<String>();
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+    // register messagereceiver
+    if (nmr == null) {
+      nmr = new NewMessageReceiver();
+    }
+    IntentFilter systemIntentFilter = new IntentFilter(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    registerReceiver(nmr, systemIntentFilter);
     
     threadId = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
     
-    handler = new MessageSendTaskHandler(this);
+    messageSendHandler = new MessageSendTaskHandler(this);
+    messageArrivedHandler = new NewMessageHandler(this);
+    // getting content at first time
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    myThread.execute(threadId);
     
+//    bindMessageNotifier();
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     text = (EditText) findViewById(R.id.text);
@@ -133,25 +150,45 @@ public class ThreadDisplayer extends Activity {
       pd.show();
     }
   }
-
+  
+//  private void bindMessageNotifier() {
+//    // TODO: fix this kind of if constraint...this is ugly
+////    MessageNotifier mn = null;
+//    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+//      new FacebookMessageProvider((FacebookAccount)account).attachNotifier(new MessageNotification() {
+//
+//        public void newMessage() {
+//          Log.d("rgai", "NEW MESSAGE ARRIVED, let's display it");
+//        }
+//      });
+//    } else {
+//      new SmsMessageProvider(this).attachNotifier(new MessageNotification() {
+//
+//        public void newMessage() {
+//          Log.d("rgai", "NEW MESSAGE ARRIVED, let's display it");
+//        }
+//      });
+//    }
+//  }
+  
   @Override
   protected void onResume() {
     super.onResume(); //To change body of generated methods, choose Tools | Templates.
     
-    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
-    serviceIntent.putExtra("account", (Parcelable)account);
-    serviceIntent.putExtra("threadId", threadId);
-    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+//    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
+//    serviceIntent.putExtra("account", (Parcelable)account);
+//    serviceIntent.putExtra("threadId", threadId);
+//    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     
-    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
-    this.sendBroadcast(intent);
+//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
+//    this.sendBroadcast(intent);
     
-    if (serviceReceiver == null) {
-      serviceReceiver = new DataUpdateReceiver(this);
-    }
-    IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
-    registerReceiver(serviceReceiver, intentFilter);
+//    if (serviceReceiver == null) {
+//      serviceReceiver = new DataUpdateReceiver(this);
+//    }
+//    IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
+//    registerReceiver(serviceReceiver, intentFilter);
   }
   
   public void sendMessage(View view) {
@@ -164,7 +201,7 @@ public class ThreadDisplayer extends Activity {
     } else {
       ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
     }
-    MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, accs, messageSendHandler, text.getText().toString(), this);
     rs.execute();
     
     String tempId = Utils.generateString(32);
@@ -180,12 +217,12 @@ public class ThreadDisplayer extends Activity {
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
     Log.d("rgai", "ThreadDisplayer onPause");
-    if (serviceReceiver != null) {
-      unregisterReceiver(serviceReceiver);
-    }
-    if (serviceConnection != null) {
-      unbindService(serviceConnection);
-    }
+//    if (serviceReceiver != null) {
+//      unregisterReceiver(serviceReceiver);
+//    }
+//    if (serviceConnection != null) {
+//      unbindService(serviceConnection);
+//    }
     
     Intent intent = new Intent(this, ThreadMsgScheduler.class);
     intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
@@ -262,6 +299,7 @@ public class ThreadDisplayer extends Activity {
   }
   
   private void displayMessage() {
+    Log.d("rgai", "DISPLAYING SMS CONTENT");
 //    String c = "";
 //    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
 //    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
@@ -273,6 +311,63 @@ public class ThreadDisplayer extends Activity {
       }
       lv.setAdapter(adapter);
       lv.setSelection(lv.getAdapter().getCount() - 1);
+    }
+  }
+  
+  private class NewMessageHandler extends Handler {
+    
+    private Context context;
+//    
+    public NewMessageHandler(Context context) {
+      this.context = context;
+    }
+    
+    @Override
+    public void handleMessage(Message msg) {
+//      Log.d("rgai", "message arrived");
+      
+      Bundle bundle = msg.getData();
+      
+      if (bundle.getInt("result") != ThreadMsgService.OK) {
+        String resMsg = "Error";
+        Toast.makeText(context, resMsg, Toast.LENGTH_LONG).show();
+        if (pd != null) {
+          pd.dismiss();
+        }
+      } else {
+        Log.d("rgai", "HANDLING SMS CONTENT");
+        FullThreadMessageParc newMessages = bundle.getParcelable("threadMessage");
+        if (content != null) {
+          content.getMessagesParc().addAll(newMessages.getMessagesParc());
+          if (!tempMessageIds.isEmpty()) {
+            for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext(); ) {
+              MessageAtom ma = it.next();
+              if (tempMessageIds.contains(ma.getId())) {
+                tempMessageIds.remove(ma.getId());
+                it.remove();
+              }
+            }
+          }
+        } else {
+          content = newMessages;
+        }
+        displayMessage();
+        if (pd != null) {
+          pd.dismiss();
+        }
+      }
+      
+//      Bundle bundle = msg.getData();
+//      if (bundle != null) {
+//        if (bundle.get("result") != null) {
+//          
+//          Intent intent = new Intent(Settings.Intents.THREAD_SERVICE_INTENT);
+//          intent.putExtra("result", bundle.getInt("result"));
+//          intent.putExtra("threadMessage", bundle.getParcelable("threadMessage"));
+//          
+//          sendBroadcast(intent);
+//        }
+//      }
     }
   }
   
@@ -297,6 +392,20 @@ public class ThreadDisplayer extends Activity {
             ThreadDisplayer.this.sendBroadcast(intent);
           }
         }
+      }
+    }
+  }
+  
+  private class NewMessageReceiver extends BroadcastReceiver {
+
+    public NewMessageReceiver(){};
+    
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
+        Log.d("rgai", "NEW SMS BROADCAST");
+        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account);
+        myThread.execute(threadId);
       }
     }
   }

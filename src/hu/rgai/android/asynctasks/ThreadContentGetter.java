@@ -47,7 +47,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
 //      String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
 //      MailProvider2 em = new MailProvider2(email, pass, imap, Pass.smtp);
       FullThreadMessageParc threadMessage = null;
-      
+      Log.d("rgai", "GETTING SMS CONTENT");
       try {
         if (account == null) {
           Log.d("rgai", "account is NULL @ threadContentGetter");
@@ -123,6 +123,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
       bundle.putInt("result", ThreadMsgService.OK);
       msg.setData(bundle);
       handler.sendMessage(msg);
+      Log.d("rgai", "RETURNING SMS CONTENT");
     }
 
 

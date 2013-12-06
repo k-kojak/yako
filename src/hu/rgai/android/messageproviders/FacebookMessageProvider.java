@@ -3,8 +3,6 @@ package hu.rgai.android.messageproviders;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullFacebookMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
@@ -44,11 +42,7 @@ import com.facebook.Request;
 import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.beans.account.Account;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import java.util.TreeSet;
 
 /**
  *
@@ -398,4 +392,5 @@ public class FacebookMessageProvider implements MessageProvider {
 //                 Request.executeBatchAsync(request);
 
   }
+
 }
