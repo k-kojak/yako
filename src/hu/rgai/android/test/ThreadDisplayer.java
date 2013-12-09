@@ -113,6 +113,8 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
     
+    
+    
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
@@ -175,6 +177,12 @@ public class ThreadDisplayer extends Activity {
   protected void onResume() {
     super.onResume(); //To change body of generated methods, choose Tools | Templates.
     
+    // init connection...Facebook needs this
+    // TODO: ugly code
+    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      FacebookMessageProvider.initConnection((FacebookAccount)account, this);
+    }
+    
 //    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
 //    serviceIntent.putExtra("account", (Parcelable)account);
 //    serviceIntent.putExtra("threadId", threadId);
@@ -205,11 +213,13 @@ public class ThreadDisplayer extends Activity {
     rs.execute();
     
     String tempId = Utils.generateString(32);
-    content.getMessagesParc().add(new MessageAtomParc(tempId, null, text.getText().toString(), new Date(),
-            new PersonAndr(-1, "me", from.getId()), true, account.getAccountType(), null));
-    displayMessage();
+//    content.getMessagesParc().add(new MessageAtomParc(tempId, null, text.getText().toString(), new Date(),
+//            new PersonAndr(-1, "me", from.getId()), true, account.getAccountType(), null));
+//    displayMessage();
     text.setText("");
-    tempMessageIds.add(tempId);
+//    tempMessageIds.add(tempId);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    myThread.execute(threadId);
 //    }
   }
 
@@ -217,6 +227,13 @@ public class ThreadDisplayer extends Activity {
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
     Log.d("rgai", "ThreadDisplayer onPause");
+    
+    // init connection...Facebook needs this
+    // TODO: ugly code
+    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      FacebookMessageProvider.closeConnection();
+    }
+    
 //    if (serviceReceiver != null) {
 //      unregisterReceiver(serviceReceiver);
 //    }
@@ -224,9 +241,9 @@ public class ThreadDisplayer extends Activity {
 //      unbindService(serviceConnection);
 //    }
     
-    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
-    this.sendBroadcast(intent);
+//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
+//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
+//    this.sendBroadcast(intent);
   }
   
   @Override
@@ -299,7 +316,7 @@ public class ThreadDisplayer extends Activity {
   }
   
   private void displayMessage() {
-    Log.d("rgai", "DISPLAYING SMS CONTENT");
+    Log.d("rgai", "DISPLAYING MESSAGE CONTENT");
 //    String c = "";
 //    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
 //    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
@@ -335,7 +352,7 @@ public class ThreadDisplayer extends Activity {
           pd.dismiss();
         }
       } else {
-        Log.d("rgai", "HANDLING SMS CONTENT");
+        Log.d("rgai", "HANDLING MESSAGE CONTENT");
         FullThreadMessageParc newMessages = bundle.getParcelable("threadMessage");
         if (content != null) {
           content.getMessagesParc().addAll(newMessages.getMessagesParc());
@@ -387,9 +404,9 @@ public class ThreadDisplayer extends Activity {
           boolean succ = bundle.getBoolean("success");
           if (succ) {
 //            cont.text.setText("");
-            Intent intent = new Intent(ThreadDisplayer.this, ThreadMsgScheduler.class);
-            intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
-            ThreadDisplayer.this.sendBroadcast(intent);
+//            Intent intent = new Intent(ThreadDisplayer.this, ThreadMsgScheduler.class);
+//            intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
+//            ThreadDisplayer.this.sendBroadcast(intent);
           }
         }
       }
@@ -403,7 +420,7 @@ public class ThreadDisplayer extends Activity {
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
-        Log.d("rgai", "NEW SMS BROADCAST");
+        Log.d("rgai", "NEW MESSAGE BROADCAST");
         ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account);
         myThread.execute(threadId);
       }

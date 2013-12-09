@@ -1,5 +1,7 @@
 package hu.rgai.android.messageproviders;
 
+import android.content.Context;
+import android.content.Intent;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
@@ -34,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 
 
@@ -42,7 +45,14 @@ import com.facebook.Request;
 import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
+import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
+import java.util.Collection;
+import org.jivesoftware.smack.ChatManagerListener;
+import org.jivesoftware.smack.Roster;
+import org.jivesoftware.smack.RosterEntry;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 
 /**
  *
@@ -50,6 +60,7 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
  */
 public class FacebookMessageProvider implements MessageProvider {
 
+  private static XMPPConnection xmpp = null;
   // use this variable to access facebook
   private FacebookAccount account;
   private MessageListener mslistener;
@@ -173,21 +184,91 @@ public class FacebookMessageProvider implements MessageProvider {
       }
     });
     Request.executeAndWait(request);
-    
+
     return messages;
   }
+
+  public static void initConnection(FacebookAccount fba, final Context context) {
+
+    if (xmpp == null) {
+
+      StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
+      StrictMode.setThreadPolicy(policy);
+
+      ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
+      config.setSASLAuthenticationEnabled(true);
+      config.setSecurityMode(SecurityMode.enabled);
+      config.setRosterLoadedAtLogin(true);
+      config.setSendPresence(false);
+
+
+      xmpp = new XMPPConnection(config);
+
+      try {
+        xmpp.connect();
+        SmackConfiguration.setPacketReplyTimeout(10000);
+        xmpp.login(fba.getUniqueName(), fba.getPassword());
+//        Roster roster = xmpp.getRoster();
+
+
+//        Collection<RosterEntry> entries = roster.getEntries();
+        Log.d("rgai", "Connected ON XMPP!");
+
+        xmpp.getChatManager().addChatListener(new ChatManagerListener() {
+          @Override
+          public void chatCreated(Chat chat, boolean arg1) {
+
+            chat.addMessageListener(new MessageListener() {
+              public void processMessage(Chat chat, Message message) {
+                if (message != null && message.getBody() != null) {
+                  Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
+                  Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+                  context.sendBroadcast(res);
+//                  RosterEntry roster = xmpp.getRoster().getEntry(message.getFrom());
+//                  System.out.println(message.getType());
+
+//                  System.out.println(roster.getName() + " : " + message.getBody());
+//                  receiveAttachments();
+//                  receivedMessages.add(roster.getName() + " : " + message.getBody());
+//                  receivedMessages.notifyDataSetChanged();
+
+                }
+              }
+            });
+          }
+        });
+
+      } catch (XMPPException e) {
+        Log.i("rgai", "nem lep be");
+        xmpp.disconnect();
+        e.printStackTrace();
+      } catch (Exception k) {
+        k.printStackTrace();
+        System.out.println(k.getMessage());
+        System.out.println("HIBAA");
+      }
+    }
+  }
   
+  public static void closeConnection() {
+    if (xmpp != null) {
+      Log.d("rgai", "Disconnecting XMPP");
+      xmpp.disconnect();
+      xmpp = null;
+    }
+  }
+
   @Override
   public FullThreadMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
-    
+
     Bundle params = new Bundle();
     final FullThreadMessage ftm = new FullThreadMessage();
-    
+
     String fqlQuery = "{"
             + "'msgs':"
             + "'SELECT author_id, body, created_time, message_id"
             + " FROM message"
-            + " WHERE thread_id = "+ id +""
+            + " WHERE thread_id = " + id + ""
             + " ORDER BY created_time DESC"
             + " LIMIT 20'"
             + ","
@@ -230,7 +311,7 @@ public class FacebookMessageProvider implements MessageProvider {
                     // building list item title
 //                    int unreadCount = msg.getInt("unread");
                     String body = msg.getString("body");
-                    
+
                     ftm.addMessage(new MessageAtom(
                             msg.getString("message_id"),
                             "",
@@ -267,8 +348,8 @@ public class FacebookMessageProvider implements MessageProvider {
       }
     });
     Request.executeAndWait(request);
-    
-    
+
+
     // EXAMPLE CODE FOR PETI
 //    Person sender = new Person(3, "Zelk Zoltán");
 //    Person me = new Person(4, "Tamas Kojedzsinszky");
@@ -294,18 +375,18 @@ public class FacebookMessageProvider implements MessageProvider {
     config.setRosterLoadedAtLogin(true);
     config.setSendPresence(false);
 
-    final XMPPConnection xmpp = new XMPPConnection(config);
+//    final XMPPConnection xmpp = new XMPPConnection(config);
 
-    try {
-      xmpp.connect();
-      SmackConfiguration.setPacketReplyTimeout(10000);
-      xmpp.login(account.getUniqueName(), account.getPassword());
-    } catch (XMPPException e) {
-      xmpp.disconnect();
-      e.printStackTrace();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+//    try {
+//      xmpp.connect();
+//      SmackConfiguration.setPacketReplyTimeout(10000);
+//      xmpp.login(account.getUniqueName(), account.getPassword());
+//    } catch (XMPPException e) {
+//      xmpp.disconnect();
+//      e.printStackTrace();
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//    }
 
     for (MessageRecipient mr : to) {
       FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
@@ -392,5 +473,4 @@ public class FacebookMessageProvider implements MessageProvider {
 //                 Request.executeBatchAsync(request);
 
   }
-
 }

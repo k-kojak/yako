@@ -38,23 +38,21 @@ public class ThreadMsgService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-//    AccountAndr account = intent.getParcelableExtra("account");
-//    String threadId = intent.getStringExtra("threadId");
-    if (intent != null && intent.getAction() != null && intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
-      if (isNetworkAvailable()) {
-        Log.d("rgai", "# ON START COMMAND ThreadMsgService");
-        ThreadContentGetter myThread = new ThreadContentGetter(this, handler, account);
-        myThread.execute(threadId);
-  //      myThread = new LongOperation(handler);
-  //      myThread.execute();
-      } else {
-        Message msg = handler.obtainMessage();
-        Bundle bundle = new Bundle();
-        bundle.putInt("result", NO_INTERNET_ACCESS);
-        msg.setData(bundle);
-        handler.sendMessage(msg);
-      }
-    }
+//    if (intent != null && intent.getAction() != null && intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
+//      if (isNetworkAvailable()) {
+//        Log.d("rgai", "# ON START COMMAND ThreadMsgService");
+//        ThreadContentGetter myThread = new ThreadContentGetter(this, handler, account);
+//        myThread.execute(threadId);
+//  //      myThread = new LongOperation(handler);
+//  //      myThread.execute();
+//      } else {
+//        Message msg = handler.obtainMessage();
+//        Bundle bundle = new Bundle();
+//        bundle.putInt("result", NO_INTERNET_ACCESS);
+//        msg.setData(bundle);
+//        handler.sendMessage(msg);
+//      }
+//    }
     
     return Service.START_STICKY;
   }
