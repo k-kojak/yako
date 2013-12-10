@@ -3,7 +3,8 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-import android.app.ActionBar;
+//import android.app.ActionBar;
+import android.annotation.SuppressLint;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -82,7 +84,9 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-    getActionBar().setDisplayShowTitleEnabled(false);
+    if (android.os.Build.VERSION.SDK_INT >= 11) {
+      getActionBar().setDisplayShowTitleEnabled(false);
+    }
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
