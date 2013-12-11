@@ -21,7 +21,7 @@
     
     <application android:label="@string/app_name" android:icon="@drawable/ic_launcher">
       <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
-        <activity android:theme="@style/Theme.AppCompat.Light"
+        <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
           android:name="MainActivity"
                   android:label="@string/app_name">
             <intent-filter>
@@ -37,26 +37,27 @@
         </activity>
         <activity android:name=".settings.SimpleEmailSettingActivity"
                   android:label="@string/adding_simple_email_account"
-                  android:theme="@style/Theme.AppCompat.Light"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         >
         </activity>
         <activity android:name=".settings.GmailSettingActivity"
                   android:label="@string/adding_gmail_account"
-                  android:theme="@style/Theme.AppCompat.Light"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         >
         </activity>
         <activity android:name=".settings.FacebookSettingActivity"
                   android:label="@string/adding_fb_account"
-                  android:theme="@style/Theme.AppCompat.Light"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         >
         </activity>
-        <activity android:name="MessageReply"
+        <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:name="MessageReply"
                   android:label="@string/app_name">
         </activity>
         
         <activity android:name=".settings.AccountSettingsList"
                   android:label="@string/account_settings"
-                  android:theme="@style/Theme.AppCompat.Light"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   >
         </activity>
         

@@ -84,9 +84,7 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-    if (android.os.Build.VERSION.SDK_INT >= 11) {
-      getActionBar().setDisplayShowTitleEnabled(false);
-    }
+    getSupportActionBar().setDisplayShowTitleEnabled(false);
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
