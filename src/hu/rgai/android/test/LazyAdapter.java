@@ -59,7 +59,7 @@ public class LazyAdapter extends BaseAdapter {
     if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
       subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
     }
-    if (!message.isSeen() && message.getUnreadCount() > 0) {
+    if (message.getUnreadCount() > 0) {
       subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
     }
     subject.setText(subjectText);

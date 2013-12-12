@@ -277,11 +277,13 @@ public final class PersonAndr extends Person implements Parcelable {
               selection,
               selectionArgs,
               null);
-    if (cursor.getCount() > 0) {
-      cursor.moveToFirst();
-      uid = cursor.getLong(0);
+    if (cursor != null) {
+      if (cursor.getCount() > 0) {
+        cursor.moveToFirst();
+        uid = cursor.getLong(0);
+      }
+      cursor.close();
     }
-    cursor.close();
     
     return uid;
   }

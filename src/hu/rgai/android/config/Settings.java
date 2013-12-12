@@ -32,6 +32,9 @@ public final class Settings {
   public static final boolean DEBUG = false;
   public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
   public static final String FACEBOOK_ME_IMG_NAME = "me.png";
+  
+  public static final int NOTIFICATION_NEW_MESSAGE_ID = 1;
+  
   public static final String CONTACT_DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
   
 //  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;

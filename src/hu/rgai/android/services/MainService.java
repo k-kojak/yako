@@ -18,6 +18,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +56,13 @@ public class MainService extends Service {
 
   public static boolean RUNNING = false;
   
+  /**
+   * This variable holds the ID of the actually displayed thread.
+   * That's why if a new message comes from this thread id, we set it immediately to seen.
+   */
+  public static String actViewingThreadId = null;
+  
+  
   // flags for email account feedback
   public static final int OK = 0;
   public static final int UNKNOWN_HOST_EXCEPTION = 1;
@@ -66,6 +75,8 @@ public class MainService extends Service {
   public static final int NO_INTERNET_ACCESS = 8;
   public static final int NO_ACCOUNT_SET = 9;
   public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
+  
+  
   
   
   private Handler handler = null;
@@ -180,16 +191,29 @@ public class MainService extends Service {
     return changed;
   }
   
-  public boolean setMessageSeen(MessageListElementParc m) {
+  
+  /**
+   * Sets the seen status to true, and the unreadCount to 0.
+   * @param m the message to set
+   * @return 
+   */
+  public boolean setMessageSeenAndRead(MessageListElementParc m) {
     boolean changed = false;
     for (MessageListElementParc mlep : messages) {
       if (mlep.equals(m) && !mlep.isSeen()) {
         changed = true;
         mlep.setSeen(true);
+        mlep.setUnreadCount(0);
         break;
       }
     }
     return changed;
+  }
+  
+  public void setAllMessagesToSeen() {
+    for (MessageListElementParc mlep : messages) {
+      mlep.setSeen(true);
+    }
   }
   
   public MessageListElementParc getListElementById(String id, AccountAndr a) {
@@ -252,35 +276,36 @@ public class MainService extends Service {
             intent.putExtra("errorMessage", bundle.getString("errorMessage"));
           }
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
-//            Log.d("rgai", "message != null");
             MessageListElementParc[] newMessages = (MessageListElementParc[]) bundle.getParcelableArray("messages");
-            // check if is there any new, unseen emails
-            for (int i = 0; i < newMessages.length; i++) {
-              if (!newMessages[i].isSeen()) {
+            
+            this.mergeMessages(newMessages);
+            MessageListElementParc lastUnreadMsg = null;
+            for (MessageListElementParc mle : messages) {
+              if(mle.getId().equals(actViewingThreadId)) {
+                mle.setSeen(true);
+                mle.setUnreadCount(0);
+              }
+              if (!mle.isSeen()) {
+                if(lastUnreadMsg == null) {
+                  lastUnreadMsg = mle;
+                }
                 newMessageCount++;
               }
             }
-//            if (emails != null) {
-//              for (int i = 0; i < newMessages.length; i++) {
-//                
-//                for (int j = 0; j < emails.length; j++) {
-//                  if (newMessages[i].getId() == emails[j].getId() && emails[j].getContent() != null) {
-//                    newMessages[j].setContent(emails[i].getContent());
-//                  }
-//                }
-//              }
-//            }
-            this.mergeMessages(newMessages);
-//            messages = newMessages;
-            intent.putExtra("messages", messages.toArray(new MessageListElementParc[0]));
-//            Log.d("rgai", "intent.putExtra, size: " + newMessages.length);
             
+            intent.putExtra("messages", messages.toArray(new MessageListElementParc[0]));
+            
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
               NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
                       .setSmallIcon(R.drawable.gmail_icon)
-                      .setContentTitle(newMessageCount + " unread message" + (newMessageCount > 1 ? "s" : ""))
-                      .setContentText(newMessageCount + " unread message" + (newMessageCount > 1 ? "s" : ""));
+                      .setWhen(lastUnreadMsg.getDate().getTime())
+                      .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle())
+                      .setContentInfo(lastUnreadMsg.getMessageType().toString())
+                      .setContentTitle(lastUnreadMsg.getFrom().getName())
+                      .setContentText(lastUnreadMsg.getTitle());
               Intent resultIntent = new Intent(context, MainActivity.class);
+              resultIntent.putExtra("from_notifier", true);
               TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
               stackBuilder.addParentStack(MainActivity.class);
               stackBuilder.addNextIntent(resultIntent);
@@ -288,9 +313,11 @@ public class MainService extends Service {
               mBuilder.setContentIntent(resultPendingIntent);
               mBuilder.setAutoCancel(true);
 
-              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-              mNotificationManager.notify(10, mBuilder.build());
               
+              mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+              
+            } else {
+              mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
             }
           } else {
 //            Log.d("rgai", "message == null");

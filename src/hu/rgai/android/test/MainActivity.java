@@ -8,6 +8,7 @@ import android.annotation.SuppressLint;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -61,10 +62,14 @@ public class MainActivity extends ActionBarActivity {
   private DataUpdateReceiver serviceReceiver;
   private SystemBroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
+  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-
+      if (activityOpenedFromNotification) {
+        s.setAllMessagesToSeen();
+        activityOpenedFromNotification = false;
+      }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -84,7 +89,11 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
+    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
+    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
+    
+    // TODO: session and access token opening and handling
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
@@ -216,6 +225,7 @@ public class MainActivity extends ActionBarActivity {
     for (MessageListElementParc mlep : messages) {
       if(mlep.equals(message)) {
         mlep.setSeen(true);
+        mlep.setUnreadCount(0);
         break;
       }
     }
@@ -280,11 +290,11 @@ public class MainActivity extends ActionBarActivity {
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
 //              if (a instanceof FacebookAccount) {
-                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-                intent = new Intent(MainActivity.this, classToLoad);
-                
-                intent.putExtra("msg_list_element", (Parcelable)message);
-                intent.putExtra("account", (Parcelable)a);
+              Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+              intent = new Intent(MainActivity.this, classToLoad);
+
+              intent.putExtra("msg_list_element", (Parcelable)message);
+              intent.putExtra("account", (Parcelable)a);
 //              } else {
 //                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
 //                intent = new Intent(MainActivity.this, classToLoad);
@@ -293,12 +303,14 @@ public class MainActivity extends ActionBarActivity {
 //                intent.putExtra("account", (Parcelable)a);
 //                
 //              }
-              boolean changed = s.setMessageSeen(message);
+              boolean changed = s.setMessageSeenAndRead(message);
               if (changed) {
                 setMessageSeen(message);
                 adapter.notifyDataSetChanged();
               }
               startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+              
+              updateNotificationStatus();
             }
           });
           if (serviceConnectionEstablished) {
@@ -316,6 +328,20 @@ public class MainActivity extends ActionBarActivity {
         this.setContentView(text);
       }
 //    }
+  }
+  
+  private void updateNotificationStatus() {
+    boolean unseenExists = false;
+    for (MessageListElementParc mle : messages) {
+      if (!mle.isSeen()) {
+        unseenExists = true;
+        break;
+      }
+    }
+    if (!unseenExists) {
+      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+    }
   }
 
   @Override

@@ -36,6 +36,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.rgai.android.tools.Utils;
@@ -112,7 +113,7 @@ public class ThreadDisplayer extends Activity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
-    
+    MainService.actViewingThreadId = threadId;
     
     
     messageSendHandler = new MessageSendTaskHandler(this);
@@ -227,11 +228,15 @@ public class ThreadDisplayer extends Activity {
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
     Log.d("rgai", "ThreadDisplayer onPause");
-    
+    MainService.actViewingThreadId = null;
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       FacebookMessageProvider.closeConnection();
+    }
+    
+    if (nmr != null) {
+      unregisterReceiver(nmr);
     }
     
 //    if (serviceReceiver != null) {
