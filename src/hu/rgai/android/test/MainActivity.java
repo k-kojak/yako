@@ -31,20 +31,26 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 
@@ -89,6 +95,17 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      public void run() {
+        try {
+          EventLogger.INSTANCE.writeToLogFile( "application over" );
+          EventLogger.INSTANCE.closeLogFile();
+        } catch (FileNotFoundException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }
+    });
     activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
     Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -124,7 +141,13 @@ public class MainActivity extends ActionBarActivity {
 //    setContent();
 //    setListAdapter(adapter);
 //    set
-
+    try {
+      EventLogger.INSTANCE.openLogFile( "logFile.txt" );
+      EventLogger.INSTANCE.writeToLogFile( "application start" );
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
   
   @Override
