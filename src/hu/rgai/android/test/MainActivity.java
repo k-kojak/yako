@@ -327,7 +327,6 @@ public class MainActivity extends ActionBarActivity {
         text.setGravity(Gravity.CENTER);
         this.setContentView(text);
       }
-//    }
   }
   
   private void updateNotificationStatus() {

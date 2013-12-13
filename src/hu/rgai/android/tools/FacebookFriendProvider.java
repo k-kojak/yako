@@ -1,11 +1,8 @@
 package hu.rgai.android.tools;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Response;
@@ -13,14 +10,8 @@ import com.facebook.Session;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

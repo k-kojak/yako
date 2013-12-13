@@ -119,7 +119,7 @@ public class ThreadDisplayer extends Activity {
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
     myThread.execute(threadId);
     
 //    bindMessageNotifier();
@@ -219,14 +219,14 @@ public class ThreadDisplayer extends Activity {
 //    displayMessage();
     text.setText("");
 //    tempMessageIds.add(tempId);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 2000);
     myThread.execute(threadId);
 //    }
   }
 
   @Override
   protected void onPause() {
-    super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    super.onPause();
     Log.d("rgai", "ThreadDisplayer onPause");
     MainService.actViewingThreadId = null;
     // init connection...Facebook needs this
@@ -238,17 +238,6 @@ public class ThreadDisplayer extends Activity {
     if (nmr != null) {
       unregisterReceiver(nmr);
     }
-    
-//    if (serviceReceiver != null) {
-//      unregisterReceiver(serviceReceiver);
-//    }
-//    if (serviceConnection != null) {
-//      unbindService(serviceConnection);
-//    }
-    
-//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
-//    this.sendBroadcast(intent);
   }
   
   @Override
@@ -426,7 +415,7 @@ public class ThreadDisplayer extends Activity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
         Log.d("rgai", "NEW MESSAGE BROADCAST");
-        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account);
+        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account, 0);
         myThread.execute(threadId);
       }
     }
