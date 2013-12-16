@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -52,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 import net.htmlparser.jericho.Source;
 
-public class ThreadDisplayer extends Activity {
+public class ThreadDisplayer extends ActionBarActivity {
 
   private ProgressDialog pd = null;
   private Handler messageSendHandler = null;
@@ -114,7 +115,11 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
     MainService.actViewingThreadId = threadId;
-    
+    String accName = "";
+    if(!account.getAccountType().equals(MessageProvider.Type.SMS)) {
+      accName = " | " + account.getDisplayName();
+    }
+    getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
     
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);

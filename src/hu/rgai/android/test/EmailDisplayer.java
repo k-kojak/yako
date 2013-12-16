@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -32,7 +33,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import net.htmlparser.jericho.Source;
 
-public class EmailDisplayer extends Activity {
+public class EmailDisplayer extends ActionBarActivity {
 
   private ProgressDialog pd = null;
   private Handler handler = null;
@@ -62,7 +63,7 @@ public class EmailDisplayer extends Activity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
-    
+    getSupportActionBar().setTitle(account.getAccountType().toString() + " | " + account.getDisplayName());
     if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
       content = (FullSimpleMessageParc)mlep.getFullMessage();
