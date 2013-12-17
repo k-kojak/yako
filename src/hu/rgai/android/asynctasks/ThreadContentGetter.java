@@ -31,12 +31,14 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     private Context context;
     private Handler handler;
     private AccountAndr account;
+    private int delay;
     
-    public ThreadContentGetter(Context context, Handler handler, AccountAndr account) {
+    public ThreadContentGetter(Context context, Handler handler, AccountAndr account, int delay) {
       this.context = context;
       this.handler = handler;
       this.account = account;
       this.context = context;
+      this.delay = delay;
     }
     
     @Override
@@ -46,6 +48,13 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
 //      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
 //      String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
 //      MailProvider2 em = new MailProvider2(email, pass, imap, Pass.smtp);
+      if (delay > 0) {
+        try {
+          Thread.sleep(delay);
+        } catch (InterruptedException ex) {
+          Logger.getLogger(ThreadContentGetter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      }
       FullThreadMessageParc threadMessage = null;
       Log.d("rgai", "GETTING MESSAGE CONTENT");
       try {

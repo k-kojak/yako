@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -41,7 +42,7 @@ import javax.mail.internet.InternetAddress;
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageReply extends Activity implements TextWatcher {
+public class MessageReply extends ActionBarActivity implements TextWatcher {
 
   public static final int MESSAGE_SENT_OK = 1;
   public static final int MESSAGE_SENT_FAILED = 2;
@@ -62,6 +63,7 @@ public class MessageReply extends Activity implements TextWatcher {
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     
+    getSupportActionBar().setDisplayShowTitleEnabled(false);
     setContentView(R.layout.message_reply);
     String content = "";
     if (getIntent().getExtras() != null) {

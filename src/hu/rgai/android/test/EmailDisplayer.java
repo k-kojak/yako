@@ -63,7 +63,7 @@ public class EmailDisplayer extends ActionBarActivity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
-    
+    getSupportActionBar().setTitle(account.getAccountType().toString() + " | " + account.getDisplayName());
     if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
       content = (FullSimpleMessageParc)mlep.getFullMessage();

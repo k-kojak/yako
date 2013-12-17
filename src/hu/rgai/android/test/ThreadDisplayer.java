@@ -37,6 +37,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.services.schedulestarters.ThreadMsgScheduler;
 import hu.rgai.android.tools.Utils;
@@ -113,13 +114,17 @@ public class ThreadDisplayer extends ActionBarActivity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
-    
-    
+    MainService.actViewingThreadId = threadId;
+    String accName = "";
+    if(!account.getAccountType().equals(MessageProvider.Type.SMS)) {
+      accName = " | " + account.getDisplayName();
+    }
+    getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
     
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
     myThread.execute(threadId);
     
 //    bindMessageNotifier();
@@ -219,32 +224,25 @@ public class ThreadDisplayer extends ActionBarActivity {
 //    displayMessage();
     text.setText("");
 //    tempMessageIds.add(tempId);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 2000);
     myThread.execute(threadId);
 //    }
   }
 
   @Override
   protected void onPause() {
-    super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    super.onPause();
     Log.d("rgai", "ThreadDisplayer onPause");
-    
+    MainService.actViewingThreadId = null;
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      FacebookMessageProvider.closeConnection();
+//      FacebookMessageProvider.closeConnection();
     }
     
-//    if (serviceReceiver != null) {
-//      unregisterReceiver(serviceReceiver);
-//    }
-//    if (serviceConnection != null) {
-//      unbindService(serviceConnection);
-//    }
-    
-//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
-//    this.sendBroadcast(intent);
+    if (nmr != null) {
+      unregisterReceiver(nmr);
+    }
   }
   
   @Override
@@ -422,7 +420,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
         Log.d("rgai", "NEW MESSAGE BROADCAST");
-        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account);
+        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account, 0);
         myThread.execute(threadId);
       }
     }

@@ -3,10 +3,12 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-import android.app.ActionBar;
+//import android.app.ActionBar;
+import android.annotation.SuppressLint;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -44,6 +46,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -57,12 +62,16 @@ public class MainActivity extends ActionBarActivity {
   private LazyAdapter adapter;
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
-  private SystemBroadcastReceiver systemReceiver;
+  private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
+  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-
+      if (activityOpenedFromNotification) {
+        s.setAllMessagesToSeen();
+        activityOpenedFromNotification = false;
+      }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -82,12 +91,13 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-   
+
+    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
+    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
+    getSupportActionBar().setDisplayShowTitleEnabled(false);
     
-    //getActionBar().setDisplayShowTitleEnabled(false);
-    //getSupportActionBar().setDisplayShowTitleEnabled(false);
-    getSupportActionBar().setTitle("Main Page");
-    
+    // TODO: session and access token opening and handling
+
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
@@ -111,10 +121,11 @@ public class MainActivity extends ActionBarActivity {
       this.sendBroadcast(intent);
       // disaplying loading dialog, since the mails are not ready, but the user opened the list
       pd = new ProgressDialog(this);
-      pd.setMessage("Fetching emails...");
+      pd.setMessage("Fetching messages...");
       pd.setCancelable(false);
       pd.show();
     }
+    
 //    setContent();
 //    setListAdapter(adapter);
 //    set
@@ -219,6 +230,7 @@ public class MainActivity extends ActionBarActivity {
     for (MessageListElementParc mlep : messages) {
       if(mlep.equals(message)) {
         mlep.setSeen(true);
+        mlep.setUnreadCount(0);
         break;
       }
     }
@@ -229,6 +241,10 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
 //    getFbMessages(this);
     // register service broadcast receiver
+    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+    if (fba != null) {
+      FacebookMessageProvider.initConnection(fba, this);
+    }
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
     }
@@ -237,10 +253,11 @@ public class MainActivity extends ActionBarActivity {
     
     // register system broadcast receiver for internet connection state change
     if (systemReceiver == null) {
-      systemReceiver = new SystemBroadcastReceiver(this);
+      systemReceiver = new CustomBroadcastReceiver(this);
     }
-    IntentFilter systemIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    registerReceiver(systemReceiver, systemIntentFilter);
+    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    registerReceiver(systemReceiver, customIntentFilter);
     
     // setting content
     setContent();
@@ -283,11 +300,11 @@ public class MainActivity extends ActionBarActivity {
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
 //              if (a instanceof FacebookAccount) {
-                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-                intent = new Intent(MainActivity.this, classToLoad);
-                
-                intent.putExtra("msg_list_element", (Parcelable)message);
-                intent.putExtra("account", (Parcelable)a);
+              Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+              intent = new Intent(MainActivity.this, classToLoad);
+
+              intent.putExtra("msg_list_element", (Parcelable)message);
+              intent.putExtra("account", (Parcelable)a);
 //              } else {
 //                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
 //                intent = new Intent(MainActivity.this, classToLoad);
@@ -296,12 +313,14 @@ public class MainActivity extends ActionBarActivity {
 //                intent.putExtra("account", (Parcelable)a);
 //                
 //              }
-              boolean changed = s.setMessageSeen(message);
+              boolean changed = s.setMessageSeenAndRead(message);
               if (changed) {
                 setMessageSeen(message);
                 adapter.notifyDataSetChanged();
               }
               startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+              
+              updateNotificationStatus();
             }
           });
           if (serviceConnectionEstablished) {
@@ -318,7 +337,20 @@ public class MainActivity extends ActionBarActivity {
         text.setGravity(Gravity.CENTER);
         this.setContentView(text);
       }
-//    }
+  }
+  
+  private void updateNotificationStatus() {
+    boolean unseenExists = false;
+    for (MessageListElementParc mle : messages) {
+      if (!mle.isSeen()) {
+        unseenExists = true;
+        break;
+      }
+    }
+    if (!unseenExists) {
+      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+    }
   }
 
   @Override
@@ -327,6 +359,7 @@ public class MainActivity extends ActionBarActivity {
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
+//    FacebookMessageProvider.closeConnection();
   }
   
   public boolean isNetworkAvailable() {
@@ -335,11 +368,11 @@ public class MainActivity extends ActionBarActivity {
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  private class SystemBroadcastReceiver extends BroadcastReceiver {
+  private class CustomBroadcastReceiver extends BroadcastReceiver {
 
 //    private MainActivity activity = null;
 
-    public SystemBroadcastReceiver(MainActivity activity) {
+    public CustomBroadcastReceiver(MainActivity activity) {
 //      this.activity = activity;
     }
 
@@ -353,6 +386,13 @@ public class MainActivity extends ActionBarActivity {
         System.out.println("Network is up ******** " + typeName + ":::" + subtypeName);
 
 //        activity.setContent("onInternetBroadcast receive");
+      } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
+        Intent i = new Intent(MainActivity.this, MainScheduler.class);
+        if (intent.getExtras().containsKey("type")) {
+          i.putExtra("type", intent.getExtras().getString("type"));
+        }
+        i.setAction(Context.ALARM_SERVICE);
+        MainActivity.this.sendBroadcast(i);
       }
     }
   }
