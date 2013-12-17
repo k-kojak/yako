@@ -237,7 +237,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      FacebookMessageProvider.closeConnection();
+//      FacebookMessageProvider.closeConnection();
     }
     
     if (nmr != null) {

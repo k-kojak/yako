@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -205,7 +204,6 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
   @Override
   public void onReceive(Context context, Intent intent) {
     if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
-      
       // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
       // a bit the reading from inbox
       try {
@@ -214,6 +212,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+      res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
 //      // in case the first attempt was too quick, request the display again a little bit later

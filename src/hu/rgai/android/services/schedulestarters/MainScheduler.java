@@ -20,6 +20,9 @@ public class MainScheduler extends BroadcastReceiver {
       Log.d("rgai", "MainScheduler onReceive");
       AlarmManager service = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       Intent i = new Intent(context, MainServiceStarter.class);
+      if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
+        i.putExtra("type", intent.getExtras().getString("type"));
+      }
       PendingIntent pending = PendingIntent.getBroadcast(context, 0, i, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar cal = Calendar.getInstance();
   //    cal.add(Calendar.SECOND, 2);

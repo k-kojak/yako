@@ -47,6 +47,8 @@ import java.util.Date;
 import java.util.List;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -60,7 +62,7 @@ public class MainActivity extends ActionBarActivity {
   private LazyAdapter adapter;
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
-  private SystemBroadcastReceiver systemReceiver;
+  private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
   private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -117,10 +119,11 @@ public class MainActivity extends ActionBarActivity {
       this.sendBroadcast(intent);
       // disaplying loading dialog, since the mails are not ready, but the user opened the list
       pd = new ProgressDialog(this);
-      pd.setMessage("Fetching emails...");
+      pd.setMessage("Fetching messages...");
       pd.setCancelable(false);
       pd.show();
     }
+    
 //    setContent();
 //    setListAdapter(adapter);
 //    set
@@ -236,6 +239,10 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
 //    getFbMessages(this);
     // register service broadcast receiver
+    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+    if (fba != null) {
+      FacebookMessageProvider.initConnection(fba, this);
+    }
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
     }
@@ -244,10 +251,11 @@ public class MainActivity extends ActionBarActivity {
     
     // register system broadcast receiver for internet connection state change
     if (systemReceiver == null) {
-      systemReceiver = new SystemBroadcastReceiver(this);
+      systemReceiver = new CustomBroadcastReceiver(this);
     }
-    IntentFilter systemIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    registerReceiver(systemReceiver, systemIntentFilter);
+    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    registerReceiver(systemReceiver, customIntentFilter);
     
     // setting content
     setContent();
@@ -349,6 +357,7 @@ public class MainActivity extends ActionBarActivity {
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
+//    FacebookMessageProvider.closeConnection();
   }
   
   public boolean isNetworkAvailable() {
@@ -357,11 +366,11 @@ public class MainActivity extends ActionBarActivity {
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  private class SystemBroadcastReceiver extends BroadcastReceiver {
+  private class CustomBroadcastReceiver extends BroadcastReceiver {
 
 //    private MainActivity activity = null;
 
-    public SystemBroadcastReceiver(MainActivity activity) {
+    public CustomBroadcastReceiver(MainActivity activity) {
 //      this.activity = activity;
     }
 
@@ -375,6 +384,13 @@ public class MainActivity extends ActionBarActivity {
         System.out.println("Network is up ******** " + typeName + ":::" + subtypeName);
 
 //        activity.setContent("onInternetBroadcast receive");
+      } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
+        Intent i = new Intent(MainActivity.this, MainScheduler.class);
+        if (intent.getExtras().containsKey("type")) {
+          i.putExtra("type", intent.getExtras().getString("type"));
+        }
+        i.setAction(Context.ALARM_SERVICE);
+        MainActivity.this.sendBroadcast(i);
       }
     }
   }

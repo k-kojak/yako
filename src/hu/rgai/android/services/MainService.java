@@ -32,6 +32,7 @@ import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.Constants;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
@@ -108,7 +109,11 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    if (isNetworkAvailable()) {
+//    if (isNetworkAvailable()) {
+      MessageProvider.Type type = null;
+      if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
+        type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
+      }
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
       if (accounts.isEmpty() && !isPhone()) {
         Message msg = handler.obtainMessage();
@@ -117,25 +122,36 @@ public class MainService extends Service {
         msg.setData(bundle);
         handler.sendMessage(msg);
       } else {
-        for (AccountAndr acc : accounts) {
-          LongOperation myThread = new LongOperation(this, handler, acc);
-          myThread.execute();
+        if (!accounts.isEmpty() && !isPhone() && !isNetworkAvailable()) {
+          Message msg = handler.obtainMessage();
+          Bundle bundle = new Bundle();
+          bundle.putInt("result", NO_INTERNET_ACCESS);
+          msg.setData(bundle);
+          handler.sendMessage(msg);
+        } else {
+          for (AccountAndr acc : accounts) {
+            if (type == null || acc.getAccountType().equals(type)) {
+              LongOperation myThread = new LongOperation(this, handler, acc);
+              myThread.execute();
+            }
+          }
+
+          if (type == null || type.equals(MessageProvider.Type.SMS)) {
+            AccountAndr smsAcc = new SmsAccountAndr();
+            LongOperation myThread = new LongOperation(this, handler, smsAcc);
+            myThread.execute();
+          }
         }
-        
-        AccountAndr smsAcc = new SmsAccountAndr();
-        LongOperation myThread = new LongOperation(this, handler, smsAcc);
-        myThread.execute();
-        
       }
 //      myThread = new LongOperation(handler);
 //      myThread.execute();
-    } else {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putInt("result", NO_INTERNET_ACCESS);
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
+//    } else {
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//      bundle.putInt("result", NO_INTERNET_ACCESS);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+//    }
     
     return Service.START_STICKY;
   }
