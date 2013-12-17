@@ -27,6 +27,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Request;
@@ -39,6 +40,7 @@ import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
+
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
@@ -47,6 +49,7 @@ import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -79,7 +82,13 @@ public class FacebookSettingActivity extends ActionBarActivity {
       onSessionStateChange(session, state, exception);
     }
   };
-
+  
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "FacebookSettingActivity back button");
+    super.onBackPressed();
+  }
+  
   private void onSessionStateChange(Session session, SessionState state, Exception exception) {
     if (state.isOpened()) {
       if (session.isOpened()) {

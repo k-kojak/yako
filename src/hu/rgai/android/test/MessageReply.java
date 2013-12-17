@@ -28,11 +28,13 @@ import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.internet.AddressException;
@@ -55,6 +57,12 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
   private PersonAndr from;
+  
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "MessageReply back button");
+    super.onBackPressed();
+  }
   
   /**
    * Called when the activity is first created.

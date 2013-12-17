@@ -17,7 +17,7 @@ public enum EventLogger {
   public synchronized boolean openLogFile( String logFileName ) throws FileNotFoundException{
     if ( logFileIsopen )
       return false;
-    outStream = new PrintStream( new File( Environment.getExternalStorageDirectory().getAbsoluteFile(), logFileName ) );
+    outStream = new PrintStream( new File( Environment.getExternalStorageDirectory().getAbsoluteFile(), logFileName ));
     logFileIsopen = true;
     return true;
   }

@@ -23,7 +23,9 @@ import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.facebook.Session;
+
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -32,6 +34,7 @@ import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,6 +54,12 @@ public class AccountSettingsList extends ActionBarActivity {
     super.onCreate(savedInstanceState);
   }
 
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "AccountSettingsList back button ");
+    super.onBackPressed();
+  }
+  
   @Override
   protected void onResume() {
     super.onResume();

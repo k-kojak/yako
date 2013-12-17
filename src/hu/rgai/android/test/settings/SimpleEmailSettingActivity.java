@@ -15,6 +15,7 @@ import android.widget.Spinner;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.test.R;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,12 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
   private EmailAccountAndr oldAccount = null;
   private Map<String, String> domainMap;
 
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "SimpleEmailSettingActivity back button");
+    super.onBackPressed();
+  }
+  
   @Override
   protected void onCreate(Bundle bundle) {
     super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.

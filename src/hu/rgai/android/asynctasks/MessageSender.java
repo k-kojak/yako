@@ -77,14 +77,21 @@ import javax.mail.NoSuchProviderException;
           recipients.add((MessageRecipient)recipient);
         }
         if (mp != null && recipients != null) {
-          try {
-            mp.sendMessage(recipients, content, content.substring(0, Math.min(content.length(), 10)));
-          } catch (NoSuchProviderException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
-          } catch (MessagingException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
-          } catch (IOException ex) {
-            Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+          while (true) {
+            try {
+              mp.sendMessage(recipients, content, content.substring(0, Math.min(content.length(), 10)));
+            } catch (NoSuchProviderException ex) {
+              Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+              break;
+            } catch (MessagingException ex) {
+              Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+              break;
+            } catch (IOException ex) {
+              Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
+              break;
+            }
+            Log.d("rgai", content);
+            break;
           }
         }
       }

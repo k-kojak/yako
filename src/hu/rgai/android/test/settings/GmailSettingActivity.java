@@ -55,6 +55,12 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     
   }
   
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "GmailSettingActivity back button");
+    super.onBackPressed();
+  }
+  
   public void saveAccountSettings(View v) {
     Log.d("rgai", "SAVE");
     

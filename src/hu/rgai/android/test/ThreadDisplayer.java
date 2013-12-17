@@ -44,12 +44,14 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
 import net.htmlparser.jericho.Source;
 
 public class ThreadDisplayer extends Activity {
@@ -96,6 +98,12 @@ public class ThreadDisplayer extends Activity {
 //      service = null;
 //    }
 //  };
+  
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "ThreadDisplayer back button");
+    super.onBackPressed();
+  }
   
   @Override
   public void onCreate(Bundle icicle) {

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,11 +26,14 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullEmailMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
+
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
+
 import net.htmlparser.jericho.Source;
 
 public class EmailDisplayer extends Activity {
@@ -47,6 +51,12 @@ public class EmailDisplayer extends Activity {
   private String mailCharCode = "UTF-8";
   
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
+  
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "EmailDisplayer back button");
+    super.onBackPressed();
+  }
   
   @Override
   public void onCreate(Bundle icicle) {

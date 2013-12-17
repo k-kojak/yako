@@ -6,6 +6,7 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,6 +57,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View row = convertView;
+		Log.d( "rgai", "ThreadViewAdapter.getView: position" + position);
     MessageAtomParc coment = getItem(position);
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		if (row == null) {

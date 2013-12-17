@@ -3,6 +3,7 @@ package hu.rgai.android.test;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+
 import java.util.List;
 
 public class LazyAdapter extends BaseAdapter {
@@ -46,7 +48,7 @@ public class LazyAdapter extends BaseAdapter {
     if (convertView == null) {
       vi = inflater.inflate(R.layout.list_row, null);
     }
-
+    Log.d( "rgai", "LazyAdapter.getView: position" + position);
     TextView subject = (TextView) vi.findViewById(R.id.subject);
     TextView from = (TextView) vi.findViewById(R.id.from);
     TextView date = (TextView) vi.findViewById(R.id.date);

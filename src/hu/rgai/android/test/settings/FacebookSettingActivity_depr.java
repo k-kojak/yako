@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -28,12 +29,14 @@ import com.facebook.Session.OpenRequest;
 import com.facebook.Session.StatusCallback;
 import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
+
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
+
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,6 +56,12 @@ public class FacebookSettingActivity_depr extends Activity {
   private Spinner messageAmount;
   private FacebookAccountAndr oldAccount;
 
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "FacebookSettingActivity_depr back button");
+    super.onBackPressed();
+  }
+  
   @Override
   public void onCreate(Bundle bundle) {
     super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.

@@ -3,6 +3,7 @@ package hu.rgai.android.tools.adapter;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +50,7 @@ public class AccountListAdapter extends BaseAdapter {
     if (view == null) {
       view = inflater.inflate(R.layout.account_list_item, null);
     }
-
+    Log.d( "rgai", "AccountListAdapter.getView: position" + position);
     TextView name = (TextView) view.findViewById(R.id.name);
     TextView type = (TextView) view.findViewById(R.id.type);
     ImageView icon = (ImageView) view.findViewById(R.id.img);

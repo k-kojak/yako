@@ -88,6 +88,12 @@ public class MainActivity extends ActionBarActivity {
     }
   };
 
+  @Override
+  public void onBackPressed() {
+    Log.d( "willrgai", "MainActivity back button");
+    super.onBackPressed();
+  }
+  
   /**
    * Called when the activity is first created.
    */
@@ -100,6 +106,7 @@ public class MainActivity extends ActionBarActivity {
         try {
           EventLogger.INSTANCE.writeToLogFile( "application over" );
           EventLogger.INSTANCE.closeLogFile();
+          onDestroy();
         } catch (FileNotFoundException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
@@ -308,7 +315,7 @@ public class MainActivity extends ActionBarActivity {
             public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
               MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
-
+              Log.d("rgai","Main activity setContent onItemClick");
 //              String messageId = (String)message.getId();
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
