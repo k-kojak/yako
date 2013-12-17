@@ -82,7 +82,12 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-    getActionBar().setDisplayShowTitleEnabled(false);
+   
+    
+    //getActionBar().setDisplayShowTitleEnabled(false);
+    //getSupportActionBar().setDisplayShowTitleEnabled(false);
+    getSupportActionBar().setTitle("Main Page");
+    
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,

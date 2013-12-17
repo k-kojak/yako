@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:messagelogger="http://schemas.android.com/apk/res-auto">
   <item android:id="@+id/message_reply"
+      android:icon="@drawable/ic_action_reply"  
           android:title="@string/message_reply"
+          messagelogger:showAsAction="ifRoom"
           />
+  
+  <item android:id="@+id/message_reply_all"
+    android:icon="@drawable/ic_action_reply_all"  
+        android:title="@string/message_reply_all"
+        messagelogger:showAsAction="ifRoom"
+        />
+  
+  <item android:id="@+id/forward"
+  android:icon="@drawable/ic_action_forward"  
+      android:title="@string/message_forward"
+      messagelogger:showAsAction="ifRoom"
+      />
+  
+  <item android:id="@+id/add_attachment"
+  android:icon="@drawable/ic_action_new_attachment"  
+      android:title="@string/add_attachment"
+      messagelogger:showAsAction="ifRoom"
+      />
+  
+  <item android:id="@+id/delete"
+    android:icon="@drawable/ic_action_discard"  
+        android:title="@string/delete"
+        messagelogger:showAsAction="ifRoom"
+        />
 </menu>
