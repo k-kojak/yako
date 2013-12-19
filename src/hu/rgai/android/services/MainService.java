@@ -111,9 +111,10 @@ public class MainService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
 //    if (isNetworkAvailable()) {
       MessageProvider.Type type = null;
-      if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
+      if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
         type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
       }
+      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
       if (accounts.isEmpty() && !isPhone()) {
         Message msg = handler.obtainMessage();
