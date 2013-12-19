@@ -43,17 +43,27 @@
         <activity android:name=".settings.SimpleEmailSettingActivity"
                   android:label="@string/adding_simple_email_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
         >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
         </activity>
         <activity android:name=".settings.GmailSettingActivity"
                   android:label="@string/adding_gmail_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
         >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
         </activity>
         <activity android:name=".settings.FacebookSettingActivity"
                   android:label="@string/adding_fb_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
         >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
+            
         </activity>
         <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:name="MessageReply"
