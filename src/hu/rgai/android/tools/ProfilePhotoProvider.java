@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.ContactsContract;
+import android.util.Log;
 import hu.rgai.android.test.R;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,9 @@ public class ProfilePhotoProvider {
    * @return 
    */
   public static Bitmap getImageToUser(Context context, long contactId) {
+    if (contactId != -1) {
+      Log.d("rgai", "VALID contact id -> " + contactId);
+    }
     Bitmap img = null;
     if (photos == null) {
       photos = new HashMap<Long, Bitmap>();

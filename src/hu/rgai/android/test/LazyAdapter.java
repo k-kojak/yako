@@ -73,7 +73,7 @@ public class LazyAdapter extends BaseAdapter {
     }
     Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
     icon.setImageBitmap(img);
-    icon.setImageBitmap(img);
+//    icon.setImageBitmap(img);
     
     date.setText(message.getFormattedDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);

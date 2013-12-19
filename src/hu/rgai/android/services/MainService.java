@@ -367,6 +367,10 @@ public class MainService extends Service {
           MessageListElementParc itemToRemove = null;
           for (MessageListElementParc oldMessage : messages) {
             if (newMessage.equals(oldMessage)) {
+              // first updating person info anyway..
+              oldMessage.setFrom(newMessage.getFrom());
+              
+              
               /* "Marking" FB message seen here.
                * Do not change info of the item, if the date is the same, so the queried
                * data will not override the displayed object.
@@ -427,26 +431,36 @@ public class MainService extends Service {
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {
+        MessageProvider mp = null;
         if (acc instanceof GmailAccountAndr) {
           accountName = ((GmailAccount)acc).getEmail();
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)acc);
-          List<MessageListElement> mle = semp.getMessageList(0, acc.getMessageLimit());
-          
-          messages.addAll(nonParcToParc(mle));
+          mp = new SimpleEmailMessageProvider((GmailAccount)acc);
+//          List<MessageListElement> mle = semp.getMessageList(0, acc.getMessageLimit());
+//          messages.addAll(nonParcToParc(mle));
         } else if (acc instanceof EmailAccountAndr) {
-          
           accountName = ((EmailAccount)acc).getEmail();
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)acc);
-          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+          mp = new SimpleEmailMessageProvider((EmailAccount)acc);
+//          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof FacebookAccountAndr) {
           accountName = ((FacebookAccountAndr)acc).getDisplayName();
-          FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
-          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+          mp = new FacebookMessageProvider((FacebookAccount)acc);
+//          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof SmsAccountAndr) {
           accountName = "SMS";
-          SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
-          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
+          mp = new SmsMessageProvider(this.context);
+//          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
+        if (mp != null) {
+          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(0, acc.getMessageLimit()));
+          for (MessageListElementParc mlep : parcelableMessages) {
+            if (!messages.contains(mlep)) {
+              messages.add(mlep);
+            } else {
+              messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
+            }
+          }
+        }
+        
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
         this.result = AUTHENTICATION_FAILED_EXCEPTION;
@@ -489,9 +503,9 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
-//        Log.d("rgai", "A message from user -> " + mle.getFrom());
+        Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
-//        Log.d("rgai", "A message from REPLACED user -> " + mle.getFrom());
+        Log.d("rgai", "A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);
       }
       
