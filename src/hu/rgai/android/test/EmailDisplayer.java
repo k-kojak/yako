@@ -98,7 +98,6 @@ public class EmailDisplayer extends ActionBarActivity {
                 intent.putExtra("account", (Parcelable)account);
                 intent.putExtra("from", from);
                 startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
-                view.reload();
                 return true;
             }
 
