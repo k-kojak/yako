@@ -297,12 +297,13 @@ public class MainService extends Service {
             
             this.mergeMessages(newMessages);
             MessageListElementParc lastUnreadMsg = null;
+            
             for (MessageListElementParc mle : messages) {
               if(mle.getId().equals(actViewingThreadId)) {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
-              if (!mle.isSeen()) {
+              if (!mle.isSeen() && mle.getDate().after(MainActivity.getLastNotification())) {
                 if(lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
                 }
@@ -314,24 +315,28 @@ public class MainService extends Service {
             
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
-              NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                      .setSmallIcon(R.drawable.gmail_icon)
-                      .setWhen(lastUnreadMsg.getDate().getTime())
-                      .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle())
-                      .setContentInfo(lastUnreadMsg.getMessageType().toString())
-                      .setContentTitle(lastUnreadMsg.getFrom().getName())
-                      .setContentText(lastUnreadMsg.getTitle());
-              Intent resultIntent = new Intent(context, MainActivity.class);
-              resultIntent.putExtra("from_notifier", true);
-              TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-              stackBuilder.addParentStack(MainActivity.class);
-              stackBuilder.addNextIntent(resultIntent);
-              PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-              mBuilder.setContentIntent(resultPendingIntent);
-              mBuilder.setAutoCancel(true);
+              if (!MainActivity.isMainActivityVisible()) {
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.gmail_icon)
+                        .setWhen(lastUnreadMsg.getDate().getTime())
+                        .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle())
+                        .setContentInfo(lastUnreadMsg.getMessageType().toString())
+                        .setContentTitle(lastUnreadMsg.getFrom().getName())
+                        .setContentText(lastUnreadMsg.getTitle());
+                Intent resultIntent = new Intent(context, MainActivity.class);
+                resultIntent.putExtra("from_notifier", true);
+                TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+                stackBuilder.addParentStack(MainActivity.class);
+                stackBuilder.addNextIntent(resultIntent);
+                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                mBuilder.setContentIntent(resultPendingIntent);
+                mBuilder.setAutoCancel(true);
 
-              
-              mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+
+                mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+              } else {
+                MainActivity.updateLastNotification();
+              }
               
             } else {
               mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);

@@ -56,6 +56,8 @@ public class MainActivity extends ActionBarActivity {
   
   
   public static final int PICK_CONTACT = 101;
+  private static boolean is_activity_visible = false;
+  private static Date last_notification_date = null;
   
   private boolean serviceConnectionEstablished = false;
   private List<MessageListElementParc> messages;
@@ -64,14 +66,14 @@ public class MainActivity extends ActionBarActivity {
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
-  private boolean activityOpenedFromNotification = false;
+//  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-      if (activityOpenedFromNotification) {
-        s.setAllMessagesToSeen();
-        activityOpenedFromNotification = false;
-      }
+//      if (activityOpenedFromNotification) {
+//        s.setAllMessagesToSeen();
+//        activityOpenedFromNotification = false;
+//      }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -91,8 +93,8 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
-    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
+//    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
+//    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
     
     // TODO: session and access token opening and handling
@@ -237,6 +239,8 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    is_activity_visible = true;
+    last_notification_date = new Date();
 //    getFbMessages(this);
     // register service broadcast receiver
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
@@ -270,6 +274,21 @@ public class MainActivity extends ActionBarActivity {
     if (serviceConnection != null) {
       unbindService(serviceConnection);
     }
+  }
+  
+  public static boolean isMainActivityVisible() {
+    return is_activity_visible;
+  }
+  
+  public static void updateLastNotification() {
+    last_notification_date = new Date();
+  }
+  
+  public static Date getLastNotification() {
+    if (last_notification_date == null) {
+      last_notification_date = new Date(new Date().getTime() - 86400 * 365);
+    }
+    return last_notification_date;
   }
   
   private void setContent() {
@@ -354,6 +373,10 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onPause() {
     super.onPause();
+    is_activity_visible = false;
+    
+    // refreshing last notification date when closing activity
+    last_notification_date = new Date();
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
