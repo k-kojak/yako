@@ -80,6 +80,7 @@ public class MainActivity extends ActionBarActivity {
   private List<MessageListElementParc> messages;
   private LazyAdapter adapter;
   private MainService s;
+  private ListView lv;
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
@@ -345,7 +346,7 @@ public class MainActivity extends ActionBarActivity {
           setContentView(R.layout.main);
           messages = new ArrayList<MessageListElementParc>();
 
-          ListView lv = (ListView) findViewById(R.id.list);
+          lv = (ListView) findViewById(R.id.list);
   //        String[] from = {"subject", "from"};
   //        int[] to = {android.R.id.text1, android.R.id.text2};
   //        adapter = new SimpleAdapter(this, emails, android.R.layout.simple_list_item_2, from, to);
@@ -391,7 +392,7 @@ public class MainActivity extends ActionBarActivity {
                 boolean changed) {
               StringBuilder builder = new StringBuilder();
               appendClickedElementDatasToBuilder(message, builder);
-              //appendVisibleElementToStringBuilder(builder, lv, adapter);
+              appendVisibleElementToStringBuilder(builder, lv, adapter);
               builder.append(changed);
               Log.d("willrgai", builder.toString() );
               EventLogger.INSTANCE.writeToLogFile( builder.toString() );
@@ -455,7 +456,7 @@ public class MainActivity extends ActionBarActivity {
     StringBuilder builder = new StringBuilder();
     builder.append( event );
     builder.append( SPACE_STR );
-    //appendVisibleElementToStringBuilder(builder, lv, adapter);
+    appendVisibleElementToStringBuilder(builder, lv, adapter);
     Log.d( "willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile( builder.toString());
   }
