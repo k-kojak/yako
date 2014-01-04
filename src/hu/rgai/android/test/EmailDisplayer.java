@@ -9,12 +9,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
 import android.widget.Toast;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
@@ -36,8 +38,9 @@ import javax.mail.NoSuchProviderException;
 
 import net.htmlparser.jericho.Source;
 
-public class EmailDisplayer extends Activity {
+public class EmailDisplayer extends ActionBarActivity {
 
+  private static final String EMAIL_BACKBUTTON_STR = "Email:backbutton";
   private ProgressDialog pd = null;
   private Handler handler = null;
   private FullSimpleMessageParc content = null;
@@ -54,7 +57,8 @@ public class EmailDisplayer extends Activity {
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "EmailDisplayer back button");
+    Log.d( "willrgai", EMAIL_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( EMAIL_BACKBUTTON_STR );
     super.onBackPressed();
   }
   
@@ -72,7 +76,7 @@ public class EmailDisplayer extends Activity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
-    
+    getSupportActionBar().setTitle(account.getAccountType().toString() + " | " + account.getDisplayName());
     if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
       content = (FullSimpleMessageParc)mlep.getFullMessage();

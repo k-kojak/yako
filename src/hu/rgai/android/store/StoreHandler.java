@@ -146,6 +146,17 @@ public class StoreHandler {
     return false;
   }
   
+  public static FacebookAccountAndr getFacebookAccount(Context context) {
+    List<AccountAndr> accounts = getAccounts(context);
+    
+    for (AccountAndr a : accounts) {
+      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+        return (FacebookAccountAndr)a;
+      }
+    }
+    return null;
+  }
+  
   public static void saveAccounts(List<AccountAndr> accounts, Context context) throws Exception {
     removeAccountSettings(context);
     int i = 0;

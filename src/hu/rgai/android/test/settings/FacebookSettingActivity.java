@@ -43,6 +43,7 @@ import com.facebook.widget.LoginButton;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
@@ -66,7 +67,8 @@ import java.util.logging.Logger;
  */
 public class FacebookSettingActivity extends ActionBarActivity {
 
-//  private MainActivity mainActivity;
+private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "FacebookSettingActivity:backbutton";
+  //  private MainActivity mainActivity;
 //  boolean stillAddingFacebookAccount = false;
   private TextView name;
   private TextView uniqueName;
@@ -85,7 +87,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "FacebookSettingActivity back button");
+    Log.d( "willrgai", FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR);
     super.onBackPressed();
   }
   

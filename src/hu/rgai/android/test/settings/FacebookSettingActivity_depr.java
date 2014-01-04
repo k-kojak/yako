@@ -32,6 +32,7 @@ import com.facebook.model.GraphUser;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.FacebookFriendProvider;
@@ -48,6 +49,7 @@ import java.util.logging.Logger;
  */
 public class FacebookSettingActivity_depr extends Activity {
 
+private static final String FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR = "FacebookSettingActivity_depr:backbutton";
 //  boolean stillAddingFacebookAccount = false;
   private TextView name;
   private TextView uniqueName;
@@ -58,7 +60,8 @@ public class FacebookSettingActivity_depr extends Activity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "FacebookSettingActivity_depr back button");
+    Log.d( "willrgai", FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR);
     super.onBackPressed();
   }
   

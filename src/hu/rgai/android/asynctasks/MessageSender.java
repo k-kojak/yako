@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
@@ -20,12 +21,14 @@ import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 
@@ -35,6 +38,8 @@ import javax.mail.NoSuchProviderException;
  */
   public class MessageSender extends AsyncTask<Integer, Integer, Boolean> {
 
+    private static final String SENDMESSAGE_STR = "sendmessage";
+    private static final String SPACE_STR = " ";
     private Context context;
     private RecipientItem recipient;
     private Handler handler;
@@ -58,7 +63,6 @@ import javax.mail.NoSuchProviderException;
     @Override
     protected Boolean doInBackground(Integer... params) {
       AccountAndr acc = getAccountForType(recipient.getType());
-
       if (acc != null) {
         MessageProvider mp = null;
         Set<MessageRecipient> recipients = null;
@@ -90,12 +94,26 @@ import javax.mail.NoSuchProviderException;
               Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
               break;
             }
-            Log.d("rgai", content);
+            
+            loggingSendMessage();
+            
             break;
           }
         }
       }
       return true;
+    }
+
+    private void loggingSendMessage() {
+      StringBuilder builder = new StringBuilder();
+      builder.append( SENDMESSAGE_STR);
+      builder.append( SPACE_STR );
+      builder.append( recipient.getType() );
+      builder.append( SPACE_STR );
+      builder.append( content );
+      builder.append( SPACE_STR );
+      builder.append( recipient.getDisplayName());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString());
     }
     
     // TODO: gmail != email

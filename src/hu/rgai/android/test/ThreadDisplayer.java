@@ -14,18 +14,24 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.widget.AbsListView.OnScrollListener;
 import hu.rgai.android.asynctasks.MessageSender;
 import hu.rgai.android.asynctasks.ThreadContentGetter;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
@@ -54,8 +60,15 @@ import java.util.Set;
 
 import net.htmlparser.jericho.Source;
 
-public class ThreadDisplayer extends Activity {
+public class ThreadDisplayer extends ActionBarActivity {
 
+  private static final String THREAD_BACKBUTTON_STR = "thread:backbutton";
+  private static final String THREAD_PAUSE_STR = "thread:pause";
+  private static final String THREAD_RESUME_STR = "thread:resume";
+  private static final String EDITTEXT_WRITE_STR = "edittext_write";
+  private static final String SPACE_STR = " ";
+  private static final String SCROLL_END_STR = "scroll end";
+  private static final String SCROLL_START_STR = "scroll start";
   private ProgressDialog pd = null;
   private Handler messageSendHandler = null;
   private Handler messageArrivedHandler = null;
@@ -101,8 +114,20 @@ public class ThreadDisplayer extends Activity {
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "ThreadDisplayer back button");
+    Log.d( "willrgai", THREAD_BACKBUTTON_STR + SPACE_STR+ threadId );
+    EventLogger.INSTANCE.writeToLogFile( THREAD_BACKBUTTON_STR + SPACE_STR+ threadId );
     super.onBackPressed();
+  }
+  
+  private void logActivityEvent(String event) {
+    StringBuilder builder = new StringBuilder();
+    builder.append( event );
+    builder.append( SPACE_STR );
+    builder.append( threadId );
+    builder.append( SPACE_STR );
+    appendVisibleElementToStringBuilder(builder);
+    Log.d( "willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile( builder.toString());
   }
   
   @Override
@@ -122,19 +147,42 @@ public class ThreadDisplayer extends Activity {
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
     MainService.actViewingThreadId = threadId;
+    String accName = "";
+    if(!account.getAccountType().equals(MessageProvider.Type.SMS)) {
+      accName = " | " + account.getDisplayName();
+    }
+    getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
     
     
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
     myThread.execute(threadId);
     
 //    bindMessageNotifier();
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     text = (EditText) findViewById(R.id.text);
-    
+    text.addTextChangedListener(new TextWatcher() {
+      
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // TODO Auto-generated method stub
+      }
+      
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // TODO Auto-generated method stub
+      }
+      
+      @Override
+      public void afterTextChanged(Editable s) {
+        // TODO Auto-generated method stub
+        Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + s.toString());
+      }
+    });
 //    webView = (WebView) findViewById(R.id.email_content);
 //    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
@@ -142,6 +190,7 @@ public class ThreadDisplayer extends Activity {
     
     adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
     lv.setAdapter(adapter);
+    lv.setOnScrollListener( new LogOnScrollListener());
     
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use  that here
@@ -206,6 +255,7 @@ public class ThreadDisplayer extends Activity {
 //    }
 //    IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
 //    registerReceiver(serviceReceiver, intentFilter);
+    logActivityEvent( THREAD_RESUME_STR );
   }
   
   public void sendMessage(View view) {
@@ -227,36 +277,30 @@ public class ThreadDisplayer extends Activity {
 //    displayMessage();
     text.setText("");
 //    tempMessageIds.add(tempId);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 2000);
     myThread.execute(threadId);
 //    }
   }
 
   @Override
   protected void onPause() {
+    logActivityEvent( THREAD_PAUSE_STR );
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
     Log.d("rgai", "ThreadDisplayer onPause");
     MainService.actViewingThreadId = null;
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      FacebookMessageProvider.closeConnection();
+//      FacebookMessageProvider.closeConnection();
     }
     
     if (nmr != null) {
+      try {
       unregisterReceiver(nmr);
+      } catch (IllegalArgumentException ex) {
+        ex.printStackTrace();
     }
-    
-//    if (serviceReceiver != null) {
-//      unregisterReceiver(serviceReceiver);
-//    }
-//    if (serviceConnection != null) {
-//      unbindService(serviceConnection);
-//    }
-    
-//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_STOP);
-//    this.sendBroadcast(intent);
+  }
   }
   
   @Override
@@ -341,6 +385,7 @@ public class ThreadDisplayer extends Activity {
       }
       lv.setAdapter(adapter);
       lv.setSelection(lv.getAdapter().getCount() - 1);
+      lv.setOnScrollListener( new LogOnScrollListener());
     }
   }
   
@@ -434,7 +479,7 @@ public class ThreadDisplayer extends Activity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
         Log.d("rgai", "NEW MESSAGE BROADCAST");
-        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account);
+        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account, 0);
         myThread.execute(threadId);
       }
     }
@@ -492,5 +537,47 @@ public class ThreadDisplayer extends Activity {
 //    private FullThreadMessageParc mergeMessages(FullThreadMessageParc newMessages) {
 //      
 //    }
+  }
+  
+  private void appendVisibleElementToStringBuilder(StringBuilder builder) {
+    int firstVisiblePosition = lv.getFirstVisiblePosition();
+    int lastVisiblePosition = lv.getLastVisiblePosition();
+    
+    for ( int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++ ) {
+      builder.append( ((MessageAtomParc)(adapter.getItem(actualVisiblePosition))).getContent() );
+      builder.append( SPACE_STR );
+    }
+  }
+  
+  class LogOnScrollListener implements OnScrollListener{
+    
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem,
+        int visibleItemCount, int totalItemCount) {
+      // TODO Auto-generated method stub
+      
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+      // TODO Auto-generated method stub
+      StringBuilder builder = new StringBuilder();
+
+      builder.append(account.getAccountType().name() );
+      builder.append( SPACE_STR);
+      builder.append( MainService.actViewingThreadId );
+      builder.append( SPACE_STR);
+      if ( scrollState == 1) {
+        builder.append( SCROLL_START_STR );
+        builder.append( SPACE_STR);
+      } else {
+        builder.append( SCROLL_END_STR );
+        builder.append( SPACE_STR);
+      }
+      appendVisibleElementToStringBuilder( builder );
+      Log.d( "willrgai", builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+    }
+
   }
 }

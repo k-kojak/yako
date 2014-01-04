@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -132,15 +131,17 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
   }
 
   @Override
-  public FullThreadMessage getMessage(String id) throws NoSuchProviderException,
+  public FullThreadMessage getMessage(String threadId )throws NoSuchProviderException,
           MessagingException, IOException {
     // TODO Auto-generated method stub
 
     final FullThreadMessage ftm = new FullThreadMessage();
-    String selection = "thread_id = " + id;
+    String selection = "thread_id = " + threadId;
 
     Uri uriSMSURI = Uri.parse("content://sms");
-    Cursor cur = context.getContentResolver().query(uriSMSURI, null, selection, null, null);
+    Cursor cur = context.getContentResolver().query(uriSMSURI,
+            new String[]{"thread_id", "_id", "subject", "body", "date", "person", "address", "type"},
+            selection, null, null);
 
     /**
      * 0: _id 1: thread_id 2: address 3: person 4: date 5: date_sent 6: protocol 7: read
@@ -148,7 +149,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
      * 14: locked 15: error_code 16: seen
      */
     while (cur.moveToNext()) {
-      if (cur.getString(1).equals(id)) {
+      if (cur.getString(0).equals(threadId)) {
 
 //        Log.d("rgai", "SMS DATE -> " + cur.getString(4));
 //        Log.d("rgai", "SMS ADDRESS -> " + cur.getString(2));
@@ -158,12 +159,12 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
 //        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
 //        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
         ftm.addMessage(new MessageAtom(
-                cur.getString(0),
-                cur.getString(11),
-                cur.getString(12),
+                cur.getString(1),
+                cur.getString(2),
+                cur.getString(3),
                 new Date(cur.getLong(4)),
-                new Person(cur.getLong(3) + "", cur.getString(2), MessageProvider.Type.SMS),
-                cur.getLong(9) == 2, //vmit ezzel kezdeni
+                new Person(cur.getLong(5) + "", cur.getString(6), MessageProvider.Type.SMS),
+                cur.getLong(7) == 2, //vmit ezzel kezdeni
                 MessageProvider.Type.SMS,
                 null));
 
@@ -203,7 +204,6 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
   @Override
   public void onReceive(Context context, Intent intent) {
     if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
-      
       // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
       // a bit the reading from inbox
       try {
@@ -212,6 +212,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+      res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
 //      // in case the first attempt was too quick, request the display again a little bit later

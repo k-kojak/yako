@@ -190,7 +190,7 @@ public class FacebookMessageProvider implements MessageProvider {
 
   public static void initConnection(FacebookAccount fba, final Context context) {
 
-    if (xmpp == null) {
+    if (xmpp == null || !xmpp.isConnected()) {
 
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
       StrictMode.setThreadPolicy(policy);
@@ -223,6 +223,7 @@ public class FacebookMessageProvider implements MessageProvider {
                 if (message != null && message.getBody() != null) {
                   Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
                   Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+                  res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
                   context.sendBroadcast(res);
 //                  RosterEntry roster = xmpp.getRoster().getEntry(message.getFrom());
 //                  System.out.println(message.getType());
@@ -376,17 +377,18 @@ public class FacebookMessageProvider implements MessageProvider {
     config.setSendPresence(false);
 
 //    final XMPPConnection xmpp = new XMPPConnection(config);
-
-//    try {
-//      xmpp.connect();
-//      SmackConfiguration.setPacketReplyTimeout(10000);
-//      xmpp.login(account.getUniqueName(), account.getPassword());
-//    } catch (XMPPException e) {
-//      xmpp.disconnect();
-//      e.printStackTrace();
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//    }
+     if (xmpp == null || !xmpp.isConnected()) {
+        try {
+          xmpp.connect();
+          SmackConfiguration.setPacketReplyTimeout(10000);
+          xmpp.login(account.getUniqueName(), account.getPassword());
+        } catch (XMPPException e) {
+          xmpp.disconnect();
+          e.printStackTrace();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+     }
 
     for (MessageRecipient mr : to) {
       FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;

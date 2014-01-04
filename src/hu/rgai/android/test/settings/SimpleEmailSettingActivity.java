@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.test.R;
 
@@ -25,6 +26,7 @@ import java.util.Map;
  */
 public class SimpleEmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
+  private static final String SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "SimpleEmailSettingActivity:backbutton";
   private EditText email;
   private EditText pass;
   private EditText imap;
@@ -36,7 +38,8 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "SimpleEmailSettingActivity back button");
+    Log.d( "willrgai", SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
     super.onBackPressed();
   }
   

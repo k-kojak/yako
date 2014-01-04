@@ -19,6 +19,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -32,21 +33,25 @@ import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.Constants;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -108,7 +113,12 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    if (isNetworkAvailable()) {
+//    if (isNetworkAvailable()) {
+      MessageProvider.Type type = null;
+      if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
+        type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
+      }
+      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
       if (accounts.isEmpty() && !isPhone()) {
         Message msg = handler.obtainMessage();
@@ -117,25 +127,36 @@ public class MainService extends Service {
         msg.setData(bundle);
         handler.sendMessage(msg);
       } else {
+        if (!accounts.isEmpty() && !isPhone() && !isNetworkAvailable()) {
+          Message msg = handler.obtainMessage();
+          Bundle bundle = new Bundle();
+          bundle.putInt("result", NO_INTERNET_ACCESS);
+          msg.setData(bundle);
+          handler.sendMessage(msg);
+        } else {
         for (AccountAndr acc : accounts) {
+            if (type == null || acc.getAccountType().equals(type)) {
           LongOperation myThread = new LongOperation(this, handler, acc);
           myThread.execute();
         }
+          }
         
+          if (type == null || type.equals(MessageProvider.Type.SMS)) {
         AccountAndr smsAcc = new SmsAccountAndr();
         LongOperation myThread = new LongOperation(this, handler, smsAcc);
         myThread.execute();
-        
+      }
+        }
       }
 //      myThread = new LongOperation(handler);
 //      myThread.execute();
-    } else {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putInt("result", NO_INTERNET_ACCESS);
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
+//    } else {
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//      bundle.putInt("result", NO_INTERNET_ACCESS);
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+//    }
     
     return Service.START_STICKY;
   }
@@ -256,6 +277,10 @@ public class MainService extends Service {
   
   private class MyHandler extends Handler {
     
+    private static final String NEW_MESSAGE_STR = "newMessage";
+    private static final String UNDERLINE_SIGN_STR = "_";
+    private static final String MESSAGE_ARRIVED_STR = "message_arrived";
+    private static final String SPACE_STR = " ";
     private Context context;
 //    
     public MyHandler(Context context) {
@@ -280,16 +305,24 @@ public class MainService extends Service {
             
             this.mergeMessages(newMessages);
             MessageListElementParc lastUnreadMsg = null;
+            
             for (MessageListElementParc mle : messages) {
               if(mle.getId().equals(actViewingThreadId)) {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
-              if (!mle.isSeen()) {
+              if (!mle.isSeen() && mle.getDate().after(MainActivity.getLastNotification())) {
                 if(lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
+                if ( ( ( actViewingThreadId != null ) && ( mle.getId().contains( actViewingThreadId + UNDERLINE_SIGN_STR) ) ) || 
+                    ( ( actViewingThreadId == null ) && ( MainActivity.isMainActivityVisible() ) ) ) {
+                 
+                 loggingNewMessageArrived( mle , true);
+               } else {
+                 loggingNewMessageArrived( mle , false);
+               }
               }
             }
             
@@ -297,6 +330,7 @@ public class MainService extends Service {
             
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
+              if (!MainActivity.isMainActivityVisible()) {
               NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
                       .setSmallIcon(R.drawable.gmail_icon)
                       .setWhen(lastUnreadMsg.getDate().getTime())
@@ -312,9 +346,12 @@ public class MainService extends Service {
               PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
               mBuilder.setContentIntent(resultPendingIntent);
               mBuilder.setAutoCancel(true);
-
+              
               
               mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+              } else {
+                MainActivity.updateLastNotification();
+              }
               
             } else {
               mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
@@ -324,8 +361,24 @@ public class MainService extends Service {
           }
 //          Log.d("rgai", "sending broadcast");
           sendBroadcast(intent);
+
         }
       }
+    }
+
+    private void loggingNewMessageArrived( MessageListElementParc mle, boolean messageIsVisible) {
+      StringBuilder builder= new StringBuilder();
+      builder.append( NEW_MESSAGE_STR );
+      builder.append( SPACE_STR );
+      builder.append( mle.getId() );
+      builder.append( SPACE_STR );
+      builder.append( actViewingThreadId );
+      builder.append( SPACE_STR );
+      builder.append( messageIsVisible );
+      builder.append( SPACE_STR );
+      builder.append( mle.getFrom().getContactId());
+      Log.d( "willrgai", builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString());
     }
     
     private void mergeMessages(MessageListElementParc[] newMessages) {
@@ -344,12 +397,17 @@ public class MainService extends Service {
         }
         if (!contains) {
           messages.add(newMessage);
+              
           // searching PersonAndr here for new messages
 //          newMessage.setFrom(PersonAndr.searchPersonAndr(context, newMessage.getFrom()));
         } else {
           MessageListElementParc itemToRemove = null;
           for (MessageListElementParc oldMessage : messages) {
             if (newMessage.equals(oldMessage)) {
+              // first updating person info anyway..
+              oldMessage.setFrom(newMessage.getFrom());
+              
+              
               /* "Marking" FB message seen here.
                * Do not change info of the item, if the date is the same, so the queried
                * data will not override the displayed object.
@@ -410,26 +468,36 @@ public class MainService extends Service {
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {
+        MessageProvider mp = null;
         if (acc instanceof GmailAccountAndr) {
           accountName = ((GmailAccount)acc).getEmail();
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)acc);
-          List<MessageListElement> mle = semp.getMessageList(0, acc.getMessageLimit());
-          
-          messages.addAll(nonParcToParc(mle));
+          mp = new SimpleEmailMessageProvider((GmailAccount)acc);
+//          List<MessageListElement> mle = semp.getMessageList(0, acc.getMessageLimit());
+//          messages.addAll(nonParcToParc(mle));
         } else if (acc instanceof EmailAccountAndr) {
-          
           accountName = ((EmailAccount)acc).getEmail();
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)acc);
-          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+          mp = new SimpleEmailMessageProvider((EmailAccount)acc);
+//          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof FacebookAccountAndr) {
           accountName = ((FacebookAccountAndr)acc).getDisplayName();
-          FacebookMessageProvider semp = new FacebookMessageProvider((FacebookAccount)acc);
-          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
+          mp = new FacebookMessageProvider((FacebookAccount)acc);
+//          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof SmsAccountAndr) {
           accountName = "SMS";
-          SmsMessageProvider smsmp = new SmsMessageProvider(this.context);
-          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
+          mp = new SmsMessageProvider(this.context);
+//          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
+        if (mp != null) {
+          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(0, acc.getMessageLimit()));
+          for (MessageListElementParc mlep : parcelableMessages) {
+            if (!messages.contains(mlep)) {
+              messages.add(mlep);
+            } else {
+              messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
+            }
+          }
+        }
+        
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
         this.result = AUTHENTICATION_FAILED_EXCEPTION;
@@ -472,9 +540,9 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
-//        Log.d("rgai", "A message from user -> " + mle.getFrom());
+        Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
-//        Log.d("rgai", "A message from REPLACED user -> " + mle.getFrom());
+        Log.d("rgai", "A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);
       }
       

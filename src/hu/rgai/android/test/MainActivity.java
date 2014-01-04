@@ -27,7 +27,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +43,7 @@ import com.facebook.SessionState;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullMessageParc;
+import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
@@ -53,29 +57,40 @@ import java.util.List;
 
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
 
+  private static final String MAINPAGE_BACKBUTTON_STR = "mainpage:backbutton";
+  private static final String MAINPAGE_PAUSE_STR = "mainpage:pause";
+  private static final String MAINPAGE_RESUME_STR = "mainpage:resume";
+  private static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
+  private static final String SCROLL_END_STR = "scroll end";
+  private static final String SCROLL_START_STR = "scroll start";
+  private static final String MAIN_PAGE_STR = "MainPage";
 //  private Boolean isInternetAvailable = null;
   
-  
+
   public static final int PICK_CONTACT = 101;
-  
+  private static final String SPACE_STR = " ";
+  private static boolean is_activity_visible = false;
+  private static Date last_notification_date = null;
   private boolean serviceConnectionEstablished = false;
   private List<MessageListElementParc> messages;
   private LazyAdapter adapter;
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
-  private SystemBroadcastReceiver systemReceiver;
+  private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
-  private boolean activityOpenedFromNotification = false;
+//  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-      if (activityOpenedFromNotification) {
-        s.setAllMessagesToSeen();
-        activityOpenedFromNotification = false;
-      }
+//      if (activityOpenedFromNotification) {
+//        s.setAllMessagesToSeen();
+//        activityOpenedFromNotification = false;
+//      }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -90,7 +105,8 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "MainActivity back button");
+    Log.d( "willrgai", MAINPAGE_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( MAINPAGE_BACKBUTTON_STR);
     super.onBackPressed();
   }
   
@@ -104,7 +120,7 @@ public class MainActivity extends ActionBarActivity {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         try {
-          EventLogger.INSTANCE.writeToLogFile( "application over" );
+          EventLogger.INSTANCE.writeToLogFile( "application:over" );
           EventLogger.INSTANCE.closeLogFile();
           onDestroy();
         } catch (FileNotFoundException e) {
@@ -113,8 +129,8 @@ public class MainActivity extends ActionBarActivity {
         }
       }
     });
-    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
-    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
+//    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
+//    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
     
     // TODO: session and access token opening and handling
@@ -141,7 +157,7 @@ public class MainActivity extends ActionBarActivity {
       this.sendBroadcast(intent);
       // disaplying loading dialog, since the mails are not ready, but the user opened the list
       pd = new ProgressDialog(this);
-      pd.setMessage("Fetching emails...");
+      pd.setMessage("Fetching messages...");
       pd.setCancelable(false);
       pd.show();
     }
@@ -150,7 +166,7 @@ public class MainActivity extends ActionBarActivity {
 //    set
     try {
       EventLogger.INSTANCE.openLogFile( "logFile.txt" );
-      EventLogger.INSTANCE.writeToLogFile( "application start" );
+      EventLogger.INSTANCE.writeToLogFile( "application:start" );
     } catch (FileNotFoundException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -246,6 +262,7 @@ public class MainActivity extends ActionBarActivity {
         for (int i = 0; i < newMessages.length; i++) {
           messages.add(newMessages[i]);
         }
+        
         adapter.notifyDataSetChanged();
       }
     }
@@ -264,8 +281,14 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    is_activity_visible = true;
+    last_notification_date = new Date();
 //    getFbMessages(this);
     // register service broadcast receiver
+    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+    if (fba != null) {
+      FacebookMessageProvider.initConnection(fba, this);
+    }
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
     }
@@ -274,13 +297,15 @@ public class MainActivity extends ActionBarActivity {
     
     // register system broadcast receiver for internet connection state change
     if (systemReceiver == null) {
-      systemReceiver = new SystemBroadcastReceiver(this);
+      systemReceiver = new CustomBroadcastReceiver(this);
     }
-    IntentFilter systemIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    registerReceiver(systemReceiver, systemIntentFilter);
+    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    registerReceiver(systemReceiver, customIntentFilter);
     
     // setting content
     setContent();
+    logActivityEvent( MAINPAGE_RESUME_STR );
   }
 
   @Override
@@ -292,6 +317,21 @@ public class MainActivity extends ActionBarActivity {
     if (serviceConnection != null) {
       unbindService(serviceConnection);
     }
+  }
+  
+  public static boolean isMainActivityVisible() {
+    return is_activity_visible;
+  }
+  
+  public static void updateLastNotification() {
+    last_notification_date = new Date();
+  }
+  
+  public static Date getLastNotification() {
+    if (last_notification_date == null) {
+      last_notification_date = new Date(new Date().getTime() - 86400 * 365);
+    }
+    return last_notification_date;
   }
   
   private void setContent() {
@@ -309,13 +349,15 @@ public class MainActivity extends ActionBarActivity {
   //        String[] from = {"subject", "from"};
   //        int[] to = {android.R.id.text1, android.R.id.text2};
   //        adapter = new SimpleAdapter(this, emails, android.R.layout.simple_list_item_2, from, to);
-          adapter = new LazyAdapter(this, messages);
+          adapter = new LazyAdapter( this, messages);
           lv.setAdapter(adapter);
+          lv.setOnScrollListener( new LogOnScrollListener( lv, adapter ));
+          
           lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
               MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
-              Log.d("rgai","Main activity setContent onItemClick");
+
 //              String messageId = (String)message.getId();
               AccountAndr a = (AccountAndr)message.getAccount();
               Intent intent = null;
@@ -338,9 +380,30 @@ public class MainActivity extends ActionBarActivity {
                 setMessageSeen(message);
                 adapter.notifyDataSetChanged();
               }
+              
+              loggingOnClickEvent(message, changed);
               startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
               
               updateNotificationStatus();
+            }
+
+            private void loggingOnClickEvent(MessageListElementParc message,
+                boolean changed) {
+              StringBuilder builder = new StringBuilder();
+              appendClickedElementDatasToBuilder(message, builder);
+              //appendVisibleElementToStringBuilder(builder, lv, adapter);
+              builder.append(changed);
+              Log.d("willrgai", builder.toString() );
+              EventLogger.INSTANCE.writeToLogFile( builder.toString() );
+            }
+
+            private void appendClickedElementDatasToBuilder( MessageListElementParc message, StringBuilder builder ) {
+              builder.append( MAIN_PAGE_STR);
+              builder.append( SPACE_STR);
+              builder.append( CLICK_TO_MESSAGEGROUP_STR );
+              builder.append( SPACE_STR );
+              builder.append( message.getId() );
+              builder.append( SPACE_STR );
             }
           });
           if (serviceConnectionEstablished) {
@@ -376,10 +439,25 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   protected void onPause() {
+    logActivityEvent( MAINPAGE_PAUSE_STR );
     super.onPause();
+    is_activity_visible = false;
+    
+    // refreshing last notification date when closing activity
+    last_notification_date = new Date();
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
+//    FacebookMessageProvider.closeConnection();
+  }
+
+  private void logActivityEvent(String event) {
+    StringBuilder builder = new StringBuilder();
+    builder.append( event );
+    builder.append( SPACE_STR );
+    //appendVisibleElementToStringBuilder(builder, lv, adapter);
+    Log.d( "willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile( builder.toString());
   }
   
   public boolean isNetworkAvailable() {
@@ -388,11 +466,11 @@ public class MainActivity extends ActionBarActivity {
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  private class SystemBroadcastReceiver extends BroadcastReceiver {
+  private class CustomBroadcastReceiver extends BroadcastReceiver {
 
 //    private MainActivity activity = null;
 
-    public SystemBroadcastReceiver(MainActivity activity) {
+    public CustomBroadcastReceiver(MainActivity activity) {
 //      this.activity = activity;
     }
 
@@ -406,8 +484,15 @@ public class MainActivity extends ActionBarActivity {
         System.out.println("Network is up ******** " + typeName + ":::" + subtypeName);
 
 //        activity.setContent("onInternetBroadcast receive");
+      } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
+        Intent i = new Intent(MainActivity.this, MainScheduler.class);
+        if (intent.getExtras().containsKey("type")) {
+          i.putExtra("type", intent.getExtras().getString("type"));
       }
+        i.setAction(Context.ALARM_SERVICE);
+        MainActivity.this.sendBroadcast(i);
     }
+  }
   }
   
   private class DataUpdateReceiver extends BroadcastReceiver {
@@ -479,5 +564,52 @@ public class MainActivity extends ActionBarActivity {
         }
       }
     }
+  }
+  
+  private void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, LazyAdapter adapter) {
+    int firstVisiblePosition = lv.getFirstVisiblePosition();
+    int lastVisiblePosition = lv.getLastVisiblePosition();
+    
+    for ( int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++ ) {
+      builder.append( ((MessageListElementParc)(adapter.getItem(actualVisiblePosition))).getTitle() );
+      builder.append( SPACE_STR );
+    }
+  }
+  
+  class LogOnScrollListener implements OnScrollListener{
+    final ListView lv;
+    final LazyAdapter adapter;
+    
+    public LogOnScrollListener( ListView lv, LazyAdapter adapter) {
+      this.lv = lv;
+      this.adapter = adapter;
+    }
+    
+    @Override
+    public void onScroll(AbsListView view, int firstVisibleItem,
+        int visibleItemCount, int totalItemCount) {
+      // TODO Auto-generated method stub
+      
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView view, int scrollState) {
+      // TODO Auto-generated method stub
+      StringBuilder builder = new StringBuilder();
+
+      builder.append( MAIN_PAGE_STR );
+      builder.append( SPACE_STR );
+      if ( scrollState == 1) {
+        builder.append( SCROLL_START_STR );
+        builder.append( SPACE_STR );
+      } else {
+        builder.append( SCROLL_END_STR );
+        builder.append( SPACE_STR);
+      }
+      appendVisibleElementToStringBuilder( builder, lv, adapter);
+      Log.d( "willrgai", builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+    }
+
   }
 }

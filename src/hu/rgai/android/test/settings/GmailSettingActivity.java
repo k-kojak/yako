@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
 
@@ -22,6 +23,7 @@ import hu.rgai.android.test.R;
  */
 public class GmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
+  private static final String GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "GmailSettingActivity:backbutton";
   private EditText email;
   private EditText pass;
   private Spinner messageAmount;
@@ -57,7 +59,8 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "GmailSettingActivity back button");
+    Log.d( "willrgai", GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR );
     super.onBackPressed();
   }
   

@@ -28,6 +28,7 @@ import com.facebook.Session;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
@@ -45,6 +46,7 @@ import java.util.regex.Pattern;
  */
 public class AccountSettingsList extends ActionBarActivity {
 
+  private static final String ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR = "AccountSettingsList:backbutton";
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
@@ -56,7 +58,8 @@ public class AccountSettingsList extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "AccountSettingsList back button ");
+    Log.d( "willrgai", ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
     super.onBackPressed();
   }
   

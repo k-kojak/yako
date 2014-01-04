@@ -53,7 +53,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 
   @Override
   public void bindView(View view, Context context, Cursor cursor) {
-    
+
     String[] cols = new String[]{
 //      ContactsContract.Data.DATA1,
 //      ContactsContract.Data.DATA2,

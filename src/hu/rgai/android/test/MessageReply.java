@@ -17,6 +17,7 @@ import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.asynctasks.MessageSender;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -46,6 +47,7 @@ import javax.mail.internet.InternetAddress;
  */
 public class MessageReply extends ActionBarActivity implements TextWatcher {
 
+  private static final String MESSAGE_REPLY_BACKBUTTON_STR = "MessageReply:backbutton";
   public static final int MESSAGE_SENT_OK = 1;
   public static final int MESSAGE_SENT_FAILED = 2;
   
@@ -60,7 +62,8 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", "MessageReply back button");
+    Log.d( "willrgai", MESSAGE_REPLY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( MESSAGE_REPLY_BACKBUTTON_STR);
     super.onBackPressed();
   }
   
