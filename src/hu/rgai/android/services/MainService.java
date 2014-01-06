@@ -44,6 +44,7 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -188,6 +189,21 @@ public class MainService extends Service {
       if (mlep.getId().equals(id) && mlep.getAccount().equals(account)) {
         mlep.setFullMessage(fullMessage);
         break;
+      }
+    }
+  }
+  
+  /**
+   * Removes messages from message list where the account matches with the parameter.
+   * @param account 
+   */
+  public void removeMessagesToAccount(AccountAndr account) {
+    Log.d("rgai", "removing messages to account -> " + account);
+    Iterator<MessageListElementParc> it = messages.iterator();
+    while (it.hasNext()) {
+      MessageListElementParc mle = it.next();
+      if (mle.getAccount().equals(account)) {
+        it.remove();
       }
     }
   }
