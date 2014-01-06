@@ -116,6 +116,7 @@ public class MainService extends Service {
       }
       Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
+      boolean isNet = isNetworkAvailable();
       if (accounts.isEmpty() && !isPhone()) {
         Message msg = handler.obtainMessage();
         Bundle bundle = new Bundle();
@@ -123,17 +124,19 @@ public class MainService extends Service {
         msg.setData(bundle);
         handler.sendMessage(msg);
       } else {
-        if (!accounts.isEmpty() && !isPhone() && !isNetworkAvailable()) {
+        if (!accounts.isEmpty() && !isPhone() && !isNet) {
           Message msg = handler.obtainMessage();
           Bundle bundle = new Bundle();
           bundle.putInt("result", NO_INTERNET_ACCESS);
           msg.setData(bundle);
           handler.sendMessage(msg);
         } else {
-          for (AccountAndr acc : accounts) {
-            if (type == null || acc.getAccountType().equals(type)) {
-              LongOperation myThread = new LongOperation(this, handler, acc);
-              myThread.execute();
+          if (isNet) {
+            for (AccountAndr acc : accounts) {
+              if (type == null || acc.getAccountType().equals(type)) {
+                LongOperation myThread = new LongOperation(this, handler, acc);
+                myThread.execute();
+              }
             }
           }
 

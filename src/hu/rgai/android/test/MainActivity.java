@@ -47,6 +47,7 @@ import java.util.Date;
 import java.util.List;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
+import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
@@ -296,7 +297,7 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable();
 //    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {
 //      isInternetAvailable = isNetworkAvailable();
-      if (isNet) {
+      if (isNet || isPhone()) {
         View currentView = this.findViewById(R.id.list);
         if (currentView == null || currentView.getId() != R.id.list) {
           setContentView(R.layout.main);
@@ -387,6 +388,16 @@ public class MainActivity extends ActionBarActivity {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+  
+  private boolean isPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    if (simState == TelephonyManager.SIM_STATE_READY) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private class CustomBroadcastReceiver extends BroadcastReceiver {
