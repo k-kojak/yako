@@ -91,13 +91,13 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
         if (!ti.isMe && !from.getId().equals("0")) {
           mle.setFrom(from);
         }
-        if (!ti.seen) {
+        if (!ti.seen && !ti.isMe) {
           mle.setSeen(false);
         }
       } else {
         foundThreads++;
         if (foundThreads > limit) break;
-        messages.add(new MessageListElement(ti.threadId, ti.seen, ti.title, from,
+        messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title, from,
                 new Date(ti.date), Type.SMS));
       }
 //      if ()
