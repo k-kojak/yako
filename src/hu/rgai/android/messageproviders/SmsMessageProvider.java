@@ -136,12 +136,13 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
     // TODO Auto-generated method stub
 
     final FullThreadMessage ftm = new FullThreadMessage();
-    String selection = "thread_id = " + threadId;
+    String selection = "thread_id = ?";
+    String[] selectionArgs = new String[]{threadId};
 
     Uri uriSMSURI = Uri.parse("content://sms");
     Cursor cur = context.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "_id", "subject", "body", "date", "person", "address", "type"},
-            selection, null, null);
+            selection, selectionArgs, null);
 
     /**
      * 0: _id 1: thread_id 2: address 3: person 4: date 5: date_sent 6: protocol 7: read
@@ -167,9 +168,17 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
                 cur.getLong(7) == 2, //vmit ezzel kezdeni
                 MessageProvider.Type.SMS,
                 null));
-
       }
     }
+    
+    // after opening a thread, set all of items to read
+    ContentValues values = new ContentValues();
+    values.put("read", true);
+    context.getContentResolver().update(
+            uriSMSURI,
+            values,
+            "thread_id = ?",
+            new String[]{threadId});
 
     return ftm;
   }
