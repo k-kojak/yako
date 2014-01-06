@@ -153,7 +153,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
     
-    
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
