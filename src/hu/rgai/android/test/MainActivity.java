@@ -3,8 +3,6 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-//import android.app.ActionBar;
-import android.annotation.SuppressLint;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
@@ -41,12 +39,11 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
+import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
@@ -56,6 +53,8 @@ public class MainActivity extends ActionBarActivity {
   
   
   public static final int PICK_CONTACT = 101;
+  private static boolean is_activity_visible = false;
+  private static Date last_notification_date = null;
   
   private boolean serviceConnectionEstablished = false;
   private List<MessageListElementParc> messages;
@@ -64,14 +63,14 @@ public class MainActivity extends ActionBarActivity {
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
-  private boolean activityOpenedFromNotification = false;
+//  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-      if (activityOpenedFromNotification) {
-        s.setAllMessagesToSeen();
-        activityOpenedFromNotification = false;
-      }
+//      if (activityOpenedFromNotification) {
+//        s.setAllMessagesToSeen();
+//        activityOpenedFromNotification = false;
+//      }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -91,9 +90,8 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    setContentView(R.layout.main);
-
-    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
-    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
+//    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
+//    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
     
     // TODO: session and access token opening and handling
@@ -239,6 +237,8 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    is_activity_visible = true;
+    last_notification_date = new Date();
 //    getFbMessages(this);
     // register service broadcast receiver
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
@@ -274,12 +274,27 @@ public class MainActivity extends ActionBarActivity {
     }
   }
   
+  public static boolean isMainActivityVisible() {
+    return is_activity_visible;
+  }
+  
+  public static void updateLastNotification() {
+    last_notification_date = new Date();
+  }
+  
+  public static Date getLastNotification() {
+    if (last_notification_date == null) {
+      last_notification_date = new Date(new Date().getTime() - 86400 * 365);
+    }
+    return last_notification_date;
+  }
+  
   private void setContent() {
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem lehet csinalni semmit...
     boolean isNet = isNetworkAvailable();
 //    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {
 //      isInternetAvailable = isNetworkAvailable();
-      if (isNet) {
+      if (isNet || isPhone()) {
         View currentView = this.findViewById(R.id.list);
         if (currentView == null || currentView.getId() != R.id.list) {
           setContentView(R.layout.main);
@@ -356,6 +371,10 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onPause() {
     super.onPause();
+    is_activity_visible = false;
+    
+    // refreshing last notification date when closing activity
+    last_notification_date = new Date();
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
@@ -366,6 +385,16 @@ public class MainActivity extends ActionBarActivity {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+  
+  private boolean isPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    if (simState == TelephonyManager.SIM_STATE_READY) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private class CustomBroadcastReceiver extends BroadcastReceiver {

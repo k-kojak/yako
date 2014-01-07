@@ -241,7 +241,11 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     
     if (nmr != null) {
-      unregisterReceiver(nmr);
+      try {
+        unregisterReceiver(nmr);
+      } catch (IllegalArgumentException ex) {
+        ex.printStackTrace();
+      }
     }
   }
   
