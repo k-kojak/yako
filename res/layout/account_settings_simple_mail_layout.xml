@@ -90,19 +90,7 @@ and open the template in the editor.
         android:id="@+id/initial_emails_num"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
-      <Button
-        android:id="@+id/save_account_button"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:text="@string/save"
-        android:onClick="saveAccountSettings" />
-      
-      <Button
-        android:id="@+id/delete_account_button"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:text="@string/delete"
-        android:onClick="deleteAccountSettings" />
+
     </LinearLayout>
   </ScrollView>
 </LinearLayout>

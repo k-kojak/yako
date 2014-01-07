@@ -20,10 +20,14 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +43,8 @@ import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
+import com.facebook.widget.ProfilePictureView;
+
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
@@ -65,6 +71,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
 //  private MainActivity mainActivity;
 //  boolean stillAddingFacebookAccount = false;
+  private ProfilePictureView profilePictureView;
   private TextView name;
   private TextView uniqueName;
   private EditText password;
@@ -72,6 +79,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   private Spinner messageAmount;
   private FacebookAccountAndr oldAccount;
   private UiLifecycleHelper uiHelper;
+  private GraphUser user;
   private Session.StatusCallback callback = new Session.StatusCallback() {
     @Override
     public void call(Session session, SessionState state, Exception exception) {
@@ -97,6 +105,9 @@ public class FacebookSettingActivity extends ActionBarActivity {
               integrator.execute(gu.getId());
               try {
 //                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
+            	 
+            	  
+              
               setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
 //                    FacebookSettingActivity.this.onResume();
               } catch (Exception ex) {
@@ -109,9 +120,26 @@ public class FacebookSettingActivity extends ActionBarActivity {
           }
         }).executeAsync();
       } 
+      
     } else if (state.isClosed()) {
       Log.i("rgai", "Logged out...");
     }
+    
+    updateUI();
+  
+    
+  }
+  
+  private void updateUI() {
+      Session session = Session.getActiveSession();
+
+      if ( user != null) {
+          profilePictureView.setProfileId(user.getId());
+
+      } else {
+          profilePictureView.setProfileId(null);
+
+      }
   }
 
   @Override
@@ -134,6 +162,9 @@ public class FacebookSettingActivity extends ActionBarActivity {
 //    }
     
     
+   
+    profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);       
+     
     messageAmount = (Spinner)findViewById(R.id.initial_items_num);
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
             R.array.initial_emails_num,
@@ -153,11 +184,21 @@ public class FacebookSettingActivity extends ActionBarActivity {
     }
     
     LoginButton lb = (LoginButton)findViewById(R.id.authButton);
+    lb.setUserInfoChangedCallback(new LoginButton.UserInfoChangedCallback() {
+        @Override
+        public void onUserInfoFetched(GraphUser user) {
+            FacebookSettingActivity.this.user = user;
+            updateUI();
+
+        }
+    });
     
     lb.setReadPermissions(Settings.getFacebookPermissions());
 //    lb.performClick();
     uiHelper = new UiLifecycleHelper(this, callback);
     uiHelper.onCreate(savedInstanceState);
+    
+
   }
 
   private void setFieldsByAccount(FacebookAccountAndr fba) {
@@ -167,6 +208,9 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
   
   private void setFieldsByAccount(String displayName, String uName, String pass, String id, int messageLimit) {
+    
+
+   
     if (displayName != null) {
       name.setText(displayName);
     }
@@ -192,6 +236,31 @@ public class FacebookSettingActivity extends ActionBarActivity {
 //    }
 //    return null;
 //  }
+  
+  
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      // Inflate the menu items for use in the action bar
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.edit_account_options_menu, menu);
+      return super.onCreateOptionsMenu(menu);
+  } 
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+      // Handle presses on the action bar items
+      switch (item.getItemId()) {
+          case R.id.edit_account_save:
+        	  saveAccountSettings();
+              return true;
+          case R.id.edit_account_delete:
+        	  deleteAccountSettings();
+              return true;
+          default:
+              return super.onOptionsItemSelected(item);
+      }
+  }
+  
 
   @Override
   public void onResume() {
@@ -202,6 +271,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 //      onSessionStateChange(session, session.getState(), null);
 //    }
 //    uiHelper.onResume();
+    updateUI();
   }
 
   @Override
@@ -235,7 +305,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 //    uiHelper.onSaveInstanceState(outState);
   }
 
-  public void saveAccountSettings(View v) {
+  public void saveAccountSettings() {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
             name.getText().toString(), uniqueName.getText().toString(), id,
@@ -258,7 +328,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
     finish();
   }
   
-  public void deleteAccountSettings(View v) {
+  public void deleteAccountSettings() {
 //    Log.d("rgai", "DELETE");
     
     Session.openActiveSession(this, true, new Session.StatusCallback() {
@@ -332,6 +402,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
       }
       Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
       StoreHandler.saveUserFbImage(activity, bitmap);
+      
+
       
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
       fbfp.getFacebookFriends(activity, new ToastHelper() {

@@ -8,6 +8,9 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -55,7 +58,30 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     
   }
   
-  public void saveAccountSettings(View v) {
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      // Inflate the menu items for use in the action bar
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.edit_account_options_menu, menu);
+      return super.onCreateOptionsMenu(menu);
+  } 
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+      // Handle presses on the action bar items
+      switch (item.getItemId()) {
+          case R.id.edit_account_save:
+        	  saveAccountSettings();
+              return true;
+          case R.id.edit_account_delete:
+        	  deleteAccountSettings();
+              return true;
+          default:
+              return super.onOptionsItemSelected(item);
+      }
+  }
+  
+  public void saveAccountSettings() {
     Log.d("rgai", "SAVE");
     
     String m = email.getText().toString();
@@ -80,7 +106,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     finish();
   }
   
-  public void deleteAccountSettings(View v) {
+  public void deleteAccountSettings() {
     Log.d("rgai", "DELETE");
     
     Intent resultIntent = new Intent();

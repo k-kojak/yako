@@ -8,6 +8,9 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -100,6 +103,29 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     
   }
   
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      // Inflate the menu items for use in the action bar
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.edit_account_options_menu, menu);
+      return super.onCreateOptionsMenu(menu);
+  } 
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+      // Handle presses on the action bar items
+      switch (item.getItemId()) {
+          case R.id.edit_account_save:
+        	  saveAccountSettings();
+              return true;
+          case R.id.edit_account_delete:
+        	  deleteAccountSettings();
+              return true;
+          default:
+              return super.onOptionsItemSelected(item);
+      }
+  }
+  
   private void autoFillImapSmtpField(CharSequence email) {
     String m = email.toString();
     int pos = m.indexOf("@");
@@ -117,7 +143,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     return ((String)securityType.getSelectedItem()).equals("SSL") ? true : false;
   }
   
-  public void saveAccountSettings(View v) {
+  public void saveAccountSettings() {
     Log.d("rgai", "SAVE");
     
     String m = email.getText().toString();
@@ -145,7 +171,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     finish();
   }
   
-  public void deleteAccountSettings(View v) {
+  public void deleteAccountSettings() {
     Log.d("rgai", "DELETE");
     
     Intent resultIntent = new Intent();

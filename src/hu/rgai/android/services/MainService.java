@@ -315,7 +315,7 @@ public class MainService extends Service {
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
               NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                      .setSmallIcon(R.drawable.gmail_icon)
+                      .setSmallIcon(R.drawable.not_ic_action_email)
                       .setWhen(lastUnreadMsg.getDate().getTime())
                       .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle())
                       .setContentInfo(lastUnreadMsg.getMessageType().toString())

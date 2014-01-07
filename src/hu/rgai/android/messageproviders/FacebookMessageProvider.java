@@ -245,7 +245,7 @@ public class FacebookMessageProvider implements MessageProvider {
         e.printStackTrace();
       } catch (Exception k) {
         k.printStackTrace();
-        System.out.println(k.getMessage());
+        System.out.println(k);
         System.out.println("HIBAA");
       }
     }
