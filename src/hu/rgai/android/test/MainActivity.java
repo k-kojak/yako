@@ -150,6 +150,11 @@ public class MainActivity extends ActionBarActivity {
         intent = new Intent(this, MessageReply.class);
         startActivity(intent);
         return true;
+      case R.id.refresh_message_list:
+//        item.setEnabled(false);
+        Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_SHORT).show();
+        reloadMessages();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -177,9 +182,10 @@ public class MainActivity extends ActionBarActivity {
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           Log.d("rgai", "email setting result");
-          Intent intent = new Intent(this, MainScheduler.class);
-          intent.setAction(Context.ALARM_SERVICE);
-          this.sendBroadcast(intent);
+          reloadMessages();
+//          Intent intent = new Intent(this, MainScheduler.class);
+//          intent.setAction(Context.ALARM_SERVICE);
+//          this.sendBroadcast(intent);
           
 //          pd = new ProgressDialog(this);
 //          pd.setMessage("Fetching emails...");
@@ -208,6 +214,12 @@ public class MainActivity extends ActionBarActivity {
       default:
         break;
     }
+  }
+  
+  private void reloadMessages() {
+    Intent intent = new Intent(this, MainScheduler.class);
+    intent.setAction(Context.ALARM_SERVICE);
+    this.sendBroadcast(intent);
   }
 
   private void updateList(MessageListElementParc[] newMessages) {

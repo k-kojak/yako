@@ -525,9 +525,9 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
-        Log.d("rgai", "A message from user -> " + mle.getFrom());
+//        Log.d("rgai", "A message from user -> " + mle.getFrom());
         mlep.setFrom(PersonAndr.searchPersonAndr(context, mle.getFrom()));
-        Log.d("rgai", "A message from REPLACED user -> " + mlep.getFrom());
+//        Log.d("rgai", "A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);
       }
       

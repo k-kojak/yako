@@ -22,6 +22,7 @@
   <string name="imap_hint">imap.gmail.com</string>
   <string name="smtp_hint">smtp.gmail.com</string>
   <string name="password_hint">password</string>
+  <string name="refreshing">Refreshing</string>
     
     
   <string name="settings_fb_access_token">hu.rgai.android.settings.accounts</string>
