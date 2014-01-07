@@ -13,6 +13,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.util.List;
 
 public class LazyAdapter extends BaseAdapter {
@@ -80,7 +81,8 @@ public class LazyAdapter extends BaseAdapter {
 //      msgType.setImageResource(R.drawable.ic_phone);
       msgType.setImageResource(R.drawable.ic_sms3);
     } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.EMAIL)) {
-      msgType.setImageResource(R.drawable.ic_email);
+      int resource = getSimpleMailIcon((EmailAccount)message.getAccount());
+      msgType.setImageResource(resource);
     } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.GMAIL)) {
       msgType.setImageResource(R.drawable.ic_gmail);
     }
@@ -89,5 +91,19 @@ public class LazyAdapter extends BaseAdapter {
     date.setText(message.getFormattedDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);
     return vi;
+  }
+  
+  private int getSimpleMailIcon(EmailAccount acc) {
+    String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
+    if (dom.contains("yahoo")) {
+      return R.drawable.ic_yahoo;
+    } else if (dom.contains("vipmail")) {
+      return R.drawable.ic_indamail;
+    } else if (dom.contains("citromail")) {
+      return R.drawable.ic_citromail;
+    } else if (dom.contains("outlook")) {
+      return R.drawable.ic_hotmail;
+    }
+    return R.drawable.ic_email;
   }
 }
