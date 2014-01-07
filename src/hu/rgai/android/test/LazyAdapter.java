@@ -51,6 +51,7 @@ public class LazyAdapter extends BaseAdapter {
     TextView from = (TextView) vi.findViewById(R.id.from);
     TextView date = (TextView) vi.findViewById(R.id.date);
     ImageView icon = (ImageView) vi.findViewById(R.id.list_image);
+    ImageView msgType = (ImageView) vi.findViewById(R.id.list_acc_type);
 
     MessageListElementParc message = data.get(position);
 
@@ -73,6 +74,16 @@ public class LazyAdapter extends BaseAdapter {
     }
     Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
     icon.setImageBitmap(img);
+    if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+      msgType.setImageResource(R.drawable.ic_fb_messenger);
+    } else if (message.getMessageType().equals(MessageProvider.Type.SMS)) {
+//      msgType.setImageResource(R.drawable.ic_phone);
+      msgType.setImageResource(R.drawable.ic_sms);
+    } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.EMAIL)) {
+      msgType.setImageResource(R.drawable.ic_email);
+    } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.GMAIL)) {
+      msgType.setImageResource(R.drawable.ic_gmail);
+    }
 //    icon.setImageBitmap(img);
     
     date.setText(message.getFormattedDate());

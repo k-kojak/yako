@@ -4,10 +4,10 @@
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
     android:orientation="horizontal"
-    android:padding="5dip" >
+    android:padding="1dip" >
  
     <!--  ListRow Left sied Thumbnail image -->
-    <LinearLayout android:id="@+id/thumbnail"
+<!--    <LinearLayout android:id="@+id/thumbnail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="3dip"
@@ -20,45 +20,75 @@
             android:layout_height="32dip"
             android:src="@drawable/gmail_icon"/>
  
-    </LinearLayout>
+    </LinearLayout>-->
+    
+    <RelativeLayout
+      android:padding="0dip"
+      android:layout_alignParentLeft="true"
+      android:layout_width="35dip"
+      android:layout_height="35dip"
+    >
+      <ImageView
+        android:id="@+id/list_image"
+        android:layout_width="32dip"
+        android:layout_height="32dip"
+        android:src="@drawable/gmail_icon"/>
+      
+      <ImageView 
+        android:id="@+id/list_acc_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_fb_messenger"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="0px"
+        android:layout_marginRight="0px"
+      />
+ 
+    </RelativeLayout>
  
     <!-- Title Of Song-->
-    <TextView
-        android:id="@+id/subject"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/thumbnail"
-        android:layout_toRightOf="@+id/thumbnail"
-        android:text="Rihanna Love the way lie"
-        android:textColor="#040404"
-        android:typeface="sans"
-        android:textSize="14dip" />
- 
-    <!-- Artist Name -->
-    <TextView
-        android:id="@+id/from"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/subject"
-        android:textColor="#343434"
-        android:textSize="10dip"
-        android:typeface="sans"
-        android:layout_marginTop="1dip"
-        android:layout_toRightOf="@+id/thumbnail"
-        android:text="Just gona stand there and ..." />
- 
-    <!-- Rightend Duration -->
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@id/subject"
-        android:gravity="right"
-        android:text="5:45"
-        android:layout_marginRight="5dip"
-        android:textSize="10dip"
-        android:textColor="#10bcc9"
-        android:textStyle="bold"/>
+    <RelativeLayout
+      android:layout_marginLeft="36dip"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content">
+      <TextView
+          android:id="@+id/subject"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignTop="@+id/thumbnail"
+          android:layout_toRightOf="@+id/thumbnail"
+          android:text=""
+          android:textColor="#040404"
+          android:typeface="sans"
+          android:textSize="14dip" />
+
+      <!-- Artist Name -->
+      <TextView
+          android:id="@+id/from"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@id/subject"
+          android:textColor="#343434"
+          android:textSize="10dip"
+          android:typeface="sans"
+          android:layout_marginTop="1dip"
+          android:layout_toRightOf="@+id/thumbnail"
+          android:text="" />
+
+      <!-- Rightend Duration -->
+      <TextView
+          android:id="@+id/date"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentRight="true"
+          android:layout_alignTop="@id/subject"
+          android:gravity="right"
+          android:text=""
+          android:layout_marginRight="5dip"
+          android:textSize="10dip"
+          android:textColor="#10bcc9"
+          android:textStyle="bold"/>
+    </RelativeLayout>
  
 </RelativeLayout>
