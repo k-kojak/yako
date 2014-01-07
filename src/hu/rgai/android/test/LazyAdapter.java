@@ -78,7 +78,7 @@ public class LazyAdapter extends BaseAdapter {
       msgType.setImageResource(R.drawable.ic_fb_messenger);
     } else if (message.getMessageType().equals(MessageProvider.Type.SMS)) {
 //      msgType.setImageResource(R.drawable.ic_phone);
-      msgType.setImageResource(R.drawable.ic_sms);
+      msgType.setImageResource(R.drawable.ic_sms3);
     } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.EMAIL)) {
       msgType.setImageResource(R.drawable.ic_email);
     } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.GMAIL)) {
