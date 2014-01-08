@@ -9,6 +9,7 @@ import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -51,12 +52,14 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 
 import java.io.FileNotFoundException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
+import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
@@ -103,7 +106,18 @@ public class MainActivity extends ActionBarActivity {
       s = null;
     }
   };
-
+  private UncaughtExceptionHandler defaultUEH;
+  
+  private Thread.UncaughtExceptionHandler _unCaughtExceptionHandler =
+      new Thread.UncaughtExceptionHandler() {
+          @Override
+          public void uncaughtException(Thread thread, Throwable ex) {
+            EventLogger.INSTANCE.writeToLogFile( "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage());
+              // re-throw critical exception further to the os (important)
+            defaultUEH.uncaughtException(thread, ex);
+          }
+      };
+  
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", MAINPAGE_BACKBUTTON_STR);
@@ -117,7 +131,6 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-//    setContentView(R.layout.main);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         try {
@@ -130,6 +143,12 @@ public class MainActivity extends ActionBarActivity {
         }
       }
     });
+    
+    defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+    // setup handler for uncaught exception 
+    Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
+//    setContentView(R.layout.main);
+
 //    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
 //    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -162,6 +181,7 @@ public class MainActivity extends ActionBarActivity {
       pd.setCancelable(false);
       pd.show();
     }
+    
 //    setContent();
 //    setListAdapter(adapter);
 //    set
@@ -302,6 +322,8 @@ public class MainActivity extends ActionBarActivity {
     }
     IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    customIntentFilter.addAction(Intent.ACTION_SCREEN_OFF );
+    customIntentFilter.addAction(Intent.ACTION_SCREEN_ON );
     registerReceiver(systemReceiver, customIntentFilter);
     
     // setting content
@@ -340,7 +362,7 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable();
 //    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {
 //      isInternetAvailable = isNetworkAvailable();
-      if (isNet) {
+      if (isNet || isPhone()) {
         View currentView = this.findViewById(R.id.list);
         if (currentView == null || currentView.getId() != R.id.list) {
           setContentView(R.layout.main);
@@ -421,7 +443,6 @@ public class MainActivity extends ActionBarActivity {
         text.setGravity(Gravity.CENTER);
         this.setContentView(text);
       }
-//    }
   }
   
   private void updateNotificationStatus() {
@@ -465,6 +486,16 @@ public class MainActivity extends ActionBarActivity {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+  
+  private boolean isPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    if (simState == TelephonyManager.SIM_STATE_READY) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private class CustomBroadcastReceiver extends BroadcastReceiver {
@@ -572,7 +603,7 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     
     for ( int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++ ) {
-      builder.append( ((MessageListElementParc)(adapter.getItem(actualVisiblePosition))).getTitle() );
+      builder.append( ((MessageListElementParc)(adapter.getItem(actualVisiblePosition))).getId() );
       builder.append( SPACE_STR );
     }
   }

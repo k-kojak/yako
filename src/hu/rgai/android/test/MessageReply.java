@@ -21,6 +21,7 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
@@ -50,6 +51,8 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   private static final String MESSAGE_REPLY_BACKBUTTON_STR = "MessageReply:backbutton";
   public static final int MESSAGE_SENT_OK = 1;
   public static final int MESSAGE_SENT_FAILED = 2;
+  private static final String EDITTEXT_WRITE_STR = "edittext_write";
+  private static final String SPACE_STR = " ";
   
   private int messageResult;
   private Handler handler = null;
@@ -185,7 +188,10 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   }
 
   public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
-  public void afterTextChanged(Editable arg0) {}
+  public void afterTextChanged(Editable arg0) {
+    Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + arg0.toString());
+    EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + arg0.toString());
+  }
 
   public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
 //    validateEmailsField(recipients);

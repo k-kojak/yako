@@ -153,7 +153,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
     
-    
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
@@ -179,8 +178,8 @@ public class ThreadDisplayer extends ActionBarActivity {
       @Override
       public void afterTextChanged(Editable s) {
         // TODO Auto-generated method stub
-        Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + s.toString());
+        Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
       }
     });
 //    webView = (WebView) findViewById(R.id.email_content);
@@ -544,7 +543,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     
     for ( int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++ ) {
-      builder.append( ((MessageAtomParc)(adapter.getItem(actualVisiblePosition))).getContent() );
+      builder.append( ((MessageAtomParc)(adapter.getItem(actualVisiblePosition))).getId() );
       builder.append( SPACE_STR );
     }
   }
