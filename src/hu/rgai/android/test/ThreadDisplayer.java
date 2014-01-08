@@ -154,7 +154,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 //
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching content...");
-      pd.setCancelable(false);
+      pd.setCancelable(true);
       pd.show();
     }
   }

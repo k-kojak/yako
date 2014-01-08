@@ -81,7 +81,7 @@ public class EmailDisplayer extends ActionBarActivity {
 
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching email content...");
-      pd.setCancelable(false);
+      pd.setCancelable(true);
       pd.show();
     }
     

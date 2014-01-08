@@ -57,6 +57,7 @@ import javax.net.ssl.SSLHandshakeException;
 public class MainService extends Service {
 
   public static boolean RUNNING = false;
+  private static int iterationCount = 0;
   
   /**
    * This variable holds the ID of the actually displayed thread.
@@ -111,6 +112,8 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
 //    if (isNetworkAvailable()) {
+    iterationCount++;
+    Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
       MessageProvider.Type type = null;
       if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
         type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
@@ -460,8 +463,13 @@ public class MainService extends Service {
 //          List<MessageListElement> mle = semp.getMessageList(0, acc.getMessageLimit());
 //          messages.addAll(nonParcToParc(mle));
         } else if (acc instanceof EmailAccountAndr) {
-          accountName = ((EmailAccount)acc).getEmail();
-          mp = new SimpleEmailMessageProvider((EmailAccount)acc);
+          if (iterationCount % 4 == 1) {
+            Log.d("rgai", "GETTING MAIL WITH ACCOUNT: " + acc);
+            accountName = ((EmailAccount)acc).getEmail();
+            mp = new SimpleEmailMessageProvider((EmailAccount)acc);
+          } else {
+            Log.d("rgai", "SKIP ACCOUNT B. OF iteration count: " + acc);
+          }
 //          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof FacebookAccountAndr) {
           accountName = ((FacebookAccountAndr)acc).getDisplayName();
@@ -551,7 +559,7 @@ public class MainService extends Service {
 
     @Override
     protected void onPreExecute() {
-      Log.d(Constants.LOG, "onPreExecute");
+//      Log.d(Constants.LOG, "onPreExecute");
     }
 
 //    @Override

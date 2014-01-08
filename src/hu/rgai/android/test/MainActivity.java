@@ -223,17 +223,35 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void updateList(MessageListElementParc[] newMessages) {
-    Log.d("rgai", "updating list...");
-    if (messages != null) {
-      
-      messages.clear();
-      if (newMessages != null) {
+//    Log.d("rgai", "updating list...");
+    if (newMessages != null && messages != null) {
+      if (messages != null) {
+        messages.clear();
         for (int i = 0; i < newMessages.length; i++) {
           messages.add(newMessages[i]);
         }
-        adapter.notifyDataSetChanged();
+//        adapter.notifyDataSetChanged();
       }
+      setContent();
     }
+    
+//    if (newMessages == null || newMessages.length == 0) {
+//      TextView text = new TextView(this);
+//      text.setText(getString(R.string.empty_list));
+//      text.setGravity(Gravity.CENTER);
+//      this.setContentView(text);
+//    } else {
+//      if (messages != null) {
+//        if (messages.isEmpty()) {
+//          setContentView(R.layout.main);
+//        }
+//        messages.clear();
+//        for (int i = 0; i < newMessages.length; i++) {
+//          messages.add(newMessages[i]);
+//        }
+//        adapter.notifyDataSetChanged();
+//      }
+//    }
   }
   
   private void setMessageSeen(MessageListElementParc message) {
@@ -303,67 +321,100 @@ public class MainActivity extends ActionBarActivity {
   
   private void setContent() {
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem lehet csinalni semmit...
+    if (messages == null) {
+      messages = new ArrayList<MessageListElementParc>();
+    }
+    boolean isListView = findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable();
-//    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {
-//      isInternetAvailable = isNetworkAvailable();
-      if (isNet || isPhone()) {
-        View currentView = this.findViewById(R.id.list);
-        if (currentView == null || currentView.getId() != R.id.list) {
-          setContentView(R.layout.main);
-          messages = new ArrayList<MessageListElementParc>();
+    if (isNet || isPhone()) {
+      // if list is not empty and current view is listview, update adapter
+      if (!messages.isEmpty() && adapter != null) {
+        adapter.notifyDataSetChanged();
+      }
+      // insert listview, set adapter
+      else if (!messages.isEmpty() && !isListView) {
+        setContentView(R.layout.main);
+        ListView lv = (ListView) findViewById(R.id.list);
+        adapter = new LazyAdapter(this, messages);
+        lv.setAdapter(adapter);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+          public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
+            MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
+            AccountAndr a = (AccountAndr)message.getAccount();
+            Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+            Intent intent = new Intent(MainActivity.this, classToLoad);
+            intent.putExtra("msg_list_element", (Parcelable)message);
+            intent.putExtra("account", (Parcelable)a);
 
-          ListView lv = (ListView) findViewById(R.id.list);
-  //        String[] from = {"subject", "from"};
-  //        int[] to = {android.R.id.text1, android.R.id.text2};
-  //        adapter = new SimpleAdapter(this, emails, android.R.layout.simple_list_item_2, from, to);
-          adapter = new LazyAdapter(this, messages);
-          lv.setAdapter(adapter);
-          lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
-
-              MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
-
-//              String messageId = (String)message.getId();
-              AccountAndr a = (AccountAndr)message.getAccount();
-              Intent intent = null;
-//              if (a instanceof FacebookAccount) {
-              Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-              intent = new Intent(MainActivity.this, classToLoad);
-
-              intent.putExtra("msg_list_element", (Parcelable)message);
-              intent.putExtra("account", (Parcelable)a);
-//              } else {
-//                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-//                intent = new Intent(MainActivity.this, classToLoad);
-//                
-//                intent.putExtra("msg_list_element", (Parcelable)message);
-//                intent.putExtra("account", (Parcelable)a);
-//                
-//              }
-              boolean changed = s.setMessageSeenAndRead(message);
-              if (changed) {
-                setMessageSeen(message);
-                adapter.notifyDataSetChanged();
-              }
-              startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-              
-              updateNotificationStatus();
+            boolean changed = s.setMessageSeenAndRead(message);
+            if (changed) {
+              setMessageSeen(message);
+              adapter.notifyDataSetChanged();
             }
-          });
-          if (serviceConnectionEstablished) {
-            updateList(s.getEmails());
+            startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+            updateNotificationStatus();
           }
-        } else {
-          updateList(s.getEmails());
-          adapter.notifyDataSetChanged();
-        }
-        
-      } else {
+        });
+      } else if (messages.isEmpty()) {
         TextView text = new TextView(this);
-        text.setText(getString(R.string.no_internet_access));
+        text.setText(getString(R.string.empty_list));
         text.setGravity(Gravity.CENTER);
         this.setContentView(text);
       }
+    } else {
+      TextView text = new TextView(this);
+      text.setText(getString(R.string.no_internet_access));
+      text.setGravity(Gravity.CENTER);
+      this.setContentView(text);
+    }
+    
+    
+    
+    
+//    boolean isNet = isNetworkAvailable();
+//      if (isNet || isPhone()) {
+//        View currentView = this.findViewById(R.id.list);
+//        if (currentView == null || currentView.getId() != R.id.list) {
+//          setContentView(R.layout.main);
+//          ListView lv = (ListView) findViewById(R.id.list);
+//          adapter = new LazyAdapter(this, messages);
+//          lv.setAdapter(adapter);
+//          lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
+//
+//              MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
+//
+//              AccountAndr a = (AccountAndr)message.getAccount();
+//              Intent intent = null;
+//              Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+//              intent = new Intent(MainActivity.this, classToLoad);
+//
+//              intent.putExtra("msg_list_element", (Parcelable)message);
+//              intent.putExtra("account", (Parcelable)a);
+//              boolean changed = s.setMessageSeenAndRead(message);
+//              if (changed) {
+//                setMessageSeen(message);
+//                adapter.notifyDataSetChanged();
+//              }
+//              startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+//              
+//              updateNotificationStatus();
+//            }
+//          });
+//          if (serviceConnectionEstablished) {
+//            updateList(s.getEmails());
+//          }
+//        } else {
+//          updateList(s.getEmails());
+//          adapter.notifyDataSetChanged();
+//        }
+        
+//      } else {
+//        TextView text = new TextView(this);
+//        text.setText(getString(R.string.no_internet_access));
+//        text.setGravity(Gravity.CENTER);
+//        this.setContentView(text);
+//      }
   }
   
   private void updateNotificationStatus() {
