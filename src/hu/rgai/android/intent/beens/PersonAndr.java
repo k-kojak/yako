@@ -209,6 +209,7 @@ public final class PersonAndr extends Person implements Parcelable {
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.EMAIL, cursor.getColumnName(0));
       }
+      cursor.close();
       
       // selection facebook
       cursor = context.getContentResolver().query(
@@ -232,6 +233,7 @@ public final class PersonAndr extends Person implements Parcelable {
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.FACEBOOK, cursor.getColumnName(0));
       }
+      cursor.close();
     }
     
     return pa;

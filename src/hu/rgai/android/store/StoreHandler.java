@@ -18,11 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.PrintWriter;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.jivesoftware.smackx.bytestreams.BytestreamSession;
 
 
 /**
@@ -120,6 +118,7 @@ public class StoreHandler {
   }
   
   public static void removeAccount(Context context, AccountAndr account) throws Exception {
+    Log.d("rgai", "REMOVING ACCOUNT: " + account);
     List<AccountAndr> accounts = getAccounts(context);
     if (accounts.contains(account)) {
       accounts.remove(account);

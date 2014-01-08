@@ -78,6 +78,7 @@ public class ProfilePhotoProvider {
 //        Log.d("rgai", "FOUND _id  -> " + _id);
 //        Log.d("rgai", "FOUND rawId-> " + rawId);
       }
+      cursor.close();
     }
     
     return bm;
