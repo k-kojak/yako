@@ -8,6 +8,7 @@ import hu.rgai.android.intent.beens.PhoneRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.EmailDisplayer;
+import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.GmailSettingActivity;
@@ -108,6 +109,42 @@ public final class Settings {
       facebookPermissions.add("read_mailbox");
     }
     return facebookPermissions;
+  }
+  
+  public static final class EmailUtils {
+    
+    private static Map<String, Integer> resToString = null;
+    
+    public static int getResourceIdToEmailDomain(String domain) {
+      Integer rid = null;
+      if (resToString == null) {
+        fillResourceIdToEmalDomain();
+      }
+      rid = resToString.get(domain);
+      if (rid == null) {
+        return R.drawable.ic_email;
+      } else {
+        return rid;
+      }
+    }
+    
+    private static void fillResourceIdToEmalDomain() {
+      resToString = new HashMap<String, Integer>();
+      resToString.put("indamail", R.drawable.ic_indamail);
+      resToString.put("vipmail", R.drawable.ic_indamail);
+      resToString.put("csinibaba", R.drawable.ic_indamail);
+      resToString.put("totalcar", R.drawable.ic_indamail);
+      resToString.put("index", R.drawable.ic_indamail);
+      resToString.put("velvet", R.drawable.ic_indamail);
+      resToString.put("torzsasztal", R.drawable.ic_indamail);
+      resToString.put("lamer", R.drawable.ic_indamail);
+      
+      resToString.put("yahoo", R.drawable.ic_yahoo);
+      
+      resToString.put("citromail", R.drawable.ic_citromail);
+      
+      resToString.put("outlook", R.drawable.ic_hotmail);
+    }
   }
   
   public static final class ActivityRequestCodes {

@@ -93,17 +93,24 @@ public class LazyAdapter extends BaseAdapter {
     return vi;
   }
   
-  private int getSimpleMailIcon(EmailAccount acc) {
+  public static int getSimpleMailIcon(EmailAccount acc) {
     String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
-    if (dom.contains("yahoo")) {
-      return R.drawable.ic_yahoo;
-    } else if (dom.contains("vipmail")) {
-      return R.drawable.ic_indamail;
-    } else if (dom.contains("citromail")) {
-      return R.drawable.ic_citromail;
-    } else if (dom.contains("outlook")) {
-      return R.drawable.ic_hotmail;
-    }
-    return R.drawable.ic_email;
+    dom = dom.substring(0, dom.indexOf("."));
+    
+    return Settings.EmailUtils.getResourceIdToEmailDomain(dom);
   }
+  
+//  private int getSimpleMailIcon(EmailAccount acc) {
+//    String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
+//    if (dom.contains("yahoo")) {
+//      return R.drawable.ic_yahoo;
+//    } else if (dom.contains("vipmail")) {
+//      return R.drawable.ic_indamail;
+//    } else if (dom.contains("citromail")) {
+//      return R.drawable.ic_citromail;
+//    } else if (dom.contains("outlook")) {
+//      return R.drawable.ic_hotmail;
+//    }
+//    return R.drawable.ic_email;
+//  }
 }
