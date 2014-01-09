@@ -45,8 +45,15 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
     context = myContext;
   }
 
-  @Override
   public List<MessageListElement> getMessageList(int offset, int limit)
+          throws CertPathValidatorException, SSLHandshakeException,
+          ConnectException, NoSuchProviderException, UnknownHostException,
+          IOException, MessagingException, AuthenticationFailedException {
+    return getMessageList(offset, limit, 20);
+  }
+  
+  @Override
+  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {

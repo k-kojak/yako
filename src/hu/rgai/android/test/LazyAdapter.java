@@ -3,6 +3,7 @@ package hu.rgai.android.test;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,12 +58,20 @@ public class LazyAdapter extends BaseAdapter {
     MessageListElementParc message = data.get(position);
 
     // Setting all values in listview
-    String subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-    if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
-      subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
-    }
-    if (message.getUnreadCount() > 0) {
-      subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+    // TODO: itt null pointer exceptionnel elszallunk olykor
+    String subjectText = " ";
+    if (message.getTitle() == null) {
+      if (message.getSubTitle() != null) {
+        subjectText = message.getSubTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
+      }
+    } else {
+      subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
+      if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
+        subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
+      }
+      if (message.getUnreadCount() > 0) {
+        subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+      }
     }
     subject.setText(subjectText);
     from.setText(message.getFrom().getName());

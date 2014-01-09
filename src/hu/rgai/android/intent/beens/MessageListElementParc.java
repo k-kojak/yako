@@ -145,7 +145,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   @Override
   public String toString() {
-    return id + "@" + account + "("+ title +")";
+    return id + "@" + account + "("+ super.toString() +")";
   }
 
   public int compareTo(MessageListElementParc o) {
