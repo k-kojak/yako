@@ -113,12 +113,12 @@ public class MainService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
 //    if (isNetworkAvailable()) {
     iterationCount++;
-    Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
+//    Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
       MessageProvider.Type type = null;
       if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
         type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
       }
-      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
+//      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
       boolean isNet = isNetworkAvailable();
       if (accounts.isEmpty() && !isPhone()) {

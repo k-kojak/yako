@@ -170,15 +170,13 @@ public class EmailDisplayer extends ActionBarActivity {
     super.finish(); //To change body of generated methods, choose Tools | Templates.
   }
   
+  
   private void displayMessage() {
     String mail = from.getId();
     String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>" + "<hr>" +"<br/>" + content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
   
-  
-  
-
   
   private class EmailContentTaskHandler extends Handler {
     

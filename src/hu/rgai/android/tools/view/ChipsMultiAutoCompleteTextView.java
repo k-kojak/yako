@@ -333,36 +333,43 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     return recipients;
   }
   
+  public void addRecipient(RecipientItem ri) {
+    recipients.add(ri);
+    setChips2();
+  }
+  
   public void setImageIcon(TextView textView, Uri imgUri, int id) {
     InputStream is = null;
     Bitmap bm = null;
     BitmapDrawable bd;
     
-    Uri contactUri = ContentUris.withAppendedId(Contacts.CONTENT_URI, id);
-    Uri photoUri = Uri.withAppendedPath(contactUri, Contacts.Photo.CONTENT_DIRECTORY);
-    Cursor cursor = this.getContext().getContentResolver().query(photoUri,
-          new String[] {Contacts.Photo.PHOTO}, null, null, null);
-     if (cursor == null) {
-         is = null;
-     }
-     try {
-         if (cursor.moveToFirst()) {
-             byte[] data = cursor.getBlob(0);
-             if (data != null) {
-                 is = new ByteArrayInputStream(data);
-             }
-         }
-     } finally {
-       cursor.close();
-     }
-
+    if (id != -1) {
+      Uri contactUri = ContentUris.withAppendedId(Contacts.CONTENT_URI, id);
+      Uri photoUri = Uri.withAppendedPath(contactUri, Contacts.Photo.CONTENT_DIRECTORY);
+      Cursor cursor = this.getContext().getContentResolver().query(photoUri,
+              new String[] {Contacts.Photo.PHOTO}, null, null, null);
+      if (cursor == null) {
+        is = null;
+      } else {
+        try {
+          if (cursor.moveToFirst()) {
+            byte[] data = cursor.getBlob(0);
+            if (data != null) {
+              is = new ByteArrayInputStream(data);
+            }
+          }
+        } finally {
+          cursor.close();
+        }
+      }
+    }
     
-    if (imgUri != null) {
+//    if (imgUri != null) {
 //      imgUri = Uri.parse(imgUri.toString().substring(0,imgUri.toString().length() - 6));
 //      is = ContactsContract.Contacts.openContactPhotoInputStream(this.getContext().getContentResolver(), imgUri);
 //      is = ContactsContract.Contacts.this.getContext().getContentResolver(), imgUri);
 //      is = ContactsContract.Contacts.
-    }
+//    }
     
     if (is != null) {
       Bitmap bitmap = BitmapFactory.decodeStream(is);

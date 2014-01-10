@@ -3,6 +3,7 @@ package hu.rgai.android.test;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,10 +18,12 @@ import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.asynctasks.MessageSender;
+import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -82,6 +85,12 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
     }
     text = (TextView) findViewById(R.id.message_content);
     recipients = (ChipsMultiAutoCompleteTextView) findViewById(R.id.recipients);
+    if (from != null && account != null
+            && (account.getAccountType().equals(MessageProvider.Type.EMAIL) || account.getAccountType().equals(MessageProvider.Type.GMAIL))) {
+      RecipientItem ri = new EmailRecipientAndr(from.getName(), from.getId(), from.getName(),
+              null, (int)from.getContactId());
+      recipients.addRecipient(ri);
+    }
     
     String[] emails = this.getEmailContacts();
 //    for (String s : emails) {
@@ -103,7 +112,8 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
     
     text.setText("\n\n" + content);
     if (from != null) {
-      recipients.setText(from.getId());
+      Log.d("rgai", "REPLYING TO -> " + from);
+//      recipients.setText(from.getId());
     }
     handler = new MessageReplyTaskHandler(this);
         
@@ -146,15 +156,6 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
         emails.add(name + " <"+ email +">");
         
         
-//        for (int i = 0; i < colSize; i++) {
-//        for (int i = 0; i < colSize; i++) {
-//          Log.d("rgai", cursor.getColumnName(i));
-//        }
-//        Log.d("rgai", " - - - - - - - - - - - - - - ");
-        
-//          ArrayAdapter arr = new ArrayAdapter(this, android.R.layout.simple_list_item_1,str);
-
-//          setListAdapter(arr);
       } while (cursor.moveToNext());
     }
     

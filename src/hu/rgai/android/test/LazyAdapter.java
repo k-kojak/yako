@@ -94,6 +94,7 @@ public class LazyAdapter extends BaseAdapter {
       msgType.setImageResource(resource);
     } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.GMAIL)) {
       msgType.setImageResource(R.drawable.ic_gmail);
+//      Log.d("rgai", "PUTTING TO LIST -> " + message.getFrom());
     }
 //    icon.setImageBitmap(img);
     

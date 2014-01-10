@@ -127,7 +127,7 @@ public final class PersonAndr extends Person implements Parcelable {
 
   @Override
   public String toString() {
-    return "PersonAndr{" + "contactId=" + contactId + ", name=" + name + ", type=" + type + '}';
+    return "PersonAndr{" + "contactId=" + contactId + ", id = " + id + ", name=" + name + ", type=" + type + '}';
   }
   
   public static PersonAndr searchPersonAndr(Context context, Person p) {
@@ -157,7 +157,7 @@ public final class PersonAndr extends Person implements Parcelable {
 //          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
         } else {
-          pa = new PersonAndr(-1, p.getName(), p.getName());
+          pa = new PersonAndr(-1, p.getName(), p.getId());
   //        pa = new PersonAndr(-1, p.getName());
         }
         return pa;
