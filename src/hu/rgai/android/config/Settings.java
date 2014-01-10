@@ -5,6 +5,7 @@ import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PhoneRecipientAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.EmailDisplayer;
@@ -54,7 +55,8 @@ public final class Settings {
     if (contactDataTypeToRecipientClass == null) {
       contactDataTypeToRecipientClass = new HashMap<String, Class>();
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailRecipientAndr.class);
-      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
+//      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, SmsMessageRecipientAndr.class);
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
     }
     return contactDataTypeToRecipientClass;

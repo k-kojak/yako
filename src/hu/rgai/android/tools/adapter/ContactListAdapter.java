@@ -120,25 +120,6 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     } else {
       photoUri = getPhotoUriById(context, (long)Integer.parseInt(id));
     }
-//    Log.d("rgai", "photoUri -> " + (photoUri != null ? photoUri.toString() : "null"));
-    
-//    String data = "";
-//    for (int k : idxes) {
-//      if (data.length() > 0) {
-//        data += " - ";
-//      }
-//      data += cursor.getString(k);
-//    }
-    
-//    if (!allowedMimeTypes.contains(type)) {
-//      view.setVisibility(View.GONE);
-//      return;
-//    }
-    
-//    String id = cursor.getString(idIdx);
-    Log.d("rgai", "photo uri -> " + (photoUri == null ? "null" : photoUri));
-//    Log.d("rgai", "THUMBNAIL FOTO URI" + (photoThn == null ? "null" : photoThn));
-
 
     Class recipientClass = Settings.getContactDataTypeToRecipientClass().get(type);
     Constructor constructor = null;

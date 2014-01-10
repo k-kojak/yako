@@ -180,11 +180,13 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
       SmsMessageRecipientAndr smr = (SmsMessageRecipientAndr) mr;
 
       SmsManager smsman = SmsManager.getDefault();
-      smsman.sendTextMessage(smr.getData(), null, content, null, null);
+      String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
+      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
+      smsman.sendTextMessage(rawPhoneNum, null, content, null, null);
 
 
       ContentValues sentSms = new ContentValues();
-      sentSms.put("address", smr.getData());
+      sentSms.put("address", rawPhoneNum);
       sentSms.put("body", content);
 
 

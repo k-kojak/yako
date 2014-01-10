@@ -12,6 +12,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.test.MessageReply;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -104,6 +105,9 @@ import javax.mail.NoSuchProviderException;
             return acc;
           }
         }
+      }
+      if (type.equals(MessageProvider.Type.SMS)) {
+        return new SmsAccountAndr();
       }
       return null;
     }
