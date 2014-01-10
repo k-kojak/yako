@@ -43,6 +43,7 @@ import com.facebook.SessionState;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.ScreenReceiver;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -86,6 +87,7 @@ public class MainActivity extends ActionBarActivity {
   private ListView lv;
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
+  private ScreenReceiver screenReceiver;
   private ProgressDialog pd = null;
 //  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -322,13 +324,23 @@ public class MainActivity extends ActionBarActivity {
     }
     IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-    customIntentFilter.addAction(Intent.ACTION_SCREEN_OFF );
-    customIntentFilter.addAction(Intent.ACTION_SCREEN_ON );
     registerReceiver(systemReceiver, customIntentFilter);
+    
+    setUpAndRegisterScreenReceiver();
     
     // setting content
     setContent();
     logActivityEvent( MAINPAGE_RESUME_STR );
+  }
+
+  private void setUpAndRegisterScreenReceiver() {
+    if ( screenReceiver == null) {
+      screenReceiver = new ScreenReceiver();
+    }
+    
+    IntentFilter screenIntentFilter = new IntentFilter( Intent.ACTION_SCREEN_OFF );
+    screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON );
+    registerReceiver(screenReceiver, screenIntentFilter);
   }
 
   @Override
