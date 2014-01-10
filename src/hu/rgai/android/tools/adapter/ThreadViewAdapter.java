@@ -79,8 +79,8 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
 		countryName.setText(coment.getContent());
     
-		countryName.setBackgroundResource(coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
-		wrapper.setGravity(coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
+		countryName.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
+		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
     Bitmap img = null;
