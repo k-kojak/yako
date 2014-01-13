@@ -15,9 +15,11 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -55,7 +57,6 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
       pass.setText(oldAccount.getPassword());
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
-    
   }
   
   @Override
@@ -117,7 +118,15 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-    AccountSettingsList.validateEmailField(email, text.toString());
+    validateGmailField(email, text.toString());
+  }
+  
+  private void validateGmailField(TextView tv, String text) {
+    if (text.contains("@")) {
+      AccountSettingsList.validatePatternAndShowErrorOnField(tv, text,
+              Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
+    }
+
   }
 
   public void afterTextChanged(Editable e) {}

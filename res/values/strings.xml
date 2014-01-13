@@ -19,6 +19,7 @@
     
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>
+  <string name="google_account_hint">google account</string>
   <string name="imap_hint">imap.gmail.com</string>
   <string name="smtp_hint">smtp.gmail.com</string>
   <string name="password_hint">password</string>
@@ -58,6 +59,7 @@
   <string name="empty_list">There are no messages.</string>
   <string name="no_account_set">No logon info provided. Go to settings.</string>
     
+  <string name="label_gmail_account">Gmail account name</string>
   <string name="label_email_address">Email address</string>
   <string name="label_imap_address">IMAP address</string>
   <string name="label_smtp_address">SMTP address</string>

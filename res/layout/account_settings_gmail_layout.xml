@@ -16,14 +16,14 @@
       <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/label_email_address"
+        android:text="@string/label_gmail_account"
         android:paddingTop="3dip"
       />
       <EditText
         android:id="@+id/email_address"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/email_hint"
+        android:hint="@string/google_account_hint"
         android:inputType="textEmailAddress" />
       <TextView
         android:layout_width="fill_parent"

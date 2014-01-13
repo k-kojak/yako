@@ -268,7 +268,7 @@ public class AccountSettingsList extends ActionBarActivity {
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"));
   }
 
-  private static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
+  protected static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
     Matcher matcher = p.matcher(text);
     if (!matcher.matches()) {
       tv.setError("Invalid email address");
