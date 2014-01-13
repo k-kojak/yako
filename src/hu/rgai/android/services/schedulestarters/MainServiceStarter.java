@@ -10,10 +10,13 @@ public class MainServiceStarter extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    Log.d("rgai", "MYservice-t futtatgatjuk x mp-nkent");
+//    Log.d("rgai", "MYservice-t futtatgatjuk x mp-nkent");
     Intent service = new Intent(context, MainService.class);
     if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
       service.putExtra("type", intent.getExtras().getString("type"));
+    }
+    if (intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
+      service.putExtra("load_more", intent.getExtras().getBoolean("load_more"));
     }
     context.startService(service);
   }

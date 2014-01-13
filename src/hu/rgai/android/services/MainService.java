@@ -115,9 +115,16 @@ public class MainService extends Service {
     iterationCount++;
 //    Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
       MessageProvider.Type type = null;
+      // if true, loading new messages at end of the lists, not checking for new ones
+      boolean loadMore = false;
       if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
         type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
       }
+      if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
+        loadMore = intent.getExtras().getBoolean("load_more", false);
+      }
+      Log.d("rgai", "@@@LoadMore -> " + loadMore);
+      
 //      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
       boolean isNet = isNetworkAvailable();
@@ -138,7 +145,7 @@ public class MainService extends Service {
           if (isNet) {
             for (AccountAndr acc : accounts) {
               if (type == null || acc.getAccountType().equals(type)) {
-                LongOperation myThread = new LongOperation(this, handler, acc);
+                LongOperation myThread = new LongOperation(this, handler, acc, loadMore);
                 myThread.execute();
               }
             }
@@ -146,7 +153,7 @@ public class MainService extends Service {
 
           if (type == null || type.equals(MessageProvider.Type.SMS)) {
             AccountAndr smsAcc = new SmsAccountAndr();
-            LongOperation myThread = new LongOperation(this, handler, smsAcc);
+            LongOperation myThread = new LongOperation(this, handler, smsAcc, loadMore);
             myThread.execute();
           }
         }
@@ -441,13 +448,15 @@ public class MainService extends Service {
     private String errorMessage = null;
     private Handler handler;
     private AccountAndr acc;
+    private boolean loadMore = false;
     
     
-    public LongOperation(Context context, Handler handler, AccountAndr acc) {
+    public LongOperation(Context context, Handler handler, AccountAndr acc, boolean loadMore) {
       this.context = context;
       this.handler = handler;
       this.acc = acc;
       this.context = context;
+      this.loadMore = loadMore;
     }
     
     @Override
@@ -464,11 +473,11 @@ public class MainService extends Service {
 //          messages.addAll(nonParcToParc(mle));
         } else if (acc instanceof EmailAccountAndr) {
           if (iterationCount % 4 == 1) {
-            Log.d("rgai", "GETTING MAIL WITH ACCOUNT: " + acc);
+//            Log.d("rgai", "GETTING MAIL WITH ACCOUNT: " + acc);
             accountName = ((EmailAccount)acc).getEmail();
             mp = new SimpleEmailMessageProvider((EmailAccount)acc);
           } else {
-            Log.d("rgai", "SKIP ACCOUNT B. OF iteration count: " + acc);
+//            Log.d("rgai", "SKIP ACCOUNT B. OF iteration count: " + acc);
           }
 //          messages.addAll(nonParcToParc(semp.getMessageList(0, acc.getMessageLimit())));
         } else if (acc instanceof FacebookAccountAndr) {
@@ -481,7 +490,18 @@ public class MainService extends Service {
 //          messages.addAll(nonParcToParc(smsmp.getMessageList(0, acc.getMessageLimit())));
         }
         if (mp != null) {
-          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(0, acc.getMessageLimit()));
+          int currentMessagesToAccount = 0;
+          if (loadMore) {
+            if (MainService.this.messages != null) {
+              for (MessageListElementParc m : MainService.this.messages) {
+                if (m.getAccount().equals(acc)) {
+                  currentMessagesToAccount++;
+                }
+              }
+            }
+//            Log.d("rgai","current messages to account " + acc + " is: " + currentMessagesToAccount);
+          }
+          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount, acc.getMessageLimit()));
           for (MessageListElementParc mlep : parcelableMessages) {
             if (!messages.contains(mlep)) {
               messages.add(mlep);

@@ -45,6 +45,7 @@ import java.util.List;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.listener.MainScrollListListener;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
@@ -63,6 +64,7 @@ public class MainActivity extends ActionBarActivity {
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ProgressDialog pd = null;
+  private Date lastLoadMoreEvent = null;
 //  private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -335,6 +337,7 @@ public class MainActivity extends ActionBarActivity {
       else if (!messages.isEmpty() && !isListView) {
         setContentView(R.layout.main);
         ListView lv = (ListView) findViewById(R.id.list);
+//        lv.setOnScrollListener(new MainScrollListListener(this));
         adapter = new LazyAdapter(this, messages);
         lv.setAdapter(adapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -415,6 +418,18 @@ public class MainActivity extends ActionBarActivity {
 //        text.setGravity(Gravity.CENTER);
 //        this.setContentView(text);
 //      }
+  }
+  
+  public void loadMoreMessage(View view) {
+    if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 15000 < new Date().getTime()) {
+      Intent service = new Intent(this, MainService.class);
+      service.putExtra("load_more", true);
+      this.startService(service);
+      lastLoadMoreEvent = new Date();
+      Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
+    } else {
+      Log.d("rgai", "@@@skipping load button press for 10 sec");
+    }
   }
   
   private void updateNotificationStatus() {

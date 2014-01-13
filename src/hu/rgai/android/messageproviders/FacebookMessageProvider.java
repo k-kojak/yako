@@ -96,7 +96,7 @@ public class FacebookMessageProvider implements MessageProvider {
             + "'SELECT thread_id, originator, recipients, unread, unseen, subject, snippet, updated_time "
             + " FROM thread"
             + " WHERE folder_id = 0"
-            + " ORDER BY updated_time DESC LIMIT " + limit + "'"
+            + " ORDER BY updated_time DESC LIMIT " + offset + "," + limit + "'"
             + ","
             + "'friend':"
             + "'SELECT name, username, uid"
@@ -220,7 +220,7 @@ public class FacebookMessageProvider implements MessageProvider {
 
 
 //        Collection<RosterEntry> entries = roster.getEntries();
-        Log.d("rgai", "Connected ON XMPP!");
+//        Log.d("rgai", "Connected ON XMPP!");
 
         xmpp.getChatManager().addChatListener(new ChatManagerListener() {
           @Override

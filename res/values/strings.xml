@@ -24,6 +24,7 @@
   <string name="smtp_hint">smtp.gmail.com</string>
   <string name="password_hint">password</string>
   <string name="refreshing">Refreshing</string>
+  <string name="loading_more_elements">Loading older messages</string>
     
     
   <string name="settings_fb_access_token">hu.rgai.android.settings.accounts</string>
@@ -84,9 +85,7 @@
   <string name="account_name_facebook">Facebook</string>
   <string name="account_name_simplemail">Simple email</string>
     
-  <string name="Fragment1">Content of tab 1</string>
-  <string name="Fragment2">Content of tab 2</string>
-    
+   
   <string name="add_account">Add Account</string>
   <string name="remove_account">Remove Account</string>
   <string name="add_attachment">Add attachment</string>
