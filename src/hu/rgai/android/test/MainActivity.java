@@ -45,7 +45,6 @@ import java.util.List;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
-import hu.rgai.android.listener.MainScrollListListener;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
