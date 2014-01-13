@@ -4,12 +4,27 @@
 package hu.rgai.android.test;
 
 //import android.app.ActionBar;
-import android.annotation.SuppressLint;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.LogUploadScheduler;
+import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.intent.beens.FullMessageParc;
+import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
+import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.settings.AccountSettingsList;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import android.app.Activity;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -22,6 +37,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBarActivity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -31,7 +48,6 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,29 +56,6 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.intent.beens.FullMessageParc;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.settings.AccountSettingsList;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-
-import java.io.FileNotFoundException;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.telephony.TelephonyManager;
-import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -85,6 +78,7 @@ public class MainActivity extends ActionBarActivity {
   private LazyAdapter adapter;
   private MainService s;
   private ListView lv;
+  private LogUploadScheduler logUploadScheduler = new LogUploadScheduler( this );
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ScreenReceiver screenReceiver;
@@ -135,14 +129,11 @@ public class MainActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
-        try {
-          EventLogger.INSTANCE.writeToLogFile( "application:over" );
-          EventLogger.INSTANCE.closeLogFile();
-          onDestroy();
-        } catch (FileNotFoundException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
+        if ( logUploadScheduler.isRunning )
+          logUploadScheduler.stopRepeatingTask();
+        EventLogger.INSTANCE.writeToLogFile( "application:over" );
+        EventLogger.INSTANCE.closeLogFile();
+        onDestroy();
       }
     });
     
@@ -187,13 +178,12 @@ public class MainActivity extends ActionBarActivity {
 //    setContent();
 //    setListAdapter(adapter);
 //    set
-    try {
-      EventLogger.INSTANCE.openLogFile( "logFile.txt" );
-      EventLogger.INSTANCE.writeToLogFile( "application:start" );
-    } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
+    EventLogger.INSTANCE.writeToLogFile( "application:start" );
+    Log.d("willrgai", "before logUploadScheduler");
+    if ( !logUploadScheduler.isRunning )
+      logUploadScheduler.startRepeatingTask();
+    Log.d("willrgai", "after logUploadScheduler");
   }
   
   @Override

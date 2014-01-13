@@ -2,39 +2,98 @@ package hu.rgai.android.eventlogger;
 
 import hu.rgai.android.test.MainActivity;
 import android.os.Handler;
+import android.util.Log;
 
 public class LogUploadScheduler {
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 24;
+  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 15 * 60;
   
-  final private int SECONDUM_IN_ONE_DAY = 1000 * 3600 * 24;
+  Thread scheduler;
   
-  boolean startedNow = true;
-  private int mInterval = SECONDUM_IN_ONE_DAY;
-  private Handler mHandler = new Handler();
-  MainActivity mainActivity;
+  public boolean isRunning = false;
+  LogUploader mStatusChecker;
   
   public LogUploadScheduler( MainActivity mainActivity) {
-    this.mainActivity = mainActivity;
+    mStatusChecker = new LogUploader( mainActivity, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME );
   }
   
-  Runnable mStatusChecker = new Runnable() {
-    @Override 
-    public void run() {
-      if ( !mainActivity.isNetworkAvailable() || startedNow) {
-        if ( startedNow )
-          
-        mHandler.postDelayed( mStatusChecker, mInterval);
-      } else {
-        startedNow = false;
-      }
-    }
-  };
-  
-  void startRepeatingTask() {
-    mStatusChecker.run(); 
+  public void startRepeatingTask() {
+    
+    mStatusChecker.setRepeatTask( true );
+    Log.d("willrgai", "before run");
+    scheduler = new Thread(mStatusChecker);
+    scheduler.start();
+    Log.d("willrgai", "after run");
+    isRunning = true;
   }
 
-  void stopRepeatingTask() {
-    mHandler.removeCallbacks(mStatusChecker);
+  public void stopRepeatingTask() {
+    isRunning = false;
+    
+    if ( scheduler.getState() == Thread.State.TIMED_WAITING) {
+      mStatusChecker.setRepeatTask( false );
+      scheduler.notify();
+    } else {
+      mStatusChecker.setRepeatTask( false );
+    }
+    scheduler = null;
   }
   
 }
+
+class LogUploader implements Runnable {
+  
+  boolean repeatTask = false;
+  boolean threadIsSleep = false;
+  final private long defaultWaitTimeInMilliSecondum;
+  final private long waitTimeAfterDefaultWaitTimeInMilliSecondum; 
+  MainActivity mainActivity;
+  
+  public boolean isRepeatTask() {
+    return repeatTask;
+  }
+
+  public void setRepeatTask(boolean repeatTask) {
+    this.repeatTask = repeatTask;
+  }
+
+  public LogUploader( MainActivity mainActivity, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
+    this.mainActivity = mainActivity;
+    this.defaultWaitTimeInMilliSecondum = defaultWaitTimeInMilliSecondum;
+    this.waitTimeAfterDefaultWaitTimeInMilliSecondum = waitTimeAfterDefaultWaitTimeInMilliSecondum;
+  }
+
+  @Override 
+  public void run() {
+    while ( repeatTask ) {
+      long elapsedTimeSinceLogCreated = EventLogger.INSTANCE.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
+      Log.d("willrgai", "elapsedtime " + elapsedTimeSinceLogCreated);
+      if ( elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum ) {
+        try {
+          Log.d("willrgai", "defaultWaitTimeInMilliSecondum");
+          Thread.sleep( defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated );
+        } catch (InterruptedException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      } else {
+        if ( !mainActivity.isNetworkAvailable()) {
+          try {
+            Log.d("willrgai", "waitTimeAfterDefaultWaitTimeInMilliSecondum");
+            Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum );
+          } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+        } else {
+          Log.d("willrgai", "uploadLogsAndCreateNewLogfile");
+          EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile();
+        }
+          
+      }
+
+      
+    }
+
+  }
+};
