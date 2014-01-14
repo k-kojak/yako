@@ -18,10 +18,13 @@ import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 
+import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.http.client.ClientProtocolException;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -37,6 +40,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.provider.Settings.Secure;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -68,7 +72,6 @@ public class MainActivity extends ActionBarActivity {
   private static final String MAIN_PAGE_STR = "MainPage";
 //  private Boolean isInternetAvailable = null;
   
-
   public static final int PICK_CONTACT = 101;
   private static final String SPACE_STR = " ";
   private static boolean is_activity_visible = false;
@@ -114,6 +117,7 @@ public class MainActivity extends ActionBarActivity {
           }
       };
   
+  
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", MAINPAGE_BACKBUTTON_STR);
@@ -127,6 +131,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("willrgai", "before");
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         if ( logUploadScheduler.isRunning )
@@ -160,7 +165,7 @@ public class MainActivity extends ActionBarActivity {
       });
     }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-    
+    Log.d("willrgai", "after ");
     
 //    Log.d("rgai", "myService.running -> " + MyService.RUNNING);
 //    emails = new ArrayList<Map<String, String>>();
@@ -174,16 +179,24 @@ public class MainActivity extends ActionBarActivity {
       pd.setCancelable(false);
       pd.show();
     }
-    
+    Log.d("willrgai", "after 2");
 //    setContent();
 //    setListAdapter(adapter);
 //    set
     EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
     EventLogger.INSTANCE.writeToLogFile( "application:start" );
-    Log.d("willrgai", "before logUploadScheduler");
-    if ( !logUploadScheduler.isRunning )
-      logUploadScheduler.startRepeatingTask();
-    Log.d("willrgai", "after logUploadScheduler");
+    Log.d("willrgai", "after 3");
+    try {
+      EventLogger.INSTANCE.uploadLogsToServer(this);
+    } catch (ClientProtocolException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    //if ( !logUploadScheduler.isRunning )
+      //logUploadScheduler.startRepeatingTask();
   }
   
   @Override

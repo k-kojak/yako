@@ -5,11 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import static hu.rgai.android.test.Constants.*;
+
 public class ScreenReceiver extends BroadcastReceiver {
-    private static final String SCREEN_IS_ON_STR = "SCREEN IS ON";
-    private static final String SCREEN_IS_OFF_STR = "SCREEN IS OFF";
-    private static final String SCREEN_OFF_STR = "screen_off";
-    private static final String SCREEN_ON_STR = "screen_on";
+
     public static boolean wasScreenOn = true;
  
     @Override

@@ -20,10 +20,8 @@ public class LogUploadScheduler {
   public void startRepeatingTask() {
     
     mStatusChecker.setRepeatTask( true );
-    Log.d("willrgai", "before run");
     scheduler = new Thread(mStatusChecker);
     scheduler.start();
-    Log.d("willrgai", "after run");
     isRunning = true;
   }
 
@@ -66,7 +64,7 @@ class LogUploader implements Runnable {
   @Override 
   public void run() {
     while ( repeatTask ) {
-      long elapsedTimeSinceLogCreated = EventLogger.INSTANCE.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
+      long elapsedTimeSinceLogCreated = LogToJsonConverter.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
       Log.d("willrgai", "elapsedtime " + elapsedTimeSinceLogCreated);
       if ( elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum ) {
         try {
@@ -87,7 +85,7 @@ class LogUploader implements Runnable {
           }
         } else {
           Log.d("willrgai", "uploadLogsAndCreateNewLogfile");
-          EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile();
+          EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( this.mainActivity );
         }
           
       }

@@ -1,27 +1,34 @@
 package hu.rgai.android.eventlogger;
 
+import hu.rgai.android.eventlogger.communication.*;
+import hu.rgai.android.eventlogger.communication.HTTP.*;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+
+import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
+import static hu.rgai.android.test.Constants.*;
 
 public enum EventLogger {
   INSTANCE;
 
-  private static final String SPACE_STR = " ";
+  //static Context context;
   private volatile BufferedWriter bufferedWriter;
   private String logFilePath;
   private long logfileCreatedTime;
+  LogToJsonConverter logToJsonConverter = new LogToJsonConverter( apiCodeToAI, appPackageName);
   
   public long getLogfileCreatedTime() {
     return logfileCreatedTime;
@@ -40,10 +47,8 @@ public enum EventLogger {
     } else {
       if ( isSdPresent() ) {
         logfile =new File( Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath );
-        Log.d( "willrgai", "van sd");
       } else {
         logfile = new File( logFilePath );
-        Log.d( "willrgai", "nincs sd");
       }
     }
 
@@ -62,8 +67,8 @@ public enum EventLogger {
     } else {
       try {
         bufferedWriter = new BufferedWriter( new FileWriter(logfile) );
-        logfileCreatedTime = getCurrentTime();
-        bufferedWriter.write( Long.toString(logfileCreatedTime));
+        logfileCreatedTime = LogToJsonConverter.getCurrentTime();
+        bufferedWriter.write( Long.toString( logfileCreatedTime ) );
         bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
@@ -76,9 +81,7 @@ public enum EventLogger {
     return true;
   }
   
-  public long getCurrentTime() {
-    return Calendar.getInstance().getTimeInMillis();
-  }
+
   
   public synchronized boolean closeLogFile() {
     try {
@@ -94,7 +97,7 @@ public enum EventLogger {
     Log.d( "willrgai", "writeToLogFile " + log);
     if ( !lockedToUpload ) {
       try {
-        bufferedWriter.write( getCurrentTime() + SPACE_STR + log);
+        bufferedWriter.write( LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
         bufferedWriter.flush();
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -127,10 +130,18 @@ public enum EventLogger {
     tempBufferToUpload.clear();    
   }
   
-  synchronized boolean uploadLogsAndCreateNewLogfile()  {
+  synchronized boolean uploadLogsAndCreateNewLogfile( Context context ) {
     boolean uploadSucces = true;
     lockedToUpload = true;
-    uploadSucces = uploadSucces && uploadLogsToServer();
+    try {
+      uploadSucces = uploadSucces && uploadLogsToServer( context );
+    } catch (ClientProtocolException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     if ( uploadSucces ) {
       deleteLogFileAndCreateNew();
     } else {
@@ -143,8 +154,15 @@ public enum EventLogger {
     return uploadSucces;
   }
   
-  private synchronized boolean uploadLogsToServer(){
+  public synchronized boolean uploadLogsToServer( Context context ) throws ClientProtocolException, IOException{
+    
     boolean uploadSucces = true;
+    final HttpPost httpPost = new HttpPost(SERVLET_URL);
+    final StringEntity httpEntity = new StringEntity("{\"apiKey\": \"bb6ae46aa833d6faadc8758d07cf00d234984f33\" \"deviceId\": \"10122423432532\", \"package\": \"hu.rgai.android\" \"records\": [ { \"timestamp\": \"102123123213213\", \"data\": [] },]}", org.apache.http.protocol.HTTP.UTF_8);
+    httpEntity.setContentType("application/json");
+    httpPost.setEntity(httpEntity);     
+    HttpResponse res = new HttpClient( context, HTTP.createHttpParams( 20000)).execute(httpPost);
+    Log.d("willrgai", res.toString() );
     return uploadSucces;
   }
 
