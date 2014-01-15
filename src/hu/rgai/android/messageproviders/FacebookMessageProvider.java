@@ -46,6 +46,8 @@ import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.config.Settings;
+import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import java.util.Collection;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -58,7 +60,7 @@ import org.jivesoftware.smack.packet.Presence;
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookMessageProvider implements MessageProvider {
+public class FacebookMessageProvider implements ThreadMessageProvider {
 
   private static XMPPConnection xmpp = null;
   // use this variable to access facebook
@@ -268,7 +270,7 @@ public class FacebookMessageProvider implements MessageProvider {
   }
 
   @Override
-  public FullThreadMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullThreadMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException {
 
     Bundle params = new Bundle();
     final FullThreadMessage ftm = new FullThreadMessage();
@@ -279,7 +281,7 @@ public class FacebookMessageProvider implements MessageProvider {
             + " FROM message"
             + " WHERE thread_id = " + id + ""
             + " ORDER BY created_time DESC"
-            + " LIMIT 20'"
+            + " LIMIT "+ offset +","+ limit +"'"
             + ","
             + "'friend':"
             + "'SELECT name, username, uid"
@@ -482,5 +484,9 @@ public class FacebookMessageProvider implements MessageProvider {
     // Request.executeBatchAndWait(request);
 //                 Request.executeBatchAsync(request);
 
+  }
+
+  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+    return getMessage(id, 0, 20);
   }
 }

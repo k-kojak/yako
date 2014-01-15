@@ -123,7 +123,6 @@ public class MainService extends Service {
       if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
         loadMore = intent.getExtras().getBoolean("load_more", false);
       }
-      Log.d("rgai", "@@@LoadMore -> " + loadMore);
       
 //      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
@@ -208,7 +207,7 @@ public class MainService extends Service {
    * @param account 
    */
   public void removeMessagesToAccount(AccountAndr account) {
-    Log.d("rgai", "removing messages to account -> " + account);
+//    Log.d("rgai", "removing messages to account -> " + account);
     Iterator<MessageListElementParc> it = messages.iterator();
     while (it.hasNext()) {
       MessageListElementParc mle = it.next();
@@ -286,7 +285,7 @@ public class MainService extends Service {
     if (messages != null) {
       for (MessageListElementParc mle : messages) {
         if (mle.getAccount().equals(acc)) {
-          Log.d("rgai", "removing message list element -> " + mle);
+//          Log.d("rgai", "removing message list element -> " + mle);
           messages.remove(mle);
           removeElementsFromList(acc);
           break;

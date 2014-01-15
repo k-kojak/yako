@@ -31,11 +31,13 @@ import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
+import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SmsMessageProvider extends BroadcastReceiver implements MessageProvider {
+public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
   Context context;
 
@@ -117,10 +119,9 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
   }
 
   @Override
-  public FullThreadMessage getMessage(String threadId )throws NoSuchProviderException,
+  public FullThreadMessage getMessage(String threadId, int offset, int limit)throws NoSuchProviderException,
           MessagingException, IOException {
     // TODO Auto-generated method stub
-
     final FullThreadMessage ftm = new FullThreadMessage();
     String selection = "thread_id = ?";
     String[] selectionArgs = new String[]{threadId};
@@ -128,7 +129,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
     Uri uriSMSURI = Uri.parse("content://sms");
     Cursor cur = context.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "_id", "subject", "body", "date", "person", "address", "type"},
-            selection, selectionArgs, null);
+            selection, selectionArgs, "_id DESC LIMIT "+offset+","+limit);
 
     /**
      * 0: _id 1: thread_id 2: address 3: person 4: date 5: date_sent 6: protocol 7: read
@@ -221,6 +222,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements MessageProv
 //      res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
 //      context.sendBroadcast(res);
     }
+  }
+
+  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+    return getMessage(id, 0, 20);
   }
 
   private class MessageItem {

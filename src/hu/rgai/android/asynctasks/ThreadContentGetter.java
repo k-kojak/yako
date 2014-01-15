@@ -15,6 +15,7 @@ import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     private Handler handler;
     private AccountAndr account;
     private int delay;
+    private int offset = 0;
     
     public ThreadContentGetter(Context context, Handler handler, AccountAndr account, int delay) {
       this.context = context;
@@ -39,6 +41,10 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
       this.account = account;
       this.context = context;
       this.delay = delay;
+    }
+    
+    public void setOffset(int offset) {
+      this.offset = offset;
     }
     
     @Override
@@ -56,12 +62,12 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
         }
       }
       FullThreadMessageParc threadMessage = null;
-      Log.d("rgai", "GETTING MESSAGE CONTENT");
+//      Log.d("rgai", "GETTING MESSAGE CONTENT");
       try {
         if (account == null) {
           Log.d("rgai", "account is NULL @ threadContentGetter");
         } else {
-          Log.d("rgai", "Getting thread messages...");
+//          Log.d("rgai", "Getting thread messages...");
           Class providerClass = Settings.getAccountTypeToMessageProvider().get(account.getAccountType());
           Class accountClass = Settings.getAccountTypeToAccountClass().get(account.getAccountType());
           Constructor constructor = null;
@@ -70,17 +76,18 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
             throw new RuntimeException("Provider class is null, " + account.getAccountType() + " is not a valid TYPE.");
           }
           
-          MessageProvider mp = null;
+          ThreadMessageProvider mp = null;
           if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
         	  constructor = providerClass.getConstructor(Context.class);
-        	  mp = (MessageProvider) constructor.newInstance(context);        	  
+        	  mp = (ThreadMessageProvider) constructor.newInstance(context);        	  
           } else {
         	  constructor = providerClass.getConstructor(accountClass);
-	          mp = (MessageProvider) constructor.newInstance(account);
+	          mp = (ThreadMessageProvider) constructor.newInstance(account);
 	          // force result to ThreadMessage, since this is a thread displayer
 	          
           }
-          threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0]));
+          Log.d("rgai", "mp.getmessage offset: " + offset);
+          threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0], offset, 20));
           Iterator<MessageAtom> iterator = threadMessage.getMessages().iterator();
           while (iterator.hasNext()) {
             MessageAtom ma = iterator.next();
@@ -132,7 +139,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
       bundle.putInt("result", ThreadMsgService.OK);
       msg.setData(bundle);
       handler.sendMessage(msg);
-      Log.d("rgai", "RETURNING MESSAGE CONTENT");
+//      Log.d("rgai", "RETURNING MESSAGE CONTENT");
     }
 
 

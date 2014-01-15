@@ -69,6 +69,8 @@ public class ThreadDisplayer extends ActionBarActivity {
   private EditText text = null;
   private ThreadViewAdapter adapter = null;
   private Set<String> tempMessageIds = null;
+  private Date lastLoadMoreEvent = null;
+  private boolean firstLoad = true;
   
 //  private WebView webView = null;
   private String mailCharCode = "UTF-8";
@@ -252,7 +254,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.message_options_menu, menu);
+    inflater.inflate(R.menu.thread_message_options_menu, menu);
     return true;
   }
   
@@ -274,18 +276,16 @@ public class ThreadDisplayer extends ActionBarActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle item selection
     switch (item.getItemId()) {
-      case R.id.message_reply:
-        Intent intent = new Intent(this, MessageReply.class);
-        Source source = new Source(messageThreadToString(content));
-        intent.putExtra("content", source.getRenderer().toString());
-        intent.putExtra("subject", subject);
-        intent.putExtra("account", (Parcelable)account);
-        intent.putExtra("from", from);
-        startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
-        return true;
-//        EmailReplySender replySender = new EmailReplySender();
-//        replySender.execute();
-//        return true;
+      case R.id.load_more:
+        if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
+          ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
+          myThread.setOffset(content.getMessagesParc().size());
+          myThread.execute(threadId);
+          
+          Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
+        } else {
+          Log.d("rgai", "@@@skipping load button press for 5 sec");
+        }
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -319,18 +319,30 @@ public class ThreadDisplayer extends ActionBarActivity {
   }
   
   private void displayMessage() {
-    Log.d("rgai", "DISPLAYING MESSAGE CONTENT");
+//    Log.d("rgai", "DISPLAYING MESSAGE CONTENT");
 //    String c = "";
 //    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
 //    c = from.getName() + mail + "<br/>" + messageThreadToString(content);
 //    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
+    int firstVisiblePos = lv.getFirstVisiblePosition();
+    int oldItemCount = 0;
+//    lv.get
+    if (adapter != null) {
+      oldItemCount = adapter.getCount();
+    }
     if (content != null) {
       adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
       for (MessageAtomParc ma : content.getMessagesParc()) {
         adapter.add(ma);
       }
       lv.setAdapter(adapter);
-      lv.setSelection(lv.getAdapter().getCount() - 1);
+      if (firstLoad) {
+        lv.setSelection(lv.getAdapter().getCount() - 1);
+        firstLoad = false;
+      } else {
+        int newItemCount = adapter.getCount();
+        lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
+      }
     }
   }
   
@@ -355,7 +367,7 @@ public class ThreadDisplayer extends ActionBarActivity {
           pd.dismiss();
         }
       } else {
-        Log.d("rgai", "HANDLING MESSAGE CONTENT");
+//        Log.d("rgai", "HANDLING MESSAGE CONTENT");
         FullThreadMessageParc newMessages = bundle.getParcelable("threadMessage");
         if (content != null) {
           content.getMessagesParc().addAll(newMessages.getMessagesParc());

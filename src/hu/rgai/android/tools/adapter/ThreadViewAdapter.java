@@ -56,7 +56,6 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-    Log.d("rgai","ThreadViewAdapter.getView called");
 		View row = convertView;
     MessageAtomParc coment = getItem(position);
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);

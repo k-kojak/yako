@@ -4,7 +4,6 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.PhoneRecipientAndr;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
