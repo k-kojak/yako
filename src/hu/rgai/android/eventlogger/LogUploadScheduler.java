@@ -1,8 +1,6 @@
 package hu.rgai.android.eventlogger;
 
 import hu.rgai.android.test.MainActivity;
-import android.os.Handler;
-import android.util.Log;
 
 public class LogUploadScheduler {
   final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 24;
@@ -65,10 +63,8 @@ class LogUploader implements Runnable {
   public void run() {
     while ( repeatTask ) {
       long elapsedTimeSinceLogCreated = LogToJsonConverter.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
-      Log.d("willrgai", "elapsedtime " + elapsedTimeSinceLogCreated);
       if ( elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum ) {
         try {
-          Log.d("willrgai", "defaultWaitTimeInMilliSecondum");
           Thread.sleep( defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated );
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
@@ -77,14 +73,13 @@ class LogUploader implements Runnable {
       } else {
         if ( !mainActivity.isNetworkAvailable()) {
           try {
-            Log.d("willrgai", "waitTimeAfterDefaultWaitTimeInMilliSecondum");
             Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum );
           } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
           }
         } else {
-          Log.d("willrgai", "uploadLogsAndCreateNewLogfile");
+
           EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( this.mainActivity );
         }
           

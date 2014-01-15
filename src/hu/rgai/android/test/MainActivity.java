@@ -20,6 +20,11 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -165,7 +170,6 @@ public class MainActivity extends ActionBarActivity {
       });
     }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-    Log.d("willrgai", "after ");
     
 //    Log.d("rgai", "myService.running -> " + MyService.RUNNING);
 //    emails = new ArrayList<Map<String, String>>();
@@ -179,24 +183,17 @@ public class MainActivity extends ActionBarActivity {
       pd.setCancelable(false);
       pd.show();
     }
-    Log.d("willrgai", "after 2");
+
 //    setContent();
 //    setListAdapter(adapter);
 //    set
     EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
     EventLogger.INSTANCE.writeToLogFile( "application:start" );
-    Log.d("willrgai", "after 3");
-    try {
-      EventLogger.INSTANCE.uploadLogsToServer(this);
-    } catch (ClientProtocolException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    //if ( !logUploadScheduler.isRunning )
-      //logUploadScheduler.startRepeatingTask();
+    EventLogger.INSTANCE.setContext( this);
+
+    if ( !logUploadScheduler.isRunning )
+      logUploadScheduler.startRepeatingTask();
+
   }
   
   @Override
