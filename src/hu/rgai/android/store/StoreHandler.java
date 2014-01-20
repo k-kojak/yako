@@ -32,10 +32,12 @@ public class StoreHandler {
   private static Bitmap fbImgMe = null;
   
   public static void saveUserFbImage(Context context, Bitmap bitmap) {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-    byte[] byteArray = stream.toByteArray();
-    saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
+    if (bitmap != null) {
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+      byte[] byteArray = stream.toByteArray();
+      saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
+    }
   }
   
   public static Bitmap getUserFbImage(Context context) {

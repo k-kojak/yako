@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -55,13 +57,14 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
 //  private MainActivity mainActivity;
 //  boolean stillAddingFacebookAccount = false;
+  private Menu menu;
   private ProfilePictureView profilePictureView;
   private TextView name;
   private TextView uniqueName;
   private EditText password;
   private String id = null;
   private Spinner messageAmount;
-  private FacebookAccountAndr oldAccount;
+  private FacebookAccountAndr oldAccount = null;
   private UiLifecycleHelper uiHelper;
   private GraphUser user;
   private Session.StatusCallback callback = new Session.StatusCallback() {
@@ -115,21 +118,19 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
   
   private void updateUI() {
-      Session session = Session.getActiveSession();
-
-      if ( user != null) {
-          profilePictureView.setProfileId(user.getId());
-
-      } else {
-          profilePictureView.setProfileId(null);
-
-      }
+//      Session session = Session.getActiveSession();
+    if (user != null) {
+      profilePictureView.setProfileId(user.getId());
+    } else {
+      profilePictureView.setProfileId(null);
+    }
+    updateLayoutAndOptionsMenu(menu);
   }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.account_settings_facebook_layout_2);
+    setContentView(R.layout.account_settings_facebook_layout);
 //    final String fbToken = StoreHandler.getFacebookAccessToken(this);
 //    
 //    if (fbToken != null) {
@@ -169,12 +170,12 @@ public class FacebookSettingActivity extends ActionBarActivity {
     
     LoginButton lb = (LoginButton)findViewById(R.id.authButton);
     lb.setUserInfoChangedCallback(new LoginButton.UserInfoChangedCallback() {
-        @Override
-        public void onUserInfoFetched(GraphUser user) {
-            FacebookSettingActivity.this.user = user;
-            updateUI();
-
-        }
+      @Override
+      public void onUserInfoFetched(GraphUser user) {
+        FacebookSettingActivity.this.user = user;
+        updateUI();
+        Log.d("rgai", "ON USER INFO FETCHED");
+      }
     });
     
     lb.setReadPermissions(Settings.getFacebookPermissions());
@@ -192,9 +193,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
   
   private void setFieldsByAccount(String displayName, String uName, String pass, String id, int messageLimit) {
-    
-
-   
     if (displayName != null) {
       name.setText(displayName);
     }
@@ -225,24 +223,57 @@ public class FacebookSettingActivity extends ActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       // Inflate the menu items for use in the action bar
-      MenuInflater inflater = getMenuInflater();
-      inflater.inflate(R.menu.edit_account_options_menu, menu);
-      return super.onCreateOptionsMenu(menu);
-  } 
+    Log.d("rgai", "ON CREATE OPTIONS MENU");
+    this.menu = menu;
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.account_options_facebook_menu, menu);
+    return super.onCreateOptionsMenu(menu);
+  }
+  
+  @Override
+  public boolean onPrepareOptionsMenu (Menu menu) {
+    Log.d("rgai", "ON PREPARE OPTIONS MENU");
+    super.onPrepareOptionsMenu(menu);
+    updateLayoutAndOptionsMenu(menu);
+    return true;
+  }
+  
+  private void updateLayoutAndOptionsMenu(Menu menu) {
+    if (menu != null) {
+      this.menu.findItem(R.id.edit_account_save).setVisible(oldAccount != null || user != null);
+      this.menu.findItem(R.id.edit_account_delete).setVisible(oldAccount != null);
+      this.menu.findItem(R.id.edit_account_cancel).setVisible(oldAccount == null);
+      
+      findViewById(R.id.profilePicture).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.display_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.unique_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.password).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.initial_items_num).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.initial_items_num_label).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      
+      if (user != null && oldAccount == null) {
+        ((TextView)findViewById(R.id.display_name)).setText(user.getName());
+        ((TextView)findViewById(R.id.unique_name)).setText(user.getUsername());
+      }
+    }
+  }
   
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
       // Handle presses on the action bar items
-      switch (item.getItemId()) {
-          case R.id.edit_account_save:
-        	  saveAccountSettings();
-              return true;
-          case R.id.edit_account_delete:
-        	  deleteAccountSettings();
-              return true;
-          default:
-              return super.onOptionsItemSelected(item);
-      }
+    switch (item.getItemId()) {
+      case R.id.edit_account_save:
+        saveAccountSettings();
+        return true;
+      case R.id.edit_account_delete:
+        deleteAccountSettings();
+        return true;
+      case R.id.edit_account_cancel:
+        finish();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
   
 
