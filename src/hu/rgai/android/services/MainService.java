@@ -353,7 +353,7 @@ public class MainService extends Service {
                 mBuilder.setAutoCancel(true);
                 KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
                 mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
-                EventLogger.INSTANCE.writeToLogFile( NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode());
+                EventLogger.INSTANCE.writeToLogFile( NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
               } else {
                 MainActivity.updateLastNotification();
               }
@@ -383,7 +383,7 @@ public class MainService extends Service {
       builder.append( SPACE_STR );
       builder.append( mle.getFrom().getContactId());
       Log.d( "willrgai", builder.toString());
-      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
     }
 
     private void mergeMessages(MessageListElementParc[] newMessages) {

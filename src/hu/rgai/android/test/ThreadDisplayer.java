@@ -115,7 +115,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", THREAD_BACKBUTTON_STR + SPACE_STR+ threadId );
-    EventLogger.INSTANCE.writeToLogFile( THREAD_BACKBUTTON_STR + SPACE_STR+ threadId );
+    EventLogger.INSTANCE.writeToLogFile( THREAD_BACKBUTTON_STR + SPACE_STR + threadId, true );
     super.onBackPressed();
   }
   
@@ -127,7 +127,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     builder.append( SPACE_STR );
     appendVisibleElementToStringBuilder(builder);
     Log.d( "willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile( builder.toString());
+    EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
   }
   
   @Override
@@ -179,7 +179,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       public void afterTextChanged(Editable s) {
         // TODO Auto-generated method stub
         Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString(), true);
       }
     });
 //    webView = (WebView) findViewById(R.id.email_content);
@@ -575,7 +575,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       }
       appendVisibleElementToStringBuilder( builder );
       Log.d( "willrgai", builder.toString());
-      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
     }
 
   }

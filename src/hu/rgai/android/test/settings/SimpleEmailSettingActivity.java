@@ -39,7 +39,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

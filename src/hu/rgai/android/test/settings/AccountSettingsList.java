@@ -59,7 +59,7 @@ public class AccountSettingsList extends ActionBarActivity {
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

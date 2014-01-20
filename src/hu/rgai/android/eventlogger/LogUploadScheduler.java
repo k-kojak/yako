@@ -39,6 +39,7 @@ public class LogUploadScheduler {
 
 class LogUploader implements Runnable {
   
+  private static final String LOGUPLOAD_FAILED_STR = "logupload:failed";
   boolean repeatTask = false;
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
@@ -80,7 +81,10 @@ class LogUploader implements Runnable {
           }
         } else {
 
-          EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( this.mainActivity );
+          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( this.mainActivity )) {
+            EventLogger.INSTANCE.writeToLogFile(LOGUPLOAD_FAILED_STR, true);
+          }
+            
         }
           
       }

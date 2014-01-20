@@ -58,7 +58,7 @@ public class EmailDisplayer extends ActionBarActivity {
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", EMAIL_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( EMAIL_BACKBUTTON_STR );
+    EventLogger.INSTANCE.writeToLogFile( EMAIL_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
   

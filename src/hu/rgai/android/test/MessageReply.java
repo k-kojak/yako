@@ -66,7 +66,7 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", MESSAGE_REPLY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( MESSAGE_REPLY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( MESSAGE_REPLY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -190,7 +190,7 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
   public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
   public void afterTextChanged(Editable arg0) {
     Log.d( "willrgai" , EDITTEXT_WRITE_STR + SPACE_STR + arg0.toString());
-    EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + arg0.toString());
+    EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + arg0.toString(), true);
   }
 
   public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {

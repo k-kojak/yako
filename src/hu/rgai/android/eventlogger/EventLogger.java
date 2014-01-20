@@ -9,29 +9,24 @@ import hu.rgai.android.test.R;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
@@ -39,7 +34,6 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -50,13 +44,12 @@ import org.apache.http.util.EntityUtils;
 
 import android.content.Context;
 import android.os.Environment;
+import android.provider.Settings.Secure;
 import android.util.Log;
 
 public enum EventLogger {
   INSTANCE;
 
-  private static final String TEST_MSG_STR = "{\"apiKey\": \"bb6ae46aa833d6faadc8758d07cf00d234984f33\", \"deviceId\": \"10122423432532\", \"package\": \"hu.rgai.android\", \"records\": [ { \"timestamp\": \"102123123213213\", \"data\": \"" + "[{\"eventname\":\"start\"}]".replaceAll( "\"", "\u0020") + "\"   }]}";
-  //static Context context;
   private volatile BufferedWriter bufferedWriter;
   private String logFilePath;
   private long logfileCreatedTime;
@@ -125,11 +118,20 @@ public enum EventLogger {
     return true;
   }
   
-  public synchronized void writeToLogFile( String log) {
+  public synchronized void writeToLogFile( String log, boolean logTimeStamp) {
     Log.d( "willrgai", "writeToLogFile " + log);
+    if ( logTimeStamp) {
+      writeFormatedLogToLogFile( LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
+    } else {
+      writeFormatedLogToLogFile( log);
+    }
+
+  }
+
+  private void writeFormatedLogToLogFile(String log) {
     if ( !lockedToUpload ) {
       try {
-        bufferedWriter.write( LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
+        bufferedWriter.write(  log);
         bufferedWriter.flush();
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -148,6 +150,7 @@ public enum EventLogger {
     FileReader logFileReader = new FileReader( logFilePath );
     BufferedReader br = new BufferedReader( logFileReader );
     long dateInMillis = Long.valueOf( br.readLine() );
+    br.close();
     return dateInMillis;
   }
   
@@ -155,18 +158,30 @@ public enum EventLogger {
     File logfile = new File( logFilePath );
     logfile.delete();
     openLogFile( logFilePath, true);
+    saveTempBufferToLogFileAndClear();
+  }
+
+  private void saveTempBufferToLogFileAndClear() {
     lockedToUpload = false;
     for ( String log : tempBufferToUpload) {
-      writeToLogFile(log);
+      writeToLogFile( log, false);
     }
-    tempBufferToUpload.clear();    
+    tempBufferToUpload.clear();
   }
   
   synchronized boolean uploadLogsAndCreateNewLogfile( Context context ) {
     boolean uploadSucces = true;
+    if ( logToJsonConverter.getDeviceId() == null)
+      logToJsonConverter.setDeviceId( Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
     lockedToUpload = true;
     try {
       uploadSucces = uploadSucces && uploadLogsToServer( context );
+      if ( uploadSucces ) {
+        deleteLogFileAndCreateNew();
+      } else {
+        saveTempBufferToLogFileAndClear();
+      }
+      return uploadSucces;
     } catch (ClientProtocolException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -189,32 +204,46 @@ public enum EventLogger {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    if ( uploadSucces ) {
-      deleteLogFileAndCreateNew();
-    } else {
-      lockedToUpload = false;
-      for ( String log : tempBufferToUpload) {
-        writeToLogFile(log);
-      }
-      tempBufferToUpload.clear();
-    }      
-    return uploadSucces;
+
+    return false;
   }
   
   public synchronized boolean uploadLogsToServer( Context context ) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException{
     
     boolean uploadSucces = true;
+    
+    List<String> logList = getLogListFromLogFile();
+    String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
+    uploadSucces = uploadSucces && uploadJsonEncodedString(jsonEncodedLogs);
+    
+    return uploadSucces;
+  }
+
+  private boolean uploadJsonEncodedString(String jsonEncodedLogs)
+      throws UnsupportedEncodingException, IOException, ClientProtocolException {
     final HttpPost httpPost = new HttpPost(SERVLET_URL);
 
-    final StringEntity httpEntity = new StringEntity( TEST_MSG_STR, org.apache.http.protocol.HTTP.UTF_8);
+    final StringEntity httpEntity = new StringEntity( jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
 
     httpEntity.setContentType("application/json");
 
     httpPost.setEntity(httpEntity); 
     HttpResponse response = getNewHttpClient().execute(httpPost);
     Log.d( "willrgai", "response " + EntityUtils.toString(response.getEntity()));
+    return true;
+  }
+
+  private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
+    List<String> logList = new ArrayList<String>();
+    FileReader logFileReader = new FileReader( logFilePath );
+    BufferedReader br = new BufferedReader( logFileReader );
     
-    return uploadSucces;
+    String readedLine;
+    while ( (readedLine = br.readLine()) != null) {
+      logList.add(readedLine);
+    }
+    br.close();
+    return logList;
   }
 
   public Context getContext() {
@@ -225,38 +254,6 @@ public enum EventLogger {
     this.context = context;
   }
 
-  class MySSLSocketFactory extends SSLSocketFactory {
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-
-    public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
-        super(truststore);
-
-        TrustManager tm = new X509TrustManager() {
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
-
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
-
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-        };
-
-        sslContext.init(null, new TrustManager[] { tm }, null);
-    }
-
-    @Override
-    public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException, UnknownHostException {
-        return sslContext.getSocketFactory().createSocket(socket, host, port, autoClose);
-    }
-
-    @Override
-    public Socket createSocket() throws IOException {
-        return sslContext.getSocketFactory().createSocket();
-    }
-  }
-  
   public HttpClient getNewHttpClient() {
     final InputStream inputStream = context.getResources().openRawResource( R.raw.trust);
     try {

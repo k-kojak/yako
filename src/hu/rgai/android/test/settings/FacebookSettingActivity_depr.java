@@ -61,7 +61,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR = "Fac
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( FACEBOOK_SETTING_ACTIVITY_DEPR_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

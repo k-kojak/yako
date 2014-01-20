@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
@@ -23,12 +24,17 @@ import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 
@@ -112,8 +118,35 @@ import javax.mail.NoSuchProviderException;
       builder.append( SPACE_STR );
       builder.append( content );
       builder.append( SPACE_STR );
-      builder.append( recipient.getDisplayName());
-      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+      builder.append( recipient.getContactId());
+      builder.append( SPACE_STR );
+      try {
+        builder.append( RSAENCODING.INSTANCE.encodingString(recipient.getData()));
+        EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
+      } catch (InvalidKeyException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IllegalBlockSizeException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchPaddingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (BadPaddingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      
+      
     }
     
     // TODO: gmail != email

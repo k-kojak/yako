@@ -68,6 +68,8 @@ import com.facebook.SessionState;
 
 public class MainActivity extends ActionBarActivity {
 
+  private static final String APPLICATION_START_STR = "application:start";
+  private static final String APPLICATION_OVER_STR = "application:over";
   private static final String MAINPAGE_BACKBUTTON_STR = "mainpage:backbutton";
   private static final String MAINPAGE_PAUSE_STR = "mainpage:pause";
   private static final String MAINPAGE_RESUME_STR = "mainpage:resume";
@@ -116,7 +118,7 @@ public class MainActivity extends ActionBarActivity {
       new Thread.UncaughtExceptionHandler() {
           @Override
           public void uncaughtException(Thread thread, Throwable ex) {
-            EventLogger.INSTANCE.writeToLogFile( "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage());
+            EventLogger.INSTANCE.writeToLogFile( "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
               // re-throw critical exception further to the os (important)
             defaultUEH.uncaughtException(thread, ex);
           }
@@ -126,7 +128,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", MAINPAGE_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( MAINPAGE_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( MAINPAGE_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -136,14 +138,12 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d("willrgai", "before");
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         if ( logUploadScheduler.isRunning )
           logUploadScheduler.stopRepeatingTask();
-        EventLogger.INSTANCE.writeToLogFile( "application:over" );
+        EventLogger.INSTANCE.writeToLogFile( APPLICATION_OVER_STR, true );
         EventLogger.INSTANCE.closeLogFile();
-        onDestroy();
       }
     });
     
@@ -188,7 +188,7 @@ public class MainActivity extends ActionBarActivity {
 //    setListAdapter(adapter);
 //    set
     EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
-    EventLogger.INSTANCE.writeToLogFile( "application:start" );
+    EventLogger.INSTANCE.writeToLogFile( APPLICATION_START_STR, true );
     EventLogger.INSTANCE.setContext( this);
 
     if ( !logUploadScheduler.isRunning )
@@ -429,7 +429,7 @@ public class MainActivity extends ActionBarActivity {
               appendVisibleElementToStringBuilder(builder, lv, adapter);
               builder.append(changed);
               Log.d("willrgai", builder.toString() );
-              EventLogger.INSTANCE.writeToLogFile( builder.toString() );
+              EventLogger.INSTANCE.writeToLogFile( builder.toString(), true );
             }
 
             private void appendClickedElementDatasToBuilder( MessageListElementParc message, StringBuilder builder ) {
@@ -491,7 +491,7 @@ public class MainActivity extends ActionBarActivity {
     builder.append( SPACE_STR );
     appendVisibleElementToStringBuilder(builder, lv, adapter);
     Log.d( "willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile( builder.toString());
+    EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
   }
   
   public boolean isNetworkAvailable() {
@@ -652,7 +652,7 @@ public class MainActivity extends ActionBarActivity {
       }
       appendVisibleElementToStringBuilder( builder, lv, adapter);
       Log.d( "willrgai", builder.toString());
-      EventLogger.INSTANCE.writeToLogFile( builder.toString());
+      EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
     }
 
   }

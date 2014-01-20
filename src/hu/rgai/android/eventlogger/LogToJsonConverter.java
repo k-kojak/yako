@@ -16,7 +16,16 @@ public class LogToJsonConverter {
   private static final String EVENTNAME_STR = "eventname";
   private static final String DATA_STR = "data";
   private String apiCode;
-  //private static String deviceId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);;
+  private String deviceId = null;
+  
+  public String getDeviceId() {
+    return deviceId;
+  }
+
+  public void setDeviceId(String deviceId) {
+    this.deviceId = deviceId;
+  }
+
   private String packageName;
 
 
@@ -30,7 +39,7 @@ public class LogToJsonConverter {
     try {
       JSONObject record = new JSONObject();
       record.put( API_KEY_STR, apiCode);
-      //record.put( DEVICE_ID_STR, deviceId);
+      record.put( DEVICE_ID_STR, deviceId);
       record.put( PACKAGE_STR, packageName);
       JSONArray recordsInRecord = new JSONArray();
       for (String log : logList) {

@@ -60,7 +60,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR );
+    EventLogger.INSTANCE.writeToLogFile( GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
   
