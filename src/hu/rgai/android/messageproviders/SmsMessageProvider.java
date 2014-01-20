@@ -96,6 +96,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   //      } else {
   ////        from = new Person(ti.personId+"", ti.address, Type.SMS);
   //      }
+//          Log.d("rgai", "pureFrom -> " + from.toString());
         if (contains) {
           MessageListElement mle = messages.get(containIndex);
           if (!ti.isMe && !from.getId().equals("0")) {

@@ -141,6 +141,7 @@ public final class PersonAndr extends Person implements Parcelable {
     } else {
       
       long uid = getUid(context, p.getType(), p.getId(), p.getName());
+//      Log.d("rgai", "UID of user " + p.toString() + ": " + uid);
       key = p.getType().toString() + "_" + uid;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
@@ -156,8 +157,14 @@ public final class PersonAndr extends Person implements Parcelable {
           }
 //          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
-        } else {
-          pa = new PersonAndr(-1, p.getName(), p.getId());
+        }
+        // user is not in contact list
+        else {
+          if (p.getType().equals(MessageProvider.Type.SMS)) {
+            pa = new PersonAndr(-1, p.getName(), p.getName());
+          } else {
+            pa = new PersonAndr(-1, p.getName(), p.getId());
+          }
   //        pa = new PersonAndr(-1, p.getName());
         }
         return pa;

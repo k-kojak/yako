@@ -78,27 +78,6 @@ public class ThreadDisplayer extends ActionBarActivity {
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
   private NewMessageReceiver nmr = null;
-//  private DataUpdateReceiver serviceReceiver;
-//  private ThreadMsgService service;
-//  private boolean serviceConnectionEstablished = false;
-//  private ServiceConnection serviceConnection = new ServiceConnection() {
-//    public void onServiceConnected(ComponentName className, IBinder binder) {
-//      Log.d("rgai", "# ON ServiceConnected callback");
-//      service = ((ThreadMsgService.MyBinder) binder).getService();
-//      service.setAccount(account);
-//      service.setThreadId(threadId);
-//
-////      updateList(service.getEmails());
-////      if ((messages == null || !messages.isEmpty()) && pd != null) {
-////        pd.dismiss();
-////      }
-//      serviceConnectionEstablished = true;
-//    }
-//
-//    public void onServiceDisconnected(ComponentName className) {
-//      service = null;
-//    }
-//  };
   
   @Override
   public void onCreate(Bundle icicle) {
@@ -116,6 +95,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
+    Log.d("rgai", from.toString());
     MainService.actViewingThreadId = threadId;
     String accName = "";
     if(!account.getAccountType().equals(MessageProvider.Type.SMS)) {
@@ -134,52 +114,20 @@ public class ThreadDisplayer extends ActionBarActivity {
     lv = (ListView) findViewById(R.id.main);
     text = (EditText) findViewById(R.id.text);
     
-//    webView = (WebView) findViewById(R.id.email_content);
-//    webView.getSettings().setDefaultTextEncodingName(mailCharCode);
-    
-    
-    
     adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
     lv.setAdapter(adapter);
     
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use  that here
       content = (FullThreadMessageParc)mlep.getFullMessage();
-//      content = getIntent().getExtras().getString("email_content");
-//      webView.loadData(content, "text/html", mailCharCode);
-//      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
       displayMessage();
     } else {
-//      handler = new ThreadContentTaskHandler();
-//      ThreadContentGetter contentGetter = new ThreadContentGetter(handler, account);
-//      contentGetter.execute(threadId);
-//
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching content...");
       pd.setCancelable(true);
       pd.show();
     }
   }
-  
-//  private void bindMessageNotifier() {
-//    // TODO: fix this kind of if constraint...this is ugly
-////    MessageNotifier mn = null;
-//    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-//      new FacebookMessageProvider((FacebookAccount)account).attachNotifier(new MessageNotification() {
-//
-//        public void newMessage() {
-//          Log.d("rgai", "NEW MESSAGE ARRIVED, let's display it");
-//        }
-//      });
-//    } else {
-//      new SmsMessageProvider(this).attachNotifier(new MessageNotification() {
-//
-//        public void newMessage() {
-//          Log.d("rgai", "NEW MESSAGE ARRIVED, let's display it");
-//        }
-//      });
-//    }
-//  }
   
   @Override
   protected void onResume() {
@@ -191,20 +139,6 @@ public class ThreadDisplayer extends ActionBarActivity {
       FacebookMessageProvider.initConnection((FacebookAccount)account, this);
     }
     
-//    Intent serviceIntent = new Intent(this, ThreadMsgService.class);
-//    serviceIntent.putExtra("account", (Parcelable)account);
-//    serviceIntent.putExtra("threadId", threadId);
-//    bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-    
-//    Intent intent = new Intent(this, ThreadMsgScheduler.class);
-//    intent.setAction(Settings.Alarms.THREAD_MSG_ALARM_START);
-//    this.sendBroadcast(intent);
-    
-//    if (serviceReceiver == null) {
-//      serviceReceiver = new DataUpdateReceiver(this);
-//    }
-//    IntentFilter intentFilter = new IntentFilter(Settings.Intents.THREAD_SERVICE_INTENT);
-//    registerReceiver(serviceReceiver, intentFilter);
   }
   
   public void sendMessage(View view) {
