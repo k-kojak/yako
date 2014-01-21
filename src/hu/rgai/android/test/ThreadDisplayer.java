@@ -106,7 +106,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     messageSendHandler = new MessageSendTaskHandler(this);
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, true);
     myThread.execute(threadId);
     
 //    bindMessageNotifier();
@@ -120,7 +120,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use  that here
       content = (FullThreadMessageParc)mlep.getFullMessage();
-      displayMessage();
+      displayMessage(true);
     } else {
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching content...");
@@ -160,7 +160,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 //    displayMessage();
     text.setText("");
 //    tempMessageIds.add(tempId);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 2000);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 2000, true);
     myThread.execute(threadId);
 //    }
   }
@@ -212,7 +212,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.load_more:
         if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
-          ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0);
+          ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, false);
           myThread.setOffset(content.getMessagesParc().size());
           myThread.execute(threadId);
           
@@ -252,7 +252,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     super.finish(); //To change body of generated methods, choose Tools | Templates.
   }
   
-  private void displayMessage() {
+  private void displayMessage(boolean scrollToBottom) {
 //    Log.d("rgai", "DISPLAYING MESSAGE CONTENT");
 //    String c = "";
 //    String mail = from.getEmails().isEmpty() ? "" : " ("+ from.getEmails().get(0) +")";
@@ -270,9 +270,15 @@ public class ThreadDisplayer extends ActionBarActivity {
         adapter.add(ma);
       }
       lv.setAdapter(adapter);
-      if (firstLoad) {
-        lv.setSelection(lv.getAdapter().getCount() - 1);
+      if (firstLoad || scrollToBottom) {
         firstLoad = false;
+//        lv.setSelection(lv.getAdapter().getCount() - 1);
+//        firstLoad = false;
+//      } else {
+        
+//      }
+//      if (scrollToBottom) {
+        lv.setSelection(lv.getAdapter().getCount() - 1);
       } else {
         int newItemCount = adapter.getCount();
         lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
@@ -293,7 +299,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 //      Log.d("rgai", "message arrived");
       
       Bundle bundle = msg.getData();
-      
+      boolean scrollToBottom = bundle.getBoolean("scroll_to_bottom");
       if (bundle.getInt("result") != ThreadMsgService.OK) {
         String resMsg = "Error";
         Toast.makeText(context, resMsg, Toast.LENGTH_LONG).show();
@@ -317,7 +323,7 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           content = newMessages;
         }
-        displayMessage();
+        displayMessage(scrollToBottom);
         if (pd != null) {
           pd.dismiss();
         }
@@ -370,63 +376,63 @@ public class ThreadDisplayer extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null && intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
         Log.d("rgai", "NEW MESSAGE BROADCAST");
-        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account, 0);
+        ThreadContentGetter myThread = new ThreadContentGetter(ThreadDisplayer.this, messageArrivedHandler, account, 0, true);
         myThread.execute(threadId);
       }
     }
   }
   
-  private class DataUpdateReceiver extends BroadcastReceiver {
-
-    private ThreadDisplayer activity;
-    
-    public DataUpdateReceiver(ThreadDisplayer activity) {
-      this.activity = activity;
-    }
-    
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      if (intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
-        if (intent.getExtras().getInt("result") != ThreadMsgService.OK) {
-          String msg = "Error";
-          Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
-          if (pd != null) {
-            pd.dismiss();
-          }
-        } else {
-          FullThreadMessageParc newMessages = intent.getExtras().getParcelable("threadMessage");
-          if (content != null) {
-            content.getMessagesParc().addAll(newMessages.getMessagesParc());
-            if (!tempMessageIds.isEmpty()) {
-              for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext(); ) {
-                MessageAtom ma = it.next();
-                if (tempMessageIds.contains(ma.getId())) {
-                  tempMessageIds.remove(ma.getId());
-                  it.remove();
-                }
-              }
-            }
-          } else {
-            content = newMessages;
-          }
-//          content = intent.getExtras().getParcelable("threadMessage");
-          displayMessage();
-//          Parcelable[] messagesParc = intent.getExtras().getParcelableArray("messages");
-//          MessageListElementParc[] messages = new MessageListElementParc[messagesParc.length];
-//          for (int i = 0; i < messagesParc.length; i++) {
-//            messages[i] = (MessageListElementParc) messagesParc[i];
-//          }
+//  private class DataUpdateReceiver extends BroadcastReceiver {
 //
-//          updateList(messages);
-          if (pd != null) {
-            pd.dismiss();
-          }
-        }
-      }
-    }
-    
-//    private FullThreadMessageParc mergeMessages(FullThreadMessageParc newMessages) {
-//      
+//    private ThreadDisplayer activity;
+//    
+//    public DataUpdateReceiver(ThreadDisplayer activity) {
+//      this.activity = activity;
 //    }
-  }
+//    
+//    @Override
+//    public void onReceive(Context context, Intent intent) {
+//      if (intent.getAction().equals(Settings.Intents.THREAD_SERVICE_INTENT)) {
+//        if (intent.getExtras().getInt("result") != ThreadMsgService.OK) {
+//          String msg = "Error";
+//          Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+//          if (pd != null) {
+//            pd.dismiss();
+//          }
+//        } else {
+//          FullThreadMessageParc newMessages = intent.getExtras().getParcelable("threadMessage");
+//          if (content != null) {
+//            content.getMessagesParc().addAll(newMessages.getMessagesParc());
+//            if (!tempMessageIds.isEmpty()) {
+//              for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext(); ) {
+//                MessageAtom ma = it.next();
+//                if (tempMessageIds.contains(ma.getId())) {
+//                  tempMessageIds.remove(ma.getId());
+//                  it.remove();
+//                }
+//              }
+//            }
+//          } else {
+//            content = newMessages;
+//          }
+////          content = intent.getExtras().getParcelable("threadMessage");
+//          displayMessage(true);
+////          Parcelable[] messagesParc = intent.getExtras().getParcelableArray("messages");
+////          MessageListElementParc[] messages = new MessageListElementParc[messagesParc.length];
+////          for (int i = 0; i < messagesParc.length; i++) {
+////            messages[i] = (MessageListElementParc) messagesParc[i];
+////          }
+////
+////          updateList(messages);
+//          if (pd != null) {
+//            pd.dismiss();
+//          }
+//        }
+//      }
+//    }
+//    
+////    private FullThreadMessageParc mergeMessages(FullThreadMessageParc newMessages) {
+////      
+////    }
+//  }
 }

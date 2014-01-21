@@ -274,6 +274,7 @@ public class MainActivity extends ActionBarActivity {
     // register service broadcast receiver
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
     if (fba != null) {
+      // TODO: this should be an async task
       FacebookMessageProvider.initConnection(fba, this);
     }
     if (serviceReceiver == null) {

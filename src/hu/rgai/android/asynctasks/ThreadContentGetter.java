@@ -34,13 +34,16 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     private AccountAndr account;
     private int delay;
     private int offset = 0;
+    private boolean scrollBottomAfterLoad = false;
     
-    public ThreadContentGetter(Context context, Handler handler, AccountAndr account, int delay) {
+    public ThreadContentGetter(Context context, Handler handler, AccountAndr account,
+            int delay, boolean scrollBottomAfterLoad) {
       this.context = context;
       this.handler = handler;
       this.account = account;
       this.context = context;
       this.delay = delay;
+      this.scrollBottomAfterLoad = scrollBottomAfterLoad;
     }
     
     public void setOffset(int offset) {
@@ -137,6 +140,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
       Bundle bundle = new Bundle();
       bundle.putParcelable("threadMessage", result);
       bundle.putInt("result", ThreadMsgService.OK);
+      bundle.putBoolean("scroll_to_bottom", scrollBottomAfterLoad);
       msg.setData(bundle);
       handler.sendMessage(msg);
 //      Log.d("rgai", "RETURNING MESSAGE CONTENT");
