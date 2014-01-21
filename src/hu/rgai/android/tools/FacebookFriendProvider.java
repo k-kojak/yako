@@ -43,6 +43,10 @@ public class FacebookFriendProvider {
       public void onCompleted(Response response) {
         try {
           GraphObject go = response.getGraphObject();
+          if (go == null) {
+            th.showToast("Unable to update contact list due to Facebook error");
+            return;
+          }
           JSONObject jso = go.getInnerJSONObject();
           JSONArray arr = jso.getJSONArray("data");
           int count = arr.length();
