@@ -141,6 +141,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     for (int l = 0; l < recipientsArr.length(); l++) {
 //                                JSONObject recipient = new
                       String id = recipientsArr.getString(l);
+                      Log.d("rgai", account.toString());
                       if (!account.getId().equals(id) && recipIds.isEmpty()) {
                         recipIds.add(id);
                       }

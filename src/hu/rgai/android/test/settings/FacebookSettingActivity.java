@@ -95,10 +95,10 @@ public class FacebookSettingActivity extends ActionBarActivity {
             	 
             	  
               
-              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
+                setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
 //                    FacebookSettingActivity.this.onResume();
               } catch (Exception ex) {
-                Logger.getLogger(FacebookSettingActivity_depr.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
               }
             } else {
 //              ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
@@ -254,6 +254,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
       if (user != null && oldAccount == null) {
         ((TextView)findViewById(R.id.display_name)).setText(user.getName());
         ((TextView)findViewById(R.id.unique_name)).setText(user.getUsername());
+        this.id = user.getId();
       }
     }
   }
@@ -299,7 +300,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
       onSessionStateChange(session, session.getState(), null);
     }
 //    uiHelper.onResume();
-    
   }
 
   @Override
@@ -325,6 +325,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
             name.getText().toString(), uniqueName.getText().toString(), id,
             password.getText().toString());
+    Log.d("rgai", "SAVING ACCOUNT -> " + newAccount.toString());
+    Log.d("rgai", "id->" + id);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
