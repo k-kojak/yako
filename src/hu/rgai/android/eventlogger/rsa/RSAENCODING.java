@@ -18,8 +18,9 @@ public enum RSAENCODING {
   PublicKey publicKey = null;
   
   private RSAENCODING() {}
+  
   public String encodingString(String log) throws InvalidKeyException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, NoSuchPaddingException, ClassNotFoundException, BadPaddingException {
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    /*KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     KeyPair myPair = kpg.generateKeyPair();
 
     Cipher c = Cipher.getInstance("RSA");
@@ -27,6 +28,7 @@ public enum RSAENCODING {
     
     byte[] encodedLog = c.doFinal(log.getBytes());
     
-    return new String(encodedLog);
+    return new String(encodedLog);*/
+    return log;
   }
 }

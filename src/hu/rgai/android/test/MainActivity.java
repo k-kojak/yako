@@ -147,9 +147,9 @@ public class MainActivity extends ActionBarActivity {
       }
     });
     
-    defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+    //defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
     // setup handler for uncaught exception 
-    Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
+    //Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
 //    setContentView(R.layout.main);
 
 //    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
@@ -187,13 +187,13 @@ public class MainActivity extends ActionBarActivity {
 //    setContent();
 //    setListAdapter(adapter);
 //    set
+
     EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
     EventLogger.INSTANCE.writeToLogFile( APPLICATION_START_STR, true );
     EventLogger.INSTANCE.setContext( this);
 
     if ( !logUploadScheduler.isRunning )
       logUploadScheduler.startRepeatingTask();
-
   }
   
   @Override

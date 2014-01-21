@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.util.Log;
 import static hu.rgai.android.test.Constants.*;
 
 public class LogToJsonConverter {
@@ -35,17 +36,18 @@ public class LogToJsonConverter {
   }
   
   public String convertLogToJsonFormat( List<String> logList) {
-    
+
     try {
       JSONObject record = new JSONObject();
-      record.put( API_KEY_STR, apiCode);
-      record.put( DEVICE_ID_STR, deviceId);
-      record.put( PACKAGE_STR, packageName);
       JSONArray recordsInRecord = new JSONArray();
       for (String log : logList) {
         addRecordsToRecord(recordsInRecord, log);
       }
-      
+
+      record.put( API_KEY_STR, apiCode);
+      record.put( DEVICE_ID_STR, deviceId);
+      record.put( PACKAGE_STR, packageName);
+      record.put("records", recordsInRecord);
       return record.toString();
     } catch (JSONException e) {
       // TODO Auto-generated catch block
@@ -59,7 +61,8 @@ public class LogToJsonConverter {
 
     StringTokenizer st = new StringTokenizer( log, " ");
     try {
-      record.put( TIMESTAMP_STR, Long.getLong(st.nextToken()));
+      Long timeStamp = Long.getLong(st.nextToken());
+
       JSONObject event = new JSONObject();
       String eventName = st.nextToken();
 
@@ -67,10 +70,11 @@ public class LogToJsonConverter {
       while ( st.hasMoreTokens()) {
         datasToEvent.put(st.nextToken());
       }
-      event.put( EVENTNAME_STR, eventName);
       event.put( EVENTDATAS_STR, datasToEvent);
+      event.put( EVENTNAME_STR, eventName);
       record.put( DATA_STR, event.toString().replaceAll("\"", "\u0020"));
-      recordsInRecord.put(event);
+      record.put( TIMESTAMP_STR, timeStamp);
+      recordsInRecord.put(record);
       
     } catch (JSONException e) {
       // TODO Auto-generated catch block

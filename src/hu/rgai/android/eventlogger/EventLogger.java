@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -41,6 +42,8 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Environment;
@@ -50,6 +53,8 @@ import android.util.Log;
 public enum EventLogger {
   INSTANCE;
 
+  private static final String SUCCESS_STR = "success";
+  private static final String RESULT_STR = "result";
   private volatile BufferedWriter bufferedWriter;
   private String logFilePath;
   private long logfileCreatedTime;
@@ -132,6 +137,7 @@ public enum EventLogger {
     if ( !lockedToUpload ) {
       try {
         bufferedWriter.write(  log);
+        bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -203,24 +209,29 @@ public enum EventLogger {
     } catch (CertificateException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    } catch ( Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
 
     return false;
   }
   
-  public synchronized boolean uploadLogsToServer( Context context ) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException{
+  public synchronized boolean uploadLogsToServer( Context context ) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException{
     
     boolean uploadSucces = true;
     
     List<String> logList = getLogListFromLogFile();
     String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
-    uploadSucces = uploadSucces && uploadJsonEncodedString(jsonEncodedLogs);
-    
+    if (jsonEncodedLogs != null)
+      uploadSucces = uploadSucces && uploadJsonEncodedString(jsonEncodedLogs);
+    else
+      return false;
     return uploadSucces;
   }
 
   private boolean uploadJsonEncodedString(String jsonEncodedLogs)
-      throws UnsupportedEncodingException, IOException, ClientProtocolException {
+      throws UnsupportedEncodingException, IOException, ClientProtocolException, ParseException, JSONException {
     final HttpPost httpPost = new HttpPost(SERVLET_URL);
 
     final StringEntity httpEntity = new StringEntity( jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
@@ -228,9 +239,15 @@ public enum EventLogger {
     httpEntity.setContentType("application/json");
 
     httpPost.setEntity(httpEntity); 
+
     HttpResponse response = getNewHttpClient().execute(httpPost);
+
     Log.d( "willrgai", "response " + EntityUtils.toString(response.getEntity()));
-    return true;
+    Log.d( "willrgai", "response statuscode " + response.getStatusLine().getStatusCode());
+
+    if ( response.getStatusLine().getStatusCode() == 200)
+      return true;
+    return false;
   }
 
   private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
@@ -239,6 +256,7 @@ public enum EventLogger {
     BufferedReader br = new BufferedReader( logFileReader );
     
     String readedLine;
+    br.readLine();
     while ( (readedLine = br.readLine()) != null) {
       logList.add(readedLine);
     }
