@@ -12,18 +12,18 @@
       <LinearLayout
         android:id="@+id/hr"
         android:layout_width="fill_parent"
-        android:layout_height="30px"
+        android:layout_height="20px"
         android:layout_marginLeft="15px"
         android:layout_marginRight="15px"
-        android:layout_marginBottom="30px"
+        android:layout_marginBottom="5px"
       >
         <View
           android:id="@+id/hr_view"
           android:layout_width="40px"
           android:layout_height="2px"
-          android:layout_marginTop="7px"
+          android:layout_marginTop="8px"
           android:layout_marginRight="3px"
-          android:layout_marginBottom="20px"
+          android:layout_marginBottom="10px"
           android:background="#11000000"
         />
         <TextView
@@ -32,7 +32,7 @@
               android:layout_height="25px"
               android:textColor="#aaaaaa"
               android:text="aaaaa"
-              android:textSize="12px"
+              android:textSize="14px"
         />
               
       </LinearLayout>

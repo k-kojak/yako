@@ -98,7 +98,7 @@ public class LazyAdapter extends BaseAdapter {
     }
 //    icon.setImageBitmap(img);
     
-    date.setText(message.getFormattedDate());
+    date.setText(message.getPrettyDate());
 //        imageLoader.DisplayImage(song.get(CustomizedListView.KEY_THUMB_URL), thumb_image);
     return vi;
   }

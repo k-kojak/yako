@@ -20,6 +20,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import hu.rgai.android.tools.Utils;
 
 public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
@@ -97,14 +98,21 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
     }
     iv.setImageBitmap(img);
 
+    if (coment.isIsMe()) {
+      iv.setVisibility(View.GONE);
+    } else {
+      iv.setVisibility(View.VISIBLE);
+    }
+    
     if (position - 1 >= 0) {
       MessageAtomParc prevMsg = getItem(position - 1);
+      // dealing with timestamps
       if (coment.getDate().getTime() - prevMsg.getDate().getTime() < 60000) {
         row.findViewById(R.id.hr).setVisibility(View.GONE);
       } else {
         row.findViewById(R.id.hr).setVisibility(View.VISIBLE);
         TextView ts = (TextView)row.findViewById(R.id.timestamp);
-        ts.setText(coment.getDate().toString());
+        ts.setText(Utils.getSimplifiedTime(coment.getDate()));
       }
       
     }
