@@ -6,6 +6,7 @@ package hu.rgai.android.test;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import android.app.Activity;
+import android.app.Application;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -46,6 +47,8 @@ import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import com.testflightapp.lib.TestFlight;
+import org.apache.http.client.params.AllClientPNames;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -90,6 +93,8 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    // launching testflight
+    TestFlight.takeOff(this.getApplication(), getString(R.string.testflight_app_token));
 //    setContentView(R.layout.main);
 //    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
 //    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
