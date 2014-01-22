@@ -6,7 +6,6 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,15 +13,13 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
 public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
@@ -67,8 +64,8 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
         row = inflater.inflate(R.layout.threadview_list_item, parent, false);
       }
 		}
-
-		wrapper = (LinearLayout) row.findViewById(R.id.wrapper);
+    
+		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
 
 		
 //    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
@@ -79,6 +76,13 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 		countryName.setText(coment.getContent());
     
 		countryName.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
+    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
+    if (coment.isIsMe()) {
+      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
+    } else {
+      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
+    }
+    wrapper.setLayoutParams(wrapperParams);
 		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
@@ -93,6 +97,20 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
     }
     iv.setImageBitmap(img);
 
+    if (position - 1 >= 0) {
+      MessageAtomParc prevMsg = getItem(position - 1);
+      if (coment.getDate().getTime() - prevMsg.getDate().getTime() < 60000) {
+        row.findViewById(R.id.hr).setVisibility(View.GONE);
+      } else {
+        row.findViewById(R.id.hr).setVisibility(View.VISIBLE);
+        TextView ts = (TextView)row.findViewById(R.id.timestamp);
+        ts.setText(coment.getDate().toString());
+      }
+      
+    }
+//    TextView ts = (TextView)row.findViewById(R.id.timestamp);
+//    ts.setText("kecske");
+    
 		return row;
 	}
 
