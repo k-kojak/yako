@@ -20,7 +20,7 @@ and open the template in the editor.
         android:id="@+id/recipients"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="hint text"
+        android:hint="@string/to_hint"
         android:completionThreshold="1"
         android:maxLines="4"
         android:scrollbars = "vertical"
