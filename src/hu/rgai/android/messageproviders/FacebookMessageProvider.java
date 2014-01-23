@@ -199,7 +199,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   public static void initConnection(FacebookAccount fba, final Context context) {
-
+    Log.d("rgai", "try connecting to XMPP");
     if (xmpp == null || !xmpp.isConnected()) {
 
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
@@ -218,6 +218,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(fba.getUniqueName(), fba.getPassword());
+        Log.d("rgai", "connected to XMPP");
 //        Roster roster = xmpp.getRoster();
 
 
@@ -250,7 +251,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         });
 
       } catch (XMPPException e) {
-        Log.i("rgai", "nem lep be");
+        Log.d("rgai", "XMPP connection failed:");
         xmpp.disconnect();
         e.printStackTrace();
       } catch (Exception k) {
@@ -388,17 +389,17 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 
 //    final XMPPConnection xmpp = new XMPPConnection(config);
      if (xmpp == null || !xmpp.isConnected()) {
-        try {
-          xmpp.connect();
-          SmackConfiguration.setPacketReplyTimeout(10000);
-          xmpp.login(account.getUniqueName(), account.getPassword());
-        } catch (XMPPException e) {
-          xmpp.disconnect();
-          e.printStackTrace();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-     }
+      try {
+        xmpp.connect();
+        SmackConfiguration.setPacketReplyTimeout(10000);
+        xmpp.login(account.getUniqueName(), account.getPassword());
+      } catch (XMPPException e) {
+        xmpp.disconnect();
+        e.printStackTrace();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 
     for (MessageRecipient mr : to) {
       FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;

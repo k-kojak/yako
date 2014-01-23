@@ -48,6 +48,7 @@ import android.telephony.TelephonyManager;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import com.testflightapp.lib.TestFlight;
+import hu.rgai.android.asynctasks.XmppConnector;
 import org.apache.http.client.params.AllClientPNames;
 
 public class MainActivity extends ActionBarActivity {
@@ -275,13 +276,15 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
     is_activity_visible = true;
     last_notification_date = new Date();
-//    getFbMessages(this);
-    // register service broadcast receiver
+    
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
     if (fba != null) {
       // TODO: this should be an async task
-      FacebookMessageProvider.initConnection(fba, this);
+      XmppConnector xmppc = new XmppConnector(fba, this);
+      xmppc.execute();
+//      FacebookMessageProvider.initConnection(fba, this);
     }
+    // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
     }
