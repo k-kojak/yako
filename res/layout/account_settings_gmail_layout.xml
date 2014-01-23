@@ -19,8 +19,16 @@
         android:text="@string/label_gmail_account"
         android:paddingTop="3dip"
       />
+      
+      <LinearLayout android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:layout_width="0px"
+                android:layout_height="0px" />
+      
       <EditText
         android:id="@+id/email_address"
+        android:nextFocusUp="@id/email_address"
+        android:nextFocusLeft="@id/email_address"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/google_account_hint"

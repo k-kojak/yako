@@ -23,8 +23,8 @@
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>
   <string name="google_account_hint">google account</string>
-  <string name="imap_hint">imap.gmail.com</string>
-  <string name="smtp_hint">smtp.gmail.com</string>
+  <string name="imap_hint">imap address</string>
+  <string name="smtp_hint">smtp address</string>
   <string name="password_hint">password</string>
   <string name="refreshing">Refreshing</string>
   <string name="loading_more_elements">Loading older messages</string>
