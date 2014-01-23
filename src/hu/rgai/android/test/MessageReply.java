@@ -14,6 +14,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -109,7 +110,8 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
 //    CustomAdapter adapter = new CustomAdapter(this, c);
     recipients.setAdapter(adapter);
     recipients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-    
+    LinearLayout fake = (LinearLayout)findViewById(R.id.fake_focus);
+    fake.requestFocus();
     if (content.length() > 0) {
       text.setText("\n\n" + content);
     }
