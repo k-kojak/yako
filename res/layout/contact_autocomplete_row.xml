@@ -5,7 +5,7 @@
     android:orientation="horizontal"
     android:padding="1dip">
  
-    <!--  ListRow Left side Thumbnail image -->
+    
     <LinearLayout android:id="@+id/thumbnail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -31,7 +31,7 @@
         android:typeface="sans"
         android:textSize="12dip" />
  
-    <!-- Artist Name -->
+    
     <TextView
         android:id="@+id/data"
         android:layout_width="fill_parent"
@@ -44,8 +44,19 @@
         android:layout_toRightOf="@+id/thumbnail"
         android:text="..." />
  
-    <!-- Rightend Duration -->
-    <TextView
+    
+    <ImageView
+            android:id="@+id/mimetype_image"
+            android:layout_width="16px"
+            android:layout_height="16px"
+            android:layout_marginTop="10px"
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@id/name"
+            android:gravity="right"
+            android:layout_marginRight="5dip"
+    />
+    
+<!--    <TextView
         android:id="@+id/type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -56,6 +67,6 @@
         android:layout_marginRight="5dip"
         android:textSize="10dip"
         android:textColor="#10bcc9"
-        android:textStyle="bold"/>
+        android:textStyle="bold"/>-->
  
 </hu.rgai.android.tools.view.AutoCompleteRow>

@@ -110,7 +110,9 @@ public class MessageReply extends ActionBarActivity implements TextWatcher {
     recipients.setAdapter(adapter);
     recipients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
     
-    text.setText("\n\n" + content);
+    if (content.length() > 0) {
+      text.setText("\n\n" + content);
+    }
     if (from != null) {
       Log.d("rgai", "REPLYING TO -> " + from);
 //      recipients.setText(from.getId());

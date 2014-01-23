@@ -156,8 +156,16 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     TextView from = (TextView) view.findViewById(R.id.data);
     from.setText(displayData);
     
-    TextView date = (TextView) view.findViewById(R.id.type);
-    date.setText(type.substring(type.indexOf("/") + 1));
+    String typeText = type.substring(type.indexOf("/") + 1);
+    ImageView typeImg = (ImageView) view.findViewById(R.id.mimetype_image);
+    Integer resid = Settings.getImgToMimetype().get(typeText);
+    if (resid != null) {
+      typeImg.setImageResource(resid);
+    } else {
+      typeImg.setImageResource(R.drawable.android);
+    }
+    
+//    typeImg.setText(type.substring(type.indexOf("/") + 1));
 //    date.setText(id);
 //    date.setText(photo);
     

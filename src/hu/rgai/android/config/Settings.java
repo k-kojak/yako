@@ -1,5 +1,6 @@
 package hu.rgai.android.config;
 
+import android.content.Context;
 import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
@@ -45,6 +46,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
+  private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
   public static final int MAX_SNIPPET_LENGTH = 30;
@@ -101,6 +103,16 @@ public final class Settings {
       accountTypeToSettingClass.put(MessageProvider.Type.FACEBOOK, FacebookSettingActivity.class);
     }
     return accountTypeToSettingClass;
+  }
+  
+  public static Map<String, Integer> getImgToMimetype() {
+    if (imgToMimetype == null) {
+      imgToMimetype = new HashMap<String, Integer>();
+      imgToMimetype.put("phone_v2", R.drawable.ic_sms3);
+      imgToMimetype.put("email_v2", R.drawable.ic_email);
+      imgToMimetype.put("im", R.drawable.ic_fb_messenger);
+    }
+    return imgToMimetype;
   }
   
   public static List<String> getFacebookPermissions() {
