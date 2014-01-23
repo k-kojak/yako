@@ -215,6 +215,7 @@ public class MainService extends Service {
         it.remove();
       }
     }
+    Log.d("rgai", "messages removed to account -> " + account);
   }
   
   /**

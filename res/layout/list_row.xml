@@ -47,7 +47,7 @@
  
     </RelativeLayout>
  
-    <!-- Title Of Song-->
+    
     <RelativeLayout
       android:layout_marginLeft="36dip"
       android:layout_width="wrap_content"
@@ -63,7 +63,7 @@
           android:typeface="sans"
           android:textSize="14dip" />
 
-      <!-- Artist Name -->
+      
       <TextView
           android:id="@+id/from"
           android:layout_width="fill_parent"
@@ -76,13 +76,14 @@
           android:layout_toRightOf="@+id/thumbnail"
           android:text="" />
 
-      <!-- Rightend Duration -->
+      
       <TextView
           android:id="@+id/date"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_alignParentRight="true"
           android:layout_alignTop="@id/subject"
+          android:layout_marginTop="6px"
           android:gravity="right"
           android:text=""
           android:layout_marginRight="5dip"

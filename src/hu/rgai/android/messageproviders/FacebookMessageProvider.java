@@ -199,9 +199,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   public static void initConnection(FacebookAccount fba, final Context context) {
-    Log.d("rgai", "try connecting to XMPP");
+    
     if (xmpp == null || !xmpp.isConnected()) {
-
+      Log.d("rgai", "try connecting to XMPP");
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
       StrictMode.setThreadPolicy(policy);
 

@@ -29,6 +29,7 @@ import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 import java.util.List;
@@ -129,7 +130,6 @@ public class AccountSettingsList extends ActionBarActivity {
     } catch (RuntimeException ex) {
       Log.d("rgai", "catching FB exception");
       ex.printStackTrace();
-      
     }
     
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
@@ -156,7 +156,7 @@ public class AccountSettingsList extends ActionBarActivity {
   }
   
   private void removeMessagesToAccount(final AccountAndr acc) {
-    
+    MainActivity.removeMessagesToAccount(acc);
     ServiceConnection serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName className, IBinder binder) {
         mainService = ((MainService.MyBinder) binder).getService();

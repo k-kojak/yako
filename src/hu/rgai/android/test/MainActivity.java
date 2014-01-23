@@ -49,6 +49,7 @@ import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import com.testflightapp.lib.TestFlight;
 import hu.rgai.android.asynctasks.XmppConnector;
+import java.util.Iterator;
 import org.apache.http.client.params.AllClientPNames;
 
 public class MainActivity extends ActionBarActivity {
@@ -61,8 +62,8 @@ public class MainActivity extends ActionBarActivity {
   private static Date last_notification_date = null;
   
   private boolean serviceConnectionEstablished = false;
-  private List<MessageListElementParc> messages;
-  private LazyAdapter adapter;
+  private static volatile List<MessageListElementParc> messages;
+  private static volatile LazyAdapter adapter;
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
@@ -94,6 +95,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("rgai","MainActivitiy.onCreate");
     // launching testflight
     TestFlight.takeOff(this.getApplication(), getString(R.string.testflight_app_token));
 //    setContentView(R.layout.main);
@@ -274,6 +276,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    Log.d("rgai","MainActivitiy.onResume");
     is_activity_visible = true;
     last_notification_date = new Date();
     
@@ -329,6 +332,18 @@ public class MainActivity extends ActionBarActivity {
     return last_notification_date;
   }
   
+  public static void removeMessagesToAccount(final AccountAndr acc) {
+    Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
+    Iterator<MessageListElementParc> it = messages.iterator();
+    while (it.hasNext()) {
+      MessageListElementParc mle = it.next();
+      if (mle.getAccount().equals(acc)) {
+        it.remove();
+      }
+    }
+    adapter.notifyDataSetChanged();
+  }
+  
   private void setContent() {
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem lehet csinalni semmit...
     if (messages == null) {
@@ -338,7 +353,7 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable();
     if (isNet || isPhone()) {
       // if list is not empty and current view is listview, update adapter
-      if (!messages.isEmpty() && adapter != null) {
+      if (!messages.isEmpty() && adapter != null && isListView) {
         adapter.notifyDataSetChanged();
       }
       // insert listview, set adapter
@@ -348,6 +363,7 @@ public class MainActivity extends ActionBarActivity {
 //        lv.setOnScrollListener(new MainScrollListListener(this));
         adapter = new LazyAdapter(this, messages);
         lv.setAdapter(adapter);
+        Log.d("rgai", "setting message list");
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
             MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
@@ -457,6 +473,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onPause() {
     super.onPause();
+    Log.d("rgai","MainActivitiy.onPause");
     is_activity_visible = false;
     
     // refreshing last notification date when closing activity
