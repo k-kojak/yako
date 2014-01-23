@@ -68,7 +68,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
             new String[]{"thread_id", "body", "date", "seen", "person", "address", "type"},
             null,
             null,
-            "date DESC");
+            "date DESC LIMIT "+offset+","+limit);
     if (cur != null) {
       while (cur.moveToNext()) {
         String title = cur.getString(1);
