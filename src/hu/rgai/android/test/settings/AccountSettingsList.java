@@ -61,7 +61,6 @@ public class AccountSettingsList extends ActionBarActivity {
     }
     Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
-//    findViewById(R.id.loadMoreButton).setVisibility(View.GONE);
 
     List<AccountAndr> accounts = null;
     try {

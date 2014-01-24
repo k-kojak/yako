@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -27,6 +28,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,9 +64,15 @@ public class MainActivity extends ActionBarActivity {
   private static boolean is_activity_visible = false;
   private static Date last_notification_date = null;
   
+//<<<<<<< HEAD
   private boolean serviceConnectionEstablished = false;
   private static volatile List<MessageListElementParc> messages;
   private static volatile LazyAdapter adapter;
+//=======
+//  private boolean serviceConnectionEstablished = false;  
+//  private List<MessageListElementParc> messages;
+//  private LazyAdapter adapter;
+//>>>>>>> origin/sms
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
