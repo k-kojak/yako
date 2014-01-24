@@ -60,7 +60,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   private Menu menu;
   private ProfilePictureView profilePictureView;
   private TextView name;
-  private TextView uniqueName;
+  private String uniqueName;
   private EditText password;
   private String id = null;
   private Spinner messageAmount;
@@ -87,9 +87,9 @@ public class FacebookSettingActivity extends ActionBarActivity {
               Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
 //                  stillAddingFacebookAccount = false;
 //                  FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-              FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
-                      new IntegrationHandler(FacebookSettingActivity.this));
-              integrator.execute(gu.getId());
+//              FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
+//                      new IntegrationHandler(FacebookSettingActivity.this));
+//              integrator.execute(gu.getId());
               try {
 //                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
             	 
@@ -159,7 +159,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
     messageAmount.setAdapter(adapter);
     
     name = (TextView)findViewById(R.id.display_name);
-    uniqueName = (TextView)findViewById(R.id.unique_name);
+//    uniqueName = (TextView)findViewById(R.id.unique_name);
     password = (EditText)findViewById(R.id.password);
     
     Bundle b = getIntent().getExtras();
@@ -172,9 +172,16 @@ public class FacebookSettingActivity extends ActionBarActivity {
     lb.setUserInfoChangedCallback(new LoginButton.UserInfoChangedCallback() {
       @Override
       public void onUserInfoFetched(GraphUser user) {
+        boolean prevUserState = FacebookSettingActivity.this.user != null;
         FacebookSettingActivity.this.user = user;
-        updateUI();
-        Log.d("rgai", "ON USER INFO FETCHED");
+        Log.d("rgai", "ON USER FETCH USER IS -> " + user);
+        Log.d("rgai", "PREV USER STATE -> " + prevUserState);
+        // User previously existed and we pressed logout, so now user is null
+        if (user == null && prevUserState == true) {
+          deleteAccountSettings(false);
+        } else {
+          updateUI();
+        }
       }
     });
     
@@ -196,15 +203,13 @@ public class FacebookSettingActivity extends ActionBarActivity {
     if (displayName != null) {
       name.setText(displayName);
     }
-    if (uniqueName != null) {
-      uniqueName.setText(uName);
-    }
     if (pass != null) {
       password.setText(pass);
     }
     if (messageLimit != -1) {
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), messageLimit));
     }
+    this.uniqueName = uName;
     this.id = id;
   }
   
@@ -240,20 +245,21 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   private void updateLayoutAndOptionsMenu(Menu menu) {
     if (menu != null) {
-      this.menu.findItem(R.id.edit_account_save).setVisible(oldAccount != null || user != null);
+      this.menu.findItem(R.id.edit_account_save).setVisible(user != null);
       this.menu.findItem(R.id.edit_account_delete).setVisible(oldAccount != null);
       this.menu.findItem(R.id.edit_account_cancel).setVisible(oldAccount == null);
       
-      findViewById(R.id.profilePicture).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.display_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.unique_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.password).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.initial_items_num).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.initial_items_num_label).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.profilePicture).setVisibility(user == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.display_name).setVisibility(user == null ? View.GONE : View.VISIBLE);
+//      findViewById(R.id.unique_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.password).setVisibility(user == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.initial_items_num).setVisibility(user == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.initial_items_num_label).setVisibility(user == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.sync_fb_contact_list).setVisibility(user == null ? View.GONE : View.VISIBLE);
       
       if (user != null && oldAccount == null) {
         ((TextView)findViewById(R.id.display_name)).setText(user.getName());
-        ((TextView)findViewById(R.id.unique_name)).setText(user.getUsername());
+//        ((TextView)findViewById(R.id.unique_name)).setText(user.getUsername());
         this.id = user.getId();
       }
     }
@@ -275,6 +281,10 @@ public class FacebookSettingActivity extends ActionBarActivity {
       default:
         return super.onOptionsItemSelected(item);
     }
+  }
+  
+  public void syncFacebookContactList(View view) {
+    Log.d("rgai", "sync fb contact list");
   }
   
 
@@ -323,7 +333,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   public void saveAccountSettings() {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
-            name.getText().toString(), uniqueName.getText().toString(), id,
+            name.getText().toString(), uniqueName, id,
             password.getText().toString());
     Log.d("rgai", "SAVING ACCOUNT -> " + newAccount.toString());
     Log.d("rgai", "id->" + id);
@@ -346,9 +356,13 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
   
   public void deleteAccountSettings() {
+    deleteAccountSettings(true);
+  }
+  
+  public void deleteAccountSettings(boolean allowLoginUI) {
 //    Log.d("rgai", "DELETE");
     
-    Session.openActiveSession(this, true, new Session.StatusCallback() {
+    Session.openActiveSession(this, allowLoginUI, new Session.StatusCallback() {
 
       public void call(Session sn, SessionState ss, Exception excptn) {
         if (sn.isOpened()) {

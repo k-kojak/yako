@@ -35,13 +35,13 @@
         android:freezesText="true"
         android:gravity="center"  />
 
-      <TextView
+<!--      <TextView
         android:id="@+id/unique_name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:editable="false"
         android:inputType="text"
-        android:gravity="center" />
+        android:gravity="center" />-->
 
 <LinearLayout android:focusable="true"
                 android:focusableInTouchMode="true"
@@ -71,7 +71,14 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
-
+      <Button android:text="Sync contact list now"
+            android:id="@+id/sync_fb_contact_list" 
+            android:textSize="14dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="syncFacebookContactList"
+            />
+      
       <com.facebook.widget.LoginButton
             android:id="@+id/authButton"
             android:layout_width="wrap_content"
