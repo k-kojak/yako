@@ -123,6 +123,7 @@ public class MainService extends Service {
       if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
         loadMore = intent.getExtras().getBoolean("load_more", false);
       }
+//      Log.d("rgai","LOAD MORE AT MAINSERVICE -> " + loadMore);
       
 //      Log.d("rgai", "MainService acc type -> " + (type == null ? "NULL" : type.toString()));
       List<AccountAndr> accounts = StoreHandler.getAccounts(this);
@@ -321,6 +322,8 @@ public class MainService extends Service {
           if (bundle.get("errorMessage") != null) {
             intent.putExtra("errorMessage", bundle.getString("errorMessage"));
           }
+//          Log.d("rgai","MainService handle message LOAD MORE -> " + bundle.getBoolean("load_more"));
+          intent.putExtra("load_more", bundle.getBoolean("load_more"));
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
             MessageListElementParc[] newMessages = (MessageListElementParc[]) bundle.getParcelableArray("messages");
             
@@ -570,6 +573,7 @@ public class MainService extends Service {
         bundle.putParcelableArray("messages", messages.toArray(new MessageListElementParc[messages.size()]));
 //        Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
       }
+      bundle.putBoolean("load_more", loadMore);
       bundle.putInt("result", this.result);
       bundle.putString("errorMessage", this.errorMessage);
       

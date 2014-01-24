@@ -12,11 +12,5 @@
         android:divider="#b5b5b5"
         android:dividerHeight="1dp"
         android:listSelector="@drawable/list_selector" />
-    <Button
-      android:id="@+id/loadMoreButton"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:text="Load more..."
-      android:onClick="loadMoreMessage" />
  
 </LinearLayout>
