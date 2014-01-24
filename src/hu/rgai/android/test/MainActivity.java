@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,9 +63,15 @@ public class MainActivity extends ActionBarActivity {
   private static boolean is_activity_visible = false;
   private static Date last_notification_date = null;
   
+//<<<<<<< HEAD
   private boolean serviceConnectionEstablished = false;
   private static volatile List<MessageListElementParc> messages;
   private static volatile LazyAdapter adapter;
+//=======
+//  private boolean serviceConnectionEstablished = false;  
+//  private List<MessageListElementParc> messages;
+//  private LazyAdapter adapter;
+//>>>>>>> origin/sms
   private MainService s;
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
@@ -360,10 +368,37 @@ public class MainActivity extends ActionBarActivity {
       else if (!messages.isEmpty() && !isListView) {
         setContentView(R.layout.main);
         ListView lv = (ListView) findViewById(R.id.list);
+  
+        
+        // TODO: loadmorebutton 
+        Button LoadMoreButton = new Button(this);
+        LoadMoreButton.setText("Load more messages...");
+        LoadMoreButton.getBackground().setAlpha(0);
+        
+        
+        //Button LoadMoreButton = (Button) findViewById(R.id.loadMoreButton); 
+        
+        lv.addFooterView(LoadMoreButton);
+        
+        
 //        lv.setOnScrollListener(new MainScrollListListener(this));
         adapter = new LazyAdapter(this, messages);
         lv.setAdapter(adapter);
+//<<<<<<< HEAD
         Log.d("rgai", "setting message list");
+//=======
+        
+        LoadMoreButton.setOnClickListener(new View.OnClickListener() {
+        	 
+            @Override
+            public void onClick(View arg0) {
+                // Starting a new async task
+                loadMoreMessage();
+            }
+        });
+
+        
+//>>>>>>> origin/sms
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
             MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
@@ -444,7 +479,7 @@ public class MainActivity extends ActionBarActivity {
 //      }
   }
   
-  public void loadMoreMessage(View view) {
+  public void loadMoreMessage() {
     if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 15000 < new Date().getTime()) {
       Intent service = new Intent(this, MainService.class);
       service.putExtra("load_more", true);

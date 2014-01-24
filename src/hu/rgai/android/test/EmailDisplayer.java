@@ -172,8 +172,9 @@ public class EmailDisplayer extends ActionBarActivity {
   
   
   private void displayMessage() {
+	  	  
     String mail = from.getId();
-    String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>" + "<hr>" +"<br/>" + content.getContent();
+    String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>"+ content.getDate() + "<br/>" + content.getSubject() + "<br/>" +"<hr>" +"<br/>" + content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
   
