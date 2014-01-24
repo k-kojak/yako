@@ -34,6 +34,7 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 import com.facebook.widget.ProfilePictureView;
+import hu.rgai.android.asynctasks.FacebookIntegratorAsyncTask;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
@@ -83,20 +84,12 @@ public class FacebookSettingActivity extends ActionBarActivity {
         Request.newMeRequest(session, new Request.GraphUserCallback() {
           public void onCompleted(GraphUser gu, Response rspns) {
             if (gu != null) {
-//                  ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
-              Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
-//                  stillAddingFacebookAccount = false;
-//                  FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-//              FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
-//                      new IntegrationHandler(FacebookSettingActivity.this));
-//              integrator.execute(gu.getId());
+              if (user == null) {
+                user = gu;
+              }
+              syncFacebookContactList(null);
               try {
-//                    StoreHandler.addAccount(FacebookSettingActivity.this, fbsa);
-            	 
-            	  
-              
                 setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
-//                    FacebookSettingActivity.this.onResume();
               } catch (Exception ex) {
                 Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
               }
@@ -284,8 +277,21 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
   
   public void syncFacebookContactList(View view) {
-    Log.d("rgai", "sync fb contact list");
+    if (user != null) {
+      if (FacebookIntegratorAsyncTask.isRunning) {
+        Toast.makeText(this, "Synchronization is running.", Toast.LENGTH_LONG).show();
+      } else {
+        Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
+        FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
+                new IntegrationHandler(FacebookSettingActivity.this));
+        integrator.execute(user.getId());
+      }
+    } else {
+      Toast.makeText(this, "Facebook session problem.", Toast.LENGTH_LONG).show();
+    }
   }
+  
+  
   
 
   @Override
@@ -404,63 +410,63 @@ public class FacebookSettingActivity extends ActionBarActivity {
     }
   }
 
-  private class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
-
-    Handler handler;
-//    FacebookAccount account;
-    private Activity activity;
-
-    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
-      this.activity = activity;
-      this.handler = handler;
-//      this.account = account;
-    }
-
-    @Override
-    protected String doInBackground(String... params) {
-      String content = null;
-
-      // getting my facebook profile image
-      String url = String.format("https://graph.facebook.com/%s/picture", params[0]);
-
-      InputStream inputStream = null;
-      try {
-        inputStream = new URL(url).openStream();
-      } catch (MalformedURLException ex) {
-        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IOException ex) {
-        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
-      }
-      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-      StoreHandler.saveUserFbImage(activity, bitmap);
-      
-
-      
-      FacebookFriendProvider fbfp = new FacebookFriendProvider();
-      fbfp.getFacebookFriends(activity, new ToastHelper() {
-
-        public void showToast(String msg) {
-          publishProgress(msg);
-        }
-      });
-
-      return content;
-    }
-
-    @Override
-    protected void onPostExecute(String result) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putString("content", "1");
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
-    
-    @Override
-    protected void onProgressUpdate(String... values) {
-      Toast.makeText(activity, values[0], Toast.LENGTH_LONG).show();
-    }
-  }
+//  private class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
+//
+//    Handler handler;
+////    FacebookAccount account;
+//    private Activity activity;
+//
+//    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
+//      this.activity = activity;
+//      this.handler = handler;
+////      this.account = account;
+//    }
+//
+//    @Override
+//    protected String doInBackground(String... params) {
+//      String content = null;
+//
+//      // getting my facebook profile image
+//      String url = String.format("https://graph.facebook.com/%s/picture", params[0]);
+//
+//      InputStream inputStream = null;
+//      try {
+//        inputStream = new URL(url).openStream();
+//      } catch (MalformedURLException ex) {
+//        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+//      } catch (IOException ex) {
+//        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+//      }
+//      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+//      StoreHandler.saveUserFbImage(activity, bitmap);
+//      
+//
+//      
+//      FacebookFriendProvider fbfp = new FacebookFriendProvider();
+//      fbfp.getFacebookFriends(activity, new ToastHelper() {
+//
+//        public void showToast(String msg) {
+//          publishProgress(msg);
+//        }
+//      });
+//
+//      return content;
+//    }
+//
+//    @Override
+//    protected void onPostExecute(String result) {
+//      Message msg = handler.obtainMessage();
+//      Bundle bundle = new Bundle();
+//      bundle.putString("content", "1");
+//      msg.setData(bundle);
+//      handler.sendMessage(msg);
+//    }
+//    
+//    @Override
+//    protected void onProgressUpdate(String... values) {
+//      Toast.makeText(activity, values[0], Toast.LENGTH_LONG).show();
+//    }
+//  }
   
   public interface ToastHelper {
     public void showToast(String msg);
