@@ -8,6 +8,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -20,16 +21,15 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.http.client.ClientProtocolException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -45,7 +45,6 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.provider.Settings.Secure;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -77,8 +76,8 @@ public class MainActivity extends ActionBarActivity {
   private static final String SCROLL_END_STR = "scroll end";
   private static final String SCROLL_START_STR = "scroll start";
   private static final String MAIN_PAGE_STR = "MainPage";
-//  private Boolean isInternetAvailable = null;
-  
+  // private Boolean isInternetAvailable = null;
+
   public static final int PICK_CONTACT = 101;
   private static final String SPACE_STR = " ";
   private static boolean is_activity_visible = false;
@@ -88,19 +87,19 @@ public class MainActivity extends ActionBarActivity {
   private LazyAdapter adapter;
   private MainService s;
   private ListView lv;
-  private LogUploadScheduler logUploadScheduler = new LogUploadScheduler( this );
+  private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler(this);
   private DataUpdateReceiver serviceReceiver;
   private BroadcastReceiver systemReceiver;
   private ScreenReceiver screenReceiver;
   private ProgressDialog pd = null;
-//  private boolean activityOpenedFromNotification = false;
+  // private boolean activityOpenedFromNotification = false;
   private ServiceConnection serviceConnection = new ServiceConnection() {
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-//      if (activityOpenedFromNotification) {
-//        s.setAllMessagesToSeen();
-//        activityOpenedFromNotification = false;
-//      }
+      // if (activityOpenedFromNotification) {
+      // s.setAllMessagesToSeen();
+      // activityOpenedFromNotification = false;
+      // }
       updateList(s.getEmails());
       if ((messages == null || !messages.isEmpty()) && pd != null) {
         pd.dismiss();
@@ -113,25 +112,24 @@ public class MainActivity extends ActionBarActivity {
     }
   };
   private UncaughtExceptionHandler defaultUEH;
-  
+
   private Thread.UncaughtExceptionHandler _unCaughtExceptionHandler =
       new Thread.UncaughtExceptionHandler() {
-          @Override
-          public void uncaughtException(Thread thread, Throwable ex) {
-            EventLogger.INSTANCE.writeToLogFile( "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
-              // re-throw critical exception further to the os (important)
-            defaultUEH.uncaughtException(thread, ex);
-          }
-      };
-  
-  
+    @Override
+    public void uncaughtException(Thread thread, Throwable ex) {
+      EventLogger.INSTANCE.writeToLogFile("uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
+      // re-throw critical exception further to the os (important)
+      defaultUEH.uncaughtException(thread, ex);
+    }
+  };
+
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", MAINPAGE_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( MAINPAGE_BACKBUTTON_STR, true);
+    Log.d("willrgai", MAINPAGE_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile(MAINPAGE_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
-  
+
   /**
    * Called when the activity is first created.
    */
@@ -140,62 +138,65 @@ public class MainActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
-        if ( logUploadScheduler.isRunning )
+        if (logUploadScheduler.isRunning)
           logUploadScheduler.stopRepeatingTask();
-        EventLogger.INSTANCE.writeToLogFile( APPLICATION_OVER_STR, true );
+        EventLogger.INSTANCE.writeToLogFile(APPLICATION_OVER_STR, true);
         EventLogger.INSTANCE.closeLogFile();
       }
     });
-    
-    //defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
-    // setup handler for uncaught exception 
-    //Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
-//    setContentView(R.layout.main);
 
-//    activityOpenedFromNotification = getIntent().getBooleanExtra("from_notifier", false);
-//    Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " + activityOpenedFromNotification);
+    // defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+    // setup handler for uncaught exception
+    // Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
+    // setContentView(R.layout.main);
+
+    // activityOpenedFromNotification =
+    // getIntent().getBooleanExtra("from_notifier", false);
+    // Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " +
+    // activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
-    
+
     // TODO: session and access token opening and handling
     final String fbToken = StoreHandler.getFacebookAccessToken(this);
     if (fbToken != null) {
       Session.openActiveSessionWithAccessToken(this,
-              AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
-              new Session.StatusCallback() {
-        public void call(Session sn, SessionState ss, Exception excptn) {
-          Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-          Log.d("rgai", sn.toString());
-          Log.d("rgai", ss.toString());
-        }
-      });
+          AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+          new Session.StatusCallback() {
+            public void call(Session sn, SessionState ss, Exception excptn) {
+              Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+              Log.d("rgai", sn.toString());
+              Log.d("rgai", ss.toString());
+            }
+          });
     }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-    
-//    Log.d("rgai", "myService.running -> " + MyService.RUNNING);
-//    emails = new ArrayList<Map<String, String>>();
+
+    // Log.d("rgai", "myService.running -> " + MyService.RUNNING);
+    // emails = new ArrayList<Map<String, String>>();
     if (!MainService.RUNNING) {
       Intent intent = new Intent(this, MainScheduler.class);
       intent.setAction(Context.ALARM_SERVICE);
       this.sendBroadcast(intent);
-      // disaplying loading dialog, since the mails are not ready, but the user opened the list
+      // disaplying loading dialog, since the mails are not ready, but the user
+      // opened the list
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching messages...");
       pd.setCancelable(false);
       pd.show();
     }
 
-//    setContent();
-//    setListAdapter(adapter);
-//    set
+    // setContent();
+    // setListAdapter(adapter);
+    // set
 
-    EventLogger.INSTANCE.openLogFile( "logFile.txt", false );
-    EventLogger.INSTANCE.writeToLogFile( APPLICATION_START_STR, true );
-    EventLogger.INSTANCE.setContext( this);
+    EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
+    EventLogger.INSTANCE.setContext(this);
 
     if ( !logUploadScheduler.isRunning )
       logUploadScheduler.startRepeatingTask();
   }
-  
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
@@ -220,8 +221,6 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
   }
-  
-  
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -233,10 +232,10 @@ public class MainActivity extends ActionBarActivity {
           FullMessageParc fm = data.getParcelableExtra("message_data");
           String messageId = data.getStringExtra("message_id");
           AccountAndr acc = data.getParcelableExtra("account");
-          
-//          String emailID = data.getIntExtra("email_id", 0) + "";
-          
-//          String content = data.getStringExtra("email_content");
+
+          // String emailID = data.getIntExtra("email_id", 0) + "";
+
+          // String content = data.getStringExtra("email_content");
           s.setMessageContent(messageId, acc, fm);
         }
         break;
@@ -246,31 +245,33 @@ public class MainActivity extends ActionBarActivity {
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           this.sendBroadcast(intent);
-          
-//          pd = new ProgressDialog(this);
-//          pd.setMessage("Fetching emails...");
-//          pd.setCancelable(false);
-//          pd.show();
+
+          // pd = new ProgressDialog(this);
+          // pd.setMessage("Fetching emails...");
+          // pd.setCancelable(false);
+          // pd.show();
         }
         break;
-//      case (PICK_CONTACT):
-//        if (resultCode == Activity.RESULT_OK) {
-//          Uri contactData = data.getData();
-//          Cursor c =  getContentResolver().query(contactData, null, null, null, null);
-//          if (c.moveToFirst()) {
-//            String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-//            AccountAndr account = StoreHandler.getAccounts(this).get(0);
-//            Intent intent = new Intent(this, MessageReply.class);
-////            Source source = new Source("");
-//            intent.putExtra("content", "");
-//            intent.putExtra("subject", "");
-//            intent.putExtra("account", (Parcelable)account);
-//            intent.putExtra("from", new PersonAndr("1", name, name));
-//            startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
-//          }
-//        }
-//        
-//        break;
+      // case (PICK_CONTACT):
+      // if (resultCode == Activity.RESULT_OK) {
+      // Uri contactData = data.getData();
+      // Cursor c = getContentResolver().query(contactData, null, null, null,
+      // null);
+      // if (c.moveToFirst()) {
+      // String name =
+      // c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+      // AccountAndr account = StoreHandler.getAccounts(this).get(0);
+      // Intent intent = new Intent(this, MessageReply.class);
+      // // Source source = new Source("");
+      // intent.putExtra("content", "");
+      // intent.putExtra("subject", "");
+      // intent.putExtra("account", (Parcelable)account);
+      // intent.putExtra("from", new PersonAndr("1", name, name));
+      // startActivityForResult(intent, EmailDisplayer.MESSAGE_REPLY_REQ_CODE);
+      // }
+      // }
+      //
+      // break;
       default:
         break;
     }
@@ -279,21 +280,21 @@ public class MainActivity extends ActionBarActivity {
   private void updateList(MessageListElementParc[] newMessages) {
     Log.d("rgai", "updating list...");
     if (messages != null) {
-      
+
       messages.clear();
       if (newMessages != null) {
         for (int i = 0; i < newMessages.length; i++) {
           messages.add(newMessages[i]);
         }
-        
+
         adapter.notifyDataSetChanged();
       }
     }
   }
-  
+
   private void setMessageSeen(MessageListElementParc message) {
     for (MessageListElementParc mlep : messages) {
-      if(mlep.equals(message)) {
+      if (mlep.equals(message)) {
         mlep.setSeen(true);
         mlep.setUnreadCount(0);
         break;
@@ -306,7 +307,7 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
     is_activity_visible = true;
     last_notification_date = new Date();
-//    getFbMessages(this);
+    // getFbMessages(this);
     // register service broadcast receiver
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
     if (fba != null) {
@@ -317,7 +318,7 @@ public class MainActivity extends ActionBarActivity {
     }
     IntentFilter intentFilter = new IntentFilter(Constants.MAIL_SERVICE_INTENT);
     registerReceiver(serviceReceiver, intentFilter);
-    
+
     // register system broadcast receiver for internet connection state change
     if (systemReceiver == null) {
       systemReceiver = new CustomBroadcastReceiver(this);
@@ -325,21 +326,21 @@ public class MainActivity extends ActionBarActivity {
     IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
     registerReceiver(systemReceiver, customIntentFilter);
-    
+
     setUpAndRegisterScreenReceiver();
-    
+
     // setting content
     setContent();
-    logActivityEvent( MAINPAGE_RESUME_STR );
+    logActivityEvent(MAINPAGE_RESUME_STR);
   }
 
   private void setUpAndRegisterScreenReceiver() {
-    if ( screenReceiver == null) {
+    if (screenReceiver == null) {
       screenReceiver = new ScreenReceiver();
     }
-    
-    IntentFilter screenIntentFilter = new IntentFilter( Intent.ACTION_SCREEN_OFF );
-    screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON );
+
+    IntentFilter screenIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+    screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON);
     registerReceiver(screenReceiver, screenIntentFilter);
   }
 
@@ -353,110 +354,114 @@ public class MainActivity extends ActionBarActivity {
       unbindService(serviceConnection);
     }
   }
-  
+
   public static boolean isMainActivityVisible() {
     return is_activity_visible;
   }
-  
+
   public static void updateLastNotification() {
     last_notification_date = new Date();
   }
-  
+
   public static Date getLastNotification() {
     if (last_notification_date == null) {
       last_notification_date = new Date(new Date().getTime() - 86400 * 365);
     }
     return last_notification_date;
   }
-  
+
   private void setContent() {
-    // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem lehet csinalni semmit...
+    // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem
+    // lehet csinalni semmit...
     boolean isNet = isNetworkAvailable();
-//    if (isNet == falseInternetAvailable == null || isInternetAvailable != isNet) {
-//      isInternetAvailable = isNetworkAvailable();
-      if (isNet || isPhone()) {
-        View currentView = this.findViewById(R.id.list);
-        if (currentView == null || currentView.getId() != R.id.list) {
-          setContentView(R.layout.main);
-          messages = new ArrayList<MessageListElementParc>();
+    // if (isNet == falseInternetAvailable == null || isInternetAvailable !=
+    // isNet) {
+    // isInternetAvailable = isNetworkAvailable();
+    if (isNet || isPhone()) {
+      View currentView = this.findViewById(R.id.list);
+      if (currentView == null || currentView.getId() != R.id.list) {
+        setContentView(R.layout.main);
+        messages = new ArrayList<MessageListElementParc>();
 
-          lv = (ListView) findViewById(R.id.list);
-  //        String[] from = {"subject", "from"};
-  //        int[] to = {android.R.id.text1, android.R.id.text2};
-  //        adapter = new SimpleAdapter(this, emails, android.R.layout.simple_list_item_2, from, to);
-          adapter = new LazyAdapter( this, messages);
-          lv.setAdapter(adapter);
-          lv.setOnScrollListener( new LogOnScrollListener( lv, adapter ));
-          
-          lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
+        lv = (ListView) findViewById(R.id.list);
+        // String[] from = {"subject", "from"};
+        // int[] to = {android.R.id.text1, android.R.id.text2};
+        // adapter = new SimpleAdapter(this, emails,
+        // android.R.layout.simple_list_item_2, from, to);
+        adapter = new LazyAdapter(this, messages);
+        lv.setAdapter(adapter);
+        lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
 
-              MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+          public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-//              String messageId = (String)message.getId();
-              AccountAndr a = (AccountAndr)message.getAccount();
-              Intent intent = null;
-//              if (a instanceof FacebookAccount) {
-              Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-              intent = new Intent(MainActivity.this, classToLoad);
+            MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
 
-              intent.putExtra("msg_list_element", (Parcelable)message);
-              intent.putExtra("account", (Parcelable)a);
-//              } else {
-//                Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-//                intent = new Intent(MainActivity.this, classToLoad);
-//                
-//                intent.putExtra("msg_list_element", (Parcelable)message);
-//                intent.putExtra("account", (Parcelable)a);
-//                
-//              }
-              boolean changed = s.setMessageSeenAndRead(message);
-              if (changed) {
-                setMessageSeen(message);
-                adapter.notifyDataSetChanged();
-              }
-              
-              loggingOnClickEvent(message, changed);
-              startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-              
-              updateNotificationStatus();
+            // String messageId = (String)message.getId();
+            AccountAndr a = message.getAccount();
+            Intent intent = null;
+            // if (a instanceof FacebookAccount) {
+            Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+            intent = new Intent(MainActivity.this, classToLoad);
+
+            intent.putExtra("msg_list_element", (Parcelable)message);
+            intent.putExtra("account", (Parcelable) a);
+            // } else {
+            // Class classToLoad =
+            // Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+            // intent = new Intent(MainActivity.this, classToLoad);
+            //
+            // intent.putExtra("msg_list_element", (Parcelable)message);
+            // intent.putExtra("account", (Parcelable)a);
+            //
+            // }
+            boolean changed = s.setMessageSeenAndRead(message);
+            if (changed) {
+              setMessageSeen(message);
+              adapter.notifyDataSetChanged();
             }
+
+            loggingOnClickEvent(message, changed);
+            startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+
+            updateNotificationStatus();
+          }
 
             private void loggingOnClickEvent(MessageListElementParc message,
                 boolean changed) {
-              StringBuilder builder = new StringBuilder();
-              appendClickedElementDatasToBuilder(message, builder);
-              appendVisibleElementToStringBuilder(builder, lv, adapter);
-              builder.append(changed);
-              Log.d("willrgai", builder.toString() );
-              EventLogger.INSTANCE.writeToLogFile( builder.toString(), true );
-            }
-
-            private void appendClickedElementDatasToBuilder( MessageListElementParc message, StringBuilder builder ) {
-              builder.append( MAIN_PAGE_STR);
-              builder.append( SPACE_STR);
-              builder.append( CLICK_TO_MESSAGEGROUP_STR );
-              builder.append( SPACE_STR );
-              builder.append( message.getId() );
-              builder.append( SPACE_STR );
-            }
-          });
-          if (serviceConnectionEstablished) {
-            updateList(s.getEmails());
+            StringBuilder builder = new StringBuilder();
+            appendClickedElementDatasToBuilder(message, builder);
+            appendVisibleElementToStringBuilder(builder, lv, adapter);
+            builder.append(changed);
+            Log.d("willrgai", builder.toString());
+            EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
           }
-        } else {
+
+          private void appendClickedElementDatasToBuilder(MessageListElementParc message, StringBuilder builder) {
+            builder.append(MAIN_PAGE_STR);
+            builder.append(SPACE_STR);
+            builder.append(CLICK_TO_MESSAGEGROUP_STR);
+            builder.append(SPACE_STR);
+            builder.append(message.getId());
+            builder.append(SPACE_STR);
+          }
+        });
+        if (serviceConnectionEstablished) {
           updateList(s.getEmails());
-          adapter.notifyDataSetChanged();
         }
-        
       } else {
-        TextView text = new TextView(this);
-        text.setText(getString(R.string.no_internet_access));
-        text.setGravity(Gravity.CENTER);
-        this.setContentView(text);
+        updateList(s.getEmails());
+        adapter.notifyDataSetChanged();
       }
+
+    } else {
+      TextView text = new TextView(this);
+      text.setText(getString(R.string.no_internet_access));
+      text.setGravity(Gravity.CENTER);
+      this.setContentView(text);
+    }
   }
-  
+
   private void updateNotificationStatus() {
     boolean unseenExists = false;
     for (MessageListElementParc mle : messages) {
@@ -473,33 +478,33 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   protected void onPause() {
-    logActivityEvent( MAINPAGE_PAUSE_STR );
+    logActivityEvent(MAINPAGE_PAUSE_STR);
     super.onPause();
     is_activity_visible = false;
-    
+
     // refreshing last notification date when closing activity
     last_notification_date = new Date();
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
-//    FacebookMessageProvider.closeConnection();
+    // FacebookMessageProvider.closeConnection();
   }
 
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
-    builder.append( event );
-    builder.append( SPACE_STR );
+    builder.append(event);
+    builder.append(SPACE_STR);
     appendVisibleElementToStringBuilder(builder, lv, adapter);
-    Log.d( "willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
+    Log.d("willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
-  
+
   public boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
-  
+
   private boolean isPhone() {
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
@@ -512,10 +517,10 @@ public class MainActivity extends ActionBarActivity {
 
   private class CustomBroadcastReceiver extends BroadcastReceiver {
 
-//    private MainActivity activity = null;
+    // private MainActivity activity = null;
 
     public CustomBroadcastReceiver(MainActivity activity) {
-//      this.activity = activity;
+      // this.activity = activity;
     }
 
     @Override
@@ -527,26 +532,26 @@ public class MainActivity extends ActionBarActivity {
         String subtypeName = info.getSubtypeName();
         System.out.println("Network is up ******** " + typeName + ":::" + subtypeName);
 
-//        activity.setContent("onInternetBroadcast receive");
+        // activity.setContent("onInternetBroadcast receive");
       } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
         Intent i = new Intent(MainActivity.this, MainScheduler.class);
         if (intent.getExtras().containsKey("type")) {
           i.putExtra("type", intent.getExtras().getString("type"));
-      }
+        }
         i.setAction(Context.ALARM_SERVICE);
         MainActivity.this.sendBroadcast(i);
+      }
     }
   }
-  }
-  
+
   private class DataUpdateReceiver extends BroadcastReceiver {
 
     private MainActivity activity;
-    
+
     public DataUpdateReceiver(MainActivity activity) {
       this.activity = activity;
     }
-    
+
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(Constants.MAIL_SERVICE_INTENT)) {
@@ -609,31 +614,31 @@ public class MainActivity extends ActionBarActivity {
       }
     }
   }
-  
+
   private void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, LazyAdapter adapter) {
     int firstVisiblePosition = lv.getFirstVisiblePosition();
     int lastVisiblePosition = lv.getLastVisiblePosition();
-    
-    for ( int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++ ) {
-      builder.append( ((MessageListElementParc)(adapter.getItem(actualVisiblePosition))).getId() );
-      builder.append( SPACE_STR );
+
+    for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
+      builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
+      builder.append(SPACE_STR);
     }
   }
-  
-  class LogOnScrollListener implements OnScrollListener{
+
+  class LogOnScrollListener implements OnScrollListener {
     final ListView lv;
     final LazyAdapter adapter;
-    
-    public LogOnScrollListener( ListView lv, LazyAdapter adapter) {
+
+    public LogOnScrollListener(ListView lv, LazyAdapter adapter) {
       this.lv = lv;
       this.adapter = adapter;
     }
-    
+
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem,
         int visibleItemCount, int totalItemCount) {
       // TODO Auto-generated method stub
-      
+
     }
 
     @Override
@@ -641,18 +646,18 @@ public class MainActivity extends ActionBarActivity {
       // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
-      builder.append( MAIN_PAGE_STR );
-      builder.append( SPACE_STR );
-      if ( scrollState == 1) {
-        builder.append( SCROLL_START_STR );
-        builder.append( SPACE_STR );
+      builder.append(MAIN_PAGE_STR);
+      builder.append(SPACE_STR);
+      if (scrollState == 1) {
+        builder.append(SCROLL_START_STR);
+        builder.append(SPACE_STR);
       } else {
-        builder.append( SCROLL_END_STR );
-        builder.append( SPACE_STR);
+        builder.append(SCROLL_END_STR);
+        builder.append(SPACE_STR);
       }
-      appendVisibleElementToStringBuilder( builder, lv, adapter);
-      Log.d( "willrgai", builder.toString());
-      EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
+      appendVisibleElementToStringBuilder(builder, lv, adapter);
+      Log.d("willrgai", builder.toString());
+      EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }
 
   }
