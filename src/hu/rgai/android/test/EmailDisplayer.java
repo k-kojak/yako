@@ -123,6 +123,7 @@ public class EmailDisplayer extends ActionBarActivity {
       case (MESSAGE_REPLY_REQ_CODE):
         if (resultCode == MessageReply.MESSAGE_SENT_OK) {
           Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
+          finish();
         } else if (resultCode == MessageReply.MESSAGE_SENT_FAILED) {
           Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG).show();
         }

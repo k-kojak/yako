@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
@@ -34,7 +35,7 @@ import javax.mail.NoSuchProviderException;
  *
  * @author Tamas Kojedzinszky
  */
-  public class MessageSender extends AsyncTask<Integer, Integer, Boolean> {
+  public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
     private Context context;
     private RecipientItem recipient;
@@ -69,6 +70,8 @@ import javax.mail.NoSuchProviderException;
           recipients.add(new FacebookMessageRecipient(recipient.getData()));
           Log.d("rgai", "SENDING FACEBOOK MESSAGE");
         } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
+          publishProgress(acc.getDisplayName());
+//          Toast.makeText(this.g, "Sending message with email: " + acc.getDisplayName(), Toast.LENGTH_LONG).show();
           mp = new SimpleEmailMessageProvider((EmailAccount)acc);
           recipients = new HashSet<MessageRecipient>();
           recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
@@ -122,15 +125,9 @@ import javax.mail.NoSuchProviderException;
     }
 
 
-//    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
+    @Override
+    protected void onProgressUpdate(String... values) {
+      Toast.makeText(context, "Sending message with account: " + values[0], Toast.LENGTH_LONG).show();
+    }
 
   }

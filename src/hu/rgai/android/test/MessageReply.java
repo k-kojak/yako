@@ -105,6 +105,7 @@ public class MessageReply extends ActionBarActivity {
       MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString(), this);
       rs.execute();
     }
+    
 //    EmailReplySender replySender = new EmailReplySender(account, handler, text.getText().toString(), subject, recipients.getText().toString());
 //    replySender.execute();
   }
