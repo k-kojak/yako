@@ -1,5 +1,8 @@
 package hu.rgai.android.test;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,9 +22,14 @@ import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.settings.FacebookSettingActivity;
+import hu.rgai.android.test.settings.GmailSettingActivity;
+import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -97,17 +105,70 @@ public class MessageReply extends ActionBarActivity {
     this.messageResult = messageResult;
   }
   
-  public void sendMessage(View v) {
+  public void sendMessage(AccountAndr from) {
+    if (from == null) {
+      return;
+    }
+    
     List<RecipientItem> to = recipients.getRecipients();
-    List<AccountAndr> accs = StoreHandler.getAccounts(this);
+    List<AccountAndr> accs = new LinkedList<AccountAndr>();
+    accs.add(from);
     
     for (RecipientItem ri : to) {
       MessageSender rs = new MessageSender(ri, accs, handler, text.getText().toString(), this);
       rs.execute();
     }
     
-//    EmailReplySender replySender = new EmailReplySender(account, handler, text.getText().toString(), subject, recipients.getText().toString());
-//    replySender.execute();
+  }
+  
+  public void prepareMessageSending(View v) {
+    List<RecipientItem> to = recipients.getRecipients();
+    List<AccountAndr> accs = StoreHandler.getAccounts(this);
+    
+    for (RecipientItem ri : to) {
+      List<AccountAndr> selectedAccs = new LinkedList<AccountAndr>();
+      Iterator<AccountAndr> accIt = accs.iterator();
+      while (accIt.hasNext()) {
+        AccountAndr actAcc = accIt.next();
+        if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
+                && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
+                || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
+                || ri.getType().equals(actAcc.getAccountType())) {
+          selectedAccs.add(actAcc);
+        }
+      }
+      if (selectedAccs.isEmpty()) {
+        Toast.makeText(this,
+                "Cannot send message to "+ ri.getDisplayData() +". A "+ri.getType().toString() + " account required for that.",
+                Toast.LENGTH_LONG).show();
+      } else if (selectedAccs.size() == 1) {
+        sendMessage(selectedAccs.get(0));
+      } else {
+        chooseAccount(selectedAccs);
+      }
+    }
+    
+  }
+  
+  private void chooseAccount(final List<AccountAndr> accs) {
+
+    String[] items = new String[accs.size()];
+    int i = 0;
+    for (AccountAndr a : accs) {
+      items[i++] = a.getDisplayName();
+    }
+
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Choose account to send from");
+    builder.setItems(items, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        sendMessage(accs.get(which));
+      }
+    });
+    
+    Dialog dialog = builder.create();
+    dialog.show();
+    
   }
 
   public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}

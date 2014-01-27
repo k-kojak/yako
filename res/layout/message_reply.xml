@@ -49,7 +49,7 @@ and open the template in the editor.
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:text="@string/send"
-        android:onClick="sendMessage" />
+        android:onClick="prepareMessageSending" />
     </LinearLayout>
   </ScrollView>
 </LinearLayout>

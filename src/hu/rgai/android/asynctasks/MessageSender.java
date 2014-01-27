@@ -127,7 +127,7 @@ import javax.mail.NoSuchProviderException;
 
     @Override
     protected void onProgressUpdate(String... values) {
-      Toast.makeText(context, "Sending message with account: " + values[0], Toast.LENGTH_LONG).show();
+      Toast.makeText(context, "Sending message with " + values[0], Toast.LENGTH_LONG).show();
     }
 
   }
