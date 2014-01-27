@@ -8,6 +8,7 @@ import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.tools.Utils;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
@@ -87,9 +88,8 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     return 0;
   }
   
-  public String getFormattedDate() {
-    PrettyTime pt = new PrettyTime();
-    return pt.format(date);
+  public String getPrettyDate() {
+    return Utils.getPrettyTime(date);
   }
   
   public AccountAndr getAccount() {
@@ -145,7 +145,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   @Override
   public String toString() {
-    return id + "@" + account + "("+ title +")";
+    return id + "@" + account + "("+ super.toString() +")";
   }
 
   public int compareTo(MessageListElementParc o) {

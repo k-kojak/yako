@@ -46,6 +46,8 @@ import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.config.Settings;
+import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import java.util.Collection;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -58,7 +60,7 @@ import org.jivesoftware.smack.packet.Presence;
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookMessageProvider implements MessageProvider {
+public class FacebookMessageProvider implements ThreadMessageProvider {
 
   private static XMPPConnection xmpp = null;
   // use this variable to access facebook
@@ -75,10 +77,18 @@ public class FacebookMessageProvider implements MessageProvider {
     this.account = account;
   }
 
+  public List<MessageListElement> getMessageList(int offset, int limit)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException,
+          NoSuchProviderException, UnknownHostException, IOException, MessagingException,
+          AuthenticationFailedException {
+    return getMessageList(offset, limit, 20);
+  }
+  
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit) throws CertPathValidatorException,
-          SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException, IOException,
-          MessagingException, AuthenticationFailedException {
+  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException,
+          NoSuchProviderException, UnknownHostException, IOException, MessagingException,
+          AuthenticationFailedException {
     Bundle params = new Bundle();
 
     final List<MessageListElement> messages = new LinkedList<MessageListElement>();
@@ -88,7 +98,7 @@ public class FacebookMessageProvider implements MessageProvider {
             + "'SELECT thread_id, originator, recipients, unread, unseen, subject, snippet, updated_time "
             + " FROM thread"
             + " WHERE folder_id = 0"
-            + " ORDER BY updated_time DESC LIMIT " + limit + "'"
+            + " ORDER BY updated_time DESC LIMIT " + offset + "," + limit + "'"
             + ","
             + "'friend':"
             + "'SELECT name, username, uid"
@@ -189,9 +199,9 @@ public class FacebookMessageProvider implements MessageProvider {
   }
 
   public static void initConnection(FacebookAccount fba, final Context context) {
-
+    
     if (xmpp == null || !xmpp.isConnected()) {
-
+      Log.d("rgai", "try connecting to XMPP");
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
       StrictMode.setThreadPolicy(policy);
 
@@ -208,11 +218,12 @@ public class FacebookMessageProvider implements MessageProvider {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(fba.getUniqueName(), fba.getPassword());
+        Log.d("rgai", "connected to XMPP");
 //        Roster roster = xmpp.getRoster();
 
 
 //        Collection<RosterEntry> entries = roster.getEntries();
-        Log.d("rgai", "Connected ON XMPP!");
+//        Log.d("rgai", "Connected ON XMPP!");
 
         xmpp.getChatManager().addChatListener(new ChatManagerListener() {
           @Override
@@ -240,12 +251,12 @@ public class FacebookMessageProvider implements MessageProvider {
         });
 
       } catch (XMPPException e) {
-        Log.i("rgai", "nem lep be");
+        Log.d("rgai", "XMPP connection failed:");
         xmpp.disconnect();
         e.printStackTrace();
       } catch (Exception k) {
         k.printStackTrace();
-        System.out.println(k.getMessage());
+        System.out.println(k);
         System.out.println("HIBAA");
       }
     }
@@ -260,7 +271,7 @@ public class FacebookMessageProvider implements MessageProvider {
   }
 
   @Override
-  public FullThreadMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullThreadMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException {
 
     Bundle params = new Bundle();
     final FullThreadMessage ftm = new FullThreadMessage();
@@ -271,7 +282,7 @@ public class FacebookMessageProvider implements MessageProvider {
             + " FROM message"
             + " WHERE thread_id = " + id + ""
             + " ORDER BY created_time DESC"
-            + " LIMIT 20'"
+            + " LIMIT "+ offset +","+ limit +"'"
             + ","
             + "'friend':"
             + "'SELECT name, username, uid"
@@ -378,17 +389,17 @@ public class FacebookMessageProvider implements MessageProvider {
 
 //    final XMPPConnection xmpp = new XMPPConnection(config);
      if (xmpp == null || !xmpp.isConnected()) {
-        try {
-          xmpp.connect();
-          SmackConfiguration.setPacketReplyTimeout(10000);
-          xmpp.login(account.getUniqueName(), account.getPassword());
-        } catch (XMPPException e) {
-          xmpp.disconnect();
-          e.printStackTrace();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-     }
+      try {
+        xmpp.connect();
+        SmackConfiguration.setPacketReplyTimeout(10000);
+        xmpp.login(account.getUniqueName(), account.getPassword());
+      } catch (XMPPException e) {
+        xmpp.disconnect();
+        e.printStackTrace();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 
     for (MessageRecipient mr : to) {
       FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
@@ -474,5 +485,9 @@ public class FacebookMessageProvider implements MessageProvider {
     // Request.executeBatchAndWait(request);
 //                 Request.executeBatchAsync(request);
 
+  }
+
+  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+    return getMessage(id, 0, 20);
   }
 }

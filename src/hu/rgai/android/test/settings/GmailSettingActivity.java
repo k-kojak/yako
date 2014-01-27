@@ -8,14 +8,19 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -54,17 +59,40 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
       pass.setText(oldAccount.getPassword());
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
+  }
     
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      // Inflate the menu items for use in the action bar
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.edit_account_options_menu, menu);
+      return super.onCreateOptionsMenu(menu);
   }
   
+
   @Override
   public void onBackPressed() {
     Log.d( "willrgai", GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
     EventLogger.INSTANCE.writeToLogFile( GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+      // Handle presses on the action bar items
+      switch (item.getItemId()) {
+          case R.id.edit_account_save:
+        	  saveAccountSettings();
+              return true;
+          case R.id.edit_account_delete:
+        	  deleteAccountSettings();
+              return true;
+          default:
+              return super.onOptionsItemSelected(item);
+      }
+  }
   
-  public void saveAccountSettings(View v) {
+  public void saveAccountSettings() {
     Log.d("rgai", "SAVE");
     
     String m = email.getText().toString();
@@ -89,7 +117,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     finish();
   }
   
-  public void deleteAccountSettings(View v) {
+  public void deleteAccountSettings() {
     Log.d("rgai", "DELETE");
     
     Intent resultIntent = new Intent();
@@ -100,7 +128,15 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-    AccountSettingsList.validateEmailField(email, text.toString());
+    validateGmailField(email, text.toString());
+  }
+
+  private void validateGmailField(TextView tv, String text) {
+    if (text.contains("@")) {
+      AccountSettingsList.validatePatternAndShowErrorOnField(tv, text,
+              Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
+    }
+
   }
 
   public void afterTextChanged(Editable e) {}

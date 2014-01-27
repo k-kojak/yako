@@ -73,7 +73,7 @@ public class ThreadMsgService extends Service {
   
   @Override
   public IBinder onBind(Intent intent) {
-    Log.d("rgai", "# BIND ThreadMsgService");
+//    Log.d("rgai", "# BIND ThreadMsgService");
     account = intent.getParcelableExtra("account");
     threadId = intent.getStringExtra("threadId");
     return mBinder;

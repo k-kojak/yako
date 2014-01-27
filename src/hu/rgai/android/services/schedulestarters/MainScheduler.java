@@ -17,11 +17,14 @@ public class MainScheduler extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     System.out.println("....ACTION -> " + intent.getAction());
     if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals(Context.ALARM_SERVICE)) {
-      Log.d("rgai", "MainScheduler onReceive");
+//      Log.d("rgai", "MainScheduler onReceive");
       AlarmManager service = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       Intent i = new Intent(context, MainServiceStarter.class);
       if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
         i.putExtra("type", intent.getExtras().getString("type"));
+      }
+      if (intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
+        i.putExtra("load_more", intent.getExtras().getBoolean("load_more"));
       }
       PendingIntent pending = PendingIntent.getBroadcast(context, 0, i, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar cal = Calendar.getInstance();

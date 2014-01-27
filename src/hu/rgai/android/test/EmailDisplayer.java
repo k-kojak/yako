@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
@@ -51,7 +53,9 @@ public class EmailDisplayer extends ActionBarActivity {
   private PersonAndr from;
   
   private WebView webView = null;
+  private WebViewClient webViewClient = null;
   private String mailCharCode = "UTF-8";
+  private Context context = this; 
   
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
@@ -90,15 +94,38 @@ public class EmailDisplayer extends ActionBarActivity {
 
       pd = new ProgressDialog(this);
       pd.setMessage("Fetching email content...");
-      pd.setCancelable(false);
+      pd.setCancelable(true);
       pd.show();
     }
+    
+    
+    webViewClient = new WebViewClient(){
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if(url.startsWith("mailto:")){
+                Intent intent = new Intent(context , MessageReply.class);
+                Source source = new Source(content.getContent());
+                //intent.putExtra("content", source.getRenderer().toString());
+                //intent.putExtra("subject", subject);
+                intent.putExtra("account", (Parcelable)account);
+                intent.putExtra("from", from);
+                startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+                return true;
+            }
+
+                return true;
+            }
+       };
+       
+       webView.setWebViewClient(webViewClient);      
+    
   }
   
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.message_options_menu, menu);
+    inflater.inflate(R.menu.email_message_options_menu, menu);
     return true;
   }
   
@@ -109,6 +136,7 @@ public class EmailDisplayer extends ActionBarActivity {
       case (MESSAGE_REPLY_REQ_CODE):
         if (resultCode == MessageReply.MESSAGE_SENT_OK) {
           Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
+          finish();
         } else if (resultCode == MessageReply.MESSAGE_SENT_FAILED) {
           Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG).show();
         }
@@ -156,11 +184,14 @@ public class EmailDisplayer extends ActionBarActivity {
     super.finish(); //To change body of generated methods, choose Tools | Templates.
   }
   
+  
   private void displayMessage() {
+	  	  
     String mail = from.getId();
-    String c = from.getName() + mail + "<br/>" + content.getContent();
-    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
+    String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>"+ content.getDate() + "<br/>" + content.getSubject() + "<br/>" +"<hr>" +"<br/>" + content.getContent();
+    webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
+  
   
   private class EmailContentTaskHandler extends Handler {
     
@@ -196,6 +227,8 @@ public class EmailDisplayer extends ActionBarActivity {
       this.handler = handler;
       this.account = account;
     }
+    
+    
     
     @Override
     protected FullSimpleMessageParc doInBackground(String... params) {
@@ -257,5 +290,5 @@ public class EmailDisplayer extends ActionBarActivity {
 //      handler.sendMessage(msg);
 //    }
   }
-  
+
 }

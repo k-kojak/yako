@@ -16,11 +16,21 @@ and open the template in the editor.
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
+      
+      <LinearLayout
+        android:id="@+id/fake_focus"
+        android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:layout_width="0px"
+                android:layout_height="0px" />
+      
       <hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView
         android:id="@+id/recipients"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="hint text"
+        android:nextFocusUp="@id/recipients"
+        android:nextFocusLeft="@id/recipients"
+        android:hint="@string/to_hint"
         android:completionThreshold="1"
         android:maxLines="4"
         android:scrollbars = "vertical"
@@ -39,7 +49,7 @@ and open the template in the editor.
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:text="@string/send"
-        android:onClick="sendMessage" />
+        android:onClick="prepareMessageSending" />
     </LinearLayout>
   </ScrollView>
 </LinearLayout>

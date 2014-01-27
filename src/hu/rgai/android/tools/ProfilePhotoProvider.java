@@ -28,7 +28,7 @@ public class ProfilePhotoProvider {
    */
   public static Bitmap getImageToUser(Context context, long contactId) {
     if (contactId != -1) {
-      Log.d("rgai", "VALID contact id -> " + contactId);
+//      Log.d("rgai", "VALID contact id -> " + contactId);
     }
     Bitmap img = null;
     if (photos == null) {
@@ -78,6 +78,7 @@ public class ProfilePhotoProvider {
 //        Log.d("rgai", "FOUND _id  -> " + _id);
 //        Log.d("rgai", "FOUND rawId-> " + rawId);
       }
+      cursor.close();
     }
     
     return bm;

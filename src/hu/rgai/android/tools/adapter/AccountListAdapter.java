@@ -9,10 +9,12 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.util.List;
 import java.util.Map;
 
@@ -60,8 +62,13 @@ public class AccountListAdapter extends BaseAdapter {
     type.setText((String)account.getAccountType().toString());
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       icon.setImageResource(R.drawable.fb);
-    } else {
+    } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
       icon.setImageResource(R.drawable.gmail_icon);
+    } else if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
+      EmailAccount eacc = (EmailAccount)account;
+      String dom = eacc.getEmail().substring(eacc.getEmail().indexOf("@") + 1);
+      dom = dom.substring(0, dom.indexOf("."));
+      icon.setImageResource(Settings.EmailUtils.getResourceIdToEmailDomain(dom));
     }
     
     return view;

@@ -1,17 +1,17 @@
 package hu.rgai.android.test.settings;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -30,11 +30,11 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.rgai.android.tools.FacebookFriendProvider;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookSessionAccount;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -50,6 +50,7 @@ public class AccountSettingsList extends ActionBarActivity {
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
+  private MainService mainService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +141,6 @@ public class AccountSettingsList extends ActionBarActivity {
     } catch (RuntimeException ex) {
       Log.d("rgai", "catching FB exception");
       ex.printStackTrace();
-      
     }
     
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
@@ -154,6 +154,7 @@ public class AccountSettingsList extends ActionBarActivity {
                   (AccountAndr) data.getParcelableExtra("new_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           StoreHandler.removeAccount(this, (AccountAndr) data.getParcelableExtra("old_account"));
+          removeMessagesToAccount((AccountAndr) data.getParcelableExtra("old_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }
@@ -163,6 +164,22 @@ public class AccountSettingsList extends ActionBarActivity {
         Log.d("rgai", "TODO: handle exception");
       }
     }
+  }
+
+  private void removeMessagesToAccount(final AccountAndr acc) {
+    MainActivity.removeMessagesToAccount(acc);
+    ServiceConnection serviceConnection = new ServiceConnection() {
+      public void onServiceConnected(ComponentName className, IBinder binder) {
+        mainService = ((MainService.MyBinder) binder).getService();
+        mainService.removeMessagesToAccount(acc);
+        unbindService(this);
+      }
+      public void onServiceDisconnected(ComponentName className) {
+        mainService = null;
+        unbindService(this);
+      }
+    };
+    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
   }
 
   private void showAccountTypeChooser() {
@@ -263,7 +280,7 @@ public class AccountSettingsList extends ActionBarActivity {
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"));
   }
 
-  private static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
+  protected static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
     Matcher matcher = p.matcher(text);
     if (!matcher.matches()) {
       tv.setError("Invalid email address");

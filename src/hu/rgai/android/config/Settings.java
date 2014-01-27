@@ -1,13 +1,15 @@
 package hu.rgai.android.config;
 
+import android.content.Context;
 import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.PhoneRecipientAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.EmailDisplayer;
+import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.GmailSettingActivity;
@@ -44,6 +46,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
+  private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
   public static final int MAX_SNIPPET_LENGTH = 30;
@@ -53,7 +56,8 @@ public final class Settings {
     if (contactDataTypeToRecipientClass == null) {
       contactDataTypeToRecipientClass = new HashMap<String, Class>();
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailRecipientAndr.class);
-      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
+//      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, SmsMessageRecipientAndr.class);
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
     }
     return contactDataTypeToRecipientClass;
@@ -101,6 +105,16 @@ public final class Settings {
     return accountTypeToSettingClass;
   }
   
+  public static Map<String, Integer> getImgToMimetype() {
+    if (imgToMimetype == null) {
+      imgToMimetype = new HashMap<String, Integer>();
+      imgToMimetype.put("phone_v2", R.drawable.ic_sms3);
+      imgToMimetype.put("email_v2", R.drawable.ic_email);
+      imgToMimetype.put("im", R.drawable.ic_fb_messenger);
+    }
+    return imgToMimetype;
+  }
+  
   public static List<String> getFacebookPermissions() {
     if (facebookPermissions == null) {
       facebookPermissions = new LinkedList<String>();
@@ -108,6 +122,42 @@ public final class Settings {
       facebookPermissions.add("read_mailbox");
     }
     return facebookPermissions;
+  }
+  
+  public static final class EmailUtils {
+    
+    private static Map<String, Integer> resToString = null;
+    
+    public static int getResourceIdToEmailDomain(String domain) {
+      Integer rid = null;
+      if (resToString == null) {
+        fillResourceIdToEmalDomain();
+      }
+      rid = resToString.get(domain);
+      if (rid == null) {
+        return R.drawable.ic_email;
+      } else {
+        return rid;
+      }
+    }
+    
+    private static void fillResourceIdToEmalDomain() {
+      resToString = new HashMap<String, Integer>();
+      resToString.put("indamail", R.drawable.ic_indamail);
+      resToString.put("vipmail", R.drawable.ic_indamail);
+      resToString.put("csinibaba", R.drawable.ic_indamail);
+      resToString.put("totalcar", R.drawable.ic_indamail);
+      resToString.put("index", R.drawable.ic_indamail);
+      resToString.put("velvet", R.drawable.ic_indamail);
+      resToString.put("torzsasztal", R.drawable.ic_indamail);
+      resToString.put("lamer", R.drawable.ic_indamail);
+      
+      resToString.put("yahoo", R.drawable.ic_yahoo);
+      
+      resToString.put("citromail", R.drawable.ic_citromail);
+      
+      resToString.put("outlook", R.drawable.ic_hotmail);
+    }
   }
   
   public static final class ActivityRequestCodes {

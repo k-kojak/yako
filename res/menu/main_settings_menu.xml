@@ -11,4 +11,10 @@
           android:title="@string/manage_accounts"
           messagelogger:showAsAction="ifRoom"
           />
+  <item android:id="@+id/refresh_message_list"
+        android:icon="@drawable/ic_action_refresh"
+        android:title="@string/refresh"
+        messagelogger:showAsAction="ifRoom"
+        />
+  
 </menu>

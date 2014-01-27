@@ -18,11 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.PrintWriter;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.jivesoftware.smackx.bytestreams.BytestreamSession;
 
 
 /**
@@ -34,10 +32,12 @@ public class StoreHandler {
   private static Bitmap fbImgMe = null;
   
   public static void saveUserFbImage(Context context, Bitmap bitmap) {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-    byte[] byteArray = stream.toByteArray();
-    saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
+    if (bitmap != null) {
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+      byte[] byteArray = stream.toByteArray();
+      saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
+    }
   }
   
   public static Bitmap getUserFbImage(Context context) {
@@ -120,6 +120,7 @@ public class StoreHandler {
   }
   
   public static void removeAccount(Context context, AccountAndr account) throws Exception {
+    Log.d("rgai", "REMOVING ACCOUNT: " + account);
     List<AccountAndr> accounts = getAccounts(context);
     if (accounts.contains(account)) {
       accounts.remove(account);

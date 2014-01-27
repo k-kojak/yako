@@ -6,7 +6,6 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,15 +13,14 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import hu.rgai.android.tools.Utils;
 
 public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
@@ -56,7 +54,6 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-    Log.d("rgai","ThreadViewAdapter.getView called");
 		View row = convertView;
     MessageAtomParc coment = getItem(position);
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -68,8 +65,8 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
         row = inflater.inflate(R.layout.threadview_list_item, parent, false);
       }
 		}
-
-		wrapper = (LinearLayout) row.findViewById(R.id.wrapper);
+    
+		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
 
 		
 //    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
@@ -79,8 +76,15 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
 		countryName.setText(coment.getContent());
     
-		countryName.setBackgroundResource(coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
-		wrapper.setGravity(coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
+		countryName.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
+    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
+    if (coment.isIsMe()) {
+      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
+    } else {
+      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
+    }
+    wrapper.setLayoutParams(wrapperParams);
+		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
     Bitmap img = null;
@@ -94,6 +98,27 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
     }
     iv.setImageBitmap(img);
 
+    if (coment.isIsMe()) {
+      iv.setVisibility(View.GONE);
+    } else {
+      iv.setVisibility(View.VISIBLE);
+    }
+    
+    if (position - 1 >= 0) {
+      MessageAtomParc prevMsg = getItem(position - 1);
+      // dealing with timestamps
+      if (coment.getDate().getTime() - prevMsg.getDate().getTime() < 60000) {
+        row.findViewById(R.id.hr).setVisibility(View.GONE);
+      } else {
+        row.findViewById(R.id.hr).setVisibility(View.VISIBLE);
+        TextView ts = (TextView)row.findViewById(R.id.timestamp);
+        ts.setText(Utils.getSimplifiedTime(coment.getDate()));
+      }
+      
+    }
+//    TextView ts = (TextView)row.findViewById(R.id.timestamp);
+//    ts.setText("kecske");
+    
 		return row;
 	}
 

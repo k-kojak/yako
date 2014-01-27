@@ -5,10 +5,6 @@
               android:layout_height="match_parent"
               android:padding="5dip">
 
-  <LinearLayout
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent">
-  
   <ScrollView
     android:layout_width="fill_parent"
     android:layout_height="wrap_content">
@@ -20,14 +16,22 @@
       <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/label_email_address"
+        android:text="@string/label_gmail_account"
         android:paddingTop="3dip"
       />
+      
+      <LinearLayout android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:layout_width="0px"
+                android:layout_height="0px" />
+      
       <EditText
         android:id="@+id/email_address"
+        android:nextFocusUp="@id/email_address"
+        android:nextFocusLeft="@id/email_address"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/email_hint"
+        android:hint="@string/google_account_hint"
         android:inputType="textEmailAddress" />
       <TextView
         android:layout_width="fill_parent"
@@ -53,9 +57,9 @@
         android:layout_height="wrap_content" />
     </LinearLayout>
   </ScrollView>
-  </LinearLayout>
+  <!--</LinearLayout>-->
 
-      <LinearLayout
+<!--      <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -63,24 +67,8 @@
         android:orientation="horizontal"
         android:paddingLeft="20dp"
         android:paddingRight="20dp" >
-        <Button
-            android:id="@+id/save_account_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:layout_weight="1"
-            android:text="@string/save"
-            android:onClick="saveAccountSettings" />
-        
-        <Button
-            android:id="@+id/delete_account_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_weight="1"
-            android:text="@string/delete"
-            android:onClick="deleteAccountSettings" />
-      </LinearLayout>
+
+      </LinearLayout>-->
       
   
 <!--  <Button
