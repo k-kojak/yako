@@ -2,6 +2,7 @@ package hu.rgai.android.services;
 
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
@@ -26,12 +27,17 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidatorException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -58,31 +64,31 @@ import android.util.Log;
 
 public class MainService extends Service {
 
-  public static boolean               RUNNING                         = false;
+  public static boolean RUNNING = false;
 
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
    * a new message comes from this thread id, we set it immediately to seen.
    */
-  public static String                actViewingThreadId              = null;
+  public static String actViewingThreadId = null;
 
   // flags for email account feedback
-  public static final int             OK                              = 0;
-  public static final int             UNKNOWN_HOST_EXCEPTION          = 1;
-  public static final int             IOEXCEPTION                     = 2;
-  public static final int             CONNECT_EXCEPTION               = 3;
-  public static final int             NO_SUCH_PROVIDER_EXCEPTION      = 4;
-  public static final int             MESSAGING_EXCEPTION             = 5;
-  public static final int             SSL_HANDSHAKE_EXCEPTION         = 6;
-  public static final int             CERT_PATH_VALIDATOR_EXCEPTION   = 7;
-  public static final int             NO_INTERNET_ACCESS              = 8;
-  public static final int             NO_ACCOUNT_SET                  = 9;
-  public static final int             AUTHENTICATION_FAILED_EXCEPTION = 10;
+  public static final int OK = 0;
+  public static final int UNKNOWN_HOST_EXCEPTION = 1;
+  public static final int IOEXCEPTION = 2;
+  public static final int CONNECT_EXCEPTION = 3;
+  public static final int NO_SUCH_PROVIDER_EXCEPTION = 4;
+  public static final int MESSAGING_EXCEPTION = 5;
+  public static final int SSL_HANDSHAKE_EXCEPTION = 6;
+  public static final int CERT_PATH_VALIDATOR_EXCEPTION = 7;
+  public static final int NO_INTERNET_ACCESS = 8;
+  public static final int NO_ACCOUNT_SET = 9;
+  public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
 
-  private Handler                     handler                         = null;
+  private Handler handler = null;
   // private LongOperation myThread = null;
-  private final IBinder               mBinder                         = new MyBinder();
-  private Set<MessageListElementParc> messages                        = null;
+  private final IBinder mBinder = new MyBinder();
+  private Set<MessageListElementParc> messages = null;
 
   public MainService() {
     // super("valami nev");
@@ -198,6 +204,7 @@ public class MainService extends Service {
    * @return
    * @deprecated use setMessageSeen instead
    */
+  @Deprecated
   public boolean setMailSeen(String id) {
     boolean changed = false;
     for (MessageListElementParc mlep : messages) {
@@ -279,11 +286,11 @@ public class MainService extends Service {
   private class MyHandler extends Handler {
 
     private static final String NOTIFICATION_POPUP_STR = "notification:popup";
-    private static final String NEW_MESSAGE_STR        = "newMessage";
-    private static final String UNDERLINE_SIGN_STR     = "_";
-    private static final String MESSAGE_ARRIVED_STR    = "message_arrived";
-    private static final String SPACE_STR              = " ";
-    private Context             context;
+    private static final String NEW_MESSAGE_STR = "newMessage";
+    private static final String UNDERLINE_SIGN_STR = "_";
+    private static final String MESSAGE_ARRIVED_STR = "message_arrived";
+    private static final String SPACE_STR = " ";
+    private Context context;
 
     //
     public MyHandler(Context context) {
@@ -292,7 +299,7 @@ public class MainService extends Service {
 
     @Override
     public void handleMessage(Message msg) {
-      // Log.d("rgai", "message arrived");
+
       Bundle bundle = msg.getData();
       int newMessageCount = 0;
       if (bundle != null) {
@@ -319,8 +326,7 @@ public class MainService extends Service {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
-                if ( ( ( actViewingThreadId != null ) && ( mle.getId().contains( actViewingThreadId + UNDERLINE_SIGN_STR) ) ) || 
-                    ( ( actViewingThreadId == null ) && ( MainActivity.isMainActivityVisible() ) ) ) {
+                if (((actViewingThreadId != null) && (mle.getId().contains(actViewingThreadId + UNDERLINE_SIGN_STR))) || ((actViewingThreadId == null) && (MainActivity.isMainActivityVisible()))) {
 
                   loggingNewMessageArrived(mle, true);
                 } else {
@@ -334,13 +340,9 @@ public class MainService extends Service {
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
               if (!MainActivity.isMainActivityVisible()) {
-                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.gmail_icon)
-                .setWhen(lastUnreadMsg.getDate().getTime())
-                .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle())
-                .setContentInfo(lastUnreadMsg.getMessageType().toString())
-                .setContentTitle(lastUnreadMsg.getFrom().getName())
-                .setContentText(lastUnreadMsg.getTitle());
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.gmail_icon).setWhen(lastUnreadMsg.getDate().getTime())
+                    .setTicker(lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle()).setContentInfo(lastUnreadMsg.getMessageType().toString())
+                    .setContentTitle(lastUnreadMsg.getFrom().getName()).setContentText(lastUnreadMsg.getTitle());
                 Intent resultIntent = new Intent(context, MainActivity.class);
                 resultIntent.putExtra("from_notifier", true);
                 TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
@@ -382,7 +384,31 @@ public class MainService extends Service {
       builder.append(mle.getFrom().getContactId());
       builder.append(SPACE_STR);
       builder.append(mle.getMessageType());
-
+      builder.append(SPACE_STR);
+      try {
+        builder.append(RSAENCODING.INSTANCE.encodingString(mle.getFrom().getId()));
+      } catch (InvalidKeyException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IllegalBlockSizeException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchAlgorithmException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NoSuchPaddingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (BadPaddingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
       Log.d("willrgai", builder.toString());
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }
@@ -415,16 +441,15 @@ public class MainService extends Service {
               // first updating person info anyway..
               oldMessage.setFrom(newMessage.getFrom());
 
-
-              /* "Marking" FB message seen here.
-               * Do not change info of the item, if the date is the same, so the queried
-               * data will not override the displayed object.
-               * Facebook does not mark messages as seen when opening them, so we have to
-               * handle it at client side.
-               * OR if we check the message at FB, then turn it seen at the app
+              /*
+               * "Marking" FB message seen here. Do not change info of the item,
+               * if the date is the same, so the queried data will not override
+               * the displayed object. Facebook does not mark messages as seen
+               * when opening them, so we have to handle it at client side. OR
+               * if we check the message at FB, then turn it seen at the app
                */
               if (newMessage.getDate().after(oldMessage.getDate())
-                  || newMessage.isSeen() && !oldMessage.isSeen()) {
+               || newMessage.isSeen() && !oldMessage.isSeen()) {
                 itemToRemove = oldMessage;
                 break;
               }
@@ -455,11 +480,11 @@ public class MainService extends Service {
 
   private class LongOperation extends AsyncTask<String, Integer, List<MessageListElementParc>> {
 
-    private Context     context;
-    private int         result;
-    private String      errorMessage = null;
-    private Handler     handler;
-    private AccountAndr acc;
+    private Context context;
+    private int result;
+    private String errorMessage = null;
+    private final Handler handler;
+    private final AccountAndr acc;
 
     public LongOperation(Context context, Handler handler, AccountAndr acc) {
       this.context = context;

@@ -53,12 +53,12 @@ import android.util.Log;
 public enum EventLogger {
   INSTANCE;
 
-  private static final String     SUCCESS_STR        = "success";
-  private static final String     RESULT_STR         = "result";
+  private static final String SUCCESS_STR = "success";
+  private static final String RESULT_STR = "result";
   private volatile BufferedWriter bufferedWriter;
-  private String                  logFilePath;
-  private long                    logfileCreatedTime;
-  LogToJsonConverter              logToJsonConverter = new LogToJsonConverter(apiCodeToAI, appPackageName);
+  private String logFilePath;
+  private long logfileCreatedTime;
+  LogToJsonConverter logToJsonConverter = new LogToJsonConverter(apiCodeToAI, appPackageName);
 
   public long getLogfileCreatedTime() {
     return logfileCreatedTime;
@@ -67,9 +67,9 @@ public enum EventLogger {
   private EventLogger() {
   }
 
-  private ArrayList<String> tempBufferToUpload = new ArrayList<String>();
-  private boolean           lockedToUpload     = false;
-  private Context           context;
+  private final ArrayList<String> tempBufferToUpload = new ArrayList<String>();
+  private boolean lockedToUpload = false;
+  private Context context;
 
   public synchronized boolean openLogFile(String logFilePath, boolean isFullPath) {
 
@@ -238,9 +238,9 @@ public enum EventLogger {
     if (!upLoadSuccess)
       return false;
 
-    upLoadSuccess = uploadEncryptedContactInformations(httpPost);
-    if (!upLoadSuccess)
-      return false;
+    // upLoadSuccess = uploadEncryptedContactInformations(httpPost);
+    // if (!upLoadSuccess)
+    // return false;
     return upLoadSuccess;
   }
 
