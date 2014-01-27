@@ -7,7 +7,7 @@
           messagelogger:showAsAction="ifRoom"
           />
   
-  <item android:id="@+id/message_reply_all"
+<!--  <item android:id="@+id/message_reply_all"
     android:icon="@drawable/ic_action_reply_all"  
         android:title="@string/message_reply_all"
         messagelogger:showAsAction="ifRoom"
@@ -29,5 +29,5 @@
     android:icon="@drawable/ic_action_discard"  
         android:title="@string/delete"
         messagelogger:showAsAction="ifRoom"
-        />
+        />-->
 </menu>
