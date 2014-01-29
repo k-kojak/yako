@@ -1,14 +1,9 @@
 package hu.rgai.android.intent.beens;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.provider.ContactsContract;
-import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -19,38 +14,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.provider.ContactsContract;
+
 /**
- *
+ * 
  * @author Tamas Kojedzinszky
  */
 public final class PersonAndr extends Person implements Parcelable {
-  
+
   private static Map<String, PersonAndr> storedPerson = null;
-  
-  private long contactId;
+
+  private final long contactId;
   private Map<MessageProvider.Type, Set<String>> idMap = null;
-  
+
   public static final Parcelable.Creator<PersonAndr> CREATOR = new Parcelable.Creator<PersonAndr>() {
+    @Override
     public PersonAndr createFromParcel(Parcel in) {
       return new PersonAndr(in);
     }
 
+    @Override
     public PersonAndr[] newArray(int size) {
       return new PersonAndr[size];
     }
   };
-  
-//  public PersonAndr(long contactId, String name) {
-//    this.contactId = contactId;
-//    this.name = name;
-//  }
-  
+
+  // public PersonAndr(long contactId, String name) {
+  // this.contactId = contactId;
+  // this.name = name;
+  // }
+
   public PersonAndr(long contactId, String name, String id) {
     this.contactId = contactId;
     this.name = name;
     this.id = id;
   }
-  
+
   public void addId(MessageProvider.Type type, String id) {
     if (id == null) {
       throw new RuntimeException("Person id cannot be null!");
@@ -63,7 +66,7 @@ public final class PersonAndr extends Person implements Parcelable {
     }
     idMap.get(type).add(id);
   }
-  
+
   public String getOneId(MessageProvider.Type type) {
     Set<String> l = this.getIds(type);
     if (l != null && !l.isEmpty()) {
@@ -72,7 +75,7 @@ public final class PersonAndr extends Person implements Parcelable {
     }
     return null;
   }
-  
+
   public Set<String> getIds(MessageProvider.Type type) {
     if (idMap != null && idMap.containsKey(type)) {
       return idMap.get(type);
@@ -83,7 +86,7 @@ public final class PersonAndr extends Person implements Parcelable {
   public long getContactId() {
     return contactId;
   }
-  
+
   public PersonAndr(Parcel in) {
     this.id = in.readString();
     this.name = in.readString();
@@ -98,11 +101,13 @@ public final class PersonAndr extends Person implements Parcelable {
       idMap.put(MessageProvider.Type.valueOf(t), new HashSet<String>(valList));
     }
   }
-  
+
+  @Override
   public int describeContents() {
     return 0;
   }
 
+  @Override
   public void writeToParcel(Parcel out, int flags) {
     String[] typesStr = new String[0];
     if (idMap != null && !idMap.isEmpty()) {
@@ -113,7 +118,7 @@ public final class PersonAndr extends Person implements Parcelable {
         typesStr[i++] = t.toString();
       }
     }
-    
+
     out.writeString(id);
     out.writeString(name);
     out.writeLong(this.contactId);
@@ -129,33 +134,35 @@ public final class PersonAndr extends Person implements Parcelable {
   public String toString() {
     return "PersonAndr{" + "contactId=" + contactId + ", id = " + id + ", name=" + name + ", type=" + type + '}';
   }
-  
+
   public static PersonAndr searchPersonAndr(Context context, Person p) {
     String key = p.getType().toString() + "_" + p.getId();
-//    Log.d("rgai", "MAP KEY -> " + key);
+    // Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {
       storedPerson = new HashMap<String, PersonAndr>();
     }
     if (storedPerson.containsKey(key)) {
       return storedPerson.get(key);
     } else {
-      
+
       long uid = getUid(context, p.getType(), p.getId(), p.getName());
-//      Log.d("rgai", "UID of user " + p.toString() + ": " + uid);
+      // Log.d("rgai", "UID of user " + p.toString() + ": " + uid);
       key = p.getType().toString() + "_" + uid;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
       } else {
         PersonAndr pa = null;
         if (uid != -1) {
-          // if dealing with sms, than p.getName() contains the phone number, so that is the user id for sending message
+          // if dealing with sms, than p.getName() contains the phone number, so
+          // that is the user id for sending message
           if (p.getType().equals(MessageProvider.Type.SMS)) {
             pa = getUserData(context, uid, p.getName());
-          // if not using sms, than p.getId() can be used for communication (fb id, email addr, etc.)
+            // if not using sms, than p.getId() can be used for communication
+            // (fb id, email addr, etc.)
           } else {
             pa = getUserData(context, uid, p.getId());
           }
-//          Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
+          // Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
         }
         // user is not in contact list
@@ -165,23 +172,19 @@ public final class PersonAndr extends Person implements Parcelable {
           } else {
             pa = new PersonAndr(-1, p.getName(), p.getId());
           }
-  //        pa = new PersonAndr(-1, p.getName());
+          // pa = new PersonAndr(-1, p.getName());
         }
         return pa;
       }
     }
   }
-  
+
   private static PersonAndr getUserData(Context context, long uid, String userAddrId) {
     PersonAndr pa = null;
-    
+
     // selecting name
-    Cursor cursor = context.getContentResolver().query(
-              ContactsContract.Data.CONTENT_URI,
-              new String[] {Settings.CONTACT_DISPLAY_NAME},
-              ContactsContract.Data.RAW_CONTACT_ID + " = ?",
-              new String[]{uid + ""},
-              null);
+    Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { Settings.CONTACT_DISPLAY_NAME }, ContactsContract.Data.RAW_CONTACT_ID + " = ?",
+        new String[] { uid + "" }, null);
     if (cursor.getCount() > 0) {
       cursor.moveToNext();
       pa = new PersonAndr(uid, cursor.getString(0), userAddrId);
@@ -189,103 +192,70 @@ public final class PersonAndr extends Person implements Parcelable {
     cursor.close();
     if (pa != null) {
       // selection phone numbers
-      cursor = context.getContentResolver().query(
-              ContactsContract.Data.CONTENT_URI,
-              new String[] {ContactsContract.CommonDataKinds.Phone.DATA},
+      cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { ContactsContract.CommonDataKinds.Phone.DATA },
 
-              ContactsContract.Data.RAW_CONTACT_ID + " = ? "
-              + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
+      ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
 
-              new String[]{uid + "", ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE},
-              null);
+      new String[] { uid + "", ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.SMS, cursor.getColumnName(0));
       }
       cursor.close();
-      
+
       // selection emails
-      cursor = context.getContentResolver().query(
-              ContactsContract.Data.CONTENT_URI,
-              new String[] {ContactsContract.CommonDataKinds.Email.DATA},
+      cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { ContactsContract.CommonDataKinds.Email.DATA },
 
-              ContactsContract.Data.RAW_CONTACT_ID + " = ? "
-              + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
+      ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
 
-              new String[]{uid + "", ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE},
-              null);
+      new String[] { uid + "", ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.EMAIL, cursor.getColumnName(0));
       }
       cursor.close();
-      
+
       // selection facebook
       cursor = context.getContentResolver().query(
-              ContactsContract.Data.CONTENT_URI,
-              new String[] {ContactsContract.CommonDataKinds.Email.DATA1},
+          ContactsContract.Data.CONTENT_URI,
+          new String[] { ContactsContract.CommonDataKinds.Email.DATA1 },
 
-              ContactsContract.Data.RAW_CONTACT_ID + " = ? "
-              + " AND " + ContactsContract.Data.MIMETYPE + " = ? "
-              + " AND " + ContactsContract.Data.DATA2 + " = ? "
-              + " AND " + ContactsContract.Data.DATA5 + " = ? "
-              + " AND " + ContactsContract.Data.DATA6 + " = ? ",
+          ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ? " + " AND " + ContactsContract.Data.DATA2 + " = ? " + " AND " + ContactsContract.Data.DATA5
+              + " = ? " + " AND " + ContactsContract.Data.DATA6 + " = ? ",
 
-              new String[] {
-                      uid + "",
-                      ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-                      ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
-                      ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
-                      Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME
-              },
-              null);
+          new String[] { uid + "", ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
+              ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "", Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME }, null);
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.FACEBOOK, cursor.getColumnName(0));
       }
       cursor.close();
     }
-    
+
     return pa;
   }
-  
+
   private static long getUid(Context context, MessageProvider.Type type, String id) {
     return getUid(context, type, id, null);
   }
-  
+
   private static long getUid(Context context, MessageProvider.Type type, String id, String id2) {
     long uid = -1;
-    
+
     String selection = "";
     String[] selectionArgs = null;
     if (type.equals(MessageProvider.Type.SMS)) {
-//      return Long.parseLong(id);
-      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? OR ("
-              + ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.Phone.DATA + " = ? )";
-      selectionArgs = new String[]{id, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, id2};
+      // return Long.parseLong(id);
+      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? OR (" + ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.Phone.DATA + " = ? )";
+      selectionArgs = new String[] { id, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, id2 };
     } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
-      selection = ContactsContract.Data.MIMETYPE + " = ? "
-              + " AND " + ContactsContract.CommonDataKinds.Email.DATA + " = ? ";
-      selectionArgs = new String[]{
-              ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
-              id};
+      selection = ContactsContract.Data.MIMETYPE + " = ? " + " AND " + ContactsContract.CommonDataKinds.Email.DATA + " = ? ";
+      selectionArgs = new String[] { ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, id };
     } else if (type.equals(MessageProvider.Type.FACEBOOK)) {
-      selection = ContactsContract.Data.MIMETYPE + " = ? "
-              + " AND " + ContactsContract.Data.DATA2 + " = ? "
-              + " AND " + ContactsContract.Data.DATA5 + " = ? "
-              + " AND " + ContactsContract.Data.DATA6 + " = ? "
-              + " AND " + ContactsContract.Data.DATA10 + " = ? ";
-      selectionArgs = new String[]{
-              ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
-              ContactsContract.CommonDataKinds.Im.TYPE_OTHER+"",
-              ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM+"",
-              Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME,
-              id};
+      selection = ContactsContract.Data.MIMETYPE + " = ? " + " AND " + ContactsContract.Data.DATA2 + " = ? " + " AND " + ContactsContract.Data.DATA5 + " = ? " + " AND " + ContactsContract.Data.DATA6
+          + " = ? " + " AND " + ContactsContract.Data.DATA10 + " = ? ";
+      selectionArgs = new String[] { ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
+          ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "", Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME, id };
     }
-    
-    Cursor cursor = context.getContentResolver().query(
-              ContactsContract.Data.CONTENT_URI,
-              new String[] {ContactsContract.Data.RAW_CONTACT_ID},
-              selection,
-              selectionArgs,
-              null);
+
+    Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { ContactsContract.Data.RAW_CONTACT_ID }, selection, selectionArgs, null);
     if (cursor != null) {
       if (cursor.getCount() > 0) {
         cursor.moveToFirst();
@@ -293,8 +263,21 @@ public final class PersonAndr extends Person implements Parcelable {
       }
       cursor.close();
     }
-    
+
     return uid;
   }
-  
+
+  @Override
+  public int hashCode() {
+    return Long.valueOf(contactId).hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof PersonAndr))
+      return false;
+    if (obj == this)
+      return true;
+    return (this.contactId == ((PersonAndr) obj).contactId) && (this.id.equals(((PersonAndr) obj).id)) && (this.name.equals(((PersonAndr) obj).name)) && (this.type == ((PersonAndr) obj).type);
+  }
 }

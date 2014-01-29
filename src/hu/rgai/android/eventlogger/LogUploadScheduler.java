@@ -3,8 +3,8 @@ package hu.rgai.android.eventlogger;
 import hu.rgai.android.test.MainActivity;
 
 public class LogUploadScheduler {
-  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 24;
-  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 15 * 60;
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 10;
+  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 5 * 60;
 
   Thread scheduler;
 
@@ -28,7 +28,7 @@ public class LogUploadScheduler {
 
     if (scheduler.getState() == Thread.State.TIMED_WAITING) {
       mStatusChecker.setRepeatTask(false);
-      scheduler.notify();
+      scheduler.interrupt();
     } else {
       mStatusChecker.setRepeatTask(false);
     }

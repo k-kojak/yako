@@ -68,8 +68,8 @@ public class LogToJsonConverter {
       String eventName = st.nextToken();
 
       JSONArray datasToEvent = new JSONArray();
-
-      datasToEvent.put(st.nextToken(""));
+      if (st.hasMoreTokens())
+        datasToEvent.put(st.nextToken(""));
       event.put(EVENTDATAS_STR, datasToEvent);
       event.put(EVENTNAME_STR, eventName);
       record.put(DATA_STR, event.toString().replaceAll("\"", "\u0020"));

@@ -71,8 +71,8 @@ public class MainActivity extends ActionBarActivity {
   private static final String MAINPAGE_PAUSE_STR = "mainpage:pause";
   private static final String MAINPAGE_RESUME_STR = "mainpage:resume";
   private static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
-  private static final String SCROLL_END_STR = "scroll end";
-  private static final String SCROLL_START_STR = "scroll start";
+  private static final String SCROLL_END_STR = "scroll:end";
+  private static final String SCROLL_START_STR = "scroll:start";
   private static final String MAIN_PAGE_STR = "MainPage";
   // private Boolean isInternetAvailable = null;
 
@@ -148,7 +148,6 @@ public class MainActivity extends ActionBarActivity {
       public void run() {
         if (logUploadScheduler.isRunning)
           logUploadScheduler.stopRepeatingTask();
-        EventLogger.INSTANCE.writeToLogFile(APPLICATION_OVER_STR, true);
         EventLogger.INSTANCE.closeLogFile();
       }
     });
@@ -480,54 +479,6 @@ public class MainActivity extends ActionBarActivity {
       this.setContentView(text);
     }
 
-    // boolean isNet = isNetworkAvailable();
-    // if (isNet || isPhone()) {
-    // View currentView = this.findViewById(R.id.list);
-    // if (currentView == null || currentView.getId() != R.id.list) {
-    // setContentView(R.layout.main);
-    // ListView lv = (ListView) findViewById(R.id.list);
-    // adapter = new LazyAdapter(this, messages);
-    // lv.setAdapter(adapter);
-    // lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-    // public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long
-    // arg3) {
-    //
-    // MessageListElementParc message = (MessageListElementParc)
-    // av.getItemAtPosition(itemIndex);
-    //
-    // AccountAndr a = (AccountAndr)message.getAccount();
-    // Intent intent = null;
-    // Class classToLoad =
-    // Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-    // intent = new Intent(MainActivity.this, classToLoad);
-    //
-    // intent.putExtra("msg_list_element", (Parcelable)message);
-    // intent.putExtra("account", (Parcelable)a);
-    // boolean changed = s.setMessageSeenAndRead(message);
-    // if (changed) {
-    // setMessageSeen(message);
-    // adapter.notifyDataSetChanged();
-    // }
-    // startActivityForResult(intent,
-    // Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-    //
-    // updateNotificationStatus();
-    // }
-    // });
-    // if (serviceConnectionEstablished) {
-    // updateList(s.getEmails());
-    // }
-    // } else {
-    // updateList(s.getEmails());
-    // adapter.notifyDataSetChanged();
-    // }
-
-    // } else {
-    // TextView text = new TextView(this);
-    // text.setText(getString(R.string.no_internet_access));
-    // text.setGravity(Gravity.CENTER);
-    // this.setContentView(text);
-    // }
   }
 
   public void loadMoreMessage() {
@@ -730,7 +681,7 @@ public class MainActivity extends ActionBarActivity {
     int firstVisiblePosition = lv.getFirstVisiblePosition();
     int lastVisiblePosition = lv.getLastVisiblePosition();
 
-    for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
+    for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
       builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
       builder.append(SPACE_STR);
     }

@@ -4,8 +4,8 @@ import static hu.rgai.android.test.Constants.SERVLET_URL;
 import static hu.rgai.android.test.Constants.SPACE_STR;
 import static hu.rgai.android.test.Constants.apiCodeToAI;
 import static hu.rgai.android.test.Constants.appPackageName;
+import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.test.R;
-import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -44,8 +44,9 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.json.JSONException;
 
-import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -238,16 +239,16 @@ public enum EventLogger {
     if (!upLoadSuccess)
       return false;
 
-    // upLoadSuccess = uploadEncryptedContactInformations(httpPost);
-    // if (!upLoadSuccess)
-    // return false;
+    upLoadSuccess = uploadCallInformations(httpPost);
+    if (!upLoadSuccess)
+      return false;
     return upLoadSuccess;
   }
 
-  private boolean uploadEncryptedContactInformations(final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
-    List<String> contactInformations = getContactInformations();
+  private boolean uploadCallInformations(final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+    List<String> callInformations = getCallInformations();
 
-    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(contactInformations);
+    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(callInformations);
     final StringEntity httpContentListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
 
     httpContentListEntity.setContentType("application/json");
@@ -257,11 +258,38 @@ public enum EventLogger {
     return isUploadSuccessFull(response);
   }
 
-  List<String> getContactInformations() {
-    List<String> contactInformations = new ArrayList<String>();
-    ChipsMultiAutoCompleteTextView recipients = (ChipsMultiAutoCompleteTextView) ((Activity) context).findViewById(R.id.recipients);
+  List<String> getCallInformations() {
+    List<String> callInformations = new ArrayList<String>();
 
-    return contactInformations;
+    Uri allCalls = Uri.parse("content://call_log/calls");
+
+    Cursor c = context.getContentResolver().query(allCalls, null, null, null, null);
+
+    while (c.moveToNext()) {
+      StringBuilder callInformationBuilder = new StringBuilder();
+      callInformationBuilder.append( String.valueOf(c.getLong(c.getColumnIndex("date"))));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append("call");
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("numbertype")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("new")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("duration")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("_id")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("numberlabel")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("name")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(c.getString(c.getColumnIndex("type")));
+      callInformationBuilder.append(SPACE_STR);
+      callInformationBuilder.append(RSAENCODING.INSTANCE.encodingString(c.getString(c.getColumnIndex("number"))));
+      callInformations.add(callInformationBuilder.toString());
+    }
+
+    return callInformations;
   }
 
   private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
@@ -270,9 +298,9 @@ public enum EventLogger {
     httpEntity.setContentType("application/json");
 
     httpPost.setEntity(httpEntity);
-
+    Log.d("willrgai", jsonEncodedLogs);
     HttpResponse response = getNewHttpClient().execute(httpPost);
-
+    Log.d("willrgai", "succes " + isUploadSuccessFull(response));
     return isUploadSuccessFull(response);
   }
 

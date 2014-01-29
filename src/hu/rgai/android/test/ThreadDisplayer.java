@@ -60,8 +60,8 @@ public class ThreadDisplayer extends ActionBarActivity {
   private static final String THREAD_RESUME_STR = "thread:resume";
   private static final String EDITTEXT_WRITE_STR = "edittext_write";
   private static final String SPACE_STR = " ";
-  private static final String SCROLL_END_STR = "scroll end";
-  private static final String SCROLL_START_STR = "scroll start";
+  private static final String SCROLL_END_STR = "scroll:end";
+  private static final String SCROLL_START_STR = "scroll:start";
   private ProgressDialog pd = null;
   private Handler messageSendHandler = null;
   private Handler messageArrivedHandler = null;

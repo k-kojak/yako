@@ -27,8 +27,6 @@ import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidatorException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -36,9 +34,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -317,7 +312,7 @@ public class MainService extends Service {
     private static final String UNDERLINE_SIGN_STR = "_";
     private static final String MESSAGE_ARRIVED_STR = "message_arrived";
     private static final String SPACE_STR = " ";
-    private Context context;
+    private final Context context;
 
     //
     public MyHandler(Context context) {
@@ -418,30 +413,8 @@ public class MainService extends Service {
       builder.append(SPACE_STR);
       builder.append(mle.getMessageType());
       builder.append(SPACE_STR);
-      try {
-        builder.append(RSAENCODING.INSTANCE.encodingString(mle.getFrom().getId()));
-      } catch (InvalidKeyException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (IllegalBlockSizeException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (NoSuchAlgorithmException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (NoSuchPaddingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (ClassNotFoundException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (BadPaddingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+      builder.append(RSAENCODING.INSTANCE.encodingString(mle.getFrom().getId()));
+
       Log.d("willrgai", builder.toString());
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }

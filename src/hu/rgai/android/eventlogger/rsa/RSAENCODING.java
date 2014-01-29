@@ -1,6 +1,6 @@
 package hu.rgai.android.eventlogger.rsa;
 
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -50,9 +50,20 @@ public enum RSAENCODING {
   private RSAENCODING() {
   }
 
-  public String encodingString(String log) throws InvalidKeyException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, NoSuchPaddingException, ClassNotFoundException,
-      BadPaddingException {
+  public String encodingString(String log) {
 
-    return new String(cypher.doFinal(log.getBytes("utf-8")));
+    try {
+      return new String(cypher.doFinal(log.getBytes("utf-8")));
+    } catch (IllegalBlockSizeException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (BadPaddingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return null;
   }
 }
