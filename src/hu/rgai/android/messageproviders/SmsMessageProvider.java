@@ -28,7 +28,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.telephony.SmsManager;
-import android.telephony.SmsMessage;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
@@ -68,7 +67,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
             new String[]{"thread_id", "body", "date", "seen", "person", "address", "type"},
             null,
             null,
-            "date DESC LIMIT "+offset+","+limit);
+            "date DESC ");
     if (cur != null) {
       while (cur.moveToNext()) {
         String title = cur.getString(1);
@@ -107,7 +106,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           }
         } else {
           foundThreads++;
-          if (foundThreads > limit) break;
+          if (foundThreads > limit + offset) break;
           messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title, from,
                   new Date(ti.date), Type.SMS));
         }
