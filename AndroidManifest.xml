@@ -33,12 +33,18 @@
                   android:label="@string/app_name"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         >
+          <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.rgai.android.test.MainActivity" />
         </activity>
+
         <activity android:name="ThreadDisplayer"
                   android:label="@string/app_name"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         >
-
+          <meta-data
+                  android:name="android.support.PARENT_ACTIVITY"
+                  android:value="hu.rgai.android.test.MainActivity" />
         </activity>
         <activity android:name=".settings.SimpleEmailSettingActivity"
                   android:label="@string/adding_simple_email_account"
@@ -104,6 +110,13 @@
         <receiver android:name="hu.rgai.android.messageproviders.SmsMessageProvider">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED"></action>
+            </intent-filter>
+        </receiver>
+        
+        <receiver android:name="hu.rgai.android.broadcastreceivers.CustomBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="hu.rgai.android.new_message_arrived_broadcast" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
         

@@ -1,5 +1,6 @@
 package hu.rgai.android.test;
 
+
 import hu.rgai.android.asynctasks.MessageSender;
 import hu.rgai.android.asynctasks.ThreadContentGetter;
 import hu.rgai.android.config.Settings;
@@ -39,6 +40,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -107,8 +109,14 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
+    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    
     tempMessageIds = new HashSet<String>();
-    MessageListElementParc mlep = (MessageListElementParc) getIntent().getExtras().getParcelable("msg_list_element");
+
+    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+    MainService.setMessageSeenAndRead(mlep);
     // register messagereceiver
     if (nmr == null) {
       nmr = new NewMessageReceiver();

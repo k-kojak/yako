@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -23,6 +24,7 @@ import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -71,10 +73,15 @@ public class EmailDisplayer extends ActionBarActivity {
     super.onCreate(icicle);
     
     setContentView(R.layout.email_displayer);
+    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    
     webView = (WebView) findViewById(R.id.email_content);
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+    MainService.setMessageSeenAndRead(mlep);
     
     emailID = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");

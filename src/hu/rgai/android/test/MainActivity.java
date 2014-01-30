@@ -89,8 +89,12 @@ public class MainActivity extends ActionBarActivity {
 
   private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler(this);
   private DataUpdateReceiver serviceReceiver;
-  private BroadcastReceiver systemReceiver;
+//<<<<<<< HEAD
+//  private BroadcastReceiver systemReceiver;
   private ScreenReceiver screenReceiver;
+//=======
+//  private BroadcastReceiver systemReceiver;
+//>>>>>>> master
   private ProgressDialog pd = null;
   private Date lastLoadMoreEvent = null;
   private ListView lv = null;
@@ -315,15 +319,25 @@ public class MainActivity extends ActionBarActivity {
     registerReceiver(serviceReceiver, intentFilter);
 
     // register system broadcast receiver for internet connection state change
-    if (systemReceiver == null) {
-      systemReceiver = new CustomBroadcastReceiver(this);
-    }
-    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-    registerReceiver(systemReceiver, customIntentFilter);
+//<<<<<<< HEAD
+//    if (systemReceiver == null) {
+//      systemReceiver = new CustomBroadcastReceiver(this);
+//    }
+//    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+//    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+//    registerReceiver(systemReceiver, customIntentFilter);
 
     setUpAndRegisterScreenReceiver();
 
+//=======
+//    if (systemReceiver == null) {
+//      systemReceiver = new CustomBroadcastReceiver(this);
+//    }
+//    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+//    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+//    registerReceiver(systemReceiver, customIntentFilter);
+    
+//>>>>>>> master
     // setting content
     setContent();
     logActivityEvent(MAINPAGE_RESUME_STR);
@@ -342,12 +356,18 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    if (systemReceiver != null) {
-      unregisterReceiver(systemReceiver);
-    }
+//<<<<<<< HEAD
+//    if (systemReceiver != null) {
+//      unregisterReceiver(systemReceiver);
+//    }
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
     }
+//=======
+//    if (systemReceiver != null) {
+//      unregisterReceiver(systemReceiver);
+//    }
+//>>>>>>> master
     if (serviceConnection != null) {
       unbindService(serviceConnection);
     }
@@ -437,7 +457,7 @@ public class MainActivity extends ActionBarActivity {
             intent.putExtra("msg_list_element", message);
             intent.putExtra("account", (Parcelable) a);
 
-            boolean changed = s.setMessageSeenAndRead(message);
+            boolean changed = MainService.setMessageSeenAndRead(message);
             if (changed) {
               setMessageSeen(message);
               adapter.notifyDataSetChanged();
@@ -570,35 +590,6 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  private class CustomBroadcastReceiver extends BroadcastReceiver {
-
-    // private MainActivity activity = null;
-
-    public CustomBroadcastReceiver(MainActivity activity) {
-      // this.activity = activity;
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      // listening for internet access change
-      if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-        NetworkInfo info = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-        String typeName = info.getTypeName();
-        String subtypeName = info.getSubtypeName();
-        // System.out.println("Network is up ******** " + typeName + ":::" +
-        // subtypeName);
-
-        // activity.setContent("onInternetBroadcast receive");
-      } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
-        Intent i = new Intent(MainActivity.this, MainScheduler.class);
-        if (intent.getExtras().containsKey("type")) {
-          i.putExtra("type", intent.getExtras().getString("type"));
-        }
-        i.setAction(Context.ALARM_SERVICE);
-        MainActivity.this.sendBroadcast(i);
-      }
-    }
-  }
 
   private class DataUpdateReceiver extends BroadcastReceiver {
 

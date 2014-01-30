@@ -53,6 +53,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
@@ -85,8 +86,9 @@ public class MainService extends Service {
   private Handler handler = null;
   // private LongOperation myThread = null;
   private final IBinder mBinder = new MyBinder();
-  private Set<MessageListElementParc> messages = null;
 
+  private static Set<MessageListElementParc> messages = null;
+  
   public MainService() {
     // super("valami nev");
     // Log.d("rgai", "myservice default constructor");
@@ -247,7 +249,7 @@ public class MainService extends Service {
    *          the message to set
    * @return
    */
-  public boolean setMessageSeenAndRead(MessageListElementParc m) {
+  public static boolean setMessageSeenAndRead(MessageListElementParc m) {
     boolean changed = false;
     for (MessageListElementParc mlep : messages) {
       if (mlep.equals(m) && !mlep.isSeen()) {
@@ -324,6 +326,7 @@ public class MainService extends Service {
 
       Bundle bundle = msg.getData();
       int newMessageCount = 0;
+//      MessageListElementParc theNewMessage = null;
       if (bundle != null) {
         if (bundle.get("result") != null) {
           // Log.d("rgai", bundle.getInt("result") + "");
@@ -363,7 +366,7 @@ public class MainService extends Service {
 
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
-              if (!MainActivity.isMainActivityVisible()) {
+              if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.not_ic_action_email)
                         .setWhen(lastUnreadMsg.getDate().getTime())
@@ -371,7 +374,15 @@ public class MainService extends Service {
                         .setContentInfo(lastUnreadMsg.getMessageType().toString())
                         .setContentTitle(lastUnreadMsg.getFrom().getName())
                         .setContentText(lastUnreadMsg.getTitle());
-                Intent resultIntent = new Intent(context, MainActivity.class);
+                Intent resultIntent;
+                if (newMessageCount == 1) {
+                  Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
+                  resultIntent = new Intent(context, classToLoad);
+                  resultIntent.putExtra("msg_list_element", lastUnreadMsg);
+                  resultIntent.putExtra("account", (Parcelable)lastUnreadMsg.getAccount());
+                } else {
+                  resultIntent = new Intent(context, MainActivity.class);
+                }
                 resultIntent.putExtra("from_notifier", true);
                 TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
                 stackBuilder.addParentStack(MainActivity.class);
