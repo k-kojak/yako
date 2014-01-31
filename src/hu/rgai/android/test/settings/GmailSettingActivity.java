@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -39,6 +40,9 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
   
     setContentView(R.layout.account_settings_gmail_layout);
+    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
     
     messageAmount = (Spinner)findViewById(R.id.initial_emails_num);
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,

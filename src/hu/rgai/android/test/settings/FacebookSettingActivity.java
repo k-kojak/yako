@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -152,7 +153,8 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
 //      });
 //    }
     
-    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
    
     profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);       
      

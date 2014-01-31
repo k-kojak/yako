@@ -3,6 +3,7 @@ package hu.rgai.android.test.settings;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -58,6 +59,9 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     domainMap.put("lamer.hu", "indamail.hu");
 
     setContentView(R.layout.account_settings_simple_mail_layout);
+    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
     
     messageAmount = (Spinner)findViewById(R.id.initial_emails_num);
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,

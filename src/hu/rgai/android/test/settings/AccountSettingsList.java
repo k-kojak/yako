@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -73,6 +74,9 @@ public class AccountSettingsList extends ActionBarActivity {
     }
     Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
+    
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
 
     List<AccountAndr> accounts = null;
     try {
