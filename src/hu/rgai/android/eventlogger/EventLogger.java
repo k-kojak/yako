@@ -81,7 +81,7 @@ public enum EventLogger {
       if (isSdPresent()) {
         logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
-        logfile = new File(logFilePath);
+        logfile = new File(context.getFilesDir().getAbsoluteFile(), logFilePath);
       }
     }
 
@@ -125,7 +125,6 @@ public enum EventLogger {
   }
 
   public synchronized void writeToLogFile(String log, boolean logTimeStamp) {
-    Log.d("willrgai", "writeToLogFile " + log);
     if (logTimeStamp) {
       writeFormatedLogToLogFile(LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
@@ -267,7 +266,7 @@ public enum EventLogger {
 
     while (c.moveToNext()) {
       StringBuilder callInformationBuilder = new StringBuilder();
-      callInformationBuilder.append( String.valueOf(c.getLong(c.getColumnIndex("date"))));
+      callInformationBuilder.append(String.valueOf(c.getLong(c.getColumnIndex("date"))));
       callInformationBuilder.append(SPACE_STR);
       callInformationBuilder.append("call");
       callInformationBuilder.append(SPACE_STR);
