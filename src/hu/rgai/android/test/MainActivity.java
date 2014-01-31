@@ -194,10 +194,9 @@ public class MainActivity extends ActionBarActivity {
       pd.setCancelable(false);
       pd.show();
     }
-
+    EventLogger.INSTANCE.setContext(this);
     EventLogger.INSTANCE.openLogFile("logFile.txt", false);
     EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
-    EventLogger.INSTANCE.setContext(this);
 
     if (!logUploadScheduler.isRunning)
       logUploadScheduler.startRepeatingTask();
