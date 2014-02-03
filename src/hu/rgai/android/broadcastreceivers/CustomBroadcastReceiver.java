@@ -18,6 +18,9 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     // listening for internet access change
     Log.d("rgai", "NEW MESSAGE ARRIVED RECEIVER");
+    if (intent.getAction() != null) {
+      Log.d("rgai", intent.getAction());
+    }
     if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
       NetworkInfo info = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
       String typeName = info.getTypeName();

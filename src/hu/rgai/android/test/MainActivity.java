@@ -62,6 +62,7 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import java.util.HashMap;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -79,7 +80,8 @@ public class MainActivity extends ActionBarActivity {
   public static final int PICK_CONTACT = 101;
   private static final String SPACE_STR = " ";
   private static boolean is_activity_visible = false;
-  private static Date last_notification_date = null;
+//  private static Date last_notification_date = null;
+  private static HashMap<AccountAndr, Date> last_notification_dates = null;
 
   private boolean serviceConnectionEstablished = false;
   private static volatile List<MessageListElementParc> messages;
@@ -299,9 +301,13 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    removeNotificationIfExists();
     Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
-    last_notification_date = new Date();
+    if (last_notification_dates == null) {
+      last_notification_dates = new HashMap<AccountAndr, Date>();
+    }
+    
 
     FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
     if (fba != null) {
@@ -373,19 +379,46 @@ public class MainActivity extends ActionBarActivity {
 
   }
 
+  /**
+   * Returns true if the main activity is visible.
+   * @return true if main activity visible, false otherwise
+   */
   public static boolean isMainActivityVisible() {
     return is_activity_visible;
   }
 
-  public static void updateLastNotification() {
-    last_notification_date = new Date();
+  /**
+   * Updates the last notification date of the given account.
+   * Sets all of the accounts last notification date to the current date if null given.
+   * @param acc the account to update, or null if update all account's last event time
+   */
+  public static void updateLastNotification(AccountAndr acc) {
+    if (acc != null) {
+      last_notification_dates.put(acc, new Date());
+    } else {
+      for (AccountAndr a : last_notification_dates.keySet()) {
+        last_notification_dates.get(a).setTime(new Date().getTime());
+      }
+    }
   }
 
-  public static Date getLastNotification() {
-    if (last_notification_date == null) {
-      last_notification_date = new Date(new Date().getTime() - 86400 * 365);
+  /**
+   * Returns the last notification of the given account.
+   * 
+   * @param acc
+   * @return 
+   */
+  public static Date getLastNotification(AccountAndr acc) {
+    Date ret = null;
+    if (last_notification_dates == null || acc == null) {
+      ret = new Date(new Date().getTime() - 86400 * 365 * 1000);
+    } else {
+      ret = last_notification_dates.get(acc);
     }
-    return last_notification_date;
+    if (ret == null) {
+      ret = new Date(new Date().getTime() - 86400 * 365 * 1000);
+    }
+    return ret;
   }
 
   public static void removeMessagesToAccount(final AccountAndr acc) {
@@ -464,7 +497,7 @@ public class MainActivity extends ActionBarActivity {
 
             loggingOnClickEvent(message, changed);
             startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-            updateNotificationStatus();
+//            removeNotificationIfExists();
           }
 
           private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
@@ -535,18 +568,18 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  private void updateNotificationStatus() {
-    boolean unseenExists = false;
-    for (MessageListElementParc mle : messages) {
-      if (!mle.isSeen()) {
-        unseenExists = true;
-        break;
-      }
-    }
-    if (!unseenExists) {
+  private void removeNotificationIfExists() {
+//    boolean unseenExists = false;
+//    for (MessageListElementParc mle : messages) {
+//      if (!mle.isSeen()) {
+//        unseenExists = true;
+//        break;
+//      }
+//    }
+//    if (!unseenExists) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-    }
+//    }
   }
 
   @Override
@@ -557,7 +590,7 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = false;
 
     // refreshing last notification date when closing activity
-    last_notification_date = new Date();
+    updateLastNotification(null);
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }

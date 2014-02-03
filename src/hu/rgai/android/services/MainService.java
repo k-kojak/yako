@@ -58,6 +58,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import java.util.Date;
 
 public class MainService extends Service {
 
@@ -148,7 +149,7 @@ public class MainService extends Service {
         if (isNet) {
           for (AccountAndr acc : accounts) {
             if (type == null || acc.getAccountType().equals(type)) {
-                LongOperation myThread = new LongOperation(this, handler, acc, loadMore);
+              LongOperation myThread = new LongOperation(this, handler, acc, loadMore);
               myThread.execute();
             }
           }
@@ -348,7 +349,9 @@ public class MainService extends Service {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
-              if (!mle.isSeen() && mle.getDate().after(MainActivity.getLastNotification())) {
+              Date lastNotForAcc = MainActivity.getLastNotification(mle.getAccount());
+              Log.d("rgai", "LAST NOT. FOR ACC " + mle.getAccount() + " -> " + lastNotForAcc);
+              if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
                 if (lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
                 }
@@ -393,12 +396,21 @@ public class MainService extends Service {
                 KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
                 mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
                 EventLogger.INSTANCE.writeToLogFile(NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+                Log.d("rgai", "DISPLAY NOTIFICATION...");
+                if (newMessageCount == 1) {
+                  MainActivity.updateLastNotification(lastUnreadMsg.getAccount());
+                } else {
+                  MainActivity.updateLastNotification(null);
+                }
               } else {
-                MainActivity.updateLastNotification();
+                
               }
+              
+//                Log.d("rgai", "UPDATE LAST NOTIFICATION TIM...");
 
             } else {
-              mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+//              Log.d("rgai", "CANCEL NOTIFICATION...");
+//              mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
             }
           } else {
             // Log.d("rgai", "message == null");
