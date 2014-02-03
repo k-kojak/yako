@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -20,23 +21,30 @@ import java.util.List;
 public class LazyAdapter extends BaseAdapter {
 
   private MainActivity activity;
-  private List<MessageListElementParc> data;
+//  private List<MessageListElementParc> data;
   private static LayoutInflater inflater = null;
 //    public ImageLoader imageLoader;
 
-  public LazyAdapter(MainActivity a, List<MessageListElementParc> d) {
+  public LazyAdapter(MainActivity a) {
     activity = a;
-    data = d;
+//    data = d;
     inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 //        imageLoader=new ImageLoader(activity.getApplicationContext());
   }
 
   public int getCount() {
-    return data.size();
+    return MainService.messages.size();
   }
 
   public Object getItem(int position) {
-    return data.get(position);
+    int i = 0;
+    for (MessageListElementParc mlep : MainService.messages) {
+      if (i == position) {
+        return mlep;
+      }
+      i++;
+    }
+    return null;
   }
 
   public long getItemId(int position) {
@@ -55,7 +63,7 @@ public class LazyAdapter extends BaseAdapter {
     ImageView icon = (ImageView) vi.findViewById(R.id.list_image);
     ImageView msgType = (ImageView) vi.findViewById(R.id.list_acc_type);
 
-    MessageListElementParc message = data.get(position);
+    MessageListElementParc message = (MessageListElementParc)this.getItem(position);
 
     // Setting all values in listview
     // TODO: itt null pointer exceptionnel elszallunk olykor

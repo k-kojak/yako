@@ -44,7 +44,7 @@ class LogUploader implements Runnable {
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
   final private long waitTimeAfterDefaultWaitTimeInMilliSecondum;
-  MainActivity mainActivity;
+//  MainActivity mainActivity;
 
   public boolean isRepeatTask() {
     return repeatTask;
@@ -55,7 +55,7 @@ class LogUploader implements Runnable {
   }
 
   public LogUploader(MainActivity mainActivity, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
-    this.mainActivity = mainActivity;
+//    this.mainActivity = mainActivity;
     this.defaultWaitTimeInMilliSecondum = defaultWaitTimeInMilliSecondum;
     this.waitTimeAfterDefaultWaitTimeInMilliSecondum = waitTimeAfterDefaultWaitTimeInMilliSecondum;
   }
@@ -72,7 +72,7 @@ class LogUploader implements Runnable {
           e.printStackTrace();
         }
       } else {
-        if (!mainActivity.isNetworkAvailable()) {
+        if (!MainActivity.isNetworkAvailable()) {
           try {
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch (InterruptedException e) {
@@ -80,7 +80,7 @@ class LogUploader implements Runnable {
             e.printStackTrace();
           }
         } else {
-          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(this.mainActivity)) {
+          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(MainActivity.instance)) {
             EventLogger.INSTANCE.writeToLogFile(LOGUPLOAD_FAILED_STR, true);
             try {
               Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);

@@ -88,7 +88,7 @@ public class MainService extends Service {
   // private LongOperation myThread = null;
   private final IBinder mBinder = new MyBinder();
 
-  private static Set<MessageListElementParc> messages = null;
+  public static volatile Set<MessageListElementParc> messages = null;
   
   public MainService() {
     // super("valami nev");
@@ -197,7 +197,7 @@ public class MainService extends Service {
   }
 
   // TODO: switch back setMessageComment function
-  public void setMessageContent(String id, AccountAndr account, FullMessage fullMessage) {
+  public static void setMessageContent(String id, AccountAndr account, FullMessage fullMessage) {
 
     for (MessageListElementParc mlep : messages) {
       if (mlep.getId().equals(id) && mlep.getAccount().equals(account)) {
@@ -223,25 +223,25 @@ public class MainService extends Service {
     Log.d("rgai", "messages removed to account -> " + account);
   }
   
-  /**
-   * 
-   * @param id
-   * @return
-   * @deprecated use setMessageSeen instead
-   */
-  @Deprecated
-  public boolean setMailSeen(String id) {
-    boolean changed = false;
-    for (MessageListElementParc mlep : messages) {
-      if (mlep.getId().equals(id)) {
-        if (mlep.isSeen()) {
-          changed = true;
-        }
-        mlep.setSeen(true);
-      }
-    }
-    return changed;
-  }
+//  /**
+//   * 
+//   * @param id
+//   * @return
+//   * @deprecated use setMessageSeen instead
+//   */
+//  @Deprecated
+//  public boolean setMailSeen(String id) {
+//    boolean changed = false;
+//    for (MessageListElementParc mlep : messages) {
+//      if (mlep.getId().equals(id)) {
+//        if (mlep.isSeen()) {
+//          changed = true;
+//        }
+//        mlep.setSeen(true);
+//      }
+//    }
+//    return changed;
+//  }
 
   /**
    * Sets the seen status to true, and the unreadCount to 0.
@@ -261,6 +261,10 @@ public class MainService extends Service {
       }
     }
     return changed;
+  }
+  
+  public static void initMessages() {
+    messages = new TreeSet<MessageListElementParc>();
   }
 
   public void setAllMessagesToSeen() {
@@ -338,6 +342,7 @@ public class MainService extends Service {
           }
 //          Log.d("rgai","MainService handle message LOAD MORE -> " + bundle.getBoolean("load_more"));
           intent.putExtra("load_more", bundle.getBoolean("load_more"));
+          boolean loadMore = bundle.getBoolean("load_more");
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
             MessageListElementParc[] newMessages = (MessageListElementParc[]) bundle.getParcelableArray("messages");
 
@@ -357,7 +362,6 @@ public class MainService extends Service {
                 }
                 newMessageCount++;
                 if (((actViewingThreadId != null) && (mle.getId().contains(actViewingThreadId + UNDERLINE_SIGN_STR))) || ((actViewingThreadId == null) && (MainActivity.isMainActivityVisible()))) {
-
                   loggingNewMessageArrived(mle, true);
                 } else {
                   loggingNewMessageArrived(mle, false);
@@ -416,7 +420,8 @@ public class MainService extends Service {
             // Log.d("rgai", "message == null");
           }
           // Log.d("rgai", "sending broadcast");
-          sendBroadcast(intent);
+//          sendBroadcast(intent);
+          MainActivity.notifyMessageChange(loadMore);
 
         }
       }
@@ -444,7 +449,7 @@ public class MainService extends Service {
 
     private void mergeMessages(MessageListElementParc[] newMessages) {
       if (messages == null) {
-        messages = new TreeSet<MessageListElementParc>();
+        initMessages();
       }
       for (MessageListElementParc newMessage : newMessages) {
         boolean contains = false;

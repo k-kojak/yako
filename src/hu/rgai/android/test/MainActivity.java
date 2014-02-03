@@ -66,6 +66,8 @@ import java.util.HashMap;
 
 public class MainActivity extends ActionBarActivity {
 
+  public static volatile MainActivity instance;
+  
   private static final String APPLICATION_START_STR = "application:start";
   private static final String APPLICATION_OVER_STR = "application:over";
   private static final String MAINPAGE_BACKBUTTON_STR = "mainpage:backbutton";
@@ -84,7 +86,7 @@ public class MainActivity extends ActionBarActivity {
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
 
   private boolean serviceConnectionEstablished = false;
-  private static volatile List<MessageListElementParc> messages;
+//  private static volatile List<MessageListElementParc> messages;
   private static volatile LazyAdapter adapter;
 
   private MainService s;
@@ -98,11 +100,11 @@ public class MainActivity extends ActionBarActivity {
 //  private BroadcastReceiver systemReceiver;
 //>>>>>>> master
   private ProgressDialog pd = null;
-  private Date lastLoadMoreEvent = null;
-  private ListView lv = null;
-  private Button loadMoreButton = null;
-  private View loadIndicator = null;
-  private volatile boolean isLoading = false;
+  private static Date lastLoadMoreEvent = null;
+  private static ListView lv = null;
+  private static Button loadMoreButton = null;
+  private static View loadIndicator = null;
+  private static volatile boolean isLoading = false;
 
   // private boolean activityOpenedFromNotification = false;
   private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -114,7 +116,7 @@ public class MainActivity extends ActionBarActivity {
       // activityOpenedFromNotification = false;
       // }
       updateList(s.getEmails(), false);
-      if ((messages == null || !messages.isEmpty()) && pd != null) {
+      if ((MainService.messages == null || MainService.messages.isEmpty()) && pd != null) {
         pd.dismiss();
       }
       serviceConnectionEstablished = true;
@@ -149,6 +151,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    instance = this;
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -244,12 +247,11 @@ public class MainActivity extends ActionBarActivity {
           FullMessageParc fm = data.getParcelableExtra("message_data");
           String messageId = data.getStringExtra("message_id");
           AccountAndr acc = data.getParcelableExtra("account");
-          s.setMessageContent(messageId, acc, fm);
+          MainService.setMessageContent(messageId, acc, fm);
         }
         break;
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
         if (resultCode == Activity.RESULT_OK) {
-          Log.d("rgai", "email setting result");
           reloadMessages();
         }
         break;
@@ -267,29 +269,33 @@ public class MainActivity extends ActionBarActivity {
   private void updateList(MessageListElementParc[] newMessages, boolean loadMoreResult) {
     // Log.d("rgai", "updating list...");
     if (loadMoreResult) {
-      if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-        if (isLoading) {
-          boolean removeResult = lv.removeFooterView(loadIndicator);
-          Log.d("rgai", "REMOVEFOOTER VIEW INDICATOR -> " + removeResult);
-          lv.addFooterView(loadMoreButton);
-          isLoading = false;
-        }
-      }
+      removeLoadMoreIndicator();
     }
-    if (newMessages != null && messages != null) {
-      if (messages != null) {
-        messages.clear();
-        for (int i = 0; i < newMessages.length; i++) {
-          messages.add(newMessages[i]);
-        }
-      }
+//    if (newMessages != null && messages != null) {
+//      if (messages != null) {
+//        messages.clear();
+//        for (int i = 0; i < newMessages.length; i++) {
+//          messages.add(newMessages[i]);
+//        }
+//      }
       setContent();
-    }
+//    }
 
   }
 
-  private void setMessageSeen(MessageListElementParc message) {
-    for (MessageListElementParc mlep : messages) {
+  private static void removeLoadMoreIndicator() {
+    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+      if (isLoading) {
+        boolean removeResult = lv.removeFooterView(loadIndicator);
+        Log.d("rgai", "REMOVEFOOTER VIEW INDICATOR -> " + removeResult);
+        lv.addFooterView(loadMoreButton);
+        isLoading = false;
+      }
+    }
+  }
+
+  private static void setMessageSeen(MessageListElementParc message) {
+    for (MessageListElementParc mlep : MainService.messages) {
       if (mlep.equals(message)) {
         mlep.setSeen(true);
         mlep.setUnreadCount(0);
@@ -423,7 +429,7 @@ public class MainActivity extends ActionBarActivity {
 
   public static void removeMessagesToAccount(final AccountAndr acc) {
     Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
-    Iterator<MessageListElementParc> it = messages.iterator();
+    Iterator<MessageListElementParc> it = MainService.messages.iterator();
     while (it.hasNext()) {
       MessageListElementParc mle = it.next();
       if (mle.getAccount().equals(acc)) {
@@ -433,30 +439,30 @@ public class MainActivity extends ActionBarActivity {
     adapter.notifyDataSetChanged();
   }
 
-  private void setContent() {
+  private static void setContent() {
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem
     // lehet csinalni semmit...
-    if (messages == null) {
-      messages = new ArrayList<MessageListElementParc>();
+    if (MainService.messages == null) {
+      MainService.initMessages();
     }
-    boolean isListView = findViewById(R.id.list) != null;
+    boolean isListView = instance.findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable();
     if (isNet || isPhone()) {
       // if list is not empty and current view is listview, update adapter
-      if (!messages.isEmpty() && adapter != null && isListView) {
+      if (!MainService.messages.isEmpty() && adapter != null && isListView) {
         adapter.notifyDataSetChanged();
       }
       // insert listview, set adapter
-      else if (!messages.isEmpty() && !isListView) {
-        setContentView(R.layout.main);
-        lv = (ListView) findViewById(R.id.list);
+      else if (!MainService.messages.isEmpty() && !isListView) {
+        instance.setContentView(R.layout.main);
+        lv = (ListView) instance.findViewById(R.id.list);
 
-        loadMoreButton = new Button(this);
+        loadMoreButton = new Button(instance);
         loadMoreButton.setText("Load more ...");
         loadMoreButton.getBackground().setAlpha(0);
 
         lv.addFooterView(loadMoreButton);
-        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LayoutInflater inflater = (LayoutInflater) instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
 
         loadIndicator.setOnClickListener(new View.OnClickListener() {
@@ -464,8 +470,9 @@ public class MainActivity extends ActionBarActivity {
           public void onClick(View arg0) {
           }
         });
-
-        adapter = new LazyAdapter(this, messages);
+//        List<MessageListElementParc> msgsList = new LinkedList<MessageListElementParc>();
+//        msgsList.addAll(MainService.messages);
+        adapter = new LazyAdapter(instance);
         lv.setAdapter(adapter);
         Log.d("rgai", "setting message list");
 
@@ -478,14 +485,14 @@ public class MainActivity extends ActionBarActivity {
           }
         });
 
-        lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
+        instance.lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
             MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
             AccountAndr a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-            Intent intent = new Intent(MainActivity.this, classToLoad);
+            Intent intent = new Intent(instance, classToLoad);
             intent.putExtra("msg_list_element", message);
             intent.putExtra("account", (Parcelable) a);
 
@@ -496,14 +503,14 @@ public class MainActivity extends ActionBarActivity {
             }
 
             loggingOnClickEvent(message, changed);
-            startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
+            instance.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
 //            removeNotificationIfExists();
           }
 
           private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
             StringBuilder builder = new StringBuilder();
             appendClickedElementDatasToBuilder(message, builder);
-            appendVisibleElementToStringBuilder(builder, lv, adapter);
+            instance.appendVisibleElementToStringBuilder(builder, lv, adapter);
             builder.append(changed);
             Log.d("willrgai", builder.toString());
             EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
@@ -518,27 +525,36 @@ public class MainActivity extends ActionBarActivity {
             builder.append(SPACE_STR);
           }
         });
-      } else if (messages.isEmpty()) {
-        TextView text = new TextView(this);
-        text.setText(getString(R.string.empty_list));
+      } else if (MainService.messages.isEmpty()) {
+        TextView text = new TextView(instance);
+        text.setText(instance.getString(R.string.empty_list));
         text.setGravity(Gravity.CENTER);
-        this.setContentView(text);
+        instance.setContentView(text);
       }
     } else {
-      TextView text = new TextView(this);
-      text.setText(getString(R.string.no_internet_access));
+      TextView text = new TextView(instance);
+      text.setText(instance.getString(R.string.no_internet_access));
       text.setGravity(Gravity.CENTER);
-      this.setContentView(text);
+      instance.setContentView(text);
     }
 
   }
+  
+  public static void notifyMessageChange(boolean loadMore) {
+    Log.d("rgai", "MAIN Activity Notified about new message...");
+    setContent();
+//    adapter.notifyDataSetChanged();
+    if (loadMore) {
+      removeLoadMoreIndicator();
+    }
+  }
 
-  public void loadMoreMessage() {
+  public static void loadMoreMessage() {
     int coolDown = 5;
     if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + coolDown * 1000 < new Date().getTime()) {
-      Intent service = new Intent(this, MainService.class);
+      Intent service = new Intent(instance, MainService.class);
       service.putExtra("load_more", true);
-      this.startService(service);
+      instance.startService(service);
       lastLoadMoreEvent = new Date();
       // Toast.makeText(this, getString(R.string.loading_more_elements),
       // Toast.LENGTH_LONG).show();
@@ -554,7 +570,7 @@ public class MainActivity extends ActionBarActivity {
         lv.addFooterView(loadIndicator);
         isLoading = true;
       } else {
-        Toast.makeText(this, "Loading more...", Toast.LENGTH_LONG).show();
+        Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
       }
       // loadMoreButton.setVisibility(View.GONE);
       // ()
@@ -569,17 +585,8 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void removeNotificationIfExists() {
-//    boolean unseenExists = false;
-//    for (MessageListElementParc mle : messages) {
-//      if (!mle.isSeen()) {
-//        unseenExists = true;
-//        break;
-//      }
-//    }
-//    if (!unseenExists) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-//    }
   }
 
   @Override
@@ -606,14 +613,14 @@ public class MainActivity extends ActionBarActivity {
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
 
-  public boolean isNetworkAvailable() {
-    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+  public static boolean isNetworkAvailable() {
+    ConnectivityManager connectivityManager = (ConnectivityManager) instance.getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  private boolean isPhone() {
-    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+  private static boolean isPhone() {
+    TelephonyManager telMgr = (TelephonyManager) instance.getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
     if (simState == TelephonyManager.SIM_STATE_READY) {
       return true;
@@ -710,7 +717,7 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  class LogOnScrollListener implements OnScrollListener {
+  static class LogOnScrollListener implements OnScrollListener {
     final ListView lv;
     final LazyAdapter adapter;
 
@@ -739,7 +746,7 @@ public class MainActivity extends ActionBarActivity {
         builder.append(SCROLL_END_STR);
         builder.append(SPACE_STR);
       }
-      appendVisibleElementToStringBuilder(builder, lv, adapter);
+      instance.appendVisibleElementToStringBuilder(builder, lv, adapter);
       Log.d("willrgai", builder.toString());
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }
