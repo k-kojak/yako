@@ -67,6 +67,7 @@ import java.util.HashMap;
 public class MainActivity extends ActionBarActivity {
 
   public static volatile MainActivity instance;
+  private static String fbToken = null;
   
   private static final String APPLICATION_START_STR = "application:start";
   private static final String APPLICATION_OVER_STR = "application:over";
@@ -173,19 +174,19 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     // TODO: session and access token opening and handling
-    final String fbToken = StoreHandler.getFacebookAccessToken(this);
-    if (fbToken != null) {
-      Session.openActiveSessionWithAccessToken(this,
-          AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
-          new Session.StatusCallback() {
-            @Override
-            public void call(Session sn, SessionState ss, Exception excptn) {
-              Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-              Log.d("rgai", sn.toString());
-              Log.d("rgai", ss.toString());
-            }
-          });
-    }
+//    final String fbToken = StoreHandler.getFacebookAccessToken(this);
+//    if (fbToken != null) {
+//      Session.openActiveSessionWithAccessToken(this,
+//        AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+//        new Session.StatusCallback() {
+//          @Override
+//          public void call(Session sn, SessionState ss, Exception excptn) {
+//            Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+//            Log.d("rgai", sn.toString());
+//            Log.d("rgai", ss.toString());
+//          }
+//        });
+//    }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 
     if (!MainService.RUNNING) {
@@ -205,6 +206,24 @@ public class MainActivity extends ActionBarActivity {
 
     if (!logUploadScheduler.isRunning)
       logUploadScheduler.startRepeatingTask();
+  }
+  
+  public static void openFbSession(Context context) {
+    if (fbToken == null) {
+      fbToken = StoreHandler.getFacebookAccessToken(context);
+      if (fbToken != null) {
+        Session.openActiveSessionWithAccessToken(context,
+          AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+          new Session.StatusCallback() {
+            @Override
+            public void call(Session sn, SessionState ss, Exception excptn) {
+              Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+              Log.d("rgai", sn.toString());
+              Log.d("rgai", ss.toString());
+            }
+          });
+      }
+    }
   }
 
   @Override
@@ -310,18 +329,15 @@ public class MainActivity extends ActionBarActivity {
     removeNotificationIfExists();
     Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
-    if (last_notification_dates == null) {
-      last_notification_dates = new HashMap<AccountAndr, Date>();
-    }
-    
+    initLastNotificationDates();
 
-    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
-    if (fba != null) {
-      // TODO: this should be an async task
-      XmppConnector xmppc = new XmppConnector(fba, this);
-      xmppc.execute();
-      // FacebookMessageProvider.initConnection(fba, this);
-    }
+//    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+//    if (fba != null) {
+//      // TODO: this should be an async task
+//      XmppConnector xmppc = new XmppConnector(fba, this);
+//      xmppc.execute();
+//      // FacebookMessageProvider.initConnection(fba, this);
+//    }
     // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
@@ -352,6 +368,12 @@ public class MainActivity extends ActionBarActivity {
     // setting content
     setContent();
     logActivityEvent(MAINPAGE_RESUME_STR);
+  }
+  
+  private static void initLastNotificationDates() {
+    if (last_notification_dates == null) {
+      last_notification_dates = new HashMap<AccountAndr, Date>();
+    }
   }
 
   private void setUpAndRegisterScreenReceiver() {
@@ -399,6 +421,7 @@ public class MainActivity extends ActionBarActivity {
    * @param acc the account to update, or null if update all account's last event time
    */
   public static void updateLastNotification(AccountAndr acc) {
+    initLastNotificationDates();
     if (acc != null) {
       last_notification_dates.put(acc, new Date());
     } else {
@@ -440,6 +463,7 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private static void setContent() {
+    if (instance == null) return;
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem
     // lehet csinalni semmit...
     if (MainService.messages == null) {
@@ -541,7 +565,7 @@ public class MainActivity extends ActionBarActivity {
   }
   
   public static void notifyMessageChange(boolean loadMore) {
-    Log.d("rgai", "MAIN Activity Notified about new message...");
+    Log.d("rgai", "MAIN Activity Notified about new message: " + MainService.messages.size());
     setContent();
 //    adapter.notifyDataSetChanged();
     if (loadMore) {

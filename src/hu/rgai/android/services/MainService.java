@@ -58,6 +58,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.rgai.android.asynctasks.XmppConnector;
 import java.util.Date;
 
 public class MainService extends Service {
@@ -100,10 +101,20 @@ public class MainService extends Service {
     // Log.d("rgai", "service oncreate");
     RUNNING = true;
     handler = new MyHandler(this);
-
+    connectXmpp();
     // IntentFilter filter = new
     // IntentFilter(Constants.EMAIL_CONTENT_CHANGED_BC_MSG);
     // registerReceiver(emailContentChangeReceiver, filter);
+  }
+  
+  private void connectXmpp() {
+    if (!FacebookMessageProvider.isXmppAlive()) {
+      FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+      if (fba != null) {
+        XmppConnector xmppc = new XmppConnector(fba, this);
+        xmppc.execute();
+      }
+    }
   }
 
   @Override
@@ -117,6 +128,7 @@ public class MainService extends Service {
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
     iterationCount++;
+    MainActivity.openFbSession(this);
 //    Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
     MessageProvider.Type type = null;
       // if true, loading new messages at end of the lists, not checking for new ones

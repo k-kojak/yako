@@ -62,7 +62,7 @@ import org.jivesoftware.smack.packet.Presence;
  */
 public class FacebookMessageProvider implements ThreadMessageProvider {
 
-  private static XMPPConnection xmpp = null;
+  private static volatile XMPPConnection xmpp = null;
   // use this variable to access facebook
   private FacebookAccount account;
   private MessageListener mslistener;
@@ -196,6 +196,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     Request.executeAndWait(request);
 
     return messages;
+  }
+  
+  public static boolean isXmppAlive() {
+    return xmpp != null && xmpp.isConnected();
   }
 
   public static void initConnection(FacebookAccount fba, final Context context) {

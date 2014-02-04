@@ -142,6 +142,10 @@ public enum EventLogger {
       } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
+      } catch (Exception ex) {
+        // TODO: a bufferedWriter sokszor null
+        Log.d("willrgai", "EZZEL KEZDENI KELL VALAMIT");
+        ex.printStackTrace();
       }
     } else {
       tempBufferToUpload.add(log);
