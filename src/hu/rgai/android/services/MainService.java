@@ -367,7 +367,6 @@ public class MainService extends Service {
                 mle.setUnreadCount(0);
               }
               Date lastNotForAcc = MainActivity.getLastNotification(mle.getAccount());
-              Log.d("rgai", "LAST NOT. FOR ACC " + mle.getAccount() + " -> " + lastNotForAcc);
               if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
                 if (lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
