@@ -565,7 +565,6 @@ public class MainActivity extends ActionBarActivity {
   }
   
   public static void notifyMessageChange(boolean loadMore) {
-    Log.d("rgai", "MAIN Activity Notified about new message: " + MainService.messages.size());
     setContent();
 //    adapter.notifyDataSetChanged();
     if (loadMore) {
@@ -734,11 +733,17 @@ public class MainActivity extends ActionBarActivity {
     }
     int firstVisiblePosition = lv.getFirstVisiblePosition();
     int lastVisiblePosition = lv.getLastVisiblePosition();
-
-    for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
-      builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
-      builder.append(SPACE_STR);
+    // TODO: null pointer exception occures here....
+    try {
+      for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
+        builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
+        builder.append(SPACE_STR);
+      }
+    } catch (Exception ex) {
+      Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");
+      ex.printStackTrace();
     }
+    
   }
 
   static class LogOnScrollListener implements OnScrollListener {
