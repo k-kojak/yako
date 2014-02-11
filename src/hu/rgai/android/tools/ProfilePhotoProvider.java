@@ -65,7 +65,9 @@ public class ProfilePhotoProvider {
             
         int photoIdx = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Photo.PHOTO);
         byte[] data = cursor.getBlob(photoIdx);
-        bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+        if (data != null) {
+          bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+        }
 //        int nameIdx = cursor.getColumnIndexOrThrow(ContactsContract.Data.DISPLAY_NAME_PRIMARY);
 //        String name = cursor.getString(nameIdx);
 //
