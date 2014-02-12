@@ -93,7 +93,8 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   private void onSessionStateChange(Session session, SessionState state, Exception exception) {
     if (state.isOpened()) {
       if (session.isOpened()) {
-        StoreHandler.storeFacebookAccessToken(FacebookSettingActivity.this, session.getAccessToken());
+        StoreHandler.storeFacebookAccessToken(FacebookSettingActivity.this, session.getAccessToken(), session.getExpirationDate());
+        
 //            ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
         Request.newMeRequest(session, new Request.GraphUserCallback() {
           public void onCompleted(GraphUser gu, Response rspns) {

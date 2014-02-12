@@ -30,7 +30,8 @@
   <string name="loading_more_elements">Loading older messages</string>
     
     
-  <string name="settings_fb_access_token">hu.rgai.android.settings.accounts</string>
+  <string name="settings_fb_access_token">hu.rgai.android.settings.accounts.fb_access_token</string>
+  <string name="settings_fb_access_token_exp_date">hu.rgai.android.settings.accounts.fb_access_token.expiration_date</string>
   <string name="settings_accounts">hu.rgai.android.settings.accounts</string>
   <string name="settings_accounts_size">hu.rgai.android.settings.accounts.size</string>
   <string name="settings_accounts_item">hu.rgai.android.settings.accounts.item</string>

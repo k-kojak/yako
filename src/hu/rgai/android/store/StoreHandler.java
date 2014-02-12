@@ -18,9 +18,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -30,6 +36,7 @@ import java.util.List;
 public class StoreHandler {
   
   private static Bitmap fbImgMe = null;
+  private static final String DATE_FORMAT = "EEE MMM dd kk:mm:ss z yyyy";
   
   public static void saveUserFbImage(Context context, Bitmap bitmap) {
     if (bitmap != null) {
@@ -90,23 +97,40 @@ public class StoreHandler {
     }
   }
   
-  public static void storeFacebookAccessToken(Context context, String token) {
+  public static void storeFacebookAccessToken(Context context, String token, Date expirationDate) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = prefs.edit();
-    editor.putString("fb_acc_token", token);
+    editor.putString(context.getString(R.string.settings_fb_access_token), token);
+    
+    SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
+    editor.putString(context.getString(R.string.settings_fb_access_token_exp_date), df.format(expirationDate));
+    Log.d("rgai", df.format(expirationDate));
+    
     editor.commit();
   }
   
   public static void clearFacebookAccessToken(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = prefs.edit();
-    editor.remove("fb_acc_token");
+    editor.remove(context.getString(R.string.settings_fb_access_token));
+    editor.remove(context.getString(R.string.settings_fb_access_token_exp_date));
     editor.commit();
   }
   
   public static String getFacebookAccessToken(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
-    String token = prefs.getString("fb_acc_token", null);
+    String token = prefs.getString(context.getString(R.string.settings_fb_access_token), null);
+    return token;
+  }
+  
+  public static Date getFacebookAccessTokenExpirationDate(Context context) {
+    SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
+    Date token = new Date();
+    try {
+      token = new SimpleDateFormat(DATE_FORMAT).parse(prefs.getString(context.getString(R.string.settings_fb_access_token_exp_date), "2030-01-01"));
+    } catch (ParseException ex) {
+      Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+    }
     return token;
   }
   

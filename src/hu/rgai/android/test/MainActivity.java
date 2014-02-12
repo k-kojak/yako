@@ -211,9 +211,12 @@ public class MainActivity extends ActionBarActivity {
   public static void openFbSession(Context context) {
     if (fbToken == null) {
       fbToken = StoreHandler.getFacebookAccessToken(context);
+      Date expirationDate = StoreHandler.getFacebookAccessTokenExpirationDate(context);
+      Log.d("rgai", "expiration date readed -> " + expirationDate.toString());
       if (fbToken != null) {
         Session.openActiveSessionWithAccessToken(context,
-          AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+          AccessToken.createFromExistingAccessToken(fbToken, expirationDate, new Date(2013, 1, 1),
+                AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
           new Session.StatusCallback() {
             @Override
             public void call(Session sn, SessionState ss, Exception excptn) {
