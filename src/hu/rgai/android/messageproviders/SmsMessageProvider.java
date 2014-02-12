@@ -160,7 +160,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     
     // after opening a thread, set all of items to read
     ContentValues values = new ContentValues();
-    values.put("read", true);
+    values.put("seen", 1);
     context.getContentResolver().update(
             uriSMSURI,
             values,
