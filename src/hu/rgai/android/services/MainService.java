@@ -372,6 +372,7 @@ public class MainService extends Service {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
+                Log.d("rgai", "NEW MESSAGE PLUS PLUS");
                 if (((actViewingThreadId != null) && (mle.getId().contains(actViewingThreadId + UNDERLINE_SIGN_STR))) || ((actViewingThreadId == null) && (MainActivity.isMainActivityVisible()))) {
                   loggingNewMessageArrived(mle, true);
                 } else {
