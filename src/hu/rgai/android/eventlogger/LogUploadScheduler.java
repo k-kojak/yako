@@ -3,7 +3,7 @@ package hu.rgai.android.eventlogger;
 import hu.rgai.android.test.MainActivity;
 
 public class LogUploadScheduler {
-  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 10;
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 15;
   final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 5 * 60;
 
   Thread scheduler;
@@ -11,8 +11,8 @@ public class LogUploadScheduler {
   public boolean isRunning = false;
   LogUploader mStatusChecker;
 
-  public LogUploadScheduler(MainActivity mainActivity) {
-    mStatusChecker = new LogUploader(mainActivity, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME);
+  public LogUploadScheduler() {
+    mStatusChecker = new LogUploader(DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME);
   }
 
   public void startRepeatingTask() {
@@ -44,7 +44,6 @@ class LogUploader implements Runnable {
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
   final private long waitTimeAfterDefaultWaitTimeInMilliSecondum;
-//  MainActivity mainActivity;
 
   public boolean isRepeatTask() {
     return repeatTask;
@@ -54,8 +53,8 @@ class LogUploader implements Runnable {
     this.repeatTask = repeatTask;
   }
 
-  public LogUploader(MainActivity mainActivity, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
-//    this.mainActivity = mainActivity;
+  public LogUploader(long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
+
     this.defaultWaitTimeInMilliSecondum = defaultWaitTimeInMilliSecondum;
     this.waitTimeAfterDefaultWaitTimeInMilliSecondum = waitTimeAfterDefaultWaitTimeInMilliSecondum;
   }

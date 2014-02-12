@@ -5,25 +5,21 @@ package hu.rgai.android.test;
 
 //import android.app.ActionBar;
 //import com.testflightapp.lib.TestFlight;
-import hu.rgai.android.asynctasks.XmppConnector;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -62,15 +58,12 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import java.util.HashMap;
 
 public class MainActivity extends ActionBarActivity {
 
   public static volatile MainActivity instance;
   private static String fbToken = null;
-  
-  private static final String APPLICATION_START_STR = "application:start";
-  private static final String APPLICATION_OVER_STR = "application:over";
+
   private static final String MAINPAGE_BACKBUTTON_STR = "mainpage:backbutton";
   private static final String MAINPAGE_PAUSE_STR = "mainpage:pause";
   private static final String MAINPAGE_RESUME_STR = "mainpage:resume";
@@ -83,23 +76,22 @@ public class MainActivity extends ActionBarActivity {
   public static final int PICK_CONTACT = 101;
   private static final String SPACE_STR = " ";
   private static boolean is_activity_visible = false;
-//  private static Date last_notification_date = null;
+  // private static Date last_notification_date = null;
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
 
   private boolean serviceConnectionEstablished = false;
-//  private static volatile List<MessageListElementParc> messages;
+  // private static volatile List<MessageListElementParc> messages;
   private static volatile LazyAdapter adapter;
 
   private MainService s;
 
-  private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler(this);
   private DataUpdateReceiver serviceReceiver;
-//<<<<<<< HEAD
-//  private BroadcastReceiver systemReceiver;
+  // <<<<<<< HEAD
+  // private BroadcastReceiver systemReceiver;
   private ScreenReceiver screenReceiver;
-//=======
-//  private BroadcastReceiver systemReceiver;
-//>>>>>>> master
+  // =======
+  // private BroadcastReceiver systemReceiver;
+  // >>>>>>> master
   private ProgressDialog pd = null;
   private static Date lastLoadMoreEvent = null;
   private static ListView lv = null;
@@ -153,14 +145,6 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     instance = this;
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        if (logUploadScheduler.isRunning)
-          logUploadScheduler.stopRepeatingTask();
-        EventLogger.INSTANCE.closeLogFile();
-      }
-    });
 
     // defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
     // setup handler for uncaught exception
@@ -174,19 +158,21 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     // TODO: session and access token opening and handling
-//    final String fbToken = StoreHandler.getFacebookAccessToken(this);
-//    if (fbToken != null) {
-//      Session.openActiveSessionWithAccessToken(this,
-//        AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
-//        new Session.StatusCallback() {
-//          @Override
-//          public void call(Session sn, SessionState ss, Exception excptn) {
-//            Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-//            Log.d("rgai", sn.toString());
-//            Log.d("rgai", ss.toString());
-//          }
-//        });
-//    }
+    // final String fbToken = StoreHandler.getFacebookAccessToken(this);
+    // if (fbToken != null) {
+    // Session.openActiveSessionWithAccessToken(this,
+    // AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1),
+    // new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE,
+    // Settings.getFacebookPermissions()),
+    // new Session.StatusCallback() {
+    // @Override
+    // public void call(Session sn, SessionState ss, Exception excptn) {
+    // Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+    // Log.d("rgai", sn.toString());
+    // Log.d("rgai", ss.toString());
+    // }
+    // });
+    // }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 
     if (!MainService.RUNNING) {
@@ -200,14 +186,8 @@ public class MainActivity extends ActionBarActivity {
       pd.setCancelable(false);
       pd.show();
     }
-    EventLogger.INSTANCE.setContext(this);
-    EventLogger.INSTANCE.openLogFile("logFile.txt", false);
-    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
-
-    if (!logUploadScheduler.isRunning)
-      logUploadScheduler.startRepeatingTask();
   }
-  
+
   public static void openFbSession(Context context) {
     if (fbToken == null) {
       fbToken = StoreHandler.getFacebookAccessToken(context);
@@ -215,16 +195,15 @@ public class MainActivity extends ActionBarActivity {
       Log.d("rgai", "expiration date readed -> " + expirationDate.toString());
       if (fbToken != null) {
         Session.openActiveSessionWithAccessToken(context,
-          AccessToken.createFromExistingAccessToken(fbToken, expirationDate, new Date(2013, 1, 1),
-                AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
-          new Session.StatusCallback() {
-            @Override
-            public void call(Session sn, SessionState ss, Exception excptn) {
-              Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-              Log.d("rgai", sn.toString());
-              Log.d("rgai", ss.toString());
-            }
-          });
+            AccessToken.createFromExistingAccessToken(fbToken, expirationDate, new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
+            new Session.StatusCallback() {
+              @Override
+              public void call(Session sn, SessionState ss, Exception excptn) {
+                Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
+                Log.d("rgai", sn.toString());
+                Log.d("rgai", ss.toString());
+              }
+            });
       }
     }
   }
@@ -293,15 +272,15 @@ public class MainActivity extends ActionBarActivity {
     if (loadMoreResult) {
       removeLoadMoreIndicator();
     }
-//    if (newMessages != null && messages != null) {
-//      if (messages != null) {
-//        messages.clear();
-//        for (int i = 0; i < newMessages.length; i++) {
-//          messages.add(newMessages[i]);
-//        }
-//      }
-      setContent();
-//    }
+    // if (newMessages != null && messages != null) {
+    // if (messages != null) {
+    // messages.clear();
+    // for (int i = 0; i < newMessages.length; i++) {
+    // messages.add(newMessages[i]);
+    // }
+    // }
+    setContent();
+    // }
 
   }
 
@@ -334,13 +313,13 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = true;
     initLastNotificationDates();
 
-//    FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
-//    if (fba != null) {
-//      // TODO: this should be an async task
-//      XmppConnector xmppc = new XmppConnector(fba, this);
-//      xmppc.execute();
-//      // FacebookMessageProvider.initConnection(fba, this);
-//    }
+    // FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
+    // if (fba != null) {
+    // // TODO: this should be an async task
+    // XmppConnector xmppc = new XmppConnector(fba, this);
+    // xmppc.execute();
+    // // FacebookMessageProvider.initConnection(fba, this);
+    // }
     // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
@@ -349,30 +328,34 @@ public class MainActivity extends ActionBarActivity {
     registerReceiver(serviceReceiver, intentFilter);
 
     // register system broadcast receiver for internet connection state change
-//<<<<<<< HEAD
-//    if (systemReceiver == null) {
-//      systemReceiver = new CustomBroadcastReceiver(this);
-//    }
-//    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-//    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-//    registerReceiver(systemReceiver, customIntentFilter);
+    // <<<<<<< HEAD
+    // if (systemReceiver == null) {
+    // systemReceiver = new CustomBroadcastReceiver(this);
+    // }
+    // IntentFilter customIntentFilter = new
+    // IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    // customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    // registerReceiver(systemReceiver, customIntentFilter);
 
     setUpAndRegisterScreenReceiver();
 
-//=======
-//    if (systemReceiver == null) {
-//      systemReceiver = new CustomBroadcastReceiver(this);
-//    }
-//    IntentFilter customIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-//    customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-//    registerReceiver(systemReceiver, customIntentFilter);
-    
-//>>>>>>> master
+    // =======
+    // if (systemReceiver == null) {
+    // systemReceiver = new CustomBroadcastReceiver(this);
+    // }
+    // IntentFilter customIntentFilter = new
+    // IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    // customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+    // registerReceiver(systemReceiver, customIntentFilter);
+
+    // >>>>>>> master
     // setting content
     setContent();
+    if (!EventLogger.INSTANCE.isLogFileOpen())
+      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
     logActivityEvent(MAINPAGE_RESUME_STR);
   }
-  
+
   private static void initLastNotificationDates() {
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
@@ -392,18 +375,18 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-//<<<<<<< HEAD
-//    if (systemReceiver != null) {
-//      unregisterReceiver(systemReceiver);
-//    }
+    // <<<<<<< HEAD
+    // if (systemReceiver != null) {
+    // unregisterReceiver(systemReceiver);
+    // }
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
     }
-//=======
-//    if (systemReceiver != null) {
-//      unregisterReceiver(systemReceiver);
-//    }
-//>>>>>>> master
+    // =======
+    // if (systemReceiver != null) {
+    // unregisterReceiver(systemReceiver);
+    // }
+    // >>>>>>> master
     if (serviceConnection != null) {
       unbindService(serviceConnection);
     }
@@ -412,6 +395,7 @@ public class MainActivity extends ActionBarActivity {
 
   /**
    * Returns true if the main activity is visible.
+   * 
    * @return true if main activity visible, false otherwise
    */
   public static boolean isMainActivityVisible() {
@@ -419,9 +403,12 @@ public class MainActivity extends ActionBarActivity {
   }
 
   /**
-   * Updates the last notification date of the given account.
-   * Sets all of the accounts last notification date to the current date if null given.
-   * @param acc the account to update, or null if update all account's last event time
+   * Updates the last notification date of the given account. Sets all of the
+   * accounts last notification date to the current date if null given.
+   * 
+   * @param acc
+   *          the account to update, or null if update all account's last event
+   *          time
    */
   public static void updateLastNotification(AccountAndr acc) {
     initLastNotificationDates();
@@ -438,7 +425,7 @@ public class MainActivity extends ActionBarActivity {
    * Returns the last notification of the given account.
    * 
    * @param acc
-   * @return 
+   * @return
    */
   public static Date getLastNotification(AccountAndr acc) {
     Date ret = null;
@@ -466,7 +453,8 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private static void setContent() {
-    if (instance == null) return;
+    if (instance == null)
+      return;
     // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem
     // lehet csinalni semmit...
     if (MainService.messages == null) {
@@ -497,8 +485,9 @@ public class MainActivity extends ActionBarActivity {
           public void onClick(View arg0) {
           }
         });
-//        List<MessageListElementParc> msgsList = new LinkedList<MessageListElementParc>();
-//        msgsList.addAll(MainService.messages);
+        // List<MessageListElementParc> msgsList = new
+        // LinkedList<MessageListElementParc>();
+        // msgsList.addAll(MainService.messages);
         adapter = new LazyAdapter(instance);
         lv.setAdapter(adapter);
         Log.d("rgai", "setting message list");
@@ -531,7 +520,7 @@ public class MainActivity extends ActionBarActivity {
 
             loggingOnClickEvent(message, changed);
             instance.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-//            removeNotificationIfExists();
+            // removeNotificationIfExists();
           }
 
           private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
@@ -566,10 +555,10 @@ public class MainActivity extends ActionBarActivity {
     }
 
   }
-  
+
   public static void notifyMessageChange(boolean loadMore) {
     setContent();
-//    adapter.notifyDataSetChanged();
+    // adapter.notifyDataSetChanged();
     if (loadMore) {
       removeLoadMoreIndicator();
     }
@@ -611,8 +600,8 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void removeNotificationIfExists() {
-      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-      mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+    NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
   }
 
   @Override
@@ -654,7 +643,6 @@ public class MainActivity extends ActionBarActivity {
       return false;
     }
   }
-
 
   private class DataUpdateReceiver extends BroadcastReceiver {
 
@@ -746,7 +734,7 @@ public class MainActivity extends ActionBarActivity {
       Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");
       ex.printStackTrace();
     }
-    
+
   }
 
   static class LogOnScrollListener implements OnScrollListener {

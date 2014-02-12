@@ -57,6 +57,7 @@ public enum EventLogger {
   private static final String SUCCESS_STR = "success";
   private static final String RESULT_STR = "result";
   private volatile BufferedWriter bufferedWriter;
+  private boolean logFileOpen = false;
   private String logFilePath;
   private long logfileCreatedTime;
   LogToJsonConverter logToJsonConverter = new LogToJsonConverter(apiCodeToAI, appPackageName);
@@ -110,8 +111,12 @@ public enum EventLogger {
       }
 
     }
-
+    logFileOpen = true;
     return true;
+  }
+
+  public boolean isLogFileOpen() {
+    return logFileOpen;
   }
 
   public synchronized boolean closeLogFile() {
