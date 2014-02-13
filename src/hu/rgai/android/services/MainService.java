@@ -87,7 +87,6 @@ public class MainService extends Service {
   public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
 
   private static final String APPLICATION_START_STR = "application:start";
-  private static final String APPLICATION_OVER_STR = "application:over";
 
   private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler();
 

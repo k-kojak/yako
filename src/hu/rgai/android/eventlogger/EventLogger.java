@@ -148,8 +148,6 @@ public enum EventLogger {
         // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (Exception ex) {
-        // TODO: a bufferedWriter sokszor null
-        Log.d("willrgai", "EZZEL KEZDENI KELL VALAMIT");
         ex.printStackTrace();
       }
     } else {
@@ -196,6 +194,7 @@ public enum EventLogger {
       } else {
         saveTempBufferToLogFileAndClear();
       }
+      lockedToUpload = false;
       return uploadSucces;
     } catch (ClientProtocolException e) {
       // TODO Auto-generated catch block
@@ -222,7 +221,7 @@ public enum EventLogger {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-
+    lockedToUpload = false;
     return false;
   }
 
@@ -302,13 +301,9 @@ public enum EventLogger {
 
   private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
     final StringEntity httpEntity = new StringEntity(jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
-
     httpEntity.setContentType("application/json");
-
     httpPost.setEntity(httpEntity);
-    Log.d("willrgai", jsonEncodedLogs);
     HttpResponse response = getNewHttpClient().execute(httpPost);
-    Log.d("willrgai", "succes " + isUploadSuccessFull(response));
     return isUploadSuccessFull(response);
   }
 

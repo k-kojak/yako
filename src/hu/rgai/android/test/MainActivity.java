@@ -767,7 +767,6 @@ public class MainActivity extends ActionBarActivity {
         builder.append(SPACE_STR);
       }
       instance.appendVisibleElementToStringBuilder(builder, lv, adapter);
-      Log.d("willrgai", builder.toString());
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }
 

@@ -7,11 +7,14 @@ import static hu.rgai.android.test.Constants.TIMESTAMP_STR;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.util.Log;
 
 public class LogToJsonConverter {
 
@@ -76,9 +79,11 @@ public class LogToJsonConverter {
       record.put(TIMESTAMP_STR, timeStamp);
       recordsInRecord.put(record);
 
+    } catch (NoSuchElementException e) {
+      Log.d("willrgai", "nincs ilyen elem");
     } catch (JSONException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+     Log.d("willrgai", "json hiba");
     }
     recordsInRecord.put(record);
   }
