@@ -75,15 +75,22 @@ public class MainActivity extends ActionBarActivity {
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
   // this is the adapter for the main view
   private static volatile LazyAdapter adapter;
-  
+  // receiver for logging screen status
   private ScreenReceiver screenReceiver;
+  // a progress dialog to display message load status
   private static ProgressDialog pd = null;
+  // a variable to store the last date of "Load more" button press time
   private static Date lastLoadMoreEvent = null;
+  // the static listview where messages displayed
   private static ListView lv = null;
+  // button to load more messages
   private static Button loadMoreButton = null;
+  // an indicator when more messages are loading
   private static View loadIndicator = null;
+  // true if more messages are currently loading
   private static volatile boolean isLoading = false;
 
+  
   private UncaughtExceptionHandler defaultUEH;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
@@ -121,6 +128,9 @@ public class MainActivity extends ActionBarActivity {
     showProgressDialog();
   }
   
+  /**
+   * Displays a loading progress dialog, which tells the user that messages are loading.
+   */
   private static void showProgressDialog() {
     pd = new ProgressDialog(instance);
     pd.setMessage("Fetching messages...");
@@ -128,12 +138,20 @@ public class MainActivity extends ActionBarActivity {
     pd.show();
   }
   
+  /**
+   * Hides the message loading dialog if is there any.
+   */
   private static void hideProgressDialog() {
     if (pd != null) {
       pd.dismiss();
     }
   }
 
+  /**
+   * Opens Facebook session if exists.
+   * 
+   * @param context 
+   */
   public static void openFbSession(Context context) {
     if (fbToken == null) {
       fbToken = StoreHandler.getFacebookAccessToken(context);
@@ -203,19 +221,19 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  /**
+   * Sends a broadcast to the Service to load fresh messages again.
+   */
   private void reloadMessages() {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
     this.sendBroadcast(intent);
   }
 
-  private void updateList(MessageListElementParc[] newMessages, boolean loadMoreResult) {
-    if (loadMoreResult) {
-      removeLoadMoreIndicator();
-    }
-    setContent();
-  }
-
+  /**
+   * Removes load more indicator.
+   * The indicator depends on Android version.
+   */
   private static void removeLoadMoreIndicator() {
     if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
       if (isLoading) {
@@ -227,6 +245,10 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  /**
+   * Sets a message's status to seen.
+   * @param message the message to set seen
+   */
   private static void setMessageSeen(MessageListElementParc message) {
     for (MessageListElementParc mlep : MainService.messages) {
       if (mlep.equals(message)) {
@@ -253,12 +275,18 @@ public class MainActivity extends ActionBarActivity {
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
   }
 
+  /**
+   * Initializes the lastNotification map.
+   */
   private static void initLastNotificationDates() {
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
     }
   }
 
+  /**
+   * Sets up the screen receiver for logging.
+   */
   private void setUpAndRegisterScreenReceiver() {
     if (screenReceiver == null) {
       screenReceiver = new ScreenReceiver();
@@ -291,9 +319,7 @@ public class MainActivity extends ActionBarActivity {
    * Updates the last notification date of the given account. Sets all of the
    * accounts last notification date to the current date if null given.
    * 
-   * @param acc
-   *          the account to update, or null if update all account's last event
-   *          time
+   * @param acc the account to update, or null if update all account's last event time
    */
   public static void updateLastNotification(AccountAndr acc) {
     initLastNotificationDates();
@@ -309,7 +335,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Returns the last notification of the given account.
    * 
-   * @param acc
+   * @param acc last notification time will be set to this account
    * @return
    */
   public static Date getLastNotification(AccountAndr acc) {
@@ -325,6 +351,11 @@ public class MainActivity extends ActionBarActivity {
     return ret;
   }
 
+  /**
+   * Removes the messages from the displayview to the given account.
+   * 
+   * @param acc messages connected to this account will be removed
+   */
   public static void removeMessagesToAccount(final AccountAndr acc) {
     Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
     Iterator<MessageListElementParc> it = MainService.messages.iterator();
@@ -337,11 +368,13 @@ public class MainActivity extends ActionBarActivity {
     adapter.notifyDataSetChanged();
   }
 
+  /**
+   * Sets the content of the listview.
+   */
   private static void setContent() {
-    if (instance == null)
+    if (instance == null) {
       return;
-    // TODO: itt is kell ellenorizni, hogy van-e jelszo, mer ha nincs akkor nem
-    // lehet csinalni semmit...
+    }
     if (MainService.messages == null) {
       MainService.initMessages();
     }
@@ -351,41 +384,28 @@ public class MainActivity extends ActionBarActivity {
     boolean isListView = instance.findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable();
     if (isNet || isPhone()) {
-      // if list is not empty and current view is listview, update adapter
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
         adapter.notifyDataSetChanged();
-      }
-      // insert listview, set adapter
-      else if (!MainService.messages.isEmpty() && !isListView) {
+      } else if (!MainService.messages.isEmpty() && !isListView) {
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
-
+        
         loadMoreButton = new Button(instance);
         loadMoreButton.setText("Load more ...");
         loadMoreButton.getBackground().setAlpha(0);
-
-        lv.addFooterView(loadMoreButton);
-        LayoutInflater inflater = (LayoutInflater) instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
-
-        loadIndicator.setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View arg0) {
-          }
-        });
-        adapter = new LazyAdapter(instance);
-        lv.setAdapter(adapter);
-        Log.d("rgai", "setting message list");
-
         loadMoreButton.setOnClickListener(new View.OnClickListener() {
-
           @Override
           public void onClick(View arg0) {
-            // Starting a new async task
             loadMoreMessage();
           }
         });
-
+        lv.addFooterView(loadMoreButton);
+        
+        LayoutInflater inflater = (LayoutInflater) instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
+        
+        adapter = new LazyAdapter(instance);
+        lv.setAdapter(adapter);
         lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
@@ -407,6 +427,9 @@ public class MainActivity extends ActionBarActivity {
             instance.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
           }
 
+          /**
+           * Performs a log event when an item clicked on the main view list.
+           */
           private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
             StringBuilder builder = new StringBuilder();
             appendClickedElementDatasToBuilder(message, builder);
@@ -437,9 +460,14 @@ public class MainActivity extends ActionBarActivity {
       text.setGravity(Gravity.CENTER);
       instance.setContentView(text);
     }
-
   }
   
+  /**
+   * Displays an error Toast message if something went wrong at the Service during retrieving messages.
+   * 
+   * @param result the result code of the message query
+   * @param message the content of the error message
+   */
   public static void showErrorMessage(int result, String message) {
     if (result != MainService.OK) {
       Log.d("rgai", "ERROR MSG FROM Service -> " + message);
@@ -482,6 +510,11 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  /**
+   * This function is called by the main Service, when a new message arrives.
+   * @param loadMore true if notification comes from a loadMore request(Load More was pressed),
+   * false otherwise
+   */
   public static void notifyMessageChange(boolean loadMore) {
     hideProgressDialog();
     setContent();
@@ -490,8 +523,11 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  /**
+   * Handles LoadMore button press.
+   */
   public static void loadMoreMessage() {
-    int coolDown = 5;
+    int coolDown = 5; // sec
     if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + coolDown * 1000 < new Date().getTime()) {
       Intent service = new Intent(instance, MainService.class);
       service.putExtra("load_more", true);
@@ -502,7 +538,6 @@ public class MainActivity extends ActionBarActivity {
         // getting height of load button
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
         params.height = loadMoreButton.getHeight();
-        Log.d("rgai", "LOAD BUTTON HEIGHT -> " + params.height);
         loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
         lv.removeFooterView(loadMoreButton);
         lv.addFooterView(loadIndicator);
@@ -515,6 +550,9 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  /**
+   * Removes the notification from statusbar if exists.
+   */
   private void removeNotificationIfExists() {
     NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
@@ -530,6 +568,10 @@ public class MainActivity extends ActionBarActivity {
     updateLastNotification(null);
   }
 
+  /**
+   * Logs event.
+   * @param event the text of log
+   */
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
@@ -539,12 +581,20 @@ public class MainActivity extends ActionBarActivity {
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
 
+  /**
+   * Decides if is network available.
+   * @return true if network is available, false otherwise
+   */
   public static boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) instance.getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
+  /**
+   * Decides if the device has SIM card or not.
+   * @return true if has SIM card, false otherwise
+   */
   private static boolean isPhone() {
     TelephonyManager telMgr = (TelephonyManager) instance.getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
@@ -654,9 +704,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
-    }
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {}
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
