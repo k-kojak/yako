@@ -2,8 +2,6 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-//import android.app.ActionBar;
-//import com.testflightapp.lib.TestFlight;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.ScreenReceiver;
@@ -67,41 +65,25 @@ import com.facebook.SessionState;
  */
 public class MainActivity extends ActionBarActivity {
 
+  // this variable holds the MainActivity instance if exists
   public static volatile MainActivity instance;
+  // holds the Facebook token
   private static String fbToken = null;
-
-  private static final String SPACE_STR = " ";
+  // holds the activity visibility state
   private static boolean is_activity_visible = false;
+  // stores the last notification state to all different account types
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
-
+  // this is the adapter for the main view
   private static volatile LazyAdapter adapter;
-
-  private MainService s;
-
-  private DataUpdateReceiver serviceReceiver;
+  
   private ScreenReceiver screenReceiver;
-  private ProgressDialog pd = null;
+  private static ProgressDialog pd = null;
   private static Date lastLoadMoreEvent = null;
   private static ListView lv = null;
   private static Button loadMoreButton = null;
   private static View loadIndicator = null;
   private static volatile boolean isLoading = false;
 
-  private final ServiceConnection serviceConnection = new ServiceConnection() {
-    @Override
-    public void onServiceConnected(ComponentName className, IBinder binder) {
-      s = ((MainService.MyBinder) binder).getService();
-      updateList(s.getEmails(), false);
-      if ((MainService.messages == null || MainService.messages.isEmpty()) && pd != null) {
-        pd.dismiss();
-      }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName className) {
-      s = null;
-    }
-  };
   private UncaughtExceptionHandler defaultUEH;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
@@ -115,7 +97,6 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR);
     EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
@@ -130,18 +111,26 @@ public class MainActivity extends ActionBarActivity {
 
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-
     if (!MainService.RUNNING) {
       Intent intent = new Intent(this, MainScheduler.class);
       intent.setAction(Context.ALARM_SERVICE);
       this.sendBroadcast(intent);
       // disaplying loading dialog, since the mails are not ready, but the user
       // opened the list
-      pd = new ProgressDialog(this);
-      pd.setMessage("Fetching messages...");
-      pd.setCancelable(false);
-      pd.show();
+    }
+    showProgressDialog();
+  }
+  
+  private static void showProgressDialog() {
+    pd = new ProgressDialog(instance);
+    pd.setMessage("Fetching messages...");
+    pd.setCancelable(false);
+    pd.show();
+  }
+  
+  private static void hideProgressDialog() {
+    if (pd != null) {
+      pd.dismiss();
     }
   }
 
@@ -155,11 +144,7 @@ public class MainActivity extends ActionBarActivity {
             AccessToken.createFromExistingAccessToken(fbToken, expirationDate, new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
             new Session.StatusCallback() {
               @Override
-              public void call(Session sn, SessionState ss, Exception excptn) {
-                Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-                Log.d("rgai", sn.toString());
-                Log.d("rgai", ss.toString());
-              }
+              public void call(Session sn, SessionState ss, Exception excptn) {}
             });
       }
     }
@@ -260,14 +245,6 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = true;
     initLastNotificationDates();
 
-    // register service broadcast receiver
-    if (serviceReceiver == null) {
-      serviceReceiver = new DataUpdateReceiver(this);
-    }
-    IntentFilter intentFilter = new IntentFilter(Constants.MAIL_SERVICE_INTENT);
-    registerReceiver(serviceReceiver, intentFilter);
-
-
     setUpAndRegisterScreenReceiver();
 
     setContent();
@@ -297,9 +274,6 @@ public class MainActivity extends ActionBarActivity {
     super.onDestroy();
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
-    }
-    if (serviceConnection != null) {
-      unbindService(serviceConnection);
     }
 
   }
@@ -371,6 +345,9 @@ public class MainActivity extends ActionBarActivity {
     if (MainService.messages == null) {
       MainService.initMessages();
     }
+    if (!MainService.messages.isEmpty()) {
+      hideProgressDialog();
+    }
     boolean isListView = instance.findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable();
     if (isNet || isPhone()) {
@@ -441,11 +418,11 @@ public class MainActivity extends ActionBarActivity {
 
           private void appendClickedElementDatasToBuilder(MessageListElementParc message, StringBuilder builder) {
             builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
-            builder.append(SPACE_STR);
+            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
             builder.append(EventLogger.LOGGER_STRINGS.OTHER.CLICK_TO_MESSAGEGROUP_STR);
-            builder.append(SPACE_STR);
+            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
             builder.append(message.getId());
-            builder.append(SPACE_STR);
+            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
           }
         });
       } else if (MainService.messages.isEmpty()) {
@@ -462,8 +439,51 @@ public class MainActivity extends ActionBarActivity {
     }
 
   }
+  
+  public static void showErrorMessage(int result, String message) {
+    if (result != MainService.OK) {
+      Log.d("rgai", "ERROR MSG FROM Service -> " + message);
+      String msg = "";
+      switch (result) {
+        case MainService.AUTHENTICATION_FAILED_EXCEPTION:
+          msg = "Authentication failed: " + message;
+          break;
+        case MainService.UNKNOWN_HOST_EXCEPTION:
+          msg = message;
+          break;
+        case MainService.IOEXCEPTION:
+          msg = message;
+          break;
+        case MainService.CONNECT_EXCEPTION:
+          msg = message;
+          break;
+        case MainService.NO_SUCH_PROVIDER_EXCEPTION:
+          msg = message;
+          break;
+        case MainService.MESSAGING_EXCEPTION:
+          msg = message;
+          break;
+        case MainService.SSL_HANDSHAKE_EXCEPTION:
+          msg = message;
+          break;
+        case MainService.NO_INTERNET_ACCESS:
+          msg = message;
+          break;
+        case MainService.NO_ACCOUNT_SET:
+          msg = instance.getString(R.string.no_account_set);
+          break;
+        default:
+          msg = instance.getString(R.string.exception_unknown);
+          break;
+      }
+      if (is_activity_visible && instance != null) {
+        Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
+      }
+    }
+  }
 
   public static void notifyMessageChange(boolean loadMore) {
+    hideProgressDialog();
     setContent();
     if (loadMore) {
       removeLoadMoreIndicator();
@@ -508,15 +528,12 @@ public class MainActivity extends ActionBarActivity {
 
     // refreshing last notification date when closing activity
     updateLastNotification(null);
-    if (serviceReceiver != null) {
-      unregisterReceiver(serviceReceiver);
-    }
   }
 
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     appendVisibleElementToStringBuilder(builder, lv, adapter);
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
@@ -538,7 +555,7 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  private class DataUpdateReceiver extends BroadcastReceiver {
+  /*private class DataUpdateReceiver extends BroadcastReceiver {
 
     private final MainActivity activity;
 
@@ -590,9 +607,7 @@ public class MainActivity extends ActionBarActivity {
           if (msg != null) {
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
           }
-          if (pd != null) {
-            pd.dismiss();
-          }
+//          hideProgressDialog();
         } else {
           Parcelable[] messagesParc = intent.getExtras().getParcelableArray("messages");
           MessageListElementParc[] messages = new MessageListElementParc[messagesParc.length];
@@ -601,18 +616,17 @@ public class MainActivity extends ActionBarActivity {
           }
 
           boolean loadMoreResult = intent.getExtras().getBoolean("load_more");
+          Log.d("rgai", "DATE UPDATE RECEIVER -> update list");
           updateList(messages, loadMoreResult);
-          if (pd != null) {
-            pd.dismiss();
-          }
+//          hideProgressDialog();
         }
       }
     }
-  }
+  }*/
 
   private void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, LazyAdapter adapter) {
     if (lv == null || adapter == null) {
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       return;
     }
     int firstVisiblePosition = lv.getFirstVisiblePosition();
@@ -621,7 +635,7 @@ public class MainActivity extends ActionBarActivity {
     try {
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
         builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
     } catch (Exception ex) {
       Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");
@@ -650,13 +664,13 @@ public class MainActivity extends ActionBarActivity {
       StringBuilder builder = new StringBuilder();
 
       builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       if (scrollState == 1) {
         builder.append(EventLogger.LOGGER_STRINGS.SCROLL.START_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       } else {
         builder.append(EventLogger.LOGGER_STRINGS.SCROLL.END_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
       instance.appendVisibleElementToStringBuilder(builder, lv, adapter);
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);

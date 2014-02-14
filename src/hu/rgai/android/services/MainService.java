@@ -321,7 +321,7 @@ public class MainService extends Service {
     return null;
   }
 
-  public MessageListElementParc[] getEmails() {
+  public MessageListElementParc[] getMessages() {
     if (messages != null) {
       return messages.toArray(new MessageListElementParc[0]);
     } else {
@@ -366,18 +366,11 @@ public class MainService extends Service {
 
       Bundle bundle = msg.getData();
       int newMessageCount = 0;
-      // MessageListElementParc theNewMessage = null;
       if (bundle != null) {
         if (bundle.get("result") != null) {
-          // Log.d("rgai", bundle.getInt("result") + "");
-          Intent intent = new Intent(Constants.MAIL_SERVICE_INTENT);
-          intent.putExtra("result", bundle.getInt("result"));
           if (bundle.get("errorMessage") != null) {
-            intent.putExtra("errorMessage", bundle.getString("errorMessage"));
+            MainActivity.showErrorMessage(bundle.getInt("result"), bundle.getString("errorMessage"));
           }
-          // Log.d("rgai","MainService handle message LOAD MORE -> " +
-          // bundle.getBoolean("load_more"));
-          intent.putExtra("load_more", bundle.getBoolean("load_more"));
           boolean loadMore = bundle.getBoolean("load_more");
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
             MessageListElementParc[] newMessages = (MessageListElementParc[]) bundle.getParcelableArray("messages");
@@ -398,8 +391,6 @@ public class MainService extends Service {
                 newMessageCount++;
               }
             }
-
-            intent.putExtra("messages", messages.toArray(new MessageListElementParc[0]));
 
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
@@ -436,19 +427,10 @@ public class MainService extends Service {
 
               }
 
-              // Log.d("rgai", "UPDATE LAST NOTIFICATION TIM...");
-
-            } else {
-              // Log.d("rgai", "CANCEL NOTIFICATION...");
-              // mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
             }
-          } else {
-            // Log.d("rgai", "message == null");
           }
-          // Log.d("rgai", "sending broadcast");
-          // sendBroadcast(intent);
+          
           MainActivity.notifyMessageChange(loadMore);
-
         }
       }
     }
