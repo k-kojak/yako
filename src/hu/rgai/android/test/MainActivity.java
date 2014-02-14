@@ -1,4 +1,3 @@
-//TODO: refresh button at main setting panel
 //TODO: batched contact list update
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
@@ -59,39 +58,28 @@ import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
 
+/**
+ * This is the main view of the application.
+ * 
+ * This activity lists the messages in a common list view.
+ * 
+ * @author Tamas Kojedzinszky
+ */
 public class MainActivity extends ActionBarActivity {
 
   public static volatile MainActivity instance;
   private static String fbToken = null;
 
-  private static final String MAINPAGE_BACKBUTTON_STR = "mainpage:backbutton";
-  private static final String MAINPAGE_PAUSE_STR = "mainpage:pause";
-  private static final String MAINPAGE_RESUME_STR = "mainpage:resume";
-  private static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
-  private static final String SCROLL_END_STR = "scroll:end";
-  private static final String SCROLL_START_STR = "scroll:start";
-  private static final String MAIN_PAGE_STR = "MainPage";
-  // private Boolean isInternetAvailable = null;
-
-  public static final int PICK_CONTACT = 101;
   private static final String SPACE_STR = " ";
   private static boolean is_activity_visible = false;
-  // private static Date last_notification_date = null;
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
 
-  private boolean serviceConnectionEstablished = false;
-  // private static volatile List<MessageListElementParc> messages;
   private static volatile LazyAdapter adapter;
 
   private MainService s;
 
   private DataUpdateReceiver serviceReceiver;
-  // <<<<<<< HEAD
-  // private BroadcastReceiver systemReceiver;
   private ScreenReceiver screenReceiver;
-  // =======
-  // private BroadcastReceiver systemReceiver;
-  // >>>>>>> master
   private ProgressDialog pd = null;
   private static Date lastLoadMoreEvent = null;
   private static ListView lv = null;
@@ -99,20 +87,14 @@ public class MainActivity extends ActionBarActivity {
   private static View loadIndicator = null;
   private static volatile boolean isLoading = false;
 
-  // private boolean activityOpenedFromNotification = false;
   private final ServiceConnection serviceConnection = new ServiceConnection() {
     @Override
     public void onServiceConnected(ComponentName className, IBinder binder) {
       s = ((MainService.MyBinder) binder).getService();
-      // if (activityOpenedFromNotification) {
-      // s.setAllMessagesToSeen();
-      // activityOpenedFromNotification = false;
-      // }
       updateList(s.getEmails(), false);
       if ((MainService.messages == null || MainService.messages.isEmpty()) && pd != null) {
         pd.dismiss();
       }
-      serviceConnectionEstablished = true;
     }
 
     @Override
@@ -133,8 +115,8 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", MAINPAGE_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile(MAINPAGE_BACKBUTTON_STR, true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -146,33 +128,8 @@ public class MainActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
     instance = this;
 
-    // defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
-    // setup handler for uncaught exception
-    // Thread.setDefaultUncaughtExceptionHandler(_unCaughtExceptionHandler);
-    // setContentView(R.layout.main);
-
-    // activityOpenedFromNotification =
-    // getIntent().getBooleanExtra("from_notifier", false);
-    // Log.d("rgai", "WE CAME FROM NOTIFIER CLICK -> " +
-    // activityOpenedFromNotification);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-    // TODO: session and access token opening and handling
-    // final String fbToken = StoreHandler.getFacebookAccessToken(this);
-    // if (fbToken != null) {
-    // Session.openActiveSessionWithAccessToken(this,
-    // AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1),
-    // new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE,
-    // Settings.getFacebookPermissions()),
-    // new Session.StatusCallback() {
-    // @Override
-    // public void call(Session sn, SessionState ss, Exception excptn) {
-    // Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-    // Log.d("rgai", sn.toString());
-    // Log.d("rgai", ss.toString());
-    // }
-    // });
-    // }
     bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 
     if (!MainService.RUNNING) {
@@ -268,20 +225,10 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void updateList(MessageListElementParc[] newMessages, boolean loadMoreResult) {
-    // Log.d("rgai", "updating list...");
     if (loadMoreResult) {
       removeLoadMoreIndicator();
     }
-    // if (newMessages != null && messages != null) {
-    // if (messages != null) {
-    // messages.clear();
-    // for (int i = 0; i < newMessages.length; i++) {
-    // messages.add(newMessages[i]);
-    // }
-    // }
     setContent();
-    // }
-
   }
 
   private static void removeLoadMoreIndicator() {
@@ -313,13 +260,6 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = true;
     initLastNotificationDates();
 
-    // FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
-    // if (fba != null) {
-    // // TODO: this should be an async task
-    // XmppConnector xmppc = new XmppConnector(fba, this);
-    // xmppc.execute();
-    // // FacebookMessageProvider.initConnection(fba, this);
-    // }
     // register service broadcast receiver
     if (serviceReceiver == null) {
       serviceReceiver = new DataUpdateReceiver(this);
@@ -327,33 +267,13 @@ public class MainActivity extends ActionBarActivity {
     IntentFilter intentFilter = new IntentFilter(Constants.MAIL_SERVICE_INTENT);
     registerReceiver(serviceReceiver, intentFilter);
 
-    // register system broadcast receiver for internet connection state change
-    // <<<<<<< HEAD
-    // if (systemReceiver == null) {
-    // systemReceiver = new CustomBroadcastReceiver(this);
-    // }
-    // IntentFilter customIntentFilter = new
-    // IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    // customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-    // registerReceiver(systemReceiver, customIntentFilter);
 
     setUpAndRegisterScreenReceiver();
 
-    // =======
-    // if (systemReceiver == null) {
-    // systemReceiver = new CustomBroadcastReceiver(this);
-    // }
-    // IntentFilter customIntentFilter = new
-    // IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    // customIntentFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-    // registerReceiver(systemReceiver, customIntentFilter);
-
-    // >>>>>>> master
-    // setting content
     setContent();
     if (!EventLogger.INSTANCE.isLogFileOpen())
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
-    logActivityEvent(MAINPAGE_RESUME_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
   }
 
   private static void initLastNotificationDates() {
@@ -375,18 +295,9 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    // <<<<<<< HEAD
-    // if (systemReceiver != null) {
-    // unregisterReceiver(systemReceiver);
-    // }
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
     }
-    // =======
-    // if (systemReceiver != null) {
-    // unregisterReceiver(systemReceiver);
-    // }
-    // >>>>>>> master
     if (serviceConnection != null) {
       unbindService(serviceConnection);
     }
@@ -485,9 +396,6 @@ public class MainActivity extends ActionBarActivity {
           public void onClick(View arg0) {
           }
         });
-        // List<MessageListElementParc> msgsList = new
-        // LinkedList<MessageListElementParc>();
-        // msgsList.addAll(MainService.messages);
         adapter = new LazyAdapter(instance);
         lv.setAdapter(adapter);
         Log.d("rgai", "setting message list");
@@ -501,7 +409,7 @@ public class MainActivity extends ActionBarActivity {
           }
         });
 
-        instance.lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
+        lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
@@ -520,7 +428,6 @@ public class MainActivity extends ActionBarActivity {
 
             loggingOnClickEvent(message, changed);
             instance.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-            // removeNotificationIfExists();
           }
 
           private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
@@ -533,9 +440,9 @@ public class MainActivity extends ActionBarActivity {
           }
 
           private void appendClickedElementDatasToBuilder(MessageListElementParc message, StringBuilder builder) {
-            builder.append(MAIN_PAGE_STR);
+            builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
             builder.append(SPACE_STR);
-            builder.append(CLICK_TO_MESSAGEGROUP_STR);
+            builder.append(EventLogger.LOGGER_STRINGS.OTHER.CLICK_TO_MESSAGEGROUP_STR);
             builder.append(SPACE_STR);
             builder.append(message.getId());
             builder.append(SPACE_STR);
@@ -558,7 +465,6 @@ public class MainActivity extends ActionBarActivity {
 
   public static void notifyMessageChange(boolean loadMore) {
     setContent();
-    // adapter.notifyDataSetChanged();
     if (loadMore) {
       removeLoadMoreIndicator();
     }
@@ -571,8 +477,6 @@ public class MainActivity extends ActionBarActivity {
       service.putExtra("load_more", true);
       instance.startService(service);
       lastLoadMoreEvent = new Date();
-      // Toast.makeText(this, getString(R.string.loading_more_elements),
-      // Toast.LENGTH_LONG).show();
 
       if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
         // getting height of load button
@@ -581,19 +485,11 @@ public class MainActivity extends ActionBarActivity {
         Log.d("rgai", "LOAD BUTTON HEIGHT -> " + params.height);
         loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
         lv.removeFooterView(loadMoreButton);
-        // Log.d("rgai", "REMOVEFOOTER VIEW BUTTON -> " + removeResult);
         lv.addFooterView(loadIndicator);
         isLoading = true;
       } else {
         Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
       }
-      // loadMoreButton.setVisibility(View.GONE);
-      // ()
-      // loadIndicator.setVisibility(View.VISIBLE);
-      // LayoutInflater inflater =
-      // (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-      // View load = inflater.inflate(R.layout.loading_indicator, null);
-      // ((ListView)findViewById(R.id.list)).addFooterView(loadIndicator);
     } else {
       Log.d("rgai", "@@@skipping load button press for " + coolDown + " sec");
     }
@@ -606,9 +502,8 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   protected void onPause() {
-    logActivityEvent(MAINPAGE_PAUSE_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
     super.onPause();
-    // Log.d("rgai","MainActivitiy.onPause");
     is_activity_visible = false;
 
     // refreshing last notification date when closing activity
@@ -616,7 +511,6 @@ public class MainActivity extends ActionBarActivity {
     if (serviceReceiver != null) {
       unregisterReceiver(serviceReceiver);
     }
-    // FacebookMessageProvider.closeConnection();
   }
 
   private void logActivityEvent(String event) {
@@ -707,7 +601,6 @@ public class MainActivity extends ActionBarActivity {
           }
 
           boolean loadMoreResult = intent.getExtras().getBoolean("load_more");
-          // Log.d("rgai", "LOAD MORE RESULT -> " + loadMoreResult);
           updateList(messages, loadMoreResult);
           if (pd != null) {
             pd.dismiss();
@@ -748,7 +641,6 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-      // TODO Auto-generated method stub
 
     }
 
@@ -757,13 +649,13 @@ public class MainActivity extends ActionBarActivity {
       // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
-      builder.append(MAIN_PAGE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
       builder.append(SPACE_STR);
       if (scrollState == 1) {
-        builder.append(SCROLL_START_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.START_STR);
         builder.append(SPACE_STR);
       } else {
-        builder.append(SCROLL_END_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.END_STR);
         builder.append(SPACE_STR);
       }
       instance.appendVisibleElementToStringBuilder(builder, lv, adapter);

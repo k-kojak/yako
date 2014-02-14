@@ -21,7 +21,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author Tamas Kojedzinszky
  */
   public class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
