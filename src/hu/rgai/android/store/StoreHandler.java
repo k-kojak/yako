@@ -127,9 +127,10 @@ public class StoreHandler {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     Date token = new Date();
     try {
-      token = new SimpleDateFormat(DATE_FORMAT).parse(prefs.getString(context.getString(R.string.settings_fb_access_token_exp_date), "2030-01-01"));
+      token = new SimpleDateFormat(DATE_FORMAT).parse(prefs.getString(context.getString(R.string.settings_fb_access_token_exp_date),
+              new Date(token.getTime() + 1000L * 3600L * 24L * 365L).toString()));
     } catch (ParseException ex) {
-      Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+//      Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
     }
     return token;
   }
