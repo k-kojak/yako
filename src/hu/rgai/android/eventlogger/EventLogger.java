@@ -377,5 +377,27 @@ public enum EventLogger {
       }
     }
   }
-
+  
+  public static class LOGGER_STRINGS {
+    
+    public static class OTHER {
+      public static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
+      public static final String SPACE_STR = " ";
+      
+    }
+    
+    public static class MAINPAGE {
+      public static final String PAUSE_STR = "mainpage:pause";
+      public static final String RESUME_STR = "mainpage:resume";
+      public static final String BACKBUTTON_STR = "mainpage:backbutton";
+      public static final String STR = "MainPage";
+    }
+    
+    public static class SCROLL {
+      public static final String END_STR = "scroll:end";
+      public static final String START_STR = "scroll:start";
+    }
+    
+  }
+  
 }
