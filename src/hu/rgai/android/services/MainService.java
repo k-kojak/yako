@@ -118,9 +118,9 @@ public class MainService extends Service {
     // IntentFilter filter = new
     // IntentFilter(Constants.EMAIL_CONTENT_CHANGED_BC_MSG);
     // registerReceiver(emailContentChangeReceiver, filter);
+    EventLogger.INSTANCE.setContext(this);
     EventLogger.INSTANCE.openLogFile("logFile.txt", false);
     EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
-    EventLogger.INSTANCE.setContext(this);
 
     if (!logUploadScheduler.isRunning)
       logUploadScheduler.startRepeatingTask();

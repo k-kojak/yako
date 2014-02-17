@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -54,8 +55,6 @@ import android.util.Log;
 public enum EventLogger {
   INSTANCE;
 
-  private static final String SUCCESS_STR = "success";
-  private static final String RESULT_STR = "result";
   private volatile BufferedWriter bufferedWriter;
   private boolean logFileOpen = false;
   private String logFilePath;
@@ -82,10 +81,10 @@ public enum EventLogger {
       if (isSdPresent()) {
         logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
-        logfile = new File(context.getFilesDir().getAbsoluteFile(), logFilePath);
+        logfile = new File(Environment.getRootDirectory().getAbsoluteFile(), logFilePath);
       }
     }
-
+    Log.d("willrgai", logfile.toString());
     this.logFilePath = logfile.getPath();
     if (logfile.exists()) {
       try {
@@ -162,7 +161,8 @@ public enum EventLogger {
   private synchronized long getLogFileCreateDate() throws NumberFormatException, IOException {
     FileReader logFileReader = new FileReader(logFilePath);
     BufferedReader br = new BufferedReader(logFileReader);
-    long dateInMillis = Long.valueOf(br.readLine());
+    String readLine = br.readLine();
+    Long dateInMillis = Long.valueOf(readLine);
     br.close();
     return dateInMillis;
   }
@@ -232,6 +232,7 @@ public enum EventLogger {
 
     List<String> logList = getLogListFromLogFile();
     String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
+    Log.d("willrgai", jsonEncodedLogs);
     if (jsonEncodedLogs != null)
       uploadSucces = uploadSucces && uploadJsonEncodedString(jsonEncodedLogs);
     else
@@ -303,7 +304,17 @@ public enum EventLogger {
     final StringEntity httpEntity = new StringEntity(jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
     httpEntity.setContentType("application/json");
     httpPost.setEntity(httpEntity);
+    InputStream reader = httpPost.getEntity().getContent();
+    BufferedReader br = null;
+    StringBuilder sb = new StringBuilder();
+    br = new BufferedReader(new InputStreamReader(reader));
+    String line;
+    while ((line = br.readLine()) != null) {
+      sb.append(line);
+    }
+    Log.d("willrgai", sb.toString());
     HttpResponse response = getNewHttpClient().execute(httpPost);
+    Log.d("willrgai", response.getStatusLine().toString());
     return isUploadSuccessFull(response);
   }
 

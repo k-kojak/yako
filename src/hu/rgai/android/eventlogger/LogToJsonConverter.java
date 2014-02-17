@@ -45,9 +45,10 @@ public class LogToJsonConverter {
       JSONObject record = new JSONObject();
       JSONArray recordsInRecord = new JSONArray();
       for (String log : logList) {
+        Log.d("willrgai", "loglist " + log);
         addRecordsToRecord(recordsInRecord, log);
       }
-
+      Log.d("willrgai", "recordsinrecord " + recordsInRecord.toString());
       record.put(API_KEY_STR, apiCode);
       record.put(DEVICE_ID_STR, deviceId);
       record.put(PACKAGE_STR, packageName);
@@ -65,7 +66,7 @@ public class LogToJsonConverter {
 
     StringTokenizer st = new StringTokenizer(log, " ");
     try {
-      Long timeStamp = Long.getLong(st.nextToken());
+      Long timeStamp = Long.valueOf(st.nextToken());
 
       JSONObject event = new JSONObject();
       String eventName = st.nextToken();
@@ -75,17 +76,16 @@ public class LogToJsonConverter {
         datasToEvent.put(st.nextToken(""));
       event.put(EVENTDATAS_STR, datasToEvent);
       event.put(EVENTNAME_STR, eventName);
-      record.put(DATA_STR, event.toString().replaceAll("\"", "\u0020"));
       record.put(TIMESTAMP_STR, timeStamp);
+      record.put(DATA_STR, event.toString().replaceAll("\"", "\u0020"));
       recordsInRecord.put(record);
-
+      recordsInRecord.toString();
     } catch (NoSuchElementException e) {
       Log.d("willrgai", "nincs ilyen elem");
     } catch (JSONException e) {
       // TODO Auto-generated catch block
-     Log.d("willrgai", "json hiba");
+      Log.d("willrgai", "json hiba");
     }
-    recordsInRecord.put(record);
   }
 
   public static long getCurrentTime() {
