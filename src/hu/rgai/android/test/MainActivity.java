@@ -21,17 +21,13 @@ import java.util.Iterator;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
@@ -90,7 +86,8 @@ public class MainActivity extends ActionBarActivity {
   // true if more messages are currently loading
   private static volatile boolean isLoading = false;
 
-  
+  private static final String APPLICATION_START_STR = "application:start";
+
   private UncaughtExceptionHandler defaultUEH;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
@@ -115,7 +112,11 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     instance = this;
-
+    if (!EventLogger.INSTANCE.isLogFileOpen()) {
+      EventLogger.INSTANCE.setContext(this);
+      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+    }
+    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (!MainService.RUNNING) {
@@ -127,9 +128,10 @@ public class MainActivity extends ActionBarActivity {
     }
     showProgressDialog();
   }
-  
+
   /**
-   * Displays a loading progress dialog, which tells the user that messages are loading.
+   * Displays a loading progress dialog, which tells the user that messages are
+   * loading.
    */
   private static void showProgressDialog() {
     pd = new ProgressDialog(instance);
@@ -137,7 +139,7 @@ public class MainActivity extends ActionBarActivity {
     pd.setCancelable(false);
     pd.show();
   }
-  
+
   /**
    * Hides the message loading dialog if is there any.
    */
@@ -150,7 +152,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Opens Facebook session if exists.
    * 
-   * @param context 
+   * @param context
    */
   public static void openFbSession(Context context) {
     if (fbToken == null) {
@@ -162,7 +164,8 @@ public class MainActivity extends ActionBarActivity {
             AccessToken.createFromExistingAccessToken(fbToken, expirationDate, new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
             new Session.StatusCallback() {
               @Override
-              public void call(Session sn, SessionState ss, Exception excptn) {}
+              public void call(Session sn, SessionState ss, Exception excptn) {
+              }
             });
       }
     }
@@ -319,7 +322,9 @@ public class MainActivity extends ActionBarActivity {
    * Updates the last notification date of the given account. Sets all of the
    * accounts last notification date to the current date if null given.
    * 
-   * @param acc the account to update, or null if update all account's last event time
+   * @param acc
+   *          the account to update, or null if update all account's last event
+   *          time
    */
   public static void updateLastNotification(AccountAndr acc) {
     initLastNotificationDates();
@@ -335,7 +340,8 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Returns the last notification of the given account.
    * 
-   * @param acc last notification time will be set to this account
+   * @param acc
+   *          last notification time will be set to this account
    * @return
    */
   public static Date getLastNotification(AccountAndr acc) {
@@ -354,7 +360,8 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Removes the messages from the displayview to the given account.
    * 
-   * @param acc messages connected to this account will be removed
+   * @param acc
+   *          messages connected to this account will be removed
    */
   public static void removeMessagesToAccount(final AccountAndr acc) {
     Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
@@ -389,7 +396,7 @@ public class MainActivity extends ActionBarActivity {
       } else if (!MainService.messages.isEmpty() && !isListView) {
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
-        
+
         loadMoreButton = new Button(instance);
         loadMoreButton.setText("Load more ...");
         loadMoreButton.getBackground().setAlpha(0);
@@ -400,10 +407,10 @@ public class MainActivity extends ActionBarActivity {
           }
         });
         lv.addFooterView(loadMoreButton);
-        
+
         LayoutInflater inflater = (LayoutInflater) instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
-        
+
         adapter = new LazyAdapter(instance);
         lv.setAdapter(adapter);
         lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
@@ -461,12 +468,15 @@ public class MainActivity extends ActionBarActivity {
       instance.setContentView(text);
     }
   }
-  
+
   /**
-   * Displays an error Toast message if something went wrong at the Service during retrieving messages.
+   * Displays an error Toast message if something went wrong at the Service
+   * during retrieving messages.
    * 
-   * @param result the result code of the message query
-   * @param message the content of the error message
+   * @param result
+   *          the result code of the message query
+   * @param message
+   *          the content of the error message
    */
   public static void showErrorMessage(int result, String message) {
     if (result != MainService.OK) {
@@ -512,8 +522,10 @@ public class MainActivity extends ActionBarActivity {
 
   /**
    * This function is called by the main Service, when a new message arrives.
-   * @param loadMore true if notification comes from a loadMore request(Load More was pressed),
-   * false otherwise
+   * 
+   * @param loadMore
+   *          true if notification comes from a loadMore request(Load More was
+   *          pressed), false otherwise
    */
   public static void notifyMessageChange(boolean loadMore) {
     hideProgressDialog();
@@ -570,7 +582,9 @@ public class MainActivity extends ActionBarActivity {
 
   /**
    * Logs event.
-   * @param event the text of log
+   * 
+   * @param event
+   *          the text of log
    */
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
@@ -583,6 +597,7 @@ public class MainActivity extends ActionBarActivity {
 
   /**
    * Decides if is network available.
+   * 
    * @return true if network is available, false otherwise
    */
   public static boolean isNetworkAvailable() {
@@ -593,6 +608,7 @@ public class MainActivity extends ActionBarActivity {
 
   /**
    * Decides if the device has SIM card or not.
+   * 
    * @return true if has SIM card, false otherwise
    */
   private static boolean isPhone() {
@@ -704,7 +720,8 @@ public class MainActivity extends ActionBarActivity {
     }
 
     @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {}
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+    }
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
