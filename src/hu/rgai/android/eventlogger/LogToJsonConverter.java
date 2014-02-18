@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +19,7 @@ import android.util.Log;
 
 public class LogToJsonConverter {
 
+  private static final String RECORDS_STR = "records";
   private static final String EVENTDATAS_STR = "eventdatas";
   private static final String EVENTNAME_STR = "eventname";
   private static final String DATA_STR = "data";
@@ -45,14 +47,13 @@ public class LogToJsonConverter {
       JSONObject record = new JSONObject();
       JSONArray recordsInRecord = new JSONArray();
       for (String log : logList) {
-        Log.d("willrgai", "loglist " + log);
         addRecordsToRecord(recordsInRecord, log);
       }
       Log.d("willrgai", "recordsinrecord " + recordsInRecord.toString());
       record.put(API_KEY_STR, apiCode);
       record.put(DEVICE_ID_STR, deviceId);
       record.put(PACKAGE_STR, packageName);
-      record.put("records", recordsInRecord);
+      record.put(RECORDS_STR, recordsInRecord);
       return record.toString();
     } catch (JSONException e) {
       // TODO Auto-generated catch block
@@ -77,7 +78,8 @@ public class LogToJsonConverter {
       event.put(EVENTDATAS_STR, datasToEvent);
       event.put(EVENTNAME_STR, eventName);
       record.put(TIMESTAMP_STR, timeStamp);
-      record.put(DATA_STR, event.toString().replaceAll("\"", "\u0020"));
+
+      record.put(DATA_STR, StringEscapeUtils.escapeJava(event.toString()));
       recordsInRecord.put(record);
       recordsInRecord.toString();
     } catch (NoSuchElementException e) {

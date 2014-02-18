@@ -456,8 +456,6 @@ public class MainService extends Service {
         builder.append(mle.getMessageType());
         builder.append(SPACE_STR);
         builder.append(RSAENCODING.INSTANCE.encodingString(mle.getFrom().getId()));
-
-        Log.d("willrgai", builder.toString());
         EventLogger.INSTANCE.writeToLogFile(builder.toString(), false);
       }
     }
