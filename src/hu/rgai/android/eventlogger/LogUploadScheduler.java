@@ -1,5 +1,6 @@
 package hu.rgai.android.eventlogger;
 
+import android.content.Context;
 import hu.rgai.android.test.MainActivity;
 
 public class LogUploadScheduler {
@@ -7,12 +8,15 @@ public class LogUploadScheduler {
   final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 15 * 60;
 
   Thread scheduler;
+  
+//  private Context c;
 
   public boolean isRunning = false;
   LogUploader mStatusChecker;
 
-  public LogUploadScheduler() {
-    mStatusChecker = new LogUploader(DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME);
+  public LogUploadScheduler(Context c) {
+//    this.c = c;
+    mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME);
   }
 
   public void startRepeatingTask() {
@@ -44,6 +48,7 @@ class LogUploader implements Runnable {
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
   final private long waitTimeAfterDefaultWaitTimeInMilliSecondum;
+  private Context c;
 
   public boolean isRepeatTask() {
     return repeatTask;
@@ -53,8 +58,8 @@ class LogUploader implements Runnable {
     this.repeatTask = repeatTask;
   }
 
-  public LogUploader(long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
-
+  public LogUploader(Context c, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
+    this.c = c;
     this.defaultWaitTimeInMilliSecondum = defaultWaitTimeInMilliSecondum;
     this.waitTimeAfterDefaultWaitTimeInMilliSecondum = waitTimeAfterDefaultWaitTimeInMilliSecondum;
   }
@@ -71,7 +76,7 @@ class LogUploader implements Runnable {
           e.printStackTrace();
         }
       } else {
-        if (!MainActivity.isNetworkAvailable()) {
+        if (!MainActivity.isNetworkAvailable(c)) {
           try {
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch (InterruptedException e) {

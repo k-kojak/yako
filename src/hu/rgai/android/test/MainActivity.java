@@ -389,7 +389,7 @@ public class MainActivity extends ActionBarActivity {
       hideProgressDialog();
     }
     boolean isListView = instance.findViewById(R.id.list) != null;
-    boolean isNet = isNetworkAvailable();
+    boolean isNet = isNetworkAvailable(instance);
     if (isNet || isPhone()) {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
         adapter.notifyDataSetChanged();
@@ -600,8 +600,8 @@ public class MainActivity extends ActionBarActivity {
    * 
    * @return true if network is available, false otherwise
    */
-  public static boolean isNetworkAvailable() {
-    ConnectivityManager connectivityManager = (ConnectivityManager) instance.getSystemService(Context.CONNECTIVITY_SERVICE);
+  public static boolean isNetworkAvailable(Context c) {
+    ConnectivityManager connectivityManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }

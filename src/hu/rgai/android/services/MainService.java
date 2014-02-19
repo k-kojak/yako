@@ -87,7 +87,7 @@ public class MainService extends Service {
 
   private static final String APPLICATION_START_STR = "application:start";
 
-  private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler();
+  private final LogUploadScheduler logUploadScheduler = new LogUploadScheduler(this);
 
   private Handler handler = null;
   // private LongOperation myThread = null;
