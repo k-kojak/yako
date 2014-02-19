@@ -15,7 +15,6 @@ import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.Constants;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -118,8 +117,12 @@ public class MainService extends Service {
     // IntentFilter filter = new
     // IntentFilter(Constants.EMAIL_CONTENT_CHANGED_BC_MSG);
     // registerReceiver(emailContentChangeReceiver, filter);
-    EventLogger.INSTANCE.setContext(this);
-    EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+
+    if (!EventLogger.INSTANCE.isLogFileOpen()) {
+      EventLogger.INSTANCE.setContext(this);
+      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+    }
+
     EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR, true);
 
     if (!logUploadScheduler.isRunning)
@@ -429,7 +432,7 @@ public class MainService extends Service {
 
             }
           }
-          
+
           MainActivity.notifyMessageChange(loadMore);
         }
       }
@@ -453,8 +456,6 @@ public class MainService extends Service {
         builder.append(mle.getMessageType());
         builder.append(SPACE_STR);
         builder.append(RSAENCODING.INSTANCE.encodingString(mle.getFrom().getId()));
-
-        Log.d("willrgai", builder.toString());
         EventLogger.INSTANCE.writeToLogFile(builder.toString(), false);
       }
     }

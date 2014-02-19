@@ -3,7 +3,7 @@ package hu.rgai.android.eventlogger;
 import hu.rgai.android.test.MainActivity;
 
 public class LogUploadScheduler {
-  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 6;
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 15;
   final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 15 * 60;
 
   Thread scheduler;

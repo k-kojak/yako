@@ -70,7 +70,7 @@ public enum EventLogger {
 
   private final ArrayList<String> tempBufferToUpload = new ArrayList<String>();
   private boolean lockedToUpload = false;
-  private Context context;
+  private Context context = null;
 
   public synchronized boolean openLogFile(String logFilePath, boolean isFullPath) {
 
@@ -81,10 +81,9 @@ public enum EventLogger {
       if (isSdPresent()) {
         logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
-        logfile = new File(Environment.getRootDirectory().getAbsoluteFile(), logFilePath);
+        logfile = new File(Environment.getDataDirectory().getAbsoluteFile(), logFilePath);
       }
     }
-    Log.d("willrgai", logfile.toString());
     this.logFilePath = logfile.getPath();
     if (logfile.exists()) {
       try {
@@ -377,15 +376,15 @@ public enum EventLogger {
       }
     }
   }
-  
+
   public static class LOGGER_STRINGS {
-    
+
     public static class OTHER {
       public static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
       public static final String SPACE_STR = " ";
-      
+
     }
-    
+
     public static class MAINPAGE {
       public static final String PAUSE_STR = "mainpage:pause";
       public static final String RESUME_STR = "mainpage:resume";
@@ -401,7 +400,7 @@ public enum EventLogger {
       public static final String END_STR = "scroll:end";
       public static final String START_STR = "scroll:start";
     }
-    
+
   }
-  
+
 }
