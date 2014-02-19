@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import hu.rgai.android.asynctasks.EmailContentGetter;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -39,29 +40,37 @@ import javax.mail.NoSuchProviderException;
 
 import net.htmlparser.jericho.Source;
 
+/**
+ * This class responsible for displaying an email message.
+ * 
+ * @author Tamas Kojedzinszky
+ */
 public class EmailDisplayer extends ActionBarActivity {
 
-  private static final String EMAIL_BACKBUTTON_STR = "Email:backbutton";
   private ProgressDialog pd = null;
   private Handler handler = null;
   private FullSimpleMessageParc content = null;
+  // the subject of the message
   private String subject = null;
+  // true if the message is already opened in the past and no need to fetch message from server
   private boolean loadedWithContent = false;
   private String emailID = "-1";
+  // account which used to fetch email (if necessary)
   private AccountAndr account;
+  // the sender of the message
   private PersonAndr from;
-  
+  // a view for displaying content
   private WebView webView = null;
   private WebViewClient webViewClient = null;
+  // default character encoding of message
   private String mailCharCode = "UTF-8";
-  private Context context = this; 
   
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", EMAIL_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( EMAIL_BACKBUTTON_STR, true );
+    Log.d( "willrgai", EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
   
@@ -74,26 +83,36 @@ public class EmailDisplayer extends ActionBarActivity {
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     
+    //creating webview
     webView = (WebView) findViewById(R.id.email_content);
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
+    // getting the information which belongs to this specific message
     MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+    // setting this message to seen
     MainService.setMessageSeenAndRead(mlep);
     
+    // fetching information
     emailID = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");
     subject = mlep.getTitle();
     from = (PersonAndr)mlep.getFrom();
+    
+    // setting title of activity
     getSupportActionBar().setTitle(account.getAccountType().toString() + " | " + account.getDisplayName());
+    
+    // if message body already available, get it from there
     if (mlep.getFullMessage() != null) {
       loadedWithContent = true;
       content = (FullSimpleMessageParc)mlep.getFullMessage();
 //      webView.loadData(content, "text/html", mailCharCode);
 //      webView.loadDataWithBaseURL(null, content, "text/html", mailCharCode, null);
       displayMessage();
+    
     } else {
+    // if messag ebody not available, fetch it from server
       handler = new EmailContentTaskHandler();
-      EmailContentGetter contentGetter = new EmailContentGetter(this, handler, account);
+      EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
       contentGetter.execute(emailID);
 
       pd = new ProgressDialog(this);
@@ -102,27 +121,20 @@ public class EmailDisplayer extends ActionBarActivity {
       pd.show();
     }
     
-    
-    webViewClient = new WebViewClient(){
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            if(url.startsWith("mailto:")){
-                Intent intent = new Intent(context , MessageReply.class);
-                Source source = new Source(content.getContent());
-                //intent.putExtra("content", source.getRenderer().toString());
-                //intent.putExtra("subject", subject);
-                intent.putExtra("account", (Parcelable)account);
-                intent.putExtra("from", from);
-                startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
-                return true;
-            }
-
-                return true;
-            }
-       };
-       
-       webView.setWebViewClient(webViewClient);      
+    // creating webview
+    webViewClient = new WebViewClient() {
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        if (url.startsWith("mailto:")) {
+          Intent intent = new Intent(EmailDisplayer.this, MessageReply.class);
+          intent.putExtra("account", (Parcelable) account);
+          intent.putExtra("from", from);
+          startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+        }
+        return true;
+      }
+    };
+    webView.setWebViewClient(webViewClient);
     
   }
   
@@ -172,6 +184,7 @@ public class EmailDisplayer extends ActionBarActivity {
   @Override
   public void finish() {
     if (!loadedWithContent) {
+      // if activity loaded without content, than set infos of it to finish it
       Intent resultIntent = new Intent();
       resultIntent.putExtra("message_data", content);
       resultIntent.putExtra("message_id", emailID);
@@ -189,16 +202,19 @@ public class EmailDisplayer extends ActionBarActivity {
   }
   
   
+  /**
+   * Displays the message.
+   */
   private void displayMessage() {
-	  	  
     String mail = from.getId();
     String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>"+ content.getDate() + "<br/>" + content.getSubject() + "<br/>" +"<hr>" +"<br/>" + content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
   
-  
+  /**
+   * Handles the result of message display.
+   */
   private class EmailContentTaskHandler extends Handler {
-    
     @Override
     public void handleMessage(Message msg) {
       Bundle bundle = msg.getData();
@@ -218,81 +234,6 @@ public class EmailDisplayer extends ActionBarActivity {
         }
       }
     }
-  }
-  
-  private class EmailContentGetter extends AsyncTask<String, Integer, FullSimpleMessageParc> {
-
-    private Context context;
-    Handler handler;
-    AccountAndr account;
-    
-    public EmailContentGetter(Context context, Handler handler, AccountAndr account) {
-      this.context = context;
-      this.handler = handler;
-      this.account = account;
-    }
-    
-    
-    
-    @Override
-    protected FullSimpleMessageParc doInBackground(String... params) {
-//      SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
-//      String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
-//      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
-//      String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
-//      MailProvider2 em = new MailProvider2(email, pass, imap, Pass.smtp);
-      FullSimpleMessageParc fsm = null;
-      
-      try {
-        if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)account);
-          fsm = new FullSimpleMessageParc((FullSimpleMessage)semp.getMessage(params[0]));
-//          content = fm.getContent();
-        } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-          SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)account);
-          fsm = new FullSimpleMessageParc((FullSimpleMessage)semp.getMessage(params[0]));
-        } else if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-          // TODO: getting facebook message
-        }
-      } catch (NoSuchProviderException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (MessagingException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IOException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
-      }
-//      try {
-//        content = em.getMailContent2(params[0]);
-//      } catch (IOException ex) {
-//        Logger.getLogger(MyService.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (MessagingException ex) {
-//        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//
-      return fsm;
-//      return "";
-    }
-
-    @Override
-    protected void onPostExecute(FullSimpleMessageParc result) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putParcelable("content", result);
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
-
-
-//    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
   }
 
 }

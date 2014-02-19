@@ -4,13 +4,8 @@
  */
 package hu.rgai.android.test.settings;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.opengl.Visibility;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,8 +23,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.facebook.AccessTokenSource;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -46,12 +39,6 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
-import hu.rgai.android.tools.FacebookFriendProvider;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

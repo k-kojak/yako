@@ -393,6 +393,10 @@ public enum EventLogger {
       public static final String STR = "MainPage";
     }
     
+    public static class EMAIL {
+      public static final String EMAIL_BACKBUTTON_STR = "Email:backbutton";
+    }
+    
     public static class SCROLL {
       public static final String END_STR = "scroll:end";
       public static final String START_STR = "scroll:start";

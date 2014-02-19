@@ -1,5 +1,9 @@
 package hu.rgai.android.test;
 
+/**
+ * 
+ * @author Vilmos Wieszner
+ */
 public class Constants {
   
   public static final String LOG = "rgai";
