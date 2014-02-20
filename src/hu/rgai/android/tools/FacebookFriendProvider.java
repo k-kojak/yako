@@ -80,7 +80,7 @@ public class FacebookFriendProvider {
 
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"));
             fbs.integrate(activity, fbii);
-            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
+//            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
           }
         } catch (JSONException e) {
           // TODO Auto-generated catch block

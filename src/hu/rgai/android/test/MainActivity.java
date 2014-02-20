@@ -372,7 +372,9 @@ public class MainActivity extends ActionBarActivity {
         it.remove();
       }
     }
-    adapter.notifyDataSetChanged();
+    if (adapter != null) {
+      adapter.notifyDataSetChanged();
+    }
   }
 
   /**

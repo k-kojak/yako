@@ -183,8 +183,12 @@ public enum EventLogger {
 
   synchronized boolean uploadLogsAndCreateNewLogfile(Context context) {
     boolean uploadSucces = true;
-    if (logToJsonConverter.getDeviceId() == null)
+    if (logToJsonConverter.getDeviceId() == null) {
+      Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
+      Log.d("rgai", "context: " + context.toString());
       logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+      
+    }
     lockedToUpload = true;
     try {
       uploadSucces = uploadSucces && uploadLogsToServer(context);

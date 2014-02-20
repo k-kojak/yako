@@ -5,7 +5,7 @@ import hu.rgai.android.test.MainActivity;
 
 public class LogUploadScheduler {
   final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 15;
-  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME = 1000 * 15 * 60;
+  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 15 * 60;
 
   Thread scheduler;
   
@@ -16,7 +16,7 @@ public class LogUploadScheduler {
 
   public LogUploadScheduler(Context c) {
 //    this.c = c;
-    mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DAEFAULT_WAIT_TIME);
+    mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
   }
 
   public void startRepeatingTask() {
@@ -84,7 +84,7 @@ class LogUploader implements Runnable {
             e.printStackTrace();
           }
         } else {
-          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(MainActivity.instance)) {
+          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(c)) {
             EventLogger.INSTANCE.writeToLogFile(LOGUPLOAD_FAILED_STR, true);
             try {
               Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);

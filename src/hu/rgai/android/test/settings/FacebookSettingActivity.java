@@ -50,8 +50,6 @@ import java.util.logging.Logger;
 public class FacebookSettingActivity extends ActionBarActivity {
 
 private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "FacebookSettingActivity:backbutton";
-  //  private MainActivity mainActivity;
-//  boolean stillAddingFacebookAccount = false;
   private Menu menu;
   private ProfilePictureView profilePictureView;
   private TextView name;
@@ -65,7 +63,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   private Session.StatusCallback callback = new Session.StatusCallback() {
     @Override
     public void call(Session session, SessionState state, Exception exception) {
-      Log.d("rgai", "CALLBACK CALLED");
+      Log.d("rgai", "Session status CALLBACK CALLED");
       onSessionStateChange(session, state, exception);
     }
   };
@@ -78,14 +76,20 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   }
   
   private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+    Log.d("rgai", "FacebookSettingActivity.onSessionStateChange");
+    Log.d("rgai", "state.isOpened -> " + state.isOpened());
+    Log.d("rgai", "session.isOpened -> " + session.isOpened());
     if (state.isOpened()) {
       if (session.isOpened()) {
+        Log.d("rgai", "STORING FB Session view storehandler");
         StoreHandler.storeFacebookAccessToken(FacebookSettingActivity.this, session.getAccessToken(), session.getExpirationDate());
         
 //            ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
         Request.newMeRequest(session, new Request.GraphUserCallback() {
           public void onCompleted(GraphUser gu, Response rspns) {
+            Log.d("rgai", "NEW ME REQUEST ON COMPLETE");
             if (gu != null) {
+              Log.d("rgai", "onSessionStateChange gu != null");
               if (user == null) {
                 user = gu;
               }
@@ -113,6 +117,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   }
 
   private void updateUI() {
+    Log.d("rgai", "updateUI() ");
 //      Session session = Session.getActiveSession();
     if (user != null) {
       profilePictureView.setProfileId(user.getId());
@@ -209,18 +214,6 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
     this.id = id;
   }
   
-//  private static Session openActiveSession(Activity activity, boolean allowLoginUI, StatusCallback callback, List<String> permissions) {
-//    OpenRequest openRequest = new OpenRequest(activity).setPermissions(permissions).setCallback(callback);
-//    Session session = new Builder(activity).build();
-//    if (SessionState.CREATED_TOKEN_LOADED.equals(session.getState()) || allowLoginUI) {
-//      Session.setActiveSession(session);
-//      session.openForRead(openRequest);
-//      return session;
-//    }
-//    return null;
-//  }
-
-  
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       // Inflate the menu items for use in the action bar
@@ -306,6 +299,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
 //      onSessionStateChange(session, session.getState(), null);
 //    }
 //    uiHelper.onResume();
+    Log.d("rgai", "onResume");
     updateUI();
   }
 
@@ -313,8 +307,10 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     Log.d("rgai", "ON ACT. RESULT");
+    
     uiHelper.onActivityResult(requestCode, resultCode, data);
     Session session = Session.getActiveSession();
+    Log.d("rgai", "onActivity result session -> " + session);
     if (session != null && (session.isOpened() || session.isClosed())) {
       onSessionStateChange(session, session.getState(), null);
     }
@@ -369,7 +365,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   }
   
   public void deleteAccountSettings(boolean allowLoginUI) {
-//    Log.d("rgai", "DELETE");
+    Log.d("rgai", "deleteAccountSettings...");
     
     Session.openActiveSession(this, allowLoginUI, new Session.StatusCallback() {
 
@@ -413,76 +409,8 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
     }
   }
 
-//  private class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
-//
-//    Handler handler;
-////    FacebookAccount account;
-//    private Activity activity;
-//
-//    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
-//      this.activity = activity;
-//      this.handler = handler;
-////      this.account = account;
-//    }
-//
-//    @Override
-//    protected String doInBackground(String... params) {
-//      String content = null;
-//
-//      // getting my facebook profile image
-//      String url = String.format("https://graph.facebook.com/%s/picture", params[0]);
-//
-//      InputStream inputStream = null;
-//      try {
-//        inputStream = new URL(url).openStream();
-//      } catch (MalformedURLException ex) {
-//        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (IOException ex) {
-//        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-//      StoreHandler.saveUserFbImage(activity, bitmap);
-//      
-//
-//      
-//      FacebookFriendProvider fbfp = new FacebookFriendProvider();
-//      fbfp.getFacebookFriends(activity, new ToastHelper() {
-//
-//        public void showToast(String msg) {
-//          publishProgress(msg);
-//        }
-//      });
-//
-//      return content;
-//    }
-//
-//    @Override
-//    protected void onPostExecute(String result) {
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//      bundle.putString("content", "1");
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
-//    
-//    @Override
-//    protected void onProgressUpdate(String... values) {
-//      Toast.makeText(activity, values[0], Toast.LENGTH_LONG).show();
-//    }
-//  }
-
   public interface ToastHelper {
     public void showToast(String msg);
   }
   
-//  public MessageProvider.Type getType() {
-//    return MessageProvider.Type.FACEBOOK;
-//  }
-//  
-//  public FacebookAccountAndr getAccount() {
-//    String m = email.getText().toString();
-//    String p = pass.getText().toString();
-//    int num = Integer.parseInt((String)messageAmount.getSelectedItem());
-//    return new FacebookAccountAndr(num, m, p);
-//  }
 }
