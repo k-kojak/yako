@@ -185,7 +185,7 @@ public enum EventLogger {
     boolean uploadSucces = true;
     if (logToJsonConverter.getDeviceId() == null) {
       Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
-      Log.d("rgai", "context: " + context.toString());
+      Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
       logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
       
     }
