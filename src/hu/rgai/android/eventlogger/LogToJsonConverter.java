@@ -80,7 +80,6 @@ public class LogToJsonConverter {
 
       record.put( DATA_STR, event.toString());
       recordsInRecord.put( record);
-      recordsInRecord.toString();
     } catch (NoSuchElementException e) {
       Log.d( "willrgai", "nincs ilyen elem");
     } catch (JSONException e) {

@@ -91,7 +91,13 @@ public enum EventLogger {
         bufferedWriter = new BufferedWriter( new FileWriter( logfile, true));
         logfileCreatedTime = getLogFileCreateDate();
       } catch (NumberFormatException e) {
-        // TODO Auto-generated catch block
+        try {
+          bufferedWriter.close();
+        } catch (IOException e1) {
+          e1.printStackTrace();
+        }
+        lockedToUpload = true;
+        deleteLogFileAndCreateNew();
         e.printStackTrace();
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -185,8 +191,8 @@ public enum EventLogger {
   synchronized boolean uploadLogsAndCreateNewLogfile( Context context) {
     boolean uploadSucces = true;
     if (logToJsonConverter.getDeviceId() == null) {
-      Log.d( "rgai", "logToJsonConverter: " + logToJsonConverter.toString());
-      Log.d( "rgai", "context: " + context.toString());
+      Log.d( "willrgai", "logToJsonConverter: " + logToJsonConverter.toString());
+      Log.d( "willrgai", "context: " + context.toString());
       logToJsonConverter.setDeviceId( Secure.getString( context.getContentResolver(), Secure.ANDROID_ID));
 
     }
