@@ -26,6 +26,7 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
@@ -59,7 +60,7 @@ public enum EventLogger {
   private boolean logFileOpen = false;
   private String logFilePath;
   private long logfileCreatedTime;
-  LogToJsonConverter logToJsonConverter = new LogToJsonConverter(apiCodeToAI, appPackageName);
+  LogToJsonConverter logToJsonConverter = new LogToJsonConverter( apiCodeToAI, appPackageName);
 
   public long getLogfileCreatedTime() {
     return logfileCreatedTime;
@@ -72,25 +73,31 @@ public enum EventLogger {
   private boolean lockedToUpload = false;
   private Context context = null;
 
-  public synchronized boolean openLogFile(String logFilePath, boolean isFullPath) {
+  public synchronized boolean openLogFile( String logFilePath, boolean isFullPath) {
 
     File logfile;
     if (isFullPath) {
-      logfile = new File(logFilePath);
+      logfile = new File( logFilePath);
     } else {
       if (isSdPresent()) {
-        logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
+        logfile = new File( Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
-        logfile = new File(Environment.getDataDirectory().getAbsoluteFile(), logFilePath);
+        logfile = new File( Environment.getDataDirectory().getAbsoluteFile(), logFilePath);
       }
     }
     this.logFilePath = logfile.getPath();
     if (logfile.exists()) {
       try {
-        bufferedWriter = new BufferedWriter(new FileWriter(logfile, true));
+        bufferedWriter = new BufferedWriter( new FileWriter( logfile, true));
         logfileCreatedTime = getLogFileCreateDate();
       } catch (NumberFormatException e) {
-        // TODO Auto-generated catch block
+        try {
+          bufferedWriter.close();
+        } catch (IOException e1) {
+          e1.printStackTrace();
+        }
+        lockedToUpload = true;
+        deleteLogFileAndCreateNew();
         e.printStackTrace();
       } catch (IOException e) {
         // TODO Auto-generated catch block
@@ -98,9 +105,9 @@ public enum EventLogger {
       }
     } else {
       try {
-        bufferedWriter = new BufferedWriter(new FileWriter(logfile));
+        bufferedWriter = new BufferedWriter( new FileWriter( logfile));
         logfileCreatedTime = LogToJsonConverter.getCurrentTime();
-        bufferedWriter.write(Long.toString(logfileCreatedTime));
+        bufferedWriter.write( Long.toString( logfileCreatedTime));
         bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
@@ -127,19 +134,19 @@ public enum EventLogger {
     return true;
   }
 
-  public synchronized void writeToLogFile(String log, boolean logTimeStamp) {
+  public synchronized void writeToLogFile( String log, boolean logTimeStamp) {
     if (logTimeStamp) {
-      writeFormatedLogToLogFile(LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
+      writeFormatedLogToLogFile( LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
-      writeFormatedLogToLogFile(log);
+      writeFormatedLogToLogFile( log);
     }
 
   }
 
-  private void writeFormatedLogToLogFile(String log) {
+  private void writeFormatedLogToLogFile( String log) {
     if (!lockedToUpload) {
       try {
-        bufferedWriter.write(log);
+        bufferedWriter.write( StringEscapeUtils.escapeJava( log));
         bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
@@ -149,39 +156,39 @@ public enum EventLogger {
         ex.printStackTrace();
       }
     } else {
-      tempBufferToUpload.add(log);
+      tempBufferToUpload.add( StringEscapeUtils.escapeJava( log));
     }
   }
 
   private static boolean isSdPresent() {
-    return android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED);
+    return android.os.Environment.getExternalStorageState().equals( android.os.Environment.MEDIA_MOUNTED);
   }
 
   private synchronized long getLogFileCreateDate() throws NumberFormatException, IOException {
-    FileReader logFileReader = new FileReader(logFilePath);
-    BufferedReader br = new BufferedReader(logFileReader);
+    FileReader logFileReader = new FileReader( logFilePath);
+    BufferedReader br = new BufferedReader( logFileReader);
     String readLine = br.readLine();
-    Long dateInMillis = Long.valueOf(readLine);
+    Long dateInMillis = Long.valueOf( readLine);
     br.close();
     return dateInMillis;
   }
 
   private synchronized void deleteLogFileAndCreateNew() {
-    File logfile = new File(logFilePath);
+    File logfile = new File( logFilePath);
     logfile.delete();
-    openLogFile(logFilePath, true);
+    openLogFile( logFilePath, true);
     saveTempBufferToLogFileAndClear();
   }
 
   private void saveTempBufferToLogFileAndClear() {
     lockedToUpload = false;
     for (String log : tempBufferToUpload) {
-      writeToLogFile(log, false);
+      writeToLogFile( log, false);
     }
     tempBufferToUpload.clear();
   }
 
-  synchronized boolean uploadLogsAndCreateNewLogfile(Context context) {
+  synchronized boolean uploadLogsAndCreateNewLogfile( Context context) {
     boolean uploadSucces = true;
     if (logToJsonConverter.getDeviceId() == null) {
       Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
@@ -191,7 +198,7 @@ public enum EventLogger {
     }
     lockedToUpload = true;
     try {
-      uploadSucces = uploadSucces && uploadLogsToServer(context);
+      uploadSucces = uploadSucces && uploadLogsToServer( context);
       if (uploadSucces) {
         deleteLogFileAndCreateNew();
       } else {
@@ -228,100 +235,100 @@ public enum EventLogger {
     return false;
   }
 
-  public synchronized boolean uploadLogsToServer(Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
+  public synchronized boolean uploadLogsToServer( Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
       KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
 
     boolean uploadSucces = true;
 
     List<String> logList = getLogListFromLogFile();
-    String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
-    Log.d("willrgai", jsonEncodedLogs);
+    String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat( logList);
+    Log.d( "willrgai", jsonEncodedLogs);
     if (jsonEncodedLogs != null)
-      uploadSucces = uploadSucces && uploadJsonEncodedString(jsonEncodedLogs);
+      uploadSucces = uploadSucces && uploadJsonEncodedString( jsonEncodedLogs);
     else
       return false;
     return uploadSucces;
   }
 
-  private boolean uploadJsonEncodedString(String jsonEncodedLogs) throws UnsupportedEncodingException, IOException, ClientProtocolException, ParseException, JSONException {
-    final HttpPost httpPost = new HttpPost(SERVLET_URL);
+  private boolean uploadJsonEncodedString( String jsonEncodedLogs) throws UnsupportedEncodingException, IOException, ClientProtocolException, ParseException, JSONException {
+    final HttpPost httpPost = new HttpPost( SERVLET_URL);
 
-    boolean upLoadSuccess = uploadLogs(jsonEncodedLogs, httpPost);
+    boolean upLoadSuccess = uploadLogs( jsonEncodedLogs, httpPost);
     if (!upLoadSuccess)
       return false;
 
-    upLoadSuccess = uploadCallInformations(httpPost);
+    upLoadSuccess = uploadCallInformations( httpPost);
     if (!upLoadSuccess)
       return false;
     return upLoadSuccess;
   }
 
-  private boolean uploadCallInformations(final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+  private boolean uploadCallInformations( final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
     List<String> callInformations = getCallInformations();
 
-    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(callInformations);
-    final StringEntity httpContentListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
+    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat( callInformations);
+    final StringEntity httpContentListEntity = new StringEntity( encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
 
-    httpContentListEntity.setContentType("application/json");
+    httpContentListEntity.setContentType( "application/json");
 
-    httpPost.setEntity(httpContentListEntity);
-    HttpResponse response = getNewHttpClient().execute(httpPost);
-    return isUploadSuccessFull(response);
+    httpPost.setEntity( httpContentListEntity);
+    HttpResponse response = getNewHttpClient().execute( httpPost);
+    return isUploadSuccessFull( response);
   }
 
   List<String> getCallInformations() {
     List<String> callInformations = new ArrayList<String>();
 
-    Uri allCalls = Uri.parse("content://call_log/calls");
+    Uri allCalls = Uri.parse( "content://call_log/calls");
 
-    Cursor c = context.getContentResolver().query(allCalls, null, null, null, null);
+    Cursor c = context.getContentResolver().query( allCalls, null, null, null, null);
 
     while (c.moveToNext()) {
       StringBuilder callInformationBuilder = new StringBuilder();
-      callInformationBuilder.append(String.valueOf(c.getLong(c.getColumnIndex("date"))));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append("call");
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("numbertype")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("new")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("duration")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("_id")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("numberlabel")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("name")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(c.getString(c.getColumnIndex("type")));
-      callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(RSAENCODING.INSTANCE.encodingString(c.getString(c.getColumnIndex("number"))));
-      callInformations.add(callInformationBuilder.toString());
+      callInformationBuilder.append( String.valueOf( c.getLong( c.getColumnIndex( "date"))));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( "call");
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "numbertype")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "new")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "duration")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "_id")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "numberlabel")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "name")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( c.getString( c.getColumnIndex( "type")));
+      callInformationBuilder.append( SPACE_STR);
+      callInformationBuilder.append( RSAENCODING.INSTANCE.encodingString( c.getString( c.getColumnIndex( "number"))));
+      callInformations.add( callInformationBuilder.toString());
     }
 
     return callInformations;
   }
 
-  private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
-    final StringEntity httpEntity = new StringEntity(jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
-    httpEntity.setContentType("application/json");
-    httpPost.setEntity(httpEntity);
+  private boolean uploadLogs( String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+    final StringEntity httpEntity = new StringEntity( jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
+    httpEntity.setContentType( "application/json");
+    httpPost.setEntity( httpEntity);
     InputStream reader = httpPost.getEntity().getContent();
     BufferedReader br = null;
     StringBuilder sb = new StringBuilder();
-    br = new BufferedReader(new InputStreamReader(reader));
+    br = new BufferedReader( new InputStreamReader( reader));
     String line;
     while ((line = br.readLine()) != null) {
-      sb.append(line);
+      sb.append( line);
     }
-    Log.d("willrgai", sb.toString());
-    HttpResponse response = getNewHttpClient().execute(httpPost);
-    Log.d("willrgai", response.getStatusLine().toString());
-    return isUploadSuccessFull(response);
+    Log.d( "willrgai", sb.toString());
+    HttpResponse response = getNewHttpClient().execute( httpPost);
+    Log.d( "willrgai", response.getStatusLine().toString());
+    return isUploadSuccessFull( response);
   }
 
-  private boolean isUploadSuccessFull(HttpResponse response) {
+  private boolean isUploadSuccessFull( HttpResponse response) {
     if (response.getStatusLine().getStatusCode() != 200)
       return false;
     else
@@ -330,13 +337,13 @@ public enum EventLogger {
 
   private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
     List<String> logList = new ArrayList<String>();
-    FileReader logFileReader = new FileReader(logFilePath);
-    BufferedReader br = new BufferedReader(logFileReader);
+    FileReader logFileReader = new FileReader( logFilePath);
+    BufferedReader br = new BufferedReader( logFileReader);
 
     String readedLine;
     br.readLine();
     while ((readedLine = br.readLine()) != null) {
-      logList.add(readedLine);
+      logList.add( readedLine);
     }
     br.close();
     return logList;
@@ -346,29 +353,29 @@ public enum EventLogger {
     return context;
   }
 
-  public void setContext(Context context) {
+  public void setContext( Context context) {
     this.context = context;
   }
 
   public HttpClient getNewHttpClient() {
-    final InputStream inputStream = context.getResources().openRawResource(R.raw.trust);
+    final InputStream inputStream = context.getResources().openRawResource( R.raw.trust);
     try {
-      final KeyStore trustStore = KeyStore.getInstance("BKS");
-      trustStore.load(inputStream, "6c79be11ab17c202cec77a0ef0ee7ac49f741fb2".toCharArray());
+      final KeyStore trustStore = KeyStore.getInstance( "BKS");
+      trustStore.load( inputStream, "6c79be11ab17c202cec77a0ef0ee7ac49f741fb2".toCharArray());
 
-      SSLSocketFactory sf = new MySSLSocketFactory(trustStore);
-      sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
+      SSLSocketFactory sf = new MySSLSocketFactory( trustStore);
+      sf.setHostnameVerifier( SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
 
       HttpParams params = new BasicHttpParams();
-      HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
+      HttpProtocolParams.setContentCharset( params, HTTP.UTF_8);
 
       SchemeRegistry registry = new SchemeRegistry();
-      registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-      registry.register(new Scheme("https", sf, 443));
+      registry.register( new Scheme( "http", PlainSocketFactory.getSocketFactory(), 80));
+      registry.register( new Scheme( "https", sf, 443));
 
-      ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
+      ClientConnectionManager ccm = new ThreadSafeClientConnManager( params, registry);
 
-      return new DefaultHttpClient(ccm, params);
+      return new DefaultHttpClient( ccm, params);
     } catch (Exception e) {
       return new DefaultHttpClient();
     } finally {
@@ -395,11 +402,11 @@ public enum EventLogger {
       public static final String BACKBUTTON_STR = "mainpage:backbutton";
       public static final String STR = "MainPage";
     }
-    
+
     public static class EMAIL {
       public static final String EMAIL_BACKBUTTON_STR = "Email:backbutton";
     }
-    
+
     public static class SCROLL {
       public static final String END_STR = "scroll:end";
       public static final String START_STR = "scroll:start";

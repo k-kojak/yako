@@ -1,40 +1,43 @@
 package hu.rgai.android.eventlogger;
 
-import android.content.Context;
 import hu.rgai.android.test.MainActivity;
+import android.content.Context;
 
-public class LogUploadScheduler {
-  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 15;
+public enum LogUploadScheduler {
+  INSTANCE;
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60;
   final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 15 * 60;
 
   Thread scheduler;
-  
-//  private Context c;
+
+  // private Context c;
 
   public boolean isRunning = false;
-  LogUploader mStatusChecker;
+  LogUploader mStatusChecker = null;
 
-  public LogUploadScheduler(Context c) {
-//    this.c = c;
-    mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
+  private LogUploadScheduler() {
   }
 
-  public void startRepeatingTask() {
+  public synchronized void setContext( Context c) {
+    if (mStatusChecker == null)
+      mStatusChecker = new LogUploader( c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
+  }
 
-    mStatusChecker.setRepeatTask(true);
-    scheduler = new Thread(mStatusChecker);
+  public synchronized void startRepeatingTask() {
+    mStatusChecker.setRepeatTask( true);
+    scheduler = new Thread( mStatusChecker);
     scheduler.start();
     isRunning = true;
   }
 
-  public void stopRepeatingTask() {
+  public synchronized void stopRepeatingTask() {
     isRunning = false;
 
     if (scheduler.getState() == Thread.State.TIMED_WAITING) {
-      mStatusChecker.setRepeatTask(false);
+      mStatusChecker.setRepeatTask( false);
       scheduler.interrupt();
     } else {
-      mStatusChecker.setRepeatTask(false);
+      mStatusChecker.setRepeatTask( false);
     }
     scheduler = null;
   }
@@ -48,17 +51,17 @@ class LogUploader implements Runnable {
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
   final private long waitTimeAfterDefaultWaitTimeInMilliSecondum;
-  private Context c;
+  private final Context c;
 
   public boolean isRepeatTask() {
     return repeatTask;
   }
 
-  public void setRepeatTask(boolean repeatTask) {
+  public void setRepeatTask( boolean repeatTask) {
     this.repeatTask = repeatTask;
   }
 
-  public LogUploader(Context c, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
+  public LogUploader( Context c, long defaultWaitTimeInMilliSecondum, long waitTimeAfterDefaultWaitTimeInMilliSecondum) {
     this.c = c;
     this.defaultWaitTimeInMilliSecondum = defaultWaitTimeInMilliSecondum;
     this.waitTimeAfterDefaultWaitTimeInMilliSecondum = waitTimeAfterDefaultWaitTimeInMilliSecondum;
@@ -70,24 +73,24 @@ class LogUploader implements Runnable {
       long elapsedTimeSinceLogCreated = LogToJsonConverter.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
       if (elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum) {
         try {
-          Thread.sleep(defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated);
+          Thread.sleep( defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated);
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
       } else {
-        if (!MainActivity.isNetworkAvailable(c)) {
+        if (!MainActivity.isNetworkAvailable( c)) {
           try {
-            Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
+            Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
           }
         } else {
-          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(c)) {
-            EventLogger.INSTANCE.writeToLogFile(LOGUPLOAD_FAILED_STR, true);
+          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( c)) {
+            EventLogger.INSTANCE.writeToLogFile( LOGUPLOAD_FAILED_STR, true);
             try {
-              Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
+              Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum);
             } catch (InterruptedException e) {
               // TODO Auto-generated catch block
               e.printStackTrace();
