@@ -238,9 +238,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
               public void processMessage(Chat chat, Message message) {
                 if (message != null && message.getBody() != null) {
                   Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
-//                  Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-//                  res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-//                  context.sendBroadcast(res);
+                  Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+                  res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+                  context.sendBroadcast(res);
                   
                   Intent service = new Intent(context, MainService.class);
                   service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
