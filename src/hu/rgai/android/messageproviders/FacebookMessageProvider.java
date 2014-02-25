@@ -46,6 +46,7 @@ import com.facebook.Session;
 import com.facebook.Response;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
@@ -203,7 +204,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   public static void initConnection(FacebookAccount fba, final Context context) {
-    
+    Log.d("rgai", "initting xmpp connection");
     if (xmpp == null || !xmpp.isConnected()) {
       Log.d("rgai", "try connecting to XMPP");
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
@@ -237,16 +238,14 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
               public void processMessage(Chat chat, Message message) {
                 if (message != null && message.getBody() != null) {
                   Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
-                  Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-                  res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-                  context.sendBroadcast(res);
-//                  RosterEntry roster = xmpp.getRoster().getEntry(message.getFrom());
-//                  System.out.println(message.getType());
-
-//                  System.out.println(roster.getName() + " : " + message.getBody());
-//                  receiveAttachments();
-//                  receivedMessages.add(roster.getName() + " : " + message.getBody());
-//                  receivedMessages.notifyDataSetChanged();
+//                  Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+//                  res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+//                  context.sendBroadcast(res);
+                  
+                  Intent service = new Intent(context, MainService.class);
+                  service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+                  context.startService(service);
+                  
 
                 }
               }
