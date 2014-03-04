@@ -611,7 +611,7 @@ public class MainActivity extends ActionBarActivity {
    * 
    * @return true if network is available, false otherwise
    */
-  public static boolean isNetworkAvailable( Context c) {
+  public static boolean isNetworkAvailable(Context c) {
     ConnectivityManager connectivityManager = (ConnectivityManager) c.getSystemService( Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
