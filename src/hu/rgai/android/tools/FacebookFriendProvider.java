@@ -60,9 +60,8 @@ public class FacebookFriendProvider {
             String timeleftStr = "";
             if (new Date().getTime() > nextToast) {
               int diff = (int)(new Date().getTime() - start.getTime());
-              Log.d("rgai", "time diff in milisec -> " + diff);
               int timeLeftInSec = (int)((diff / (i + 1)) * (count - i)) / 1000;
-              Log.d("rgai", "timeleftinsec -> " + timeLeftInSec);
+              Log.d("rgai", "remaining synctime -> " + timeLeftInSec);
               int timeLeftInMin = timeLeftInSec / 60;
               if (timeLeftInMin > 0) timeLeftInSec -= timeLeftInMin * 60;
               timeleftStr = (timeLeftInMin > 0 ? timeLeftInMin + " min" + (timeLeftInMin > 1 ? "s " : " ") : "") + timeLeftInSec + " sec" + (timeLeftInSec > 1 ? "s" : "");

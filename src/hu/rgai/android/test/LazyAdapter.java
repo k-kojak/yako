@@ -2,6 +2,7 @@ package hu.rgai.android.test;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -82,7 +83,20 @@ public class LazyAdapter extends BaseAdapter {
       }
     }
     subject.setText(subjectText);
-    from.setText(message.getFrom().getName());
+    String fromText = "";
+    if (message.getFrom() == null) {
+      if (message.getRecipientsList() != null) {
+        for (int i = 0; i < message.getRecipientsList().size(); i++) {
+          if (i > 0) {
+            fromText += ", ";
+          }
+          fromText += message.getRecipientsList().get(i).getName();
+        }
+      }
+    } else {
+      fromText = message.getFrom().getName();
+    }
+    from.setText(fromText);
     if (!message.isSeen()) {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
@@ -90,7 +104,12 @@ public class LazyAdapter extends BaseAdapter {
       subject.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
       from.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
     }
-    Bitmap img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
+    Bitmap img;
+    if (message.getFrom() != null) {
+      img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
+    } else {
+      img = BitmapFactory.decodeResource(activity.getResources(), R.drawable.group_chat);
+    }
     icon.setImageBitmap(img);
     if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       msgType.setImageResource(R.drawable.ic_fb_messenger);

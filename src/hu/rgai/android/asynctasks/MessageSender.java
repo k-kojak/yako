@@ -145,11 +145,13 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   @Override
   protected void onPostExecute(Boolean success) {
-    Message msg = handler.obtainMessage();
-    Bundle bundle = new Bundle();
-    bundle.putBoolean("success", success);
-    msg.setData(bundle);
-    handler.sendMessage(msg);
+    if (handler != null) {
+      Message msg = handler.obtainMessage();
+      Bundle bundle = new Bundle();
+      bundle.putBoolean("success", success);
+      msg.setData(bundle);
+      handler.sendMessage(msg);
+    }
   }
 
   @Override

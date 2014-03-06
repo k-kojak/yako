@@ -15,6 +15,8 @@ import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -57,6 +59,9 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.subTitle = in.readString();
     this.unreadCount = in.readInt();
     this.from = in.readParcelable(PersonAndr.class.getClassLoader());
+    
+    recipients = new LinkedList<Person>();
+    in.readList(recipients, PersonAndr.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     this.fullMessage = in.readParcelable(FullMessageParc.class.getClassLoader());
@@ -71,11 +76,14 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
-    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(), mle.getFrom(), mle.getDate(), mle.getMessageType(), account);
+    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
+            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), account);
   }
   
-  public MessageListElementParc(String id, boolean seen, String title, String subTitle, int unreadCount, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
-    super(id, seen, title, subTitle, unreadCount, from, date, messageType);
+  public MessageListElementParc(String id, boolean seen, String title, String subTitle,
+          int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
+          AccountAndr account) {
+    super(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType);
     this.account = account;
   }
 
@@ -102,13 +110,14 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public void writeToParcel(Parcel out, int flags) {
-	initStringToClassLoader();
+    initStringToClassLoader();
     out.writeString(this.id);
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
     out.writeString(subTitle);
     out.writeInt(unreadCount);
     out.writeParcelable((Parcelable)from, flags);
+    out.writeList(recipients);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable((Parcelable)fullMessage, flags);

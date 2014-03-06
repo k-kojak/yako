@@ -189,6 +189,7 @@ public final class Settings {
   public static final class Intents {
     public static final String THREAD_SERVICE_INTENT = "hu.rgai.android.threadmsg_service_intent";
     public static final String NEW_MESSAGE_ARRIVED_BROADCAST = "hu.rgai.android.new_message_arrived_broadcast";
+    public static final String NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE = "hu.rgai.android.notify_new_fb_group_thread_message";
   }
   
   public static final class Alarms {

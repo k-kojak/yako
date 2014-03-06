@@ -275,15 +275,15 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   public void syncFacebookContactList(View view) {
     if (user != null) {
       if (FacebookIntegratorAsyncTask.isRunning) {
-        Toast.makeText(this, "Synchronization is running.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Synchronization is running", Toast.LENGTH_LONG).show();
       } else {
-        Toast.makeText(FacebookSettingActivity.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
+        Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
                 new IntegrationHandler(FacebookSettingActivity.this));
         integrator.execute(user.getId());
       }
     } else {
-      Toast.makeText(this, "Facebook session problem.", Toast.LENGTH_LONG).show();
+      Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();
     }
   }
   

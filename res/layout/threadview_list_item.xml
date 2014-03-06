@@ -31,7 +31,7 @@
               android:layout_width="fill_parent"
               android:layout_height="25px"
               android:textColor="#aaaaaa"
-              android:text="aaaaa"
+              android:text=""
               android:textSize="14px"
         />
               

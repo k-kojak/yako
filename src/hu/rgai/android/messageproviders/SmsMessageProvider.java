@@ -108,8 +108,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         } else {
           foundThreads++;
           if (foundThreads > limit + offset) break;
-          messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title, from,
-                  new Date(ti.date), Type.SMS));
+          messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
+                  from, null, new Date(ti.date), Type.SMS));
         }
       }
     }

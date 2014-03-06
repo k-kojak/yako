@@ -60,6 +60,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
 
 public class MainService extends Service {
 
@@ -376,6 +377,26 @@ public class MainService extends Service {
           if (bundle.getInt( "result") == OK && bundle.get( "messages") != null) {
             MessageListElementParc[] newMessages = (MessageListElementParc[]) bundle.getParcelableArray( "messages");
 
+            /*
+             * If new message packet comes from Facebook, and newMessages contains groupMessages,
+             * send a broadcast so the group Facebook chat is notified about the new messages.
+             */
+            if (newMessages != null) {
+              boolean sendBC = false;
+              for (int i = 0; i < newMessages.length; i++) {
+                MessageListElementParc m = newMessages[i];
+                if (m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
+                  sendBC = true;
+                  break;
+                }
+              }
+              if (sendBC) {
+                Log.d("rgai", "SENDING NOTIFY BROADCAST FROM MAIN SERVICE");
+                Intent i = new Intent(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
+                context.sendBroadcast(i);
+              }
+            }
+            
             this.mergeMessages( newMessages);
             MessageListElementParc lastUnreadMsg = null;
 
@@ -396,9 +417,24 @@ public class MainService extends Service {
             NotificationManager mNotificationManager = (NotificationManager) getSystemService( Context.NOTIFICATION_SERVICE);
             if (newMessageCount != 0) {
               if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
+                String fromNameText = "?";
+                if (lastUnreadMsg.getFrom() != null) {
+                  fromNameText = lastUnreadMsg.getFrom().getName();
+                } else {
+                  if (lastUnreadMsg.getRecipientsList() != null) {
+                    fromNameText = "";
+                    for (int i = 0; i < lastUnreadMsg.getRecipientsList().size(); i++) {
+                      if (i > 0) {
+                        fromNameText += ",";
+                      }
+                      fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
+                    }
+                  }
+                  
+                }
                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder( context).setSmallIcon( R.drawable.not_ic_action_email).setWhen( lastUnreadMsg.getDate().getTime())
-                    .setTicker( lastUnreadMsg.getFrom().getName() + ": " + lastUnreadMsg.getTitle()).setContentInfo( lastUnreadMsg.getMessageType().toString())
-                    .setContentTitle( lastUnreadMsg.getFrom().getName()).setContentText( lastUnreadMsg.getTitle());
+                    .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle()).setContentInfo( lastUnreadMsg.getMessageType().toString())
+                    .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
                 Intent resultIntent;
                 if (newMessageCount == 1) {
                   Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get( lastUnreadMsg.getAccount().getAccountType());
@@ -438,6 +474,7 @@ public class MainService extends Service {
 
     private void loggingNewMessageArrived( MessageListElementParc mle, boolean messageIsVisible) {
       if (mle.getDate().getTime() > EventLogger.INSTANCE.getLogfileCreatedTime()) {
+        String fromID = mle.getFrom() == null ? mle.getRecipientsList() == null ? "NULL" : mle.getRecipientsList().get(0).getId() : mle.getFrom().getId();
         StringBuilder builder = new StringBuilder();
         builder.append( mle.getDate().getTime());
         builder.append( SPACE_STR);
@@ -449,11 +486,9 @@ public class MainService extends Service {
         builder.append( SPACE_STR);
         builder.append( messageIsVisible);
         builder.append( SPACE_STR);
-        builder.append( mle.getFrom().getContactId());
-        builder.append( SPACE_STR);
         builder.append( mle.getMessageType());
         builder.append( SPACE_STR);
-        builder.append( RSAENCODING.INSTANCE.encodingString( mle.getFrom().getId()));
+        builder.append( RSAENCODING.INSTANCE.encodingString( fromID));
         EventLogger.INSTANCE.writeToLogFile( builder.toString(), false);
       }
     }
@@ -645,6 +680,13 @@ public class MainService extends Service {
         MessageListElementParc mlep = new MessageListElementParc( mle, acc);
         // Log.d("rgai", "@A message from user -> " + mle.getFrom());
         mlep.setFrom( PersonAndr.searchPersonAndr( context, mle.getFrom()));
+        if (mlep.getRecipientsList() != null) {
+          for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
+            PersonAndr pa = PersonAndr.searchPersonAndr(context, mlep.getRecipientsList().get(i));
+            mlep.getRecipientsList().set(i, pa);
+            
+          }
+        }
         // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());
         parc.add( mlep);
       }
@@ -673,16 +715,6 @@ public class MainService extends Service {
       // Log.d(Constants.LOG, "onPreExecute");
     }
 
-    // @Override
-    // protected void onProgressUpdate(Integer... values) {
-    // Log.d(Constants.LOG, "onProgressUpdate");
-    // Message msg = handler.obtainMessage();
-    // Bundle bundle = new Bundle();
-    //
-    // bundle.putInt("progress", values[0]);
-    // msg.setData(bundle);
-    // handler.sendMessage(msg);
-    // }
   }
 
 }
