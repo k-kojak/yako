@@ -190,15 +190,19 @@ public class MainActivity extends ActionBarActivity {
     Intent intent;
     switch (item.getItemId()) {
       case R.id.accounts:
+        EventLogger.INSTANCE.writeToLogFile( "click:account_button", true);
         intent = new Intent( this, AccountSettingsList.class);
         startActivityForResult( intent, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
         return true;
       case R.id.message_send_new:
+        EventLogger.INSTANCE.writeToLogFile( "click:message_send_button", true);
         intent = new Intent( this, MessageReply.class);
         startActivity( intent);
         return true;
       case R.id.refresh_message_list:
+        EventLogger.INSTANCE.writeToLogFile( "click:refresh_button", true);
         // item.setEnabled(false);
+
         Toast.makeText( this, getString( R.string.refreshing), Toast.LENGTH_SHORT).show();
         reloadMessages();
         return true;
@@ -414,6 +418,7 @@ public class MainActivity extends ActionBarActivity {
         loadMoreButton.setOnClickListener( new View.OnClickListener() {
           @Override
           public void onClick( View arg0) {
+            EventLogger.INSTANCE.writeToLogFile( "click:load_more_button", true);
             loadMoreMessage();
           }
         });
@@ -453,7 +458,6 @@ public class MainActivity extends ActionBarActivity {
             appendClickedElementDatasToBuilder( message, builder);
             instance.appendVisibleElementToStringBuilder( builder, lv, adapter);
             builder.append( changed);
-            Log.d( "willrgai", builder.toString());
             EventLogger.INSTANCE.writeToLogFile( builder.toString(), true);
           }
 

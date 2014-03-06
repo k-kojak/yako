@@ -6,7 +6,7 @@ import android.content.Context;
 public enum LogUploadScheduler {
   INSTANCE;
   final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60;
-  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 15 * 60;
+  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 60;
 
   Thread scheduler;
 

