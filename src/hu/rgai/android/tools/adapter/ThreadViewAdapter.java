@@ -87,7 +87,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
-    Bitmap img = null;
+    Bitmap img;
     if (coment.isIsMe()) {
       img = StoreHandler.getUserFbImage(context);
     } else {

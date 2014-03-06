@@ -30,12 +30,12 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
 //        activity.setContent("onInternetBroadcast receive");
     } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
 //        Log.d("rgai", "NEW MESSAGE ARRIVED RECEIVER");
-      Intent i = new Intent(context, MainScheduler.class);
-      if (intent.getExtras().containsKey("type")) {
-        i.putExtra("type", intent.getExtras().getString("type"));
-      }
-      i.setAction(Context.ALARM_SERVICE);
-      context.sendBroadcast(i);
+//      Intent i = new Intent(context, MainScheduler.class);
+//      if (intent.getExtras().containsKey("type")) {
+//        i.putExtra("type", intent.getExtras().getString("type"));
+//      }
+//      i.setAction(Context.ALARM_SERVICE);
+//      context.sendBroadcast(i);
     }
   }
 }

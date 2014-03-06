@@ -136,6 +136,9 @@ public final class PersonAndr extends Person implements Parcelable {
   }
 
   public static PersonAndr searchPersonAndr(Context context, Person p) {
+    if (p == null) {
+      return null;
+    }
     String key = p.getType().toString() + "_" + p.getId();
     // Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {

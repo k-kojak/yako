@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
@@ -107,8 +108,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         } else {
           foundThreads++;
           if (foundThreads > limit + offset) break;
-          messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title, from,
-                  new Date(ti.date), Type.SMS));
+          messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
+                  from, null, new Date(ti.date), Type.SMS));
         }
       }
     }
@@ -209,9 +210,15 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       } catch (InterruptedException ex) {
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
+      Log.d("rgai", "SMS notif received");
+      
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
+      
+      Intent service = new Intent(context, MainService.class);
+      service.putExtra("type", MessageProvider.Type.SMS.toString());
+      context.startService(service);
       
 //      // in case the first attempt was too quick, request the display again a little bit later
 //      try {

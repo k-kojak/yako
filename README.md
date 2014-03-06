@@ -13,6 +13,3 @@ use different applications to interact with friends in different channels.
 
 In the near future we would like to personalize the message notifications and the application usage,
 on the basis of the user habits, behavior, reactions and the contents of messages.
-
-
-This project uses the [message logger](https://github.com/k-kojak/rgai.message.logger) base project.

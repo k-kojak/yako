@@ -194,12 +194,17 @@ public enum EventLogger {
   }
 
   synchronized boolean uploadLogsAndCreateNewLogfile( Context context) {
+    if (context == null) {
+      Log.d("rgai", "CONTEXT IS NULL @ EventLogger.uploadLogsAndCreateNewLogfile");
+      return false;
+    }
     boolean uploadSucces = true;
     if (logToJsonConverter.getDeviceId() == null) {
-      Log.d( "willrgai", "logToJsonConverter: " + logToJsonConverter.toString());
-      Log.d( "willrgai", "context: " + context.toString());
-      logToJsonConverter.setDeviceId( Secure.getString( context.getContentResolver(), Secure.ANDROID_ID));
-
+      Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
+      Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
+      
+      logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+      
     }
     lockedToUpload = true;
     try {

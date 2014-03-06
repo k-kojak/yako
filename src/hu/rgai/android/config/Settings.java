@@ -46,6 +46,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
+  private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
@@ -71,6 +72,17 @@ public final class Settings {
       accountTypeToAccountClass.put(MessageProvider.Type.GMAIL, GmailAccount.class);
     }
     return accountTypeToAccountClass;
+  }
+  
+  public static Map<MessageProvider.Type, Integer> getAccountTypeToIconResource() {
+    if (accountTypeToIconResource == null) {
+      accountTypeToIconResource = new EnumMap<MessageProvider.Type, Integer>(MessageProvider.Type.class);
+      accountTypeToIconResource.put(MessageProvider.Type.EMAIL, R.drawable.ic_email);
+      accountTypeToIconResource.put(MessageProvider.Type.FACEBOOK, R.drawable.fb);
+      accountTypeToIconResource.put(MessageProvider.Type.GMAIL, R.drawable.gmail_icon);
+      accountTypeToIconResource.put(MessageProvider.Type.SMS, R.drawable.ic_sms3);
+    }
+    return accountTypeToIconResource;
   }
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
@@ -189,6 +201,7 @@ public final class Settings {
   public static final class Intents {
     public static final String THREAD_SERVICE_INTENT = "hu.rgai.android.threadmsg_service_intent";
     public static final String NEW_MESSAGE_ARRIVED_BROADCAST = "hu.rgai.android.new_message_arrived_broadcast";
+    public static final String NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE = "hu.rgai.android.notify_new_fb_group_thread_message";
   }
   
   public static final class Alarms {
