@@ -62,14 +62,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   private static volatile XMPPConnection xmpp = null;
   // use this variable to access facebook
   private FacebookAccount account;
-//  private MessageListener mslistener;
-//  private Activity activity;
 
-// public void onCreate(Bundle savedInstanceState) {
-//         super.onCreate(savedInstanceState);
-//         // setContentView(R.layout.activity_main);
-// }
-//
   public FacebookMessageProvider(FacebookAccount account) {
     this.account = account;
   }
@@ -113,7 +106,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
             new Request.Callback() {
       public void onCompleted(Response response) {
         if (response != null) {
-//                    Log.d("rgai", "Got results: " + response.toString());
           if (response.getGraphObject() != null) {
             try {
               GraphObject go = response.getGraphObject();
@@ -150,13 +142,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     // building list item title
                     boolean seen = msg.getInt("unseen") == 0;
                     int unreadCount = msg.getInt("unread");
-                    String snippet = msg.getString("snippet")/*.replaceAll("\n", " ").replaceAll(" {2,}", " ")*/;
-//                    if (snippet.length() > 30) {
-//                      snippet = snippet.substring(0, 30) + "...";
-//                    }
-//                    if (!seen && unreadCount > 0) {
-//                      snippet = "(" + unreadCount + ") " + snippet;
-//                    }
+                    String snippet = msg.getString("snippet");
                     Person from = null;
                     if (recipients.size() == 1) {
                       from = recipients.get(0);
@@ -176,8 +162,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   // loop through friends
                   for (int j = 0; j < userArr.length(); j++) {
                     JSONObject msg = userArr.getJSONObject(j);
-//                              Log.d("rgai", msg.getString("uid"));
-//                              Log.d("rgai", msg.getString("name"));
                     // matching friend names to messages by id
                     for (int k = 0; k < messages.size(); k++) {
                       if (messages.get(k).getFrom() != null) {
@@ -237,11 +221,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(fba.getUniqueName(), fba.getPassword());
         Log.d("rgai", "connected to XMPP");
-//        Roster roster = xmpp.getRoster();
-
-
-//        Collection<RosterEntry> entries = roster.getEntries();
-//        Log.d("rgai", "Connected ON XMPP!");
 
         xmpp.getChatManager().addChatListener(new ChatManagerListener() {
           @Override
@@ -316,7 +295,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
             new Request.Callback() {
       public void onCompleted(Response response) {
         if (response != null) {
-//                    Log.d("rgai", "Got results: " + response.toString());
           if (response.getGraphObject() != null) {
             try {
               GraphObject go = response.getGraphObject();
@@ -355,8 +333,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   // loop through friends
                   for (int j = 0; j < userArr.length(); j++) {
                     JSONObject user = userArr.getJSONObject(j);
-//                              Log.d("rgai", msg.getString("uid"));
-//                              Log.d("rgai", msg.getString("name"));
                     // matching friend names to messages by id
                     for (MessageAtom ma : ftm.getMessages()) {
                       if (ma.getFrom().getId().equals(user.getString("uid"))) {
@@ -378,17 +354,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     Request.executeAndWait(request);
 
 
-    // EXAMPLE CODE FOR PETI
-//    Person sender = new Person(3, "Zelk Zoltán");
-//    Person me = new Person(4, "Tamas Kojedzsinszky");
-//    FullThreadMessage ffm = new FullThreadMessage();
-//    Log.d("rgai", "THREAD ID -> " + id);
-//
-//    ffm.addMessage(new MessageAtom("4", null, id, new Date(), sender, MessageProvider.Type.FACEBOOK, null));
-//    ffm.addMessage(new MessageAtom("1", null, "This is the content of a message item...", new Date(), sender, MessageProvider.Type.FACEBOOK, null));
-//    ffm.addMessage(new MessageAtom("2", null, "This is the content of a message item2...", new Date(), me, MessageProvider.Type.FACEBOOK, null));
-//    ffm.addMessage(new MessageAtom("3", null, "This is the content of a message item3...", new Date(), sender, MessageProvider.Type.FACEBOOK, null));
-//
     return ftm;
   }
 
@@ -403,7 +368,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     config.setRosterLoadedAtLogin(true);
     config.setSendPresence(false);
 
-//    final XMPPConnection xmpp = new XMPPConnection(config);
      if (xmpp == null || !xmpp.isConnected()) {
       try {
         xmpp.connect();
@@ -430,7 +394,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         e.printStackTrace();
       }
 
-      // sending message here to facebook user using the information in FacebookMessageRecipient class
     }
   }
 
@@ -500,8 +463,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     });
     Request.executeAndWait(request);
-    // Request.executeBatchAndWait(request);
-//                 Request.executeBatchAsync(request);
 
   }
 
