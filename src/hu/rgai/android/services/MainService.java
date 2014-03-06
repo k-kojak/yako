@@ -451,7 +451,7 @@ public class MainService extends Service {
                         .setContentInfo( lastUnreadMsg.getAccount().getDisplayName())
                         
                         .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle())
-                        .setVibrate(new long[]{100,150,100,150,800,150,100,150});
+                        .setVibrate(new long[]{100,150,100,150,500,150,100,150});
                 Intent resultIntent;
                 if (newMessageCount == 1) {
                   Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get( lastUnreadMsg.getAccount().getAccountType());
