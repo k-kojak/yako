@@ -275,7 +275,7 @@ public class MainActivity extends ActionBarActivity {
     Log.d( "rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
     initLastNotificationDates();
-
+    updateLastNotification(null);
     setUpAndRegisterScreenReceiver();
 
     setContent();
@@ -340,9 +340,12 @@ public class MainActivity extends ActionBarActivity {
     if (acc != null) {
       last_notification_dates.put( acc, new Date());
     } else {
+      Log.d("rgai", "update all notification date");
+      Log.d("rgai", last_notification_dates.toString());
       for (AccountAndr a : last_notification_dates.keySet()) {
         last_notification_dates.get( a).setTime( new Date().getTime());
       }
+      Log.d("rgai", last_notification_dates.toString());
     }
   }
 
@@ -356,12 +359,12 @@ public class MainActivity extends ActionBarActivity {
   public static Date getLastNotification( AccountAndr acc) {
     Date ret = null;
     if (last_notification_dates == null || acc == null) {
-      ret = new Date( new Date().getTime() - 86400 * 365 * 1000);
+      ret = new Date( new Date().getTime() - 86400L * 365 * 1000);
     } else {
       ret = last_notification_dates.get( acc);
     }
     if (ret == null) {
-      ret = new Date( new Date().getTime() - 86400 * 365 * 1000);
+      ret = new Date( new Date().getTime() - 86400L * 365 * 1000);
     }
     return ret;
   }

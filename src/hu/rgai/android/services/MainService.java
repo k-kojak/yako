@@ -47,6 +47,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -60,6 +62,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 
 public class MainService extends Service {
@@ -405,12 +408,14 @@ public class MainService extends Service {
                 mle.setSeen( true);
                 mle.setUnreadCount( 0);
               }
-              Date lastNotForAcc = MainActivity.getLastNotification( mle.getAccount());
+              Date lastNotForAcc = MainActivity.getLastNotification(mle.getAccount());
+              Log.d("rgai", "LastNotForAccount: " + lastNotForAcc + " ("+ mle.getAccount() +")");
               if (!mle.isSeen() && mle.getDate().after( lastNotForAcc)) {
                 if (lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
+                MainActivity.updateLastNotification(mle.getAccount());
               }
             }
 
@@ -430,11 +435,23 @@ public class MainService extends Service {
                       fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
                     }
                   }
-                  
                 }
-                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder( context).setSmallIcon( R.drawable.not_ic_action_email).setWhen( lastUnreadMsg.getDate().getTime())
-                    .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle()).setContentInfo( lastUnreadMsg.getMessageType().toString())
-                    .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
+                
+                Bitmap largeIcon;
+                if (lastUnreadMsg.getFrom() != null) {
+                  largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
+                } else {
+                  largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
+                }
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder( context)
+                        .setLargeIcon(largeIcon)
+                        .setSmallIcon(R.drawable.not_ic_action_email)
+                        .setWhen( lastUnreadMsg.getDate().getTime())
+                        .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
+                        .setContentInfo( lastUnreadMsg.getAccount().getDisplayName())
+                        
+                        .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle())
+                        .setVibrate(new long[]{100,150,100,150,800,150,100,150});
                 Intent resultIntent;
                 if (newMessageCount == 1) {
                   Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get( lastUnreadMsg.getAccount().getAccountType());
@@ -455,11 +472,11 @@ public class MainService extends Service {
                 mNotificationManager.notify( Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
                 EventLogger.INSTANCE.writeToLogFile( NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
                 Log.d( "rgai", "DISPLAY NOTIFICATION...");
-                if (newMessageCount == 1) {
-                  MainActivity.updateLastNotification( lastUnreadMsg.getAccount());
-                } else {
-                  MainActivity.updateLastNotification( null);
-                }
+//                if (newMessageCount == 1) {
+//                  MainActivity.updateLastNotification( lastUnreadMsg.getAccount());
+//                } else {
+//                  MainActivity.updateLastNotification( null);
+//                }
               } else {
 
               }

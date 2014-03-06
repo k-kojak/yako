@@ -46,6 +46,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
+  private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
@@ -71,6 +72,17 @@ public final class Settings {
       accountTypeToAccountClass.put(MessageProvider.Type.GMAIL, GmailAccount.class);
     }
     return accountTypeToAccountClass;
+  }
+  
+  public static Map<MessageProvider.Type, Integer> getAccountTypeToIconResource() {
+    if (accountTypeToIconResource == null) {
+      accountTypeToIconResource = new EnumMap<MessageProvider.Type, Integer>(MessageProvider.Type.class);
+      accountTypeToIconResource.put(MessageProvider.Type.EMAIL, R.drawable.ic_email);
+      accountTypeToIconResource.put(MessageProvider.Type.FACEBOOK, R.drawable.fb);
+      accountTypeToIconResource.put(MessageProvider.Type.GMAIL, R.drawable.gmail_icon);
+      accountTypeToIconResource.put(MessageProvider.Type.SMS, R.drawable.ic_sms3);
+    }
+    return accountTypeToIconResource;
   }
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
