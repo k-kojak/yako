@@ -2,13 +2,12 @@ package hu.rgai.android.eventlogger;
 
 import hu.rgai.android.test.MainActivity;
 import android.content.Context;
+import android.os.AsyncTask;
 
 public enum LogUploadScheduler {
   INSTANCE;
-  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60;
-  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 60;
-
-  Thread scheduler;
+  final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 24;
+  final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 60 * 15;
 
   // private Context c;
 
@@ -25,26 +24,18 @@ public enum LogUploadScheduler {
 
   public synchronized void startRepeatingTask() {
     mStatusChecker.setRepeatTask( true);
-    scheduler = new Thread( mStatusChecker);
-    scheduler.start();
+    mStatusChecker.execute();
     isRunning = true;
   }
 
   public synchronized void stopRepeatingTask() {
     isRunning = false;
-
-    if (scheduler.getState() == Thread.State.TIMED_WAITING) {
-      mStatusChecker.setRepeatTask( false);
-      scheduler.interrupt();
-    } else {
-      mStatusChecker.setRepeatTask( false);
-    }
-    scheduler = null;
+    mStatusChecker.setRepeatTask( false );
   }
 
 }
 
-class LogUploader implements Runnable {
+class LogUploader extends AsyncTask<Void, Void, Void> {
 
   private static final String LOGUPLOAD_FAILED_STR = "logupload:failed";
   boolean repeatTask = false;
@@ -68,8 +59,10 @@ class LogUploader implements Runnable {
   }
 
   @Override
-  public void run() {
-    while (repeatTask) {
+  protected Void doInBackground( Void... params) {
+    // TODO Auto-generated method stub
+    android.os.Process.setThreadPriority( android.os.Process.THREAD_PRIORITY_BACKGROUND );
+    while ( repeatTask ) {
       long elapsedTimeSinceLogCreated = LogToJsonConverter.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
       if (elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum) {
         try {
@@ -102,6 +95,6 @@ class LogUploader implements Runnable {
       }
 
     }
-
+    return null;
   }
 };
