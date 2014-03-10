@@ -62,10 +62,19 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
     // this.recipients = recipients;
   }
 
+  boolean isValidContent() {
+    if ( recipient.getType().equals( MessageProvider.Type.FACEBOOK)
+        || recipient.getType().equals( MessageProvider.Type.SMS) ) {
+      if ( content.length() == 0 )
+        return false;
+    }
+    return true;
+  }
+
   @Override
   protected Boolean doInBackground(Integer... params) {
     AccountAndr acc = getAccountForType(recipient.getType());
-    if (acc != null) {
+    if ( acc != null && isValidContent() ) {
       MessageProvider mp = null;
       Set<MessageRecipient> recipients = null;
       if (recipient.getType().equals(MessageProvider.Type.FACEBOOK)) {

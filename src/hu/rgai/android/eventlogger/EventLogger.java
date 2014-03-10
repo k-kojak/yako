@@ -195,16 +195,16 @@ public enum EventLogger {
 
   synchronized boolean uploadLogsAndCreateNewLogfile( Context context) {
     if (context == null) {
-      Log.d("rgai", "CONTEXT IS NULL @ EventLogger.uploadLogsAndCreateNewLogfile");
+      Log.d( "rgai", "CONTEXT IS NULL @ EventLogger.uploadLogsAndCreateNewLogfile");
       return false;
     }
     boolean uploadSucces = true;
     if (logToJsonConverter.getDeviceId() == null) {
-      Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
-      Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
-      
-      logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
-      
+      Log.d( "rgai", "logToJsonConverter: " + logToJsonConverter.toString());
+      Log.d( "rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
+
+      logToJsonConverter.setDeviceId( Secure.getString( context.getContentResolver(), Secure.ANDROID_ID));
+
     }
     lockedToUpload = true;
     try {
@@ -277,9 +277,6 @@ public enum EventLogger {
 
   private boolean uploadContentInformations( final HttpPost httpPost) {
     List<String> contentInformations = getContentInformations();
-    for (String string : contentInformations) {
-      Log.d( "willrgai", string);
-    }
     String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat( contentInformations);
     StringEntity httpContentListEntity;
     HttpResponse response = null;
