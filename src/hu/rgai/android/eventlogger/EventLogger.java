@@ -248,30 +248,22 @@ public enum EventLogger {
   public synchronized boolean uploadLogsToServer( Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
       KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
 
-    boolean uploadSucces = true;
-
     List<String> logList = getLogListFromLogFile();
-    String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat( logList);
-    Log.d( "willrgai", jsonEncodedLogs);
-    if (jsonEncodedLogs != null)
-      uploadSucces = uploadSucces && uploadJsonEncodedString( jsonEncodedLogs);
-    else
-      return false;
-    return uploadSucces;
-  }
-
-  private boolean uploadJsonEncodedString( String jsonEncodedLogs) throws UnsupportedEncodingException, IOException, ClientProtocolException, ParseException, JSONException {
-    final HttpPost httpPost = new HttpPost( SERVLET_URL);
-
-    if (!uploadLogs( jsonEncodedLogs, httpPost))
+    String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat( logList );
+    Log.d( "willrgai", jsonEncodedLogs );
+    if (jsonEncodedLogs == null)
       return false;
 
-    if (!uploadCallInformations( httpPost))
+    final HttpPost httpPost = new HttpPost( SERVLET_URL );
+
+    if ( !uploadLogs( jsonEncodedLogs, httpPost ) )
       return false;
 
-    if (!uploadContentInformations( httpPost))
+    if ( !uploadCallInformations( httpPost ) )
       return false;
 
+    if ( !uploadContentInformations( httpPost ) )
+      return false;
     return true;
   }
 
