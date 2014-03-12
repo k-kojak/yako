@@ -2,14 +2,13 @@ package hu.rgai.android.eventlogger;
 
 import hu.rgai.android.test.MainActivity;
 import android.content.Context;
-import android.os.AsyncTask;
 
 public enum LogUploadScheduler {
   INSTANCE;
   final private long DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM = 1000 * 60 * 60 * 24;
   final private long WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME = 1000 * 60 * 15;
 
-  // private Context c;
+  Thread scheduler;
 
   public boolean isRunning = false;
   LogUploader mStatusChecker = null;
@@ -19,25 +18,25 @@ public enum LogUploadScheduler {
 
   public synchronized void setContext( Context c) {
     if (mStatusChecker == null)
-      mStatusChecker = new LogUploader( c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
+      mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
   }
 
   public synchronized void startRepeatingTask() {
-    mStatusChecker.setRepeatTask( true);
-    mStatusChecker.execute();
+    mStatusChecker.setRepeatTask(true);
+    scheduler = new Thread(mStatusChecker);
+    scheduler.start();
     isRunning = true;
   }
 
   public synchronized void stopRepeatingTask() {
     isRunning = false;
-    mStatusChecker.setRepeatTask( false );
+    mStatusChecker.setRepeatTask(false);
   }
 
 }
 
-class LogUploader extends AsyncTask<Void, Void, Void> {
+class LogUploader implements Runnable {
 
-  private static final String LOGUPLOAD_FAILED_STR = "logupload:failed";
   boolean repeatTask = false;
   boolean threadIsSleep = false;
   final private long defaultWaitTimeInMilliSecondum;
@@ -59,42 +58,38 @@ class LogUploader extends AsyncTask<Void, Void, Void> {
   }
 
   @Override
-  protected Void doInBackground( Void... params) {
+  public void run() {
     // TODO Auto-generated method stub
-    android.os.Process.setThreadPriority( android.os.Process.THREAD_PRIORITY_BACKGROUND );
+    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
     while ( repeatTask ) {
       long elapsedTimeSinceLogCreated = LogToJsonConverter.getCurrentTime() - EventLogger.INSTANCE.getLogfileCreatedTime();
-      if (elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum) {
+      if ( elapsedTimeSinceLogCreated < defaultWaitTimeInMilliSecondum ) {
         try {
-          Thread.sleep( defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated);
-        } catch (InterruptedException e) {
+          Thread.sleep(defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated);
+        } catch ( InterruptedException e ) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
       } else {
-        if (!MainActivity.isNetworkAvailable( c)) {
+        if ( !MainActivity.isNetworkAvailable(c) ) {
           try {
-            Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum);
-          } catch (InterruptedException e) {
+            Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
+          } catch ( InterruptedException e ) {
             // TODO Auto-generated catch block
             e.printStackTrace();
           }
         } else {
-          if (!EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile( c)) {
-            EventLogger.INSTANCE.writeToLogFile( LOGUPLOAD_FAILED_STR, true);
-            try {
-              Thread.sleep( waitTimeAfterDefaultWaitTimeInMilliSecondum);
-            } catch (InterruptedException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-            }
+          try {
+            EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(c);
+            Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
+          } catch ( InterruptedException e ) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
           }
-
         }
 
       }
 
     }
-    return null;
   }
 };
