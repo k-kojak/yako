@@ -267,7 +267,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
             projection, selection, selectionArgs, sort);
   }
   
-  private static Uri getPhotoUriById(Context context, Long id ) {
+  public static Uri getPhotoUriById(Context context, Long id ) {
     if( id == null || context == null ) return null;
 
     Uri photo = Uri.parse( "android.resource://"+ context.getPackageName() +"/" + R.drawable.android );

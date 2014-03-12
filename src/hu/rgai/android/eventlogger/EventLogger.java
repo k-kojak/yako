@@ -48,7 +48,7 @@ public enum EventLogger {
       if (isSdPresent()) {
         logfile = new File( Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
-        logfile = new File( Environment.getDataDirectory().getAbsoluteFile(), logFilePath);
+        logfile = new File( context.getFilesDir().getAbsoluteFile(), logFilePath);
       }
     }
     this.logFilePath = logfile.getPath();

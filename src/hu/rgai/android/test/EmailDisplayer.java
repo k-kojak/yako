@@ -2,9 +2,8 @@ package hu.rgai.android.test;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -25,18 +24,11 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import hu.rgai.android.tools.adapter.ContactListAdapter;
 
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
+import java.io.File;
+
 
 import net.htmlparser.jericho.Source;
 
@@ -206,8 +198,29 @@ public class EmailDisplayer extends ActionBarActivity {
    * Displays the message.
    */
   private void displayMessage() {
+
+	  
+      // TODO: e-mail kinézet
+	  
+	
+//	Bitmap img =ProfilePhotoProvider.getImageToUser(this, from.getContactId());
+//	ImageView image = null;
+//	image.setImageBitmap(img);
+//	image.getResources();
+	
+	Uri uri= ContactListAdapter.getPhotoUriById(this,from.getContactId());
+	
+	System.out.println(uri.toString());
+	
+	File myFile = new File(uri.toString());
+
+	System.out.println(myFile.getAbsolutePath());
+	
+	
     String mail = from.getId();
+    
     String c = "<b>" +from.getName() +"</b>" + "<br/>" + "<small>" + "<a href=\"mailto:" + mail +"\">"+ mail + "</a>" + "</small>"+ "<br/>"+ content.getDate() + "<br/>" + content.getSubject() + "<br/>" +"<hr>" +"<br/>" + content.getContent();
+    
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
   

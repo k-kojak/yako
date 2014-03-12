@@ -77,7 +77,7 @@ public class FacebookFriendProvider {
             String name = json_obj.getString("name");
             String username = json_obj.getString("username");
 
-            FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"));
+            FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"), json_obj.getString("pic_big"));
             fbs.integrate(activity, fbii);
 //            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
           }

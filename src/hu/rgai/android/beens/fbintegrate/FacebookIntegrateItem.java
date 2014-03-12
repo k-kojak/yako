@@ -11,12 +11,14 @@ public class FacebookIntegrateItem {
   private String fbAliasId;
   private String fbId;
   private String thumbImgUrl;
+  private String bigThumbImgUrl;
 
-  public FacebookIntegrateItem(String name, String fbAliasId, String fbId, String thumbImgUrl) {
+  public FacebookIntegrateItem(String name, String fbAliasId, String fbId, String thumbImgUrl, String bigThumbImgUrl) {
     this.name = name;
     this.fbAliasId = fbAliasId;
     this.fbId = fbId;
     this.thumbImgUrl = thumbImgUrl;
+    this.bigThumbImgUrl = bigThumbImgUrl;
   }
 
   public String getName() {
@@ -33,6 +35,10 @@ public class FacebookIntegrateItem {
 
   public String getThumbImgUlr() {
     return thumbImgUrl;
+  }
+  
+  public String getBigThumbImgUlr() {
+	return bigThumbImgUrl;
   }
   
   @Override
