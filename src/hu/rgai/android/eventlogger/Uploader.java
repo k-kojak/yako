@@ -73,7 +73,6 @@ class Uploader implements Runnable {
     if ( logToJsonConverter.getDeviceId() == null ) {
       Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
       Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
-
       logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
     }
     EventLogger.INSTANCE.lockedToUpload = true;
@@ -272,7 +271,7 @@ class Uploader implements Runnable {
     StringBuilder sb = new StringBuilder();
     br = new BufferedReader(new InputStreamReader(reader));
     String line;
-    while ( ( line = br.readLine()) != null ) {
+    while ( ( line = br.readLine() ) != null ) {
       sb.append(line);
     }
     Log.d("willrgai", sb.toString());
@@ -290,12 +289,14 @@ class Uploader implements Runnable {
 
   private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
     List<String> logList = new ArrayList<String>();
-    FileReader logFileReader = new FileReader(EventLogger.INSTANCE.logFilePath);
-    BufferedReader br = new BufferedReader(logFileReader);
-
+    BufferedReader br;
+    if ( EventLogger.INSTANCE.sdCard )
+      br = new BufferedReader(new FileReader(EventLogger.INSTANCE.logFilePath));
+    else
+      br = new BufferedReader(new InputStreamReader(context.openFileInput(EventLogger.INSTANCE.logFilePath)));
     String readedLine;
     br.readLine();
-    while ( ( readedLine = br.readLine()) != null ) {
+    while ( ( readedLine = br.readLine() ) != null ) {
       logList.add(readedLine);
     }
     br.close();

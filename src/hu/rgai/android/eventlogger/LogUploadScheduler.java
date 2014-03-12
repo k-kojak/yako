@@ -17,7 +17,7 @@ public enum LogUploadScheduler {
   }
 
   public synchronized void setContext( Context c) {
-    if (mStatusChecker == null)
+    if ( mStatusChecker == null )
       mStatusChecker = new LogUploader(c, DEFAULT_WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM, WAIT_TIME_TO_UPLOAD_IN_MILLISECUNDUM_AFTER_DEFAULT_WAIT_TIME);
   }
 
