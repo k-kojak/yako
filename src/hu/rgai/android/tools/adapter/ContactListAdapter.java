@@ -162,7 +162,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     if (resid != null) {
       typeImg.setImageResource(resid);
     } else {
-      typeImg.setImageResource(R.drawable.android);
+      typeImg.setImageResource(R.drawable.ic_contact_picture);
     }
     
 //    typeImg.setText(type.substring(type.indexOf("/") + 1));
@@ -174,21 +174,21 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 //      photoUri = Uri.withAppendedPath( photoUri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY );
       iv.setImageURI(photoUri);
     } else {
-      iv.setImageResource(R.drawable.android);
+      iv.setImageResource(R.drawable.ic_contact_picture);
     }
   }
   
-  private Uri loadContactPhoto(ContentResolver cr, long id) {
-    Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
-    Log.d("rgai", "person path -> " + uri.toString());
-    Log.d("rgai", "person's photo path -> " + Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY));
-    return Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
+//  private Uri loadContactPhoto(ContentResolver cr, long id) {
+//    Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
+//    Log.d("rgai", "person path -> " + uri.toString());
+//    Log.d("rgai", "person's photo path -> " + Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY));
+//    return Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
 //    InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(cr, uri); 
 //    if (input == null) { 
 //      return null; 
 //    } 
 //    return BitmapFactory.decodeStream(input); 
-  }
+//  }
 
   @Override
   public CharSequence convertToString(Cursor cursor) {

@@ -1,29 +1,20 @@
 package hu.rgai.android.tools.view;
 
 import android.app.Activity;
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.Contacts;
-import android.provider.MediaStore;
-import android.text.Annotation;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
-import android.text.style.StyleSpan;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -33,20 +24,14 @@ import android.widget.TextView;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView implements OnItemClickListener {
 
   private final String TAG = "ChipsMultiAutoCompleteTextview";
   private ArrayList<RecipientItem> recipients;
-  private static int chipTextImgDimension = 50;
+  private static int CHIP_TEXT_DIMENSION_IN_DIP = 55;
 
   /* Constructor */
   public ChipsMultiAutoCompleteTextView(Context context) {
@@ -169,15 +154,22 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
           setImageIcon(textView, u.getContactId()); // set flag image
   // capture bitmapt of genreated textview
           int spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+          textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
           textView.measure(spec, spec);
+          
           textView.layout(0, 0, textView.getMeasuredWidth(), textView.getMeasuredHeight());
           Bitmap b = Bitmap.createBitmap(textView.getWidth(), textView.getHeight(), Bitmap.Config.ARGB_8888);
+//          Bitmap b = Bitmap.createBitmap(70, 70, Bitmap.Config.ARGB_8888);
           Canvas canvas = new Canvas(b);
+          
           canvas.translate(-textView.getScrollX(), -textView.getScrollY());
           textView.draw(canvas);
           textView.setDrawingCacheEnabled(true);
           Bitmap cacheBmp = textView.getDrawingCache();
           Bitmap viewBmp = cacheBmp.copy(Bitmap.Config.ARGB_8888, true);
+          Log.d("rgai", "viewBmp.getWidth() -> " + viewBmp.getWidth());
+          Log.d("rgai", "viewBmp.getHeight() -> " + viewBmp.getHeight());
+          
           textView.destroyDrawingCache(); // destory drawable
   // create bitmap drawable for imagespan
           BitmapDrawable bmpDrawable = new BitmapDrawable(viewBmp);
@@ -341,12 +333,19 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   
   public void setImageIcon(TextView textView, int id) {
     Bitmap bitmap = ProfilePhotoProvider.getImageToUser(this.getContext(), id);
-    BitmapDrawable bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, chipTextImgDimension, chipTextImgDimension, true));
+    int px = dipToPixels(CHIP_TEXT_DIMENSION_IN_DIP);
+    Log.d("rgai", CHIP_TEXT_DIMENSION_IN_DIP + " DIP = " + px + " PX");
+    BitmapDrawable bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, px, px, true));
 //    } else {
 //      bm = BitmapFactory.decodeResource(getResources(), R.drawable.android);
 //      bd = new BitmapDrawable(null, bm);
 //    }
     textView.setCompoundDrawablesWithIntrinsicBounds(null, null, bd, null);
+  }
+  
+  private int dipToPixels(float dipValue) {
+    DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+    return (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
   }
   
 //  public void setImageIcon(TextView textView, Uri imgUri, int id) {

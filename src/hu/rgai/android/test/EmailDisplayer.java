@@ -194,7 +194,7 @@ public class EmailDisplayer extends ActionBarActivity {
 //    ((TextView)findViewById(R.id.email)).setText(from.getId());
     
     
-    String c = "<hr>" + content.getContent();
+    String c = content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
 
