@@ -32,6 +32,7 @@ import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.ProfilePhotoProvider;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -165,7 +166,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
           TextView textView = (TextView) lf.inflate(R.layout.chips_edittext, null);
           textView.setText(u.getDisplayName()); // set text
 //          setFlags(textView, u.getText()); // set flag image
-          setImageIcon(textView, u.getImgUri(), u.getContactId()); // set flag image
+          setImageIcon(textView, u.getContactId()); // set flag image
   // capture bitmapt of genreated textview
           int spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
           textView.measure(spec, spec);
@@ -338,46 +339,56 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     setChips2();
   }
   
-  public void setImageIcon(TextView textView, Uri imgUri, int id) {
-    InputStream is = null;
-    Bitmap bm = null;
-    BitmapDrawable bd;
-    
-    if (id != -1) {
-      Uri contactUri = ContentUris.withAppendedId(Contacts.CONTENT_URI, id);
-      Uri photoUri = Uri.withAppendedPath(contactUri, Contacts.Photo.CONTENT_DIRECTORY);
-      Cursor cursor = this.getContext().getContentResolver().query(photoUri,
-              new String[] {Contacts.Photo.PHOTO}, null, null, null);
-      if (cursor == null) {
-        is = null;
-      } else {
-        try {
-          if (cursor.moveToFirst()) {
-            byte[] data = cursor.getBlob(0);
-            if (data != null) {
-              is = new ByteArrayInputStream(data);
-            }
-          }
-        } finally {
-          cursor.close();
-        }
-      }
-    }
-    
-//    if (imgUri != null) {
-//      imgUri = Uri.parse(imgUri.toString().substring(0,imgUri.toString().length() - 6));
-//      is = ContactsContract.Contacts.openContactPhotoInputStream(this.getContext().getContentResolver(), imgUri);
-//      is = ContactsContract.Contacts.this.getContext().getContentResolver(), imgUri);
-//      is = ContactsContract.Contacts.
+  public void setImageIcon(TextView textView, int id) {
+    Bitmap bitmap = ProfilePhotoProvider.getImageToUser(this.getContext(), id);
+    BitmapDrawable bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, chipTextImgDimension, chipTextImgDimension, true));
+//    } else {
+//      bm = BitmapFactory.decodeResource(getResources(), R.drawable.android);
+//      bd = new BitmapDrawable(null, bm);
 //    }
-    
-    if (is != null) {
-      Bitmap bitmap = BitmapFactory.decodeStream(is);
-      bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, chipTextImgDimension, chipTextImgDimension, true));
-    } else {
-      bm = BitmapFactory.decodeResource(getResources(), R.drawable.android);
-      bd = new BitmapDrawable(null, bm);
-    }
     textView.setCompoundDrawablesWithIntrinsicBounds(null, null, bd, null);
   }
+  
+//  public void setImageIcon(TextView textView, Uri imgUri, int id) {
+//    InputStream is = null;
+//    Bitmap bm = null;
+//    BitmapDrawable bd;
+//    
+//    if (id != -1) {
+//      Uri contactUri = ContentUris.withAppendedId(Contacts.CONTENT_URI, id);
+//      Uri photoUri = Uri.withAppendedPath(contactUri, Contacts.Photo.CONTENT_DIRECTORY);
+//      Cursor cursor = this.getContext().getContentResolver().query(photoUri,
+//              new String[] {Contacts.Photo.PHOTO}, null, null, null);
+//      if (cursor == null) {
+//        is = null;
+//      } else {
+//        try {
+//          if (cursor.moveToFirst()) {
+//            byte[] data = cursor.getBlob(0);
+//            if (data != null) {
+//              is = new ByteArrayInputStream(data);
+//            }
+//          }
+//        } finally {
+//          cursor.close();
+//        }
+//      }
+//    }
+//    
+////    if (imgUri != null) {
+////      imgUri = Uri.parse(imgUri.toString().substring(0,imgUri.toString().length() - 6));
+////      is = ContactsContract.Contacts.openContactPhotoInputStream(this.getContext().getContentResolver(), imgUri);
+////      is = ContactsContract.Contacts.this.getContext().getContentResolver(), imgUri);
+////      is = ContactsContract.Contacts.
+////    }
+//    
+//    if (is != null) {
+//      Bitmap bitmap = BitmapFactory.decodeStream(is);
+//      bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, chipTextImgDimension, chipTextImgDimension, true));
+//    } else {
+//      bm = BitmapFactory.decodeResource(getResources(), R.drawable.android);
+//      bd = new BitmapDrawable(null, bm);
+//    }
+//    textView.setCompoundDrawablesWithIntrinsicBounds(null, null, bd, null);
+//  }
 }
