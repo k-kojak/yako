@@ -24,7 +24,7 @@ import hu.rgai.android.tools.Utils;
 
 public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 
-	private TextView countryName;
+//	private TextView msgBubble;
 	private List<MessageAtomParc> messages = new ArrayList<MessageAtomParc>();
 	private LinearLayout wrapper;
   private AccountAndr account = null;
@@ -72,40 +72,79 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 //    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
 //    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
-		countryName = (TextView) row.findViewById(R.id.comment);
+		TextView msgBubble = (TextView) row.findViewById(R.id.comment);
 
-		countryName.setText(coment.getContent());
+		msgBubble.setText(coment.getContent());
     
-		countryName.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
-    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
-    if (coment.isIsMe()) {
-      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
-    } else {
-      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
-    }
-    wrapper.setLayoutParams(wrapperParams);
+		msgBubble.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
+    
+//    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
+//    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+//              LinearLayout.LayoutParams.WRAP_CONTENT,
+//              LinearLayout.LayoutParams.WRAP_CONTENT);
+//    if (coment.isIsMe()) {
+//      params.setMargins(75, 10, 10, 10);
+//      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
+//    } else {
+//      params.setMargins(10, 30, 75, 10);
+//      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
+//    }
+//    msgBubble.setLayoutParams(params);
+    
+//    wrapper.setLayoutParams(wrapperParams);
 		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
     
     ImageView iv = (ImageView)row.findViewById(R.id.img);
-    Bitmap img;
-    if (coment.isIsMe()) {
-      img = StoreHandler.getUserFbImage(context);
-    } else {
-      img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
-    }
-    if (img == null) {
-      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
-    }
-    iv.setImageBitmap(img);
+//    Bitmap img;
+//    if (coment.isIsMe()) {
+//      img = StoreHandler.getUserFbImage(context);
+//    } else {
+//      img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
+//    }
+//    if (img == null) {
+//      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
+//    }
+//    iv.setImageBitmap(img);
 
+    MessageAtomParc prevMsg = null;
+    if (position - 1 >= 0) {
+      prevMsg = getItem(position - 1);
+    }
+    boolean smallTopPadding;
     if (coment.isIsMe()) {
       iv.setVisibility(View.GONE);
+      smallTopPadding = true;
     } else {
-      iv.setVisibility(View.VISIBLE);
+//      iv.setVisibility(View.VISIBLE);
+      if (prevMsg != null && !prevMsg.isIsMe()) {
+        iv.setVisibility(View.GONE);
+        smallTopPadding = true;
+      } else {
+        iv.setVisibility(View.VISIBLE);
+        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
+        if (img == null) {
+          img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
+        }
+        iv.setImageBitmap(img);
+        smallTopPadding = false;
+      }
     }
     
-    if (position - 1 >= 0) {
-      MessageAtomParc prevMsg = getItem(position - 1);
+    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+              LinearLayout.LayoutParams.WRAP_CONTENT,
+              LinearLayout.LayoutParams.WRAP_CONTENT);
+    if (coment.isIsMe()) {
+      params.setMargins(75, smallTopPadding ? 10 : 30, 10, 5);
+      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
+    } else {
+      params.setMargins(10, smallTopPadding ? 0 : 30, 75, 5);
+      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
+    }
+    msgBubble.setLayoutParams(params);
+    wrapper.setLayoutParams(wrapperParams);
+    
+    if (prevMsg != null) {
       // dealing with timestamps
       if (coment.getDate().getTime() - prevMsg.getDate().getTime() < 60000) {
         row.findViewById(R.id.hr).setVisibility(View.GONE);
@@ -114,8 +153,9 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
         TextView ts = (TextView)row.findViewById(R.id.timestamp);
         ts.setText(Utils.getSimplifiedTime(coment.getDate()));
       }
-      
     }
+    
+    
 //    TextView ts = (TextView)row.findViewById(R.id.timestamp);
 //    ts.setText("kecske");
     
