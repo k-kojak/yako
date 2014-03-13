@@ -50,7 +50,7 @@ public final class Settings {
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
-  public static final int MAX_SNIPPET_LENGTH = 30;
+  public static final int MAX_SNIPPET_LENGTH = 24;
 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {

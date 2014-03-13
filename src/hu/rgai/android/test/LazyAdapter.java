@@ -75,13 +75,15 @@ public class LazyAdapter extends BaseAdapter {
       }
     } else {
       subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-      if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
-        subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
-      }
-      if (message.getUnreadCount() > 0) {
-        subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
-      }
     }
+    
+    if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
+      subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
+    }
+    if (message.getUnreadCount() > 0) {
+      subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+    }
+    
     subject.setText(subjectText);
     String fromText = "";
     if (message.getFrom() == null) {

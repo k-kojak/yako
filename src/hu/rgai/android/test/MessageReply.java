@@ -111,7 +111,7 @@ public class MessageReply extends ActionBarActivity {
         && (account.getAccountType().equals( MessageProvider.Type.EMAIL) || account.getAccountType().equals( MessageProvider.Type.GMAIL))) {
       RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getId(),
           null, (int) from.getContactId());
-      recipients.addRecipient( ri);
+      recipients.addRecipient(ri);
     }
 
     Cursor c = getContentResolver().query( ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);

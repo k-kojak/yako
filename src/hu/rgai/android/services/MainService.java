@@ -49,8 +49,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
@@ -443,12 +446,15 @@ public class MainService extends Service {
                 } else {
                   largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
                 }
+                Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
+             
                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder( context)
                         .setLargeIcon(largeIcon)
                         .setSmallIcon(R.drawable.not_ic_action_email)
                         .setWhen( lastUnreadMsg.getDate().getTime())
                         .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
                         .setContentInfo( lastUnreadMsg.getAccount().getDisplayName())
+                        .setSound(soundURI)
                         
                         .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle())
                         .setVibrate(new long[]{100,150,100,150,500,150,100,150});

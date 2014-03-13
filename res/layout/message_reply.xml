@@ -41,7 +41,6 @@ and open the template in the editor.
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Content"
-        android:minLines="6"
         android:inputType="textMultiLine" />
 
       <Button
