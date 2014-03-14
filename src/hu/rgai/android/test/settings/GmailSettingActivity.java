@@ -14,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -63,6 +64,11 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
       pass.setText(oldAccount.getPassword());
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
+  }
+  
+  public void onCheckboxClicked(View v) {
+    boolean checked = ((CheckBox)v).isChecked();
+    AccountSettingsList.showHidePassword(checked, pass);
   }
     
   @Override

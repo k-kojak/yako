@@ -14,12 +14,14 @@ import android.os.Message;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -293,6 +295,18 @@ public class AccountSettingsList extends ActionBarActivity {
     }
   }
 
+  public static void showHidePassword(boolean showPass, EditText passField) {
+    int s, e;
+    s = passField.getSelectionStart();;
+    e = passField.getSelectionEnd();
+    if (showPass) {
+      passField.setTransformationMethod(null);
+    } else {
+      passField.setTransformationMethod(new PasswordTransformationMethod());
+    }
+    passField.setSelection(s, e);
+  }
+  
   public static int getSpinnerPosition(SpinnerAdapter adapter, int value) {
     int ind = 0;
     for (int i = 0; i < adapter.getCount(); i++) {

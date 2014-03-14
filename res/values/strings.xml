@@ -25,6 +25,7 @@
   <string name="imap_hint">imap address</string>
   <string name="smtp_hint">smtp address</string>
   <string name="password_hint">password</string>
+  <string name="show_password">Show password</string>
   <string name="refreshing">Refreshing</string>
   <string name="loading_more_elements">Loading older messages</string>
     

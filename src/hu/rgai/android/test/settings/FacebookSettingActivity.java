@@ -18,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -214,6 +215,11 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
     this.id = id;
   }
   
+  public void onCheckboxClicked(View v) {
+    boolean checked = ((CheckBox)v).isChecked();
+    AccountSettingsList.showHidePassword(checked, password);
+  }
+  
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       // Inflate the menu items for use in the action bar
@@ -242,6 +248,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
       findViewById(R.id.display_name).setVisibility(user == null ? View.GONE : View.VISIBLE);
 //      findViewById(R.id.unique_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.password).setVisibility(user == null ? View.GONE : View.VISIBLE);
+      findViewById(R.id.show_pass).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.initial_items_num).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.initial_items_num_label).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.sync_fb_contact_list).setVisibility(user == null ? View.GONE : View.VISIBLE);

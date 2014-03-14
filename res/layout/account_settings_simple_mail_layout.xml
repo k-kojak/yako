@@ -49,6 +49,13 @@
         android:layout_height="wrap_content"
         android:hint="@string/password_hint"
         android:inputType="textPassword" />
+      
+      <CheckBox android:id="@+id/show_pass"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/show_password"
+        android:onClick="onCheckboxClicked" />
+
 
       <TextView
         android:layout_width="fill_parent"
