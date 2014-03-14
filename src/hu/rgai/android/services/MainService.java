@@ -604,8 +604,6 @@ public class MainService extends Service {
 
     @Override
     protected List<MessageListElementParc> doInBackground( String... params) {
-      // TEMPORARY CALL
-      MainActivity.clearLastNotifictionDates();
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {

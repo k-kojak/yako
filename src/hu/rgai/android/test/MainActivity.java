@@ -300,11 +300,6 @@ public class MainActivity extends ActionBarActivity {
     }
   }
   
-  // TEMPORARY FUNCTION
-  public static void clearLastNotifictionDates() {
-    last_notification_dates = new HashMap<AccountAndr, Date>();
-  }
-
   /**
    * Sets up the screen receiver for logging.
    */
