@@ -604,7 +604,8 @@ public class MainService extends Service {
 
     @Override
     protected List<MessageListElementParc> doInBackground( String... params) {
-
+      // TEMPORARY CALL
+      MainActivity.clearLastNotifictionDates();
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {
@@ -701,8 +702,10 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc( mle, acc);
-        // Log.d("rgai", "@A message from user -> " + mle.getFrom());
-        mlep.setFrom( PersonAndr.searchPersonAndr( context, mle.getFrom()));
+//        Log.d("rgai", "@A message from user -> " + mle.getFrom());
+        PersonAndr paFound = PersonAndr.searchPersonAndr( context, mle.getFrom());
+        mlep.setFrom(paFound);
+//        Log.d("rgai", "Found from -> " + paFound.toString());
         if (mlep.getRecipientsList() != null) {
           for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
             PersonAndr pa = PersonAndr.searchPersonAndr(context, mlep.getRecipientsList().get(i));

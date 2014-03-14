@@ -69,6 +69,30 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
             null,
             null,
             "date DESC ");
+//    Cursor cur2 = context.getContentResolver().query(uriSMSURI,
+//            null,
+//            null,
+//            null,
+//            "date DESC ");
+//    while (cur2.moveToNext()) {
+//      String[] cn = cur2.getColumnNames();
+//      int tid = cur2.getInt(cur2.getColumnIndex("thread_id"));
+//      if (tid == 4 || tid == 3) {
+//        for (int i = 0; i < cn.length; i++) {
+//          String v = "";
+//          if (cur2.getType(i) == Cursor.FIELD_TYPE_INTEGER) {
+//            v = cur2.getInt(i) + "";
+//          } else if (cur2.getType(i) == Cursor.FIELD_TYPE_STRING) {
+//            v = cur2.getString(i) + "";
+//          }
+//          Log.d("rgai", cn[i] + " -> " + v);
+//        }
+//      }
+//      Log.d("rgai", "----------------------------------------------");
+//      Log.d("rgai", "----------------------------------------------");
+//      
+//    }
+//    cur2.close();
     if (cur != null) {
       while (cur.moveToNext()) {
         String title = cur.getString(1);
@@ -79,7 +103,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         boolean isMe = cur.getInt(6) == 2;
         MessageItem ti = new MessageItem(cur.getString(0), title, seen, isMe, cur.getLong(4),
                 cur.getString(5), cur.getLong(2));
-  //      Log.d("rgai", "MessageItem -> " + ti);
+//        Log.d("rgai", "MessageItem -> " + ti);
         boolean contains = false;
         int containIndex = -1;
         for (MessageListElement mle : messages) {
@@ -92,7 +116,11 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
         Person from = null;
   //      if (!ti.isMe) {
+        if (ti.personId == 0) {
+          from = new Person(ti.address, ti.address, Type.SMS);
+        } else {
           from = new Person(ti.personId+"", ti.address, Type.SMS);
+        }
   //      } else {
   ////        from = new Person(ti.personId+"", ti.address, Type.SMS);
   //      }
@@ -112,6 +140,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
                   from, null, new Date(ti.date), Type.SMS));
         }
       }
+      cur.close();
     }
 
     return messages;

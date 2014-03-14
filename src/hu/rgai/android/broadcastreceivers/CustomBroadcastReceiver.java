@@ -7,7 +7,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.services.schedulestarters.MainScheduler;
 
 public class CustomBroadcastReceiver extends BroadcastReceiver {
 

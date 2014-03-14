@@ -67,7 +67,12 @@ public class AccountListAdapter extends BaseAdapter {
     } else if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
       EmailAccount eacc = (EmailAccount)account;
       String dom = eacc.getEmail().substring(eacc.getEmail().indexOf("@") + 1);
-      dom = dom.substring(0, dom.indexOf("."));
+      int dotIndex = dom.indexOf(".");
+      if (dotIndex == -1) {
+        dom = "";
+      } else {
+        dom = dom.substring(0, dotIndex);
+      }
       icon.setImageResource(Settings.EmailUtils.getResourceIdToEmailDomain(dom));
     }
     

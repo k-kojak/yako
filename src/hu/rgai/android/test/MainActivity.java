@@ -164,7 +164,7 @@ public class MainActivity extends ActionBarActivity {
     if (fbToken == null) {
       fbToken = StoreHandler.getFacebookAccessToken( context);
       Date expirationDate = StoreHandler.getFacebookAccessTokenExpirationDate( context);
-      Log.d( "rgai", "expiration date readed -> " + expirationDate.toString());
+//      Log.d( "rgai", "expiration date readed -> " + expirationDate.toString());
       if (fbToken != null) {
         Session.openActiveSessionWithAccessToken( context,
             AccessToken.createFromExistingAccessToken( fbToken, expirationDate, new Date( 2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
@@ -298,6 +298,11 @@ public class MainActivity extends ActionBarActivity {
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
     }
+  }
+  
+  // TEMPORARY FUNCTION
+  public static void clearLastNotifictionDates() {
+    last_notification_dates = new HashMap<AccountAndr, Date>();
   }
 
   /**
