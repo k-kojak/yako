@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 
 /**
  * 
@@ -155,17 +156,23 @@ public class MessageReply extends ActionBarActivity {
   public void prepareMessageSending( View v) {
     List<RecipientItem> to = recipients.getRecipients();
     List<AccountAndr> accs = StoreHandler.getAccounts( this);
-
+    
+    boolean isPhone = MainActivity.isPhone(this);
+    
     for (RecipientItem ri : to) {
       List<AccountAndr> selectedAccs = new LinkedList<AccountAndr>();
       Iterator<AccountAndr> accIt = accs.iterator();
-      while (accIt.hasNext()) {
-        AccountAndr actAcc = accIt.next();
-        if (((ri.getType().equals( MessageProvider.Type.EMAIL) || ri.getType().equals( MessageProvider.Type.GMAIL))
-            && (actAcc.getAccountType().equals( MessageProvider.Type.EMAIL)
-            || actAcc.getAccountType().equals( MessageProvider.Type.GMAIL)))
-            || ri.getType().equals( actAcc.getAccountType())) {
-          selectedAccs.add( actAcc);
+      if (ri.getType().equals(MessageProvider.Type.SMS) && isPhone) {
+        selectedAccs.add(new SmsAccountAndr());
+      } else {
+        while (accIt.hasNext()) {
+          AccountAndr actAcc = accIt.next();
+          if (((ri.getType().equals( MessageProvider.Type.EMAIL) || ri.getType().equals( MessageProvider.Type.GMAIL))
+              && (actAcc.getAccountType().equals( MessageProvider.Type.EMAIL)
+              || actAcc.getAccountType().equals( MessageProvider.Type.GMAIL)))
+              || ri.getType().equals( actAcc.getAccountType())) {
+            selectedAccs.add( actAcc);
+          }
         }
       }
       if (selectedAccs.isEmpty()) {

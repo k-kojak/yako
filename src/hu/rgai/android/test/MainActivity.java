@@ -408,7 +408,7 @@ public class MainActivity extends ActionBarActivity {
     }
     boolean isListView = instance.findViewById( R.id.list) != null;
     boolean isNet = isNetworkAvailable( instance);
-    if (isNet || isPhone()) {
+    if (isNet || isPhone(instance)) {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
         adapter.notifyDataSetChanged();
       } else if (!MainService.messages.isEmpty() && !isListView) {
@@ -629,7 +629,7 @@ public class MainActivity extends ActionBarActivity {
    * 
    * @return true if has SIM card, false otherwise
    */
-  private static boolean isPhone() {
+  public static boolean isPhone(Context c) {
     TelephonyManager telMgr = (TelephonyManager) instance.getSystemService( Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
     if (simState == TelephonyManager.SIM_STATE_READY) {
