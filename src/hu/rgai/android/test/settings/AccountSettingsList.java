@@ -275,7 +275,7 @@ public class AccountSettingsList extends ActionBarActivity {
 
   public static void validateEmailField(TextView tv, String text) {
     validatePatternAndShowErrorOnField(tv, text,
-            Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
+            Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9\\-]+)*(\\.[A-Za-z]{2,})$"));
 
   }
 
