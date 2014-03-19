@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
 import android.util.Log;
 
@@ -27,6 +29,9 @@ public enum EventLogger {
   private boolean logFileOpen = false;
   String logFilePath;
   long logfileCreatedTime;
+
+  private String appVersion = null;
+
   LogToJsonConverter logToJsonConverter = new LogToJsonConverter(apiCodeToAI, appPackageName);
 
   public long getLogfileCreatedTime() {
@@ -42,13 +47,13 @@ public enum EventLogger {
   Thread actUploaderThread = null;
   boolean sdCard = false;
 
-  public synchronized boolean openLogFile( String logFilePath, boolean isFullPath) {
+  public synchronized boolean openLogFile(String logFilePath, boolean isFullPath) {
 
     File logfile = null;
-    if ( isFullPath ) {
+    if (isFullPath) {
       logfile = new File(logFilePath);
     } else {
-      if ( isSdPresent() ) {
+      if (isSdPresent()) {
         sdCard = true;
         logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
       } else {
@@ -56,29 +61,29 @@ public enum EventLogger {
       }
     }
     this.logFilePath = logfile.getPath();
-    if ( logfile.exists() ) {
+    if (logfile.exists()) {
       try {
-        if ( !sdCard )
+        if (!sdCard)
           bufferedWriter = new BufferedWriter(new OutputStreamWriter(context.openFileOutput(logFilePath, Context.MODE_APPEND)));
         else
           bufferedWriter = new BufferedWriter(new FileWriter(logfile, true));
         logfileCreatedTime = getLogFileCreateDate();
-      } catch ( NumberFormatException e ) {
+      } catch (NumberFormatException e) {
         try {
           bufferedWriter.close();
-        } catch ( IOException e1 ) {
+        } catch (IOException e1) {
           e1.printStackTrace();
         }
         lockedToUpload = true;
         deleteLogFileAndCreateNew();
         e.printStackTrace();
-      } catch ( IOException e ) {
+      } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
     } else {
       try {
-        if ( !sdCard )
+        if (!sdCard)
           bufferedWriter = new BufferedWriter(new OutputStreamWriter(context.openFileOutput(logFilePath, Context.MODE_PRIVATE)));
         else
           bufferedWriter = new BufferedWriter(new FileWriter(logfile));
@@ -86,7 +91,7 @@ public enum EventLogger {
         bufferedWriter.write(Long.toString(logfileCreatedTime));
         bufferedWriter.newLine();
         bufferedWriter.flush();
-      } catch ( IOException e ) {
+      } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
@@ -96,6 +101,20 @@ public enum EventLogger {
     return true;
   }
 
+  public String getAppVersion() {
+    if (appVersion == null) {
+      PackageInfo pInfo;
+      try {
+        pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+        appVersion = pInfo.versionName;
+      } catch (NameNotFoundException e) {
+        e.printStackTrace();
+        appVersion = "not_checked_version";
+      }
+    }
+    return appVersion;
+  }
+
   public boolean isLogFileOpen() {
     return logFileOpen;
   }
@@ -103,32 +122,32 @@ public enum EventLogger {
   public synchronized boolean closeLogFile() {
     try {
       bufferedWriter.close();
-    } catch ( IOException e ) {
+    } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
     return true;
   }
 
-  public synchronized void writeToLogFile( String log, boolean logTimeStamp) {
-    if ( logTimeStamp ) {
+  public synchronized void writeToLogFile(String log, boolean logTimeStamp) {
+    if (logTimeStamp) {
       writeFormatedLogToLogFile(LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
       writeFormatedLogToLogFile(log);
     }
   }
 
-  private void writeFormatedLogToLogFile( String log) {
+  private void writeFormatedLogToLogFile(String log) {
     Log.d("willrgai", log);
-    if ( !lockedToUpload ) {
+    if (!lockedToUpload) {
       try {
         bufferedWriter.write(StringEscapeUtils.escapeJava(log));
         bufferedWriter.newLine();
         bufferedWriter.flush();
-      } catch ( IOException e ) {
+      } catch (IOException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
-      } catch ( Exception ex ) {
+      } catch (Exception ex) {
         ex.printStackTrace();
       }
     } else {
@@ -142,7 +161,7 @@ public enum EventLogger {
 
   private synchronized long getLogFileCreateDate() throws NumberFormatException, IOException {
     BufferedReader br;
-    if ( sdCard )
+    if (sdCard)
       br = new BufferedReader(new FileReader(logFilePath));
     else
       br = new BufferedReader(new InputStreamReader(context.openFileInput(logFilePath)));
@@ -161,14 +180,14 @@ public enum EventLogger {
 
   void saveTempBufferToLogFileAndClear() {
     lockedToUpload = false;
-    for ( String log : tempBufferToUpload) {
+    for (String log : tempBufferToUpload) {
       writeToLogFile(log, false);
     }
     tempBufferToUpload.clear();
   }
 
-  synchronized void uploadLogsAndCreateNewLogfile( final Context context) {
-    if ( actUploaderThread == null || !actUploaderThread.isAlive() ) {
+  synchronized void uploadLogsAndCreateNewLogfile(final Context context) {
+    if (actUploaderThread == null || !actUploaderThread.isAlive()) {
       actUploaderThread = new Thread(new Uploader(logToJsonConverter, context));
       actUploaderThread.start();
     }
@@ -178,7 +197,7 @@ public enum EventLogger {
     return context;
   }
 
-  public void setContext( Context context) {
+  public void setContext(Context context) {
     this.context = context;
   }
 

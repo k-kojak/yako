@@ -35,24 +35,23 @@ public class LogToJsonConverter {
 
   private final String packageName;
 
-  public LogToJsonConverter( String apiCode, String packageName) {
+  public LogToJsonConverter(String apiCode, String packageName) {
     this.apiCode = apiCode;
     this.packageName = packageName;
   }
 
-  public String convertLogToJsonFormat( List<String> logList) {
+  public String convertLogToJsonFormat(List<String> logList) {
 
     try {
       JSONObject record = new JSONObject();
       JSONArray recordsInRecord = new JSONArray();
       for (String log : logList) {
-        addRecordsToRecord( recordsInRecord, log);
+        addRecordsToRecord(recordsInRecord, log);
       }
-      Log.d( "willrgai", "recordsinrecord " + recordsInRecord.toString());
-      record.put( API_KEY_STR, apiCode);
-      record.put( DEVICE_ID_STR, deviceId);
-      record.put( PACKAGE_STR, packageName);
-      record.put( RECORDS_STR, recordsInRecord);
+      record.put(API_KEY_STR, apiCode);
+      record.put(DEVICE_ID_STR, deviceId);
+      record.put(PACKAGE_STR, packageName);
+      record.put(RECORDS_STR, recordsInRecord);
       return record.toString();
     } catch (JSONException e) {
       // TODO Auto-generated catch block
@@ -61,30 +60,30 @@ public class LogToJsonConverter {
     }
   }
 
-  private void addRecordsToRecord( JSONArray recordsInRecord, String log) {
+  private void addRecordsToRecord(JSONArray recordsInRecord, String log) {
     JSONObject record = new JSONObject();
 
-    StringTokenizer st = new StringTokenizer( log, " ");
+    StringTokenizer st = new StringTokenizer(log, " ");
     try {
-      Long timeStamp = Long.valueOf( st.nextToken());
+      Long timeStamp = Long.valueOf(st.nextToken());
 
       JSONObject event = new JSONObject();
       String eventName = st.nextToken();
 
       JSONArray datasToEvent = new JSONArray();
       if (st.hasMoreTokens())
-        datasToEvent.put( st.nextToken( ""));
-      event.put( EVENTDATAS_STR, datasToEvent);
-      event.put( EVENTNAME_STR, eventName);
-      record.put( TIMESTAMP_STR, timeStamp);
+        datasToEvent.put(st.nextToken(""));
+      event.put(EVENTDATAS_STR, datasToEvent);
+      event.put(EVENTNAME_STR, eventName);
+      record.put(TIMESTAMP_STR, timeStamp);
 
-      record.put( DATA_STR, event.toString());
-      recordsInRecord.put( record);
+      record.put(DATA_STR, event.toString());
+      recordsInRecord.put(record);
     } catch (NoSuchElementException e) {
-      Log.d( "willrgai", "nincs ilyen elem");
+      Log.d("willrgai", "nincs ilyen elem");
     } catch (JSONException e) {
       // TODO Auto-generated catch block
-      Log.d( "willrgai", "json hiba");
+      Log.d("willrgai", "json hiba");
     }
   }
 
