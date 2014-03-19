@@ -110,7 +110,7 @@ public class MessageReply extends ActionBarActivity {
     recipients = (ChipsMultiAutoCompleteTextView) findViewById( R.id.recipients);
     if (from != null && account != null
         && (account.getAccountType().equals( MessageProvider.Type.EMAIL) || account.getAccountType().equals( MessageProvider.Type.GMAIL))) {
-      RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getId(),
+      RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getName(),
           null, (int) from.getContactId());
       recipients.addRecipient(ri);
     }

@@ -121,7 +121,12 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
       if (ind > 0) {
         newText += ",";
       }
-      newText += u.getDisplayName();
+      if (u.getContactId() == -1) {
+        newText += u.getDisplayData();
+      } else {
+        newText += u.getDisplayName();
+      }
+      
       ind++;
     }
     
@@ -149,7 +154,13 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
 // inflate chips_edittext layout
           LayoutInflater lf = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
           TextView textView = (TextView) lf.inflate(R.layout.chips_edittext, null);
-          textView.setText(u.getDisplayName()); // set text
+          String displayText = "";
+          if (u.getContactId() == -1) {
+            displayText = u.getDisplayData();
+          } else {
+            displayText = u.getDisplayName();
+          }
+          textView.setText(displayText);
 //          setFlags(textView, u.getText()); // set flag image
           setImageIcon(textView, u.getContactId()); // set flag image
   // capture bitmapt of genreated textview
@@ -178,7 +189,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
 //          ValamiKlassz vk = new ValamiKlassz("asder");
 //          ssb.setSpan(vk, x + c.length() - 1, x + c.length(), Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
           ChipsMultiAutoCompleteTextView.ImageSpanExt ise = new ChipsMultiAutoCompleteTextView.ImageSpanExt(bmpDrawable, u);
-          ssb.setSpan(ise, x, x + u.getDisplayName().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+          ssb.setSpan(ise, x, x + displayText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 //          ssb.
 //          ssb.set
 //          Annotation a = new Annotation("kulcs", "ertek -> " + Math.random());
@@ -186,7 +197,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
 // hiding user info
 //        StyleSpan bold = new StyleSpan(Typeface.BOLD);
 //        ssb.setSpan(bold, 0, 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        x = x + u.getDisplayName().length() + 1;
+        x = x + displayText.length() + 1;
       }
       
 // set chips span
