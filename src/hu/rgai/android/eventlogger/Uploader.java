@@ -49,7 +49,7 @@ import android.provider.Settings.Secure;
 import android.util.Log;
 
 class Uploader implements Runnable {
-  private static final String UPLOAD_FAILED_STR = "upload failed";
+  private static final String UPLOAD_FAILED_STR = "log_upload:failed";
 
   public Uploader(LogToJsonConverter logToJsonConverter, Context context) {
     super();
@@ -97,7 +97,6 @@ class Uploader implements Runnable {
 
     List<String> logList = getLogListFromLogFile();
     String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
-    Log.d("willrgai", jsonEncodedLogs);
     if (jsonEncodedLogs == null)
       return false;
 
@@ -235,7 +234,7 @@ class Uploader implements Runnable {
     while ((line = br.readLine()) != null) {
       sb.append(line);
     }
-    Log.d("willrgai", sb.toString());
+    Log.d("willrgai", "uploadlogs " + sb.toString());
     HttpResponse response = getNewHttpClient().execute(httpPost);
     Log.d("willrgai", response.getStatusLine().toString());
     return isUploadSuccessFull(response);
