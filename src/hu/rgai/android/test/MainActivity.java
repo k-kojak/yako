@@ -441,7 +441,7 @@ public class MainActivity extends ActionBarActivity {
             AccountAndr a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(instance, classToLoad);
-            intent.putExtra("msg_list_element", message);
+            intent.putExtra("msg_list_element_id", message.getId());
             intent.putExtra("account", (Parcelable) a);
 
             boolean changed = MainService.setMessageSeenAndRead(message);

@@ -82,7 +82,10 @@ public class EmailDisplayer extends ActionBarActivity {
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
 
     // getting the information which belongs to this specific message
-    MessageListElementParc mlep = (MessageListElementParc) getIntent().getExtras().getParcelable("msg_list_element");
+//    MessageListElementParc mlep = (MessageListElementParc) getIntent().getExtras().getParcelable("msg_list_element");
+    account = getIntent().getExtras().getParcelable("account");
+    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
+    MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
     // setting this message to seen
     MainService.setMessageSeenAndRead(mlep);
 
@@ -91,7 +94,7 @@ public class EmailDisplayer extends ActionBarActivity {
     }
     // fetching information
     emailID = mlep.getId();
-    account = getIntent().getExtras().getParcelable("account");
+    
     subject = mlep.getTitle();
     from = (PersonAndr) mlep.getFrom();
 

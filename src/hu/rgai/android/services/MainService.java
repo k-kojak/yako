@@ -314,7 +314,7 @@ public class MainService extends Service {
     }
   }
 
-  public MessageListElementParc getListElementById(String id, AccountAndr a) {
+  public static MessageListElementParc getListElementById(String id, AccountAndr a) {
     for (MessageListElementParc mlep : messages) {
       if (mlep.getId().equals(id) && mlep.getAccount().equals(a)) {
         return mlep;
@@ -460,7 +460,7 @@ public class MainService extends Service {
                 if (newMessageCount == 1) {
                   Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
                   resultIntent = new Intent(context, classToLoad);
-                  resultIntent.putExtra("msg_list_element", lastUnreadMsg);
+                  resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
                   resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
                 } else {
                   resultIntent = new Intent(context, MainActivity.class);

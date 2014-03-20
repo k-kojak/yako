@@ -113,7 +113,10 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     tempMessageIds = new HashSet<String>();
 
-    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+//    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element_id");
+    account = getIntent().getExtras().getParcelable("account");
+    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
+    MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
     MainService.setMessageSeenAndRead(mlep);
     if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedThreadChat = true;
@@ -122,7 +125,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
 
     threadId = mlep.getId();
-    account = getIntent().getExtras().getParcelable("account");
     if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
       fromNotification = true;
     }
