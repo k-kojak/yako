@@ -3,21 +3,29 @@ package hu.rgai.android.intent.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.intent.beens.FullThreadMessageParc;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.tools.Utils;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.ocpsoft.prettytime.PrettyTime;
 
 /**
@@ -77,15 +85,42 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
     this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
-            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), account);
+            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.getFullMessage(), account);
   }
   
   public MessageListElementParc(String id, boolean seen, String title, String subTitle,
           int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
-          AccountAndr account) {
+          FullMessage fullMessage, AccountAndr account) {
     super(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType);
+    convertFullMessageToParc(fullMessage, messageType);
+    
     this.account = account;
   }
+  
+  private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
+    if (fullMessage != null) {
+      Class fullParcMessageClass = Settings.getAccountTypeToFullParcMessageClass().get(type);
+      Class fullMessageClass = Settings.getAccountTypeToFullMessageClass().get(type);
+      if (fullParcMessageClass == null) {
+        throw new RuntimeException("Full message class is null, " + account.getAccountType() + " is not a valid TYPE.");
+      }
+      try {
+        Constructor constructor = fullParcMessageClass.getConstructor(fullMessageClass);
+        this.fullMessage = (FullMessageParc) constructor.newInstance(fullMessage);
+      } catch (NoSuchMethodException ex) {
+        Logger.getLogger(MessageListElementParc.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (InstantiationException ex) {
+        Logger.getLogger(MessageListElementParc.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IllegalAccessException ex) {
+        Logger.getLogger(MessageListElementParc.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IllegalArgumentException ex) {
+        Logger.getLogger(MessageListElementParc.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (InvocationTargetException ex) {
+        Logger.getLogger(MessageListElementParc.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+  }
+          
 
 //  public MessageListElementParc(String id, boolean seen, String title, Person from, Date date, MessageProvider.Type messageType, AccountAndr account) {
 //    super(id, seen, title, from, date, messageType);

@@ -63,6 +63,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 
 public class MainService extends Service {
@@ -697,8 +698,12 @@ public class MainService extends Service {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
         MessageListElementParc mlep = new MessageListElementParc(mle, acc);
+        
         // Log.d("rgai", "@A message from user -> " + mle.getFrom());
         PersonAndr paFound = PersonAndr.searchPersonAndr(context, mle.getFrom());
+        if (mlep.getFullMessage() != null && mlep.getFullMessage() instanceof FullSimpleMessageParc) {
+          ((FullSimpleMessageParc)mlep.getFullMessage()).setFrom(paFound);
+        }
         mlep.setFrom(paFound);
         // Log.d("rgai", "Found from -> " + paFound.toString());
         if (mlep.getRecipientsList() != null) {

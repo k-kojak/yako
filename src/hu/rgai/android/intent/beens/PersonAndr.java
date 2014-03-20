@@ -57,7 +57,7 @@ public final class PersonAndr extends Person implements Parcelable {
     this.name = name;
     this.id = id;
   }
-
+  
   public void addId(MessageProvider.Type type, String id) {
     if (id == null) {
       throw new RuntimeException("Person id cannot be null!");
