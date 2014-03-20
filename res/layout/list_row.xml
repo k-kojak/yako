@@ -90,6 +90,18 @@
           android:textSize="11dip"
           android:textColor="#10bcc9"
           android:textStyle="bold"/>
+      
+      <ImageView 
+        android:id="@+id/attachment"
+        android:layout_width="16dip"
+        android:layout_height="16dip"
+        android:src="@drawable/ic_attachment"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="4dip"
+        android:layout_marginRight="5dip"
+        android:visibility="gone"
+      />
     </RelativeLayout>
  
 </RelativeLayout>

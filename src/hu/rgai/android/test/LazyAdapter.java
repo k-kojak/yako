@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
@@ -63,9 +64,29 @@ public class LazyAdapter extends BaseAdapter {
     TextView date = (TextView) vi.findViewById(R.id.date);
     ImageView icon = (ImageView) vi.findViewById(R.id.list_image);
     ImageView msgType = (ImageView) vi.findViewById(R.id.list_acc_type);
+    ImageView attachment = (ImageView) vi.findViewById(R.id.attachment);
 
     MessageListElementParc message = (MessageListElementParc)this.getItem(position);
-
+    
+    // dealing with attachment display
+    boolean hasAttachment = false;
+    if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessageParc) {
+      FullSimpleMessageParc fsmp = (FullSimpleMessageParc)message.getFullMessage();
+      if (fsmp.getAttachments() != null && !fsmp.getAttachments().isEmpty()) {
+        hasAttachment = true;
+      } else {
+        hasAttachment = false;
+      }
+    } else {
+      hasAttachment = false;
+    }
+    if (hasAttachment) {
+      attachment.setVisibility(View.VISIBLE);
+    } else {
+      attachment.setVisibility(View.GONE);
+    }
+    
+    
     // Setting all values in listview
     // TODO: itt null pointer exceptionnel elszallunk olykor
     String subjectText = " ";
