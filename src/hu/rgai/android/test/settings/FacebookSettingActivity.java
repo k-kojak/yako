@@ -274,6 +274,9 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
       case R.id.edit_account_cancel:
         finish();
         return true;
+      case android.R.id.home:
+        finish();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }

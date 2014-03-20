@@ -12,6 +12,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.PasswordTransformationMethod;
@@ -130,6 +132,9 @@ public class AccountSettingsList extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.add_account:
         showAccountTypeChooser();
+      case android.R.id.home:
+        finish();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }

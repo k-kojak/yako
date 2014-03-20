@@ -112,6 +112,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("rgai", "MainActivity.onCreate");
     instance = this;
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
@@ -344,12 +345,12 @@ public class MainActivity extends ActionBarActivity {
     if (acc != null) {
       last_notification_dates.put(acc, new Date());
     } else {
-      Log.d("rgai", "update all notification date");
-      Log.d("rgai", last_notification_dates.toString());
+//      Log.d("rgai", "update all notification date");
+//      Log.d("rgai", last_notification_dates.toString());
       for (AccountAndr a : last_notification_dates.keySet()) {
         last_notification_dates.get(a).setTime(new Date().getTime());
       }
-      Log.d("rgai", last_notification_dates.toString());
+//      Log.d("rgai", last_notification_dates.toString());
     }
   }
 

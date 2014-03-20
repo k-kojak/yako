@@ -24,10 +24,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
@@ -70,7 +72,10 @@ public class MessageReply extends ActionBarActivity {
   public void onCreate( Bundle icicle) {
     super.onCreate( icicle);
 
-    getSupportActionBar().setDisplayShowTitleEnabled( false);
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayShowTitleEnabled( false);
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    
     setContentView( R.layout.message_reply);
     String content = "";
     if (getIntent().getExtras() != null) {
@@ -131,6 +136,17 @@ public class MessageReply extends ActionBarActivity {
     }
     handler = new MessageReplyTaskHandler( this);
 
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case android.R.id.home:
+        finish();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
 
   public void setMessageResult( int messageResult) {

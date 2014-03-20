@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -41,6 +43,8 @@ public class EmailDisplayer extends ActionBarActivity {
   private Handler handler = null;
   private FullSimpleMessageParc content = null;
   
+  // indicates if activity opens from notification or not
+  private boolean fromNotification = false;
   // the subject of the message
   private String subject = null;
   // true if the message is already opened in the past and no need to fetch message from server
@@ -82,6 +86,9 @@ public class EmailDisplayer extends ActionBarActivity {
     // setting this message to seen
     MainService.setMessageSeenAndRead(mlep);
 
+    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+      fromNotification = true;
+    }
     // fetching information
     emailID = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");
@@ -161,6 +168,14 @@ public class EmailDisplayer extends ActionBarActivity {
         intent.putExtra("from", from);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
+      case android.R.id.home:
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (fromNotification) {
+          TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
+        } else {
+          finish();
+        }
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -171,13 +186,17 @@ public class EmailDisplayer extends ActionBarActivity {
     if (!loadedWithContent) {
       // if activity loaded without content, than set infos of it to finish it
       Intent resultIntent = new Intent();
-      resultIntent.putExtra("message_data", content);
-      resultIntent.putExtra("message_id", emailID);
-
-      resultIntent.putExtra("account", (Parcelable) account);
+      buildFinishIntent(resultIntent);
       setResult(Activity.RESULT_OK, resultIntent);
     }
     super.finish(); //To change body of generated methods, choose Tools | Templates.
+  }
+  
+  private void buildFinishIntent(Intent i) {
+    i.putExtra("message_data", content);
+    i.putExtra("message_id", emailID);
+
+    i.putExtra("account", (Parcelable) account);
   }
 
   /**

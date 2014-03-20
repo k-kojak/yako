@@ -16,11 +16,9 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.tools.Utils;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
 import java.util.Date;
@@ -36,11 +34,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
@@ -80,6 +79,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private boolean firstLoad = true;
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
+  private boolean fromNotification = false;
 
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
@@ -123,6 +123,9 @@ public class ThreadDisplayer extends ActionBarActivity {
 
     threadId = mlep.getId();
     account = getIntent().getExtras().getParcelable("account");
+    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+      fromNotification = true;
+    }
     from = mlep.getFrom();
     MainService.actViewingThreadId = threadId;
     String accName = "";
@@ -223,7 +226,6 @@ public class ThreadDisplayer extends ActionBarActivity {
       unregisterReceiver(dur);
     }
     
-    Log.d("rgai", "ThreadDisplayer onPause");
     MainService.actViewingThreadId = null;
   }
 
@@ -259,6 +261,17 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           Log.d("rgai", "@@@skipping load button press for 5 sec");
         }
+      case android.R.id.home:
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (fromNotification) {
+          Log.d("rgai", "NEW STACKBUILDER");
+            TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
+        } else {
+          Log.d("rgai", "NO STACK BUILDER");
+//          NavUtils.navigateUpTo(this, upIntent);
+          finish();
+        }
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }

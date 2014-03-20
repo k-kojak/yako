@@ -17,7 +17,6 @@ import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
@@ -50,8 +49,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -67,7 +64,6 @@ import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
 
 public class MainService extends Service {
 
@@ -110,9 +106,8 @@ public class MainService extends Service {
   public void onCreate() {
     // Log.d("rgai", "service oncreate");
     RUNNING = true;
-    handler = new MyHandler(this);
-    connectXmpp();
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    handler = new MyHandler( this);
+    Runtime.getRuntime().addShutdownHook( new Thread() {
       @Override
       public void run() {
         if (LogUploadScheduler.INSTANCE.isRunning)
@@ -155,6 +150,7 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
+    connectXmpp();
     iterationCount++;
     MainActivity.openFbSession(this);
     // Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);

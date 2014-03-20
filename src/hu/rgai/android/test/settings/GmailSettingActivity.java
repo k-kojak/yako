@@ -90,16 +90,19 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
       // Handle presses on the action bar items
-      switch (item.getItemId()) {
-          case R.id.edit_account_save:
-        	  saveAccountSettings();
-              return true;
-          case R.id.edit_account_delete:
-        	  deleteAccountSettings();
-              return true;
-          default:
-              return super.onOptionsItemSelected(item);
-      }
+    switch (item.getItemId()) {
+      case R.id.edit_account_save:
+        saveAccountSettings();
+        return true;
+      case R.id.edit_account_delete:
+        deleteAccountSettings();
+        return true;
+      case android.R.id.home:
+        finish();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
   
   public void saveAccountSettings() {
