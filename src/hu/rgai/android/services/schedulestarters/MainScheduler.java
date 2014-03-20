@@ -11,7 +11,7 @@ import java.util.Calendar;
 
 public class MainScheduler extends BroadcastReceiver {
 
-  private static final long REPEAT_TIME = 25;
+  private static final long REPEAT_TIME = 90; // seconds
   
   @Override
   public void onReceive(Context context, Intent intent) {
