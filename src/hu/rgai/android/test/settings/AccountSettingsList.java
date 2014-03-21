@@ -132,6 +132,7 @@ public class AccountSettingsList extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.add_account:
         showAccountTypeChooser();
+        return true;
       case android.R.id.home:
         finish();
         return true;

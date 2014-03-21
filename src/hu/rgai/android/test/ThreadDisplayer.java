@@ -263,6 +263,7 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           Log.d("rgai", "@@@skipping load button press for 5 sec");
         }
+        return true;
       case android.R.id.home:
         Intent upIntent = NavUtils.getParentActivityIntent(this);
         if (fromNotification) {
