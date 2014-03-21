@@ -52,6 +52,7 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import hu.rgai.android.broadcastreceivers.CustomBroadcastReceiver;
 
 /**
  * This is the main view of the application.

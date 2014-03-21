@@ -97,11 +97,22 @@
         
         
         
-        <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:name="MessageReply"
+        <activity android:name="MessageReply"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:label="@string/app_name"
                   android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.MainActivity" >
+          <intent-filter>
+            <action android:name="android.intent.action.SENDTO" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="smsto" />
+            <data android:scheme="mailto" />
+          </intent-filter>
+          <intent-filter>
+            <action android:name="android.intent.action.SENDTO" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="imto" android:host="facebook" />
+          </intent-filter>
           <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.MainActivity" />

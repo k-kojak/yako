@@ -63,6 +63,8 @@
   <string name="no_internet_access">Not connected to internet.</string>
   <string name="empty_list">There are no messages.</string>
   <string name="no_account_set">No logon info provided. Go to settings.</string>
+  <string name="unsupported_encoding">Unsopported encoding exception.</string>
+  <string name="unsupported_charset">Unsopported charset exception.</string>
     
   <string name="label_gmail_account">Gmail account name</string>
   <string name="label_email_address">Email address</string>

@@ -19,7 +19,9 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -35,7 +37,16 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.FacebookRecipientAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -135,7 +146,61 @@ public class MessageReply extends ActionBarActivity {
       Log.d( "rgai", "REPLYING TO -> " + from);
     }
     handler = new MessageReplyTaskHandler( this);
+    
+    if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
+      processImplicitIntent(getIntent());
+    }
 
+  }
+  
+  private void processImplicitIntent(Intent intent) {
+    try {
+      String uri = URLDecoder.decode(intent.getDataString(), "UTF-8");
+      String[] uriParts = uri.split(":");
+      if (uriParts.length > 1) {
+        if (uriParts[0].equals("imto")) {
+          String[] dataParts = uriParts[1].replaceFirst("^/+", "").split("/");
+          if (dataParts.length == 2 && dataParts[0].equals("facebook")) {
+            searchUserAndInsertAsRecipient(MessageProvider.Type.FACEBOOK, dataParts[1]);
+          }
+        } else if (uriParts[0].equals("smsto")) {
+          searchUserAndInsertAsRecipient(MessageProvider.Type.SMS, uriParts[1]);
+        } else if (uriParts[0].equals("mailto")) {
+          searchUserAndInsertAsRecipient(MessageProvider.Type.EMAIL, uriParts[1]);
+        }
+      }
+    } catch (UnsupportedCharsetException ex) {
+      ex.printStackTrace();
+      Toast.makeText(this, getString(R.string.unsupported_encoding), Toast.LENGTH_LONG).show();
+    } catch (UnsupportedEncodingException ex) {
+      ex.printStackTrace();
+      Toast.makeText(this, getString(R.string.unsupported_charset), Toast.LENGTH_LONG).show();
+    }
+  }
+  
+  private void searchUserAndInsertAsRecipient(MessageProvider.Type type, String id) {
+    Log.d("rgai", "ID TO SEARCH: " + id);
+    PersonAndr pa = PersonAndr.searchPersonAndr(this, new Person(id, id, type));
+    
+    if (pa != null) {
+      Log.d("rgai", "PA=" + pa.toString());
+      RecipientItem ri = null;
+      switch (type) {
+        case FACEBOOK:
+          ri = new FacebookRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        case SMS:
+          ri = new SmsMessageRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        case EMAIL:
+        case GMAIL:
+          ri = new EmailRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        default:
+          break;
+      }
+      recipients.addRecipient(ri);
+    }
   }
 
   @Override
