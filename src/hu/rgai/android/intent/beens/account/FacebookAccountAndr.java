@@ -6,6 +6,7 @@ package hu.rgai.android.intent.beens.account;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 
 /**
@@ -69,5 +70,18 @@ public class FacebookAccountAndr extends FacebookAccount implements AccountAndr,
     }
     return true;
   }
+
+  @Override
+  public int hashCode() {
+    int hash = 3;
+    return hash;
+  }
+
+  @Override
+  public String toString() {
+    return "FacebookAccountAndr{" + "displayName=" + displayName + ", uniqueName=" + uniqueName +'}';
+  }
+  
+  
   
 }

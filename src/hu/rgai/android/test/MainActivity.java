@@ -280,8 +280,8 @@ public class MainActivity extends ActionBarActivity {
     removeNotificationIfExists();
     Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
-    initLastNotificationDates();
-    updateLastNotification(null);
+//    initLastNotificationDates();
+    updateLastNotification(instance, null);
     setUpAndRegisterScreenReceiver();
 
     setContent();
@@ -296,12 +296,13 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Initializes the lastNotification map.
    */
-  private static void initLastNotificationDates() {
+  private static void initLastNotificationDates(Context context) {
+    last_notification_dates = StoreHandler.readLastNotificationObject(context);
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
     }
   }
-
+  
   /**
    * Sets up the screen receiver for logging.
    */
@@ -341,18 +342,20 @@ public class MainActivity extends ActionBarActivity {
    *          the account to update, or null if update all account's last event
    *          time
    */
-  public static void updateLastNotification(AccountAndr acc) {
-    initLastNotificationDates();
+  public static void updateLastNotification(Context context, AccountAndr acc) {
+    initLastNotificationDates(context);
     if (acc != null) {
+      Log.d("rgai", "last_not_dates size before put: " + last_notification_dates.keySet().size());
       last_notification_dates.put(acc, new Date());
+      Log.d("rgai", "last_not_dates size after put: " + last_notification_dates.keySet().size());
+      Log.d("rgai", "last_not_dates: " + last_notification_dates);
+      Log.d("rgai", " ");
     } else {
-//      Log.d("rgai", "update all notification date");
-//      Log.d("rgai", last_notification_dates.toString());
       for (AccountAndr a : last_notification_dates.keySet()) {
         last_notification_dates.get(a).setTime(new Date().getTime());
       }
-//      Log.d("rgai", last_notification_dates.toString());
     }
+    StoreHandler.writeLastNotificationObject(context, last_notification_dates);
   }
 
   /**
@@ -362,7 +365,8 @@ public class MainActivity extends ActionBarActivity {
    *          last notification time will be set to this account
    * @return
    */
-  public static Date getLastNotification(AccountAndr acc) {
+  public static Date getLastNotification(Context context, AccountAndr acc) {
+    initLastNotificationDates(context);
     Date ret = null;
     if (last_notification_dates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
@@ -597,7 +601,7 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = false;
 
     // refreshing last notification date when closing activity
-    updateLastNotification(null);
+    updateLastNotification(instance, null);
   }
 
   /**

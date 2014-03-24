@@ -409,14 +409,14 @@ public class MainService extends Service {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
-              Date lastNotForAcc = MainActivity.getLastNotification(mle.getAccount());
+              Date lastNotForAcc = MainActivity.getLastNotification(context, mle.getAccount());
               // Log.d("rgai", "LastNotForAccount: " + lastNotForAcc + " ("+ mle.getAccount() +")");
               if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
                 if (lastUnreadMsg == null) {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
-                MainActivity.updateLastNotification(mle.getAccount());
+                MainActivity.updateLastNotification(context, mle.getAccount());
               }
             }
 
@@ -710,7 +710,6 @@ public class MainService extends Service {
           for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
             PersonAndr pa = PersonAndr.searchPersonAndr(context, mlep.getRecipientsList().get(i));
             mlep.getRecipientsList().set(i, pa);
-
           }
         }
         // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());

@@ -53,6 +53,7 @@ public class SmsAccountAndr implements AccountAndr, Parcelable {
 	}
   
   // There are only 1 account to SMS (to SIM card), so yes, 2 SMS accounts are always the same
+  @Override
   public boolean equals(Object obj) {
     if (obj == null) {
       return false;
@@ -61,6 +62,12 @@ public class SmsAccountAndr implements AccountAndr, Parcelable {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    return hash;
   }
   
 }

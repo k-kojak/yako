@@ -78,7 +78,13 @@ public class EmailAccountAndr extends EmailAccount implements AccountAndr, Parce
     }
     return true;
   }
-  
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    return hash;
+  }
+
   @Override
   public String toString() {
     return this.accountType.toString() + " -> " + email;
