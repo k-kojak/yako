@@ -18,6 +18,7 @@
   <string name="service_name">This is my service</string>
   <string name="manage_accounts">Manage accounts</string>
   <string name="system_preferences">Settings</string>
+  <string name="filter_list">Filter list</string>
   <string name="message_reply">Reply</string>
   <string name="message_send_new">New message</string>
   <string name="load_more">Load more</string>

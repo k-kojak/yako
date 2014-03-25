@@ -6,11 +6,17 @@
           android:title="@string/message_send_new"
           messagelogger:showAsAction="ifRoom"
           />
+  
   <item android:id="@+id/accounts"
           android:icon="@drawable/ic_action_accounts"
           android:title="@string/manage_accounts"
           messagelogger:showAsAction="ifRoom"
           />
+  
+  <item android:id="@+id/filter_list"
+        android:title="@string/filter_list"
+        />
+  
   <item android:id="@+id/refresh_message_list"
         android:icon="@drawable/ic_action_refresh"
         android:title="@string/refresh"

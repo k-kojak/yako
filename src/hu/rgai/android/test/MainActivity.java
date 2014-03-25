@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -52,7 +54,9 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.test.settings.SystemPreferences;
+import java.util.List;
 
 /**
  * This is the main view of the application.
@@ -87,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
   private static View loadIndicator = null;
   // true if more messages are currently loading
   private static volatile boolean isLoading = false;
+  public static AccountAndr actSelectedFilter = null;
 
   private static final String APPLICATION_START_STR = "application:start";
 
@@ -214,9 +219,58 @@ public class MainActivity extends ActionBarActivity {
         Intent i = new Intent(instance, SystemPreferences.class);
         startActivity(i);
         return true;
+      case R.id.filter_list:
+        showListFilter();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
+  }
+  
+  private void showListFilter() {
+    final List<AccountAndr> allAccount = getAllAccounts();
+    final CharSequence[] items = new CharSequence[allAccount.size() + 1];
+    int selectedIndex = 0;
+    items[0] = "All";
+    for (int i = 0; i < allAccount.size(); i++) {
+      String dn = allAccount.get(i).getDisplayName();
+      if (dn == null) {
+        items[i + 1] = allAccount.get(i).getAccountType().toString();
+      } else {
+        items[i + 1] = dn + " (" + allAccount.get(i).getAccountType().toString() + ")";
+      }
+      
+      if (allAccount.get(i).equals(actSelectedFilter)) {
+        selectedIndex = i+1;
+      }
+    }
+           
+    // Creating and Building the Dialog
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Filter list");
+    builder.setSingleChoiceItems(items, selectedIndex, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int item) {
+        if (item == 0) {
+          actSelectedFilter = null;
+        } else {
+          if (allAccount.size() >= item) {
+            actSelectedFilter = allAccount.get(item - 1);
+          }
+        }
+        dialog.dismiss();
+        setContent();
+      }
+    });
+    builder.create().show();
+  }
+  
+  private List<AccountAndr> getAllAccounts() {
+    List<AccountAndr> list = StoreHandler.getAccounts(this);
+    if (isPhone(this)) {
+      list.add(new SmsAccountAndr());
+    }
+    
+    return list;
   }
 
   @Override
@@ -417,7 +471,9 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable(instance);
     if (isNet || isPhone(instance)) {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
+        adapter.setListFilter(actSelectedFilter);
         adapter.notifyDataSetChanged();
+        
       } else if (!MainService.messages.isEmpty() && !isListView) {
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
@@ -438,6 +494,7 @@ public class MainActivity extends ActionBarActivity {
         loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
 
         adapter = new LazyAdapter(instance);
+        adapter.setListFilter(actSelectedFilter);
         lv.setAdapter(adapter);
         lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {

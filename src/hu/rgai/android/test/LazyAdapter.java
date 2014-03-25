@@ -14,6 +14,7 @@ import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -26,6 +27,7 @@ public class LazyAdapter extends BaseAdapter {
 //  private List<MessageListElementParc> data;
   private static LayoutInflater inflater = null;
 //    public ImageLoader imageLoader;
+  private AccountAndr filterAcc = null;
 
   public LazyAdapter(MainActivity a) {
     activity = a;
@@ -35,12 +37,12 @@ public class LazyAdapter extends BaseAdapter {
   }
 
   public int getCount() {
-    return MainService.messages.size();
+    return MainService.getFilteredMessages(filterAcc).size();
   }
 
   public Object getItem(int position) {
     int i = 0;
-    for (MessageListElementParc mlep : MainService.messages) {
+    for (MessageListElementParc mlep : MainService.getFilteredMessages(filterAcc)) {
       if (i == position) {
         return mlep;
       }
@@ -53,6 +55,10 @@ public class LazyAdapter extends BaseAdapter {
     return position;
   }
 
+  public void setListFilter(AccountAndr filterAccount) {
+    this.filterAcc = filterAccount;
+  }
+  
   public View getView(int position, View convertView, ViewGroup parent) {
     View vi = convertView;
     if (convertView == null) {

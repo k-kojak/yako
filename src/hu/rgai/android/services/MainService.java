@@ -229,6 +229,20 @@ public class MainService extends Service {
       }
     }
   }
+  
+  public static Set<MessageListElementParc> getFilteredMessages(AccountAndr filterAcc) {
+    if (filterAcc == null) {
+      return messages;
+    } else {
+      Set<MessageListElementParc> filterList = new TreeSet<MessageListElementParc>();
+      for (MessageListElementParc mlep : messages) {
+        if (mlep.getAccount().equals(filterAcc)) {
+          filterList.add(mlep);
+        }
+      }
+      return filterList;
+    }
+  }
 
   /**
    * Removes messages from message list where the account matches with the
