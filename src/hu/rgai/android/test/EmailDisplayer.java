@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -21,7 +20,6 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.asynctasks.EmailContentGetter;
 import hu.rgai.android.asynctasks.EmailMessageMarker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
@@ -50,7 +48,7 @@ public class EmailDisplayer extends ActionBarActivity {
   private String subject = null;
   // true if the message is already opened in the past and no need to fetch message from server
   private boolean loadedWithContent = false;
-  private String emailID = "-1";
+//  private String emailID = "-1";
   // account which used to fetch email (if necessary)
   private AccountAndr account;
   // the sender of the message
@@ -98,7 +96,7 @@ public class EmailDisplayer extends ActionBarActivity {
       fromNotification = true;
     }
     // fetching information
-    emailID = mlep.getId();
+//    emailID = mlep.getId();
     
     subject = mlep.getTitle();
     from = (PersonAndr) mlep.getFrom();
@@ -179,62 +177,23 @@ public class EmailDisplayer extends ActionBarActivity {
   @Override
   public void finish() {
     if (!loadedWithContent) {
-      // if activity loaded without content, than set infos of it to finish it
       Intent resultIntent = new Intent();
-      buildFinishIntent(resultIntent);
       setResult(Activity.RESULT_OK, resultIntent);
     }
-    super.finish(); //To change body of generated methods, choose Tools | Templates.
+    super.finish();
   }
   
-  private void buildFinishIntent(Intent i) {
-    i.putExtra("message_data", content);
-    i.putExtra("message_id", emailID);
-
-    i.putExtra("account", (Parcelable) account);
-  }
-
   /**
    * Displays the message.
    */
   private void displayMessage() {
     Bitmap img = ProfilePhotoProvider.getImageToUser(this, from.getContactId());
     ((ImageView)findViewById(R.id.avatar)).setImageBitmap(img);
-    
     ((TextView)findViewById(R.id.from_name)).setText(from.getName());
-    
     ((TextView)findViewById(R.id.date)).setText(Utils.getPrettyTime(content.getDate()));
-    
-//    ((TextView)findViewById(R.id.email)).setText(from.getId());
-    
     
     String c = content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
 
-  /**
-   * Handles the result of message display.
-   */
-  private class EmailContentTaskHandler extends Handler {
-
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.get("content") != null) {
-          content = bundle.getParcelable("content");
-
-          // content holds a simple Person object, but "from" is came from the MainActivity
-          // which is already a PersonAndr, so override it with it, so when creating parcelable
-          // there will not be an error
-          content.setFrom(from);
-
-          displayMessage();
-          if (pd != null) {
-            pd.dismiss();
-          }
-        }
-      }
-    }
-  }
 }

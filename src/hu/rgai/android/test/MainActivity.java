@@ -220,11 +220,12 @@ public class MainActivity extends ActionBarActivity {
     switch (requestCode) {
       case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
         if (resultCode == Activity.RESULT_OK) {
-          // TODO: only saving simple string content
-          FullMessageParc fm = data.getParcelableExtra("message_data");
-          String messageId = data.getStringExtra("message_id");
-          AccountAndr acc = data.getParcelableExtra("account");
-          MainService.setMessageContent(messageId, acc, fm);
+          if (data.hasExtra("message_data")) {
+            FullMessageParc fm = data.getParcelableExtra("message_data");
+            String messageId = data.getStringExtra("message_id");
+            AccountAndr acc = data.getParcelableExtra("account");
+            MainService.setMessageContent(messageId, acc, fm);
+          }
         }
         break;
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
