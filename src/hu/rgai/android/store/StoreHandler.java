@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.config.Settings;
@@ -14,6 +15,7 @@ import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
+import hu.rgai.android.test.settings.SystemPreferences;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,6 +47,29 @@ public class StoreHandler {
   private static Bitmap fbImgMe = null;
   private static final String DATE_FORMAT = "EEE MMM dd kk:mm:ss z yyyy";
   private static final String LAST_NOTIFICATION_DATES_FILENAME = "yako_lastNotDatesFile";
+  
+  public static class SystemSettings {
+    
+    public static boolean isNotificationTurnedOn(Context context) {
+      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+      Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION, true);
+      return not;
+    }
+    
+    public static boolean isNotificationSoundTurnedOn(Context context) {
+      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+      Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_SOUND, true);
+      return not;
+    }
+    
+    public static boolean isNotificationVibrationTurnedOn(Context context) {
+      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+      Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_VIBRATION, true);
+      return not;
+    }
+    
+  }
+  
   
   public static void writeLastNotificationObject(Context context, HashMap<AccountAndr, Date> map) {
     if (map != null) {

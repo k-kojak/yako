@@ -426,77 +426,150 @@ public class MainService extends Service {
             for (AccountAndr a : accountsToUpdate) {
               MainActivity.updateLastNotification(context, a);
             }
-
-            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            if (newMessageCount != 0) {
-              if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
-                String fromNameText = "?";
-                if (lastUnreadMsg.getFrom() != null) {
-                  fromNameText = lastUnreadMsg.getFrom().getName();
-                } else {
-                  if (lastUnreadMsg.getRecipientsList() != null) {
-                    fromNameText = "";
-                    for (int i = 0; i < lastUnreadMsg.getRecipientsList().size(); i++) {
-                      if (i > 0) {
-                        fromNameText += ",";
-                      }
-                      fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
-                    }
-                  }
-                }
-
-                Bitmap largeIcon;
-                if (lastUnreadMsg.getFrom() != null) {
-                  largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
-                } else {
-                  largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
-                }
-                Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
-
-                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
-                    .setLargeIcon(largeIcon)
-                    .setSmallIcon(R.drawable.not_ic_action_email)
-                    .setWhen(lastUnreadMsg.getDate().getTime())
-                    .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
-                    .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
-                    .setSound(soundURI)
-
-                    .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle())
-                    .setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
-                Intent resultIntent;
-                if (newMessageCount == 1) {
-                  Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
-                  resultIntent = new Intent(context, classToLoad);
-                  resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
-                  resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
-                } else {
-                  resultIntent = new Intent(context, MainActivity.class);
-                }
-                resultIntent.putExtra("from_notifier", true);
-                TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-                stackBuilder.addParentStack(MainActivity.class);
-                stackBuilder.addNextIntent(resultIntent);
-                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                mBuilder.setContentIntent(resultPendingIntent);
-                mBuilder.setAutoCancel(true);
-                KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-                mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
-                EventLogger.INSTANCE.writeToLogFile(NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
-                Log.d("rgai", "DISPLAY NOTIFICATION...");
-                // if (newMessageCount == 1) {
-                // MainActivity.updateLastNotification( lastUnreadMsg.getAccount());
-                // } else {
-                // MainActivity.updateLastNotification( null);
-                // }
-              } else {
-
-              }
-
+            if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(context)) {
+              builNotification(newMessageCount, lastUnreadMsg);
             }
+//            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//            if (newMessageCount != 0) {
+//              if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
+//                String fromNameText = "?";
+//                if (lastUnreadMsg.getFrom() != null) {
+//                  fromNameText = lastUnreadMsg.getFrom().getName();
+//                } else {
+//                  if (lastUnreadMsg.getRecipientsList() != null) {
+//                    fromNameText = "";
+//                    for (int i = 0; i < lastUnreadMsg.getRecipientsList().size(); i++) {
+//                      if (i > 0) {
+//                        fromNameText += ",";
+//                      }
+//                      fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
+//                    }
+//                  }
+//                }
+//
+//                Bitmap largeIcon;
+//                if (lastUnreadMsg.getFrom() != null) {
+//                  largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
+//                } else {
+//                  largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
+//                }
+//                Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
+//
+//                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+//                    .setLargeIcon(largeIcon)
+//                    .setSmallIcon(R.drawable.not_ic_action_email)
+//                    .setWhen(lastUnreadMsg.getDate().getTime())
+//                    .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
+//                    .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
+//                    .setSound(soundURI)
+//
+//                    .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle())
+//                    .setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
+//                Intent resultIntent;
+//                if (newMessageCount == 1) {
+//                  Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
+//                  resultIntent = new Intent(context, classToLoad);
+//                  resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
+//                  resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
+//                } else {
+//                  resultIntent = new Intent(context, MainActivity.class);
+//                }
+//                resultIntent.putExtra("from_notifier", true);
+//                TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+//                stackBuilder.addParentStack(MainActivity.class);
+//                stackBuilder.addNextIntent(resultIntent);
+//                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+//                mBuilder.setContentIntent(resultPendingIntent);
+//                mBuilder.setAutoCancel(true);
+//                KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+//                mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+//                EventLogger.INSTANCE.writeToLogFile(NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+//                Log.d("rgai", "DISPLAY NOTIFICATION...");
+//                // if (newMessageCount == 1) {
+//                // MainActivity.updateLastNotification( lastUnreadMsg.getAccount());
+//                // } else {
+//                // MainActivity.updateLastNotification( null);
+//                // }
+//              } else {
+//
+//              }
+//
+//            }
           }
 
           MainActivity.notifyMessageChange(loadMore);
         }
+      }
+    }
+    
+    private void builNotification(int newMessageCount, MessageListElementParc lastUnreadMsg) {
+      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
+        String fromNameText = "?";
+        if (lastUnreadMsg.getFrom() != null) {
+          fromNameText = lastUnreadMsg.getFrom().getName();
+        } else {
+          if (lastUnreadMsg.getRecipientsList() != null) {
+            fromNameText = "";
+            for (int i = 0; i < lastUnreadMsg.getRecipientsList().size(); i++) {
+              if (i > 0) {
+                fromNameText += ",";
+              }
+              fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
+            }
+          }
+        }
+
+        Bitmap largeIcon;
+        if (lastUnreadMsg.getFrom() != null) {
+          largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
+        } else {
+          largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
+        }
+        
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+            .setLargeIcon(largeIcon)
+            .setSmallIcon(R.drawable.not_ic_action_email)
+            .setWhen(lastUnreadMsg.getDate().getTime())
+            .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
+            .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
+            .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
+        
+        if (StoreHandler.SystemSettings.isNotificationSoundTurnedOn(context)) {
+          Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
+          mBuilder.setSound(soundURI);
+        }
+        
+        if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(context)) {
+          mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
+        }
+          
+        Intent resultIntent;
+        if (newMessageCount == 1) {
+          Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
+          resultIntent = new Intent(context, classToLoad);
+          resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
+          resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
+        } else {
+          resultIntent = new Intent(context, MainActivity.class);
+        }
+        resultIntent.putExtra("from_notifier", true);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(resultPendingIntent);
+        mBuilder.setAutoCancel(true);
+        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
+        EventLogger.INSTANCE.writeToLogFile(NOTIFICATION_POPUP_STR + SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+        Log.d("rgai", "DISPLAY NOTIFICATION...");
+        // if (newMessageCount == 1) {
+        // MainActivity.updateLastNotification( lastUnreadMsg.getAccount());
+        // } else {
+        // MainActivity.updateLastNotification( null);
+        // }
       }
     }
 

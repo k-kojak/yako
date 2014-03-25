@@ -6,10 +6,18 @@
   <string name="adding_fb_account">Adding Facebook account</string>
   <string name="adding_gmail_account">Adding Gmail account</string>
   <string name="adding_simple_email_account">Adding email account</string>
+  <string name="settings">Settings</string>
+  <string name="notifications">Notifications</string>
+  <string name="notifications_summary">Make sounds and show icon in status bar when you receive messages</string>
+  <string name="notifications_sound">Play sound</string>
+  <string name="notifications_sound_summary">Make sound when you receive new message</string>
+  <string name="notifications_vibration">Vibrate</string>
+  <string name="notifications_vibration_summary">Vibrate when notified</string>
   
   <string name="account_settings">Account settings</string>
   <string name="service_name">This is my service</string>
   <string name="manage_accounts">Manage accounts</string>
+  <string name="system_preferences">Settings</string>
   <string name="message_reply">Reply</string>
   <string name="message_send_new">New message</string>
   <string name="load_more">Load more</string>

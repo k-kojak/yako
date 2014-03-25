@@ -81,7 +81,17 @@
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
         </activity>
         
-        
+        <activity android:name=".settings.SystemPreferences"
+                  android:label="@string/settings"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.rgai.android.test.MainActivity" />
+        </activity>
         
         <activity android:name=".settings.FacebookSettingActivity"
                   android:label="@string/adding_fb_account"

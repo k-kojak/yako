@@ -52,6 +52,7 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import hu.rgai.android.test.settings.SystemPreferences;
 
 /**
  * This is the main view of the application.
@@ -208,6 +209,10 @@ public class MainActivity extends ActionBarActivity {
 
         Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_SHORT).show();
         reloadMessages();
+        return true;
+      case R.id.system_preferences:
+        Intent i = new Intent(instance, SystemPreferences.class);
+        startActivity(i);
         return true;
       default:
         return super.onOptionsItemSelected(item);
