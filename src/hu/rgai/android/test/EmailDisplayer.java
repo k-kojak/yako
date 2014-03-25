@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import hu.rgai.android.asynctasks.EmailContentGetter;
+import hu.rgai.android.asynctasks.EmailMessageMarker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -86,8 +87,12 @@ public class EmailDisplayer extends ActionBarActivity {
     account = getIntent().getExtras().getParcelable("account");
     String mlepId = getIntent().getExtras().getString("msg_list_element_id");
     MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
-    // setting this message to seen
+    // setting this message to seen in list
     MainService.setMessageSeenAndRead(mlep);
+    
+    // setting message status to read at imap
+    EmailMessageMarker messageMarker = new EmailMessageMarker(handler, account);
+    messageMarker.execute(mlepId);
 
     if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
       fromNotification = true;
@@ -102,22 +107,9 @@ public class EmailDisplayer extends ActionBarActivity {
     getSupportActionBar().setTitle(subject);
 
     // if message body already available, get it from there
-    if (mlep.getFullMessage() != null) {
-      loadedWithContent = true;
-      content = (FullSimpleMessageParc) mlep.getFullMessage();
-      displayMessage();
-
-    } else {
-      // if messag ebody not available, fetch it from server
-      handler = new EmailContentTaskHandler();
-      EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
-      contentGetter.execute(emailID);
-
-      pd = new ProgressDialog(this);
-      pd.setMessage("Fetching email content...");
-      pd.setCancelable(true);
-      pd.show();
-    }
+    loadedWithContent = true;
+    content = (FullSimpleMessageParc) mlep.getFullMessage();
+    displayMessage();
 
     // creating webview
     webViewClient = new WebViewClient() {

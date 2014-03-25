@@ -264,6 +264,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     return getMessage(id, 0, 20);
   }
 
+  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
+    // we do nothing here, getMessage sets the status to read anyway
+  }
+
   private class MessageItem {
     private String threadId;
     private String title;
