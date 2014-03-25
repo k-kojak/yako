@@ -52,7 +52,6 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import hu.rgai.android.broadcastreceivers.CustomBroadcastReceiver;
 
 /**
  * This is the main view of the application.
@@ -113,7 +112,9 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d("rgai", "MainActivity.onCreate");
+    
+    // this loads the last notification dates from file
+    MainActivity.initLastNotificationDates(this);
     instance = this;
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
@@ -296,7 +297,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Initializes the lastNotification map.
    */
-  private static void initLastNotificationDates(Context context) {
+  public static void initLastNotificationDates(Context context) {
     last_notification_dates = StoreHandler.readLastNotificationObject(context);
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
@@ -343,13 +344,8 @@ public class MainActivity extends ActionBarActivity {
    *          time
    */
   public static void updateLastNotification(Context context, AccountAndr acc) {
-    initLastNotificationDates(context);
     if (acc != null) {
-      Log.d("rgai", "last_not_dates size before put: " + last_notification_dates.keySet().size());
       last_notification_dates.put(acc, new Date());
-      Log.d("rgai", "last_not_dates size after put: " + last_notification_dates.keySet().size());
-      Log.d("rgai", "last_not_dates: " + last_notification_dates);
-      Log.d("rgai", " ");
     } else {
       for (AccountAndr a : last_notification_dates.keySet()) {
         last_notification_dates.get(a).setTime(new Date().getTime());
@@ -366,7 +362,6 @@ public class MainActivity extends ActionBarActivity {
    * @return
    */
   public static Date getLastNotification(Context context, AccountAndr acc) {
-    initLastNotificationDates(context);
     Date ret = null;
     if (last_notification_dates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);

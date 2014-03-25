@@ -65,6 +65,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import java.util.HashSet;
 
 public class MainService extends Service {
 
@@ -105,10 +106,12 @@ public class MainService extends Service {
 
   @Override
   public void onCreate() {
-    // Log.d("rgai", "service oncreate");
     RUNNING = true;
-    handler = new MyHandler( this);
-    Runtime.getRuntime().addShutdownHook( new Thread() {
+    handler = new MyHandler(this);
+    
+    // this loads the last notification dates from file
+    MainActivity.initLastNotificationDates(this);
+    Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
         if (LogUploadScheduler.INSTANCE.isRunning)
@@ -395,7 +398,6 @@ public class MainService extends Service {
                 }
               }
               if (sendBC) {
-                Log.d("rgai", "SENDING NOTIFY BROADCAST FROM MAIN SERVICE");
                 Intent i = new Intent(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
                 context.sendBroadcast(i);
               }
@@ -404,6 +406,8 @@ public class MainService extends Service {
             this.mergeMessages(newMessages);
             MessageListElementParc lastUnreadMsg = null;
 
+            Set<AccountAndr> accountsToUpdate = new HashSet<AccountAndr>();
+            
             for (MessageListElementParc mle : messages) {
               if (mle.getId().equals(actViewingThreadId)) {
                 mle.setSeen(true);
@@ -416,8 +420,11 @@ public class MainService extends Service {
                   lastUnreadMsg = mle;
                 }
                 newMessageCount++;
-                MainActivity.updateLastNotification(context, mle.getAccount());
+                accountsToUpdate.add(mle.getAccount());
               }
+            }
+            for (AccountAndr a : accountsToUpdate) {
+              MainActivity.updateLastNotification(context, a);
             }
 
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
