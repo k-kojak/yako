@@ -26,13 +26,13 @@
       android:padding="0dip"
       android:layout_alignParentLeft="true"
       android:layout_width="49dip"
-      android:layout_height="49dip"
-    >
+      android:layout_height="49dip" >
+      
       <ImageView
         android:id="@+id/list_image"
         android:layout_width="46dip"
         android:layout_height="46dip"
-        android:src="@drawable/gmail_icon"/>
+        android:src="@drawable/gmail_icon" />
       
       <ImageView 
         android:id="@+id/list_acc_type"
@@ -52,44 +52,53 @@
       android:layout_marginLeft="51dip"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content">
-      <TextView
+      
+      <TableRow
+        android:id="@+id/first_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/thumbnail"
+        android:layout_toRightOf="@+id/thumbnail" >
+        
+        <TextView
           android:id="@+id/subject"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:layout_alignTop="@+id/thumbnail"
-          android:layout_toRightOf="@+id/thumbnail"
           android:text=""
           android:textColor="#040404"
           android:typeface="sans"
-          android:textSize="16dip" />
+          android:textSize="16dip"
+          android:layout_weight="1" />
 
-      
-      <TextView
-          android:id="@+id/from"
-          android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          android:layout_below="@id/subject"
-          android:textColor="#343434"
-          android:textSize="12dip"
-          android:typeface="sans"
-          android:layout_marginTop="1dip"
-          android:layout_toRightOf="@+id/thumbnail"
-          android:text="" />
-
-      
-      <TextView
+        <TextView
           android:id="@+id/date"
           android:layout_width="wrap_content"
+          android:minWidth="100dip"
           android:layout_height="wrap_content"
           android:layout_alignParentRight="true"
-          android:layout_alignTop="@id/subject"
-          android:layout_marginTop="6px"
+          
           android:gravity="right"
           android:text=""
           android:layout_marginRight="5dip"
           android:textSize="11dip"
           android:textColor="#10bcc9"
-          android:textStyle="bold"/>
+          android:textStyle="bold"
+          android:layout_weight="1" />
+        
+      </TableRow>
+
+      <TextView
+            android:id="@+id/from"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#343434"
+            android:textSize="12dip"
+            android:typeface="sans"
+            android:layout_marginTop="1dip"
+            android:layout_toRightOf="@+id/thumbnail"
+            android:layout_below="@id/first_row"
+            android:text="" />
+      
       
       <ImageView 
         android:id="@+id/attachment"

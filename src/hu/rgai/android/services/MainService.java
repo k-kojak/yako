@@ -653,7 +653,7 @@ public class MainService extends Service {
             // Log.d("rgai","current messages to account " + acc + " is: " +
             // currentMessagesToAccount);
           }
-          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount, acc.getMessageLimit()));
+          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount, acc.getMessageLimit(), Settings.MAX_SNIPPET_LENGTH));
           for (MessageListElementParc mlep : parcelableMessages) {
             if (!messages.contains(mlep)) {
               messages.add(mlep);

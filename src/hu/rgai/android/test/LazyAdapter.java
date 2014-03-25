@@ -97,7 +97,7 @@ public class LazyAdapter extends BaseAdapter {
     } else {
       subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
     }
-    
+    Log.d("rgai", "subjectText: " + subjectText);
     if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
       subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
     }
