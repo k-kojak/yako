@@ -51,7 +51,6 @@ import java.util.regex.Pattern;
  */
 public class AccountSettingsList extends ActionBarActivity {
 
-  private static final String ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR = "AccountSettingsList:backbutton";
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
@@ -64,8 +63,7 @@ public class AccountSettingsList extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

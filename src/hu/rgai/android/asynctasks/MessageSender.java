@@ -40,8 +40,6 @@ import android.widget.Toast;
  */
 public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
-  private static final String SENDMESSAGE_STR = "sendmessage";
-  private static final String SPACE_STR = " ";
   private final Context context;
   private final RecipientItem recipient;
   private final Handler handler;
@@ -81,7 +79,6 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
         mp = new FacebookMessageProvider((FacebookAccount) acc);
         recipients = new HashSet<MessageRecipient>();
         recipients.add(new FacebookMessageRecipient(recipient.getData()));
-        Log.d("rgai", "SENDING FACEBOOK MESSAGE");
       } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
         publishProgress(acc.getDisplayName());
         // Toast.makeText(this.g, "Sending message with email: " +
@@ -120,14 +117,14 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   private void loggingSendMessage() {
     StringBuilder builder = new StringBuilder();
-    builder.append(SENDMESSAGE_STR);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SENDMESSAGE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(recipient.getType());
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(content);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(recipient.getContactId());
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(RSAENCODING.INSTANCE.encodingString(recipient.getData()));
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }

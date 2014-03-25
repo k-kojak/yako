@@ -57,14 +57,6 @@ import android.widget.Toast;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
-  private static final String THREAD_BACKBUTTON_STR = "thread:backbutton";
-  private static final String THREAD_PAUSE_STR = "thread:pause";
-  private static final String THREAD_RESUME_STR = "thread:resume";
-  private static final String EDITTEXT_WRITE_STR = "edittext_write";
-  private static final String SPACE_STR = " ";
-  private static final String SCROLL_END_STR = "scroll:end";
-  private static final String SCROLL_START_STR = "scroll:start";
-  
   private ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
   private FullThreadMessageParc content = null;
@@ -88,17 +80,17 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", THREAD_BACKBUTTON_STR + SPACE_STR + threadId);
-    EventLogger.INSTANCE.writeToLogFile(THREAD_BACKBUTTON_STR + SPACE_STR + threadId, true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId, true);
     super.onBackPressed();
   }
 
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(threadId);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
@@ -165,8 +157,10 @@ public class ThreadDisplayer extends ActionBarActivity {
         @Override
         public void afterTextChanged(Editable s) {
           // TODO Auto-generated method stub
-          Log.d("willrgai", EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
-          EventLogger.INSTANCE.writeToLogFile(EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString(), true);
+          Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                  + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+          EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
         }
       });
     }
@@ -201,7 +195,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       FacebookMessageProvider.initConnection((FacebookAccount) account, this);
     }
 
-    logActivityEvent(THREAD_RESUME_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
   }
 
   public void sendMessage(View view) {
@@ -221,7 +215,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   @Override
   protected void onPause() {
-    logActivityEvent(THREAD_PAUSE_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
     if (dur != null) {
@@ -382,7 +376,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
         builder.append((adapter.getItem(actualVisiblePosition)).getId());
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
     }
   
@@ -418,15 +412,15 @@ public class ThreadDisplayer extends ActionBarActivity {
       StringBuilder builder = new StringBuilder();
 
       builder.append(account.getAccountType().name());
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       builder.append(MainService.actViewingThreadId);
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       if (scrollState == 1) {
-        builder.append(SCROLL_START_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.START_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       } else {
-        builder.append(SCROLL_END_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.END_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
       appendVisibleElementToStringBuilder(builder);
       Log.d("willrgai", builder.toString());

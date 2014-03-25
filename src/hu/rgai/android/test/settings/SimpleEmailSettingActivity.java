@@ -31,7 +31,6 @@ import java.util.Map;
  */
 public class SimpleEmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
-  private static final String SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "SimpleEmailSettingActivity:backbutton";
   private EditText email;
   private EditText pass;
   private EditText imap;
@@ -43,8 +42,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

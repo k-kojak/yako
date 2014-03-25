@@ -21,7 +21,6 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -42,11 +41,8 @@ import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 
@@ -54,16 +50,12 @@ import java.util.logging.Logger;
  */
 public class MessageReply extends ActionBarActivity {
 
-  private static final String MESSAGE_REPLY_BACKBUTTON_STR = "MessageReply:backbutton";
   public static final int MESSAGE_SENT_OK = 1;
   public static final int MESSAGE_SENT_FAILED = 2;
-  private static final String EDITTEXT_WRITE_STR = "edittext_write";
-  private static final String SPACE_STR = " ";
 
   private int messageResult;
   private Handler handler = null;
   // private String content = null;
-  private String subject = null;
   private TextView text;
   private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
@@ -71,8 +63,8 @@ public class MessageReply extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", MESSAGE_REPLY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( MESSAGE_REPLY_BACKBUTTON_STR, true);
+    Log.d( "willrgai", EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -92,9 +84,6 @@ public class MessageReply extends ActionBarActivity {
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey( "content")) {
         content = getIntent().getExtras().getString( "content");
-      }
-      if (getIntent().getExtras().containsKey( "subject")) {
-        subject = getIntent().getExtras().getString( "subject");
       }
       if (getIntent().getExtras().containsKey( "account")) {
         account = getIntent().getExtras().getParcelable( "account");
@@ -119,8 +108,10 @@ public class MessageReply extends ActionBarActivity {
       @Override
       public void afterTextChanged( Editable s) {
         // TODO Auto-generated method stub
-        Log.d( "willrgai", EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString(), true);
+        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     });
     recipients = (ChipsMultiAutoCompleteTextView) findViewById( R.id.recipients);
