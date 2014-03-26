@@ -140,6 +140,7 @@ class Uploader implements Runnable {
 
   }
 
+  // TODO: NEM TÖLTI FEL DE MIÉRT
   List<String> getContactInformations() {
 
     List<String> contactInformations = new ArrayList<String>();
