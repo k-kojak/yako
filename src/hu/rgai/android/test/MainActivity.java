@@ -9,15 +9,18 @@ import hu.rgai.android.eventlogger.ScreenReceiver;
 import hu.rgai.android.intent.beens.FullMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
+import hu.rgai.android.test.settings.SystemPreferences;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -54,9 +57,6 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.test.settings.SystemPreferences;
-import java.util.List;
 
 /**
  * This is the main view of the application.
@@ -69,28 +69,40 @@ public class MainActivity extends ActionBarActivity {
 
   // this variable holds the MainActivity instance if exists
   public static volatile MainActivity instance;
+
   // holds the Facebook token
   private static String fbToken = null;
+
   // holds the activity visibility state
   private static boolean is_activity_visible = false;
+
   // stores the last notification state to all different account types
   private static HashMap<AccountAndr, Date> last_notification_dates = null;
+
   // this is the adapter for the main view
   private static volatile LazyAdapter adapter;
+
   // receiver for logging screen status
   private ScreenReceiver screenReceiver;
+
   // a progress dialog to display message load status
   private static ProgressDialog pd = null;
+
   // a variable to store the last date of "Load more" button press time
   private static Date lastLoadMoreEvent = null;
+
   // the static listview where messages displayed
   private static ListView lv = null;
+
   // button to load more messages
   private static Button loadMoreButton = null;
+
   // an indicator when more messages are loading
   private static View loadIndicator = null;
+
   // true if more messages are currently loading
   private static volatile boolean isLoading = false;
+
   public static AccountAndr actSelectedFilter = null;
 
   private static final String APPLICATION_START_STR = "application:start";
@@ -118,7 +130,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     instance = this;
@@ -226,7 +238,7 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
   }
-  
+
   private void showListFilter() {
     final List<AccountAndr> allAccount = getAllAccounts();
     final CharSequence[] items = new CharSequence[allAccount.size() + 1];
@@ -239,16 +251,17 @@ public class MainActivity extends ActionBarActivity {
       } else {
         items[i + 1] = dn + " (" + allAccount.get(i).getAccountType().toString() + ")";
       }
-      
+
       if (allAccount.get(i).equals(actSelectedFilter)) {
-        selectedIndex = i+1;
+        selectedIndex = i + 1;
       }
     }
-           
+
     // Creating and Building the Dialog
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Filter list");
     builder.setSingleChoiceItems(items, selectedIndex, new DialogInterface.OnClickListener() {
+      @Override
       public void onClick(DialogInterface dialog, int item) {
         if (item == 0) {
           actSelectedFilter = null;
@@ -263,13 +276,13 @@ public class MainActivity extends ActionBarActivity {
     });
     builder.create().show();
   }
-  
+
   private List<AccountAndr> getAllAccounts() {
     List<AccountAndr> list = StoreHandler.getAccounts(this);
     if (isPhone(this)) {
       list.add(new SmsAccountAndr());
     }
-    
+
     return list;
   }
 
@@ -341,7 +354,7 @@ public class MainActivity extends ActionBarActivity {
     removeNotificationIfExists();
     Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
-//    initLastNotificationDates();
+    // initLastNotificationDates();
     updateLastNotification(instance, null);
     setUpAndRegisterScreenReceiver();
 
@@ -363,7 +376,7 @@ public class MainActivity extends ActionBarActivity {
       last_notification_dates = new HashMap<AccountAndr, Date>();
     }
   }
-  
+
   /**
    * Sets up the screen receiver for logging.
    */
@@ -473,7 +486,7 @@ public class MainActivity extends ActionBarActivity {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
         adapter.setListFilter(actSelectedFilter);
         adapter.notifyDataSetChanged();
-        
+
       } else if (!MainService.messages.isEmpty() && !isListView) {
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
@@ -712,6 +725,8 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
+      builder.append(actSelectedFilter.getDisplayName());
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
         builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
@@ -725,6 +740,7 @@ public class MainActivity extends ActionBarActivity {
 
   static class LogOnScrollListener implements OnScrollListener {
     final ListView lv;
+
     final LazyAdapter adapter;
 
     public LogOnScrollListener(ListView lv, LazyAdapter adapter) {

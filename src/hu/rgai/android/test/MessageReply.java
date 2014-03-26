@@ -3,15 +3,22 @@ package hu.rgai.android.test;
 import hu.rgai.android.asynctasks.MessageSender;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
+import hu.rgai.android.intent.beens.FacebookRecipientAndr;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,13 +43,6 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.UnsupportedCharsetException;
 
 /**
  * 
@@ -51,6 +51,7 @@ import java.nio.charset.UnsupportedCharsetException;
 public class MessageReply extends ActionBarActivity {
 
   public static final int MESSAGE_SENT_OK = 1;
+
   public static final int MESSAGE_SENT_FAILED = 2;
 
   private int messageResult;
@@ -146,6 +147,7 @@ public class MessageReply extends ActionBarActivity {
   
   private void processImplicitIntent(Intent intent) {
     try {
+      EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.MESSAGE_WRITE_FROM_CONTACT_LIST, true);
       String uri = URLDecoder.decode(intent.getDataString(), "UTF-8");
       String[] uriParts = uri.split(":");
       if (uriParts.length > 1) {
