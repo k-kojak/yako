@@ -272,6 +272,7 @@ public enum EventLogger {
       public static final String NEW_MESSAGE_STR = "newMessage";
       public static final String SENDMESSAGE_STR = "sendmessage";
       public static final String EDITTEXT_WRITE_STR = "edittext_write";
+      public static final String MESSAGE_WRITE_FROM_CONTACT_LIST = "message_write_from_contact_list";
     }
 
     public static class MAINPAGE {
@@ -293,15 +294,15 @@ public enum EventLogger {
 
       public static final String START_STR = "scroll:start";
     }
-    
+
     public static class NOTIFICATION {
       public static final String NOTIFICATION_POPUP_STR = "notification:popup";
     }
-    
+
     public static class APPLICATION {
       public static final String APPLICATION_START_STR = "application:start";
     }
-    
+
     public static class LOG_UPLOAD {
       public static final String UPLOAD_FAILED_STR = "log_upload:failed";
     }
@@ -330,8 +331,6 @@ public enum EventLogger {
       public static final String SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "SimpleEmailSettingActivity:backbutton";
     }
     
-    
-
   }
 
 }
