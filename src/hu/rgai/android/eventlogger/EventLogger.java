@@ -261,6 +261,7 @@ public enum EventLogger {
       public static final String ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR = "AccountSettingsList:backbutton";
       public static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "FacebookSettingActivity:backbutton";
       public static final String GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "GmailSettingActivity:backbutton";
+      public static final String INFMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "InfmailSettingActivity:backbutton";
       public static final String SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "SimpleEmailSettingActivity:backbutton";
     }
     

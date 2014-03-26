@@ -3,9 +3,10 @@
   <string name="app_id">549327858470212</string>
   <string name="app_name">Yako</string>
   <string name="facebook_login_name">Login to Facebook</string>
-  <string name="adding_fb_account">Adding Facebook account</string>
-  <string name="adding_gmail_account">Adding Gmail account</string>
-  <string name="adding_simple_email_account">Adding email account</string>
+  <string name="setup_fb_account">Setup Facebook account</string>
+  <string name="setup_gmail_account">Setup Gmail account</string>
+  <string name="setup_simple_email_account">Setup email account</string>
+  <string name="setup_inf_email_account">Setup Inf email account</string>
   <string name="settings">Settings</string>
   <string name="notifications">Notifications</string>
   <string name="notifications_summary">Make sounds and show icon in status bar when you receive messages</string>
@@ -27,10 +28,12 @@
   <string name="delete">Delete</string>
   <string name="cancel">Cancel</string>
   <string name="send">Send</string>
+  <string name="loading">Loading...</string>
     
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>
   <string name="google_account_hint">google account</string>
+  <string name="infmail_account_hint">infmail username</string>
   <string name="imap_hint">imap address</string>
   <string name="smtp_hint">smtp address</string>
   <string name="password_hint">password</string>
@@ -76,6 +79,7 @@
   <string name="unsupported_charset">Unsopported charset exception.</string>
     
   <string name="label_gmail_account">Gmail account name</string>
+  <string name="label_infmail_account">Inf mail username (without @ and domain!)</string>
   <string name="label_email_address">Email address</string>
   <string name="label_imap_address">IMAP address</string>
   <string name="label_smtp_address">SMTP address</string>
@@ -98,7 +102,9 @@
     
   <string name="account_name_gmail">Gmail</string>
   <string name="account_name_facebook">Facebook</string>
+  <string name="account_name_infemail">Inf email</string>
   <string name="account_name_simplemail">Simple email</string>
+  
     
    
   <string name="add_account">Add Account</string>

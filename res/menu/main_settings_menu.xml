@@ -4,8 +4,16 @@
   <item android:id="@+id/message_send_new"
           android:icon="@drawable/ic_action_new_message"
           android:title="@string/message_send_new"
-          messagelogger:showAsAction="ifRoom"
-          />
+          messagelogger:showAsAction="ifRoom" />
+  
+  <item android:id="@+id/refresh_message_list"
+        android:icon="@drawable/ic_action_refresh"
+        android:title="@string/refresh"
+        messagelogger:showAsAction="ifRoom" />
+  
+  <item android:id="@+id/filter_list"
+        android:title="@string/filter_list"
+        />
   
   <item android:id="@+id/accounts"
           android:icon="@drawable/ic_action_accounts"
@@ -13,19 +21,9 @@
           messagelogger:showAsAction="ifRoom"
           />
   
-  <item android:id="@+id/filter_list"
-        android:title="@string/filter_list"
-        />
-  
-  <item android:id="@+id/refresh_message_list"
-        android:icon="@drawable/ic_action_refresh"
-        android:title="@string/refresh"
-        messagelogger:showAsAction="ifRoom"
-        />
   
   <item android:id="@+id/system_preferences"
         android:icon="@drawable/ic_action_settings"
-        android:title="@string/system_preferences"
-        messagelogger:showAsAction="ifRoom" />
+        android:title="@string/system_preferences" />
   
 </menu>

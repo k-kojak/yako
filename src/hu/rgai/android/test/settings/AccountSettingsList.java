@@ -35,6 +35,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
@@ -105,9 +106,10 @@ public class AccountSettingsList extends ActionBarActivity {
           if (classToLoad == null) {
             throw new RuntimeException("Account type does not have setting class.");
           }
+          if (isInfMail(account)) {
+            classToLoad = InfEmailSettingActivity.class;
+          }
           Intent i = new Intent(AccountSettingsList.this, classToLoad);
-
-          // TODO: getFull message now always converted to FullEmailMessage
 
           i.putExtra("account", (Parcelable) account);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
@@ -115,6 +117,16 @@ public class AccountSettingsList extends ActionBarActivity {
         }
       });
     }
+  }
+  
+  private boolean isInfMail(AccountAndr acc) {
+    if (acc instanceof EmailAccountAndr) {
+      EmailAccountAndr ea = (EmailAccountAndr)acc;
+      if (ea.getImapAddress().equals(InfEmailSettingActivity.IMAP_ADDRESS)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   @Override
@@ -200,9 +212,11 @@ public class AccountSettingsList extends ActionBarActivity {
     String[] items;
     fbAdded = isFacebookAccountAdded();
     if (fbAdded) {
-      items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_simplemail)};
+      items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_infemail),
+        getString(R.string.account_name_simplemail)};
     } else {
-      items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_facebook), getString(R.string.account_name_simplemail)};
+      items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_facebook),
+        getString(R.string.account_name_infemail), getString(R.string.account_name_simplemail)};
     }
 
     builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -214,12 +228,19 @@ public class AccountSettingsList extends ActionBarActivity {
             break;
           case 1:
             if (fbAdded) {
-              classToLoad = SimpleEmailSettingActivity.class;
+              classToLoad = InfEmailSettingActivity.class;
             } else {
               classToLoad = FacebookSettingActivity.class;
             }
             break;
           case 2:
+            if (fbAdded) {
+              classToLoad = SimpleEmailSettingActivity.class;
+            } else {
+              classToLoad = InfEmailSettingActivity.class;
+            }
+            break;
+          case 3:
             classToLoad = SimpleEmailSettingActivity.class;
             break;
           default:

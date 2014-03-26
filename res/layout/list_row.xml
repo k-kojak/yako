@@ -73,7 +73,7 @@
         <TextView
           android:id="@+id/date"
           android:layout_width="wrap_content"
-          android:minWidth="100dip"
+          android:minWidth="120dip"
           android:layout_height="wrap_content"
           android:layout_alignParentRight="true"
           

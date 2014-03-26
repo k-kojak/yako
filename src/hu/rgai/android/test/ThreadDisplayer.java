@@ -122,11 +122,8 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     from = mlep.getFrom();
     MainService.actViewingThreadId = threadId;
-    String accName = "";
-    if (!account.getAccountType().equals(MessageProvider.Type.SMS)) {
-      accName = " | " + account.getDisplayName();
-    }
-    getSupportActionBar().setTitle(account.getAccountType().toString() + accName);
+    
+    getSupportActionBar().setTitle(from.getName() + " | " + account.getAccountType().toString());
 
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
@@ -175,7 +172,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       displayMessage(true);
     } else {
       pd = new ProgressDialog(this);
-      pd.setMessage("Fetching content...");
+      pd.setMessage(getString(R.string.loading));
       pd.setCancelable(true);
       pd.show();
     }

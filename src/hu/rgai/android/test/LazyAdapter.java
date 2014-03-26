@@ -103,7 +103,7 @@ public class LazyAdapter extends BaseAdapter {
     } else {
       subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
     }
-    Log.d("rgai", "subjectText: " + subjectText);
+    
     if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
       subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
     }
@@ -161,7 +161,9 @@ public class LazyAdapter extends BaseAdapter {
   
   public static int getSimpleMailIcon(EmailAccount acc) {
     String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
-    dom = dom.substring(0, dom.indexOf("."));
+    if (dom.indexOf(".") != -1) {
+      dom = dom.substring(0, dom.indexOf("."));
+    }
     
     return Settings.EmailUtils.getResourceIdToEmailDomain(dom);
   }

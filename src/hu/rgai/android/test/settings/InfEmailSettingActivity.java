@@ -1,6 +1,5 @@
 package hu.rgai.android.test.settings;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -20,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.test.R;
 import java.util.regex.Pattern;
@@ -28,18 +28,20 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class GmailSettingActivity extends ActionBarActivity implements TextWatcher {
+public class InfEmailSettingActivity extends ActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;
   private Spinner messageAmount;
-  private GmailAccountAndr oldAccount = null;
+  private EmailAccountAndr oldAccount = null;
+  public static final String IMAP_ADDRESS = "mail.inf.u-szeged.hu";
+  private static final String SMTP_ADDRESS = "mail.inf.u-szeged.hu";
 
   @Override
   public void onCreate(Bundle bundle) {
     super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
   
-    setContentView(R.layout.account_settings_gmail_layout);
+    setContentView(R.layout.account_settings_infmail_layout);
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -58,7 +60,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (GmailAccountAndr)b.getParcelable("account");
+      oldAccount = (EmailAccountAndr)b.getParcelable("account");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
@@ -81,7 +83,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
 
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.INFMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
 
@@ -109,7 +111,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     String m = email.getText().toString();
     String p = pass.getText().toString();
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    GmailAccountAndr newAccount = new GmailAccountAndr(messageLimit, m, p);
+    EmailAccountAndr newAccount = new EmailAccountAndr(m, p, IMAP_ADDRESS, SMTP_ADDRESS, false, messageLimit);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
@@ -129,6 +131,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   }
   
   public void deleteAccountSettings() {
+    
     Intent resultIntent = new Intent();
     resultIntent.putExtra("old_account", (Parcelable)oldAccount);
     setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE, resultIntent);
@@ -137,15 +140,15 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-    validateGmailField(email, text.toString());
+    validateInfField(email, text.toString());
   }
 
-  private void validateGmailField(TextView tv, String text) {
+  private void validateInfField(TextView tv, String text) {
     if (text.contains("@")) {
-      AccountSettingsList.validatePatternAndShowErrorOnField(tv, text,
-              Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
+      tv.setError("Invalid username");
+    } else {
+      tv.setError(null);
     }
-
   }
 
   public void afterTextChanged(Editable e) {}
