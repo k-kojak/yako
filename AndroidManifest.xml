@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="hu.rgai.android.test"
-      android:versionCode="25"
-      android:versionName="1.0.25">
+      android:versionCode="33"
+      android:versionName="1.0.33">
   
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="16"/>
   
@@ -38,76 +38,123 @@
         <activity android:name="EmailDisplayer"
                   android:label="@string/app_name"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-        >
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
           <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.MainActivity" />
         </activity>
 
+
+
         <activity android:name="ThreadDisplayer"
                   android:label="@string/app_name"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-        >
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
           <meta-data
                   android:name="android.support.PARENT_ACTIVITY"
                   android:value="hu.rgai.android.test.MainActivity" />
         </activity>
+        
+        
+        
         <activity android:name=".settings.SimpleEmailSettingActivity"
                   android:label="@string/adding_simple_email_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
-        >
+                  android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
             <meta-data android:name="android.support.UI_OPTIONS"
                    android:value="splitActionBarWhenNarrow" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
         </activity>
+        
+        
+        
         <activity android:name=".settings.GmailSettingActivity"
                   android:label="@string/adding_gmail_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
-        >
+                  android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
             <meta-data android:name="android.support.UI_OPTIONS"
                    android:value="splitActionBarWhenNarrow" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
         </activity>
+        
+        <activity android:name=".settings.SystemPreferences"
+                  android:label="@string/settings"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.rgai.android.test.MainActivity" />
+        </activity>
+        
         <activity android:name=".settings.FacebookSettingActivity"
                   android:label="@string/adding_fb_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
-        >
+                  android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
             <meta-data android:name="android.support.UI_OPTIONS"
                    android:value="splitActionBarWhenNarrow" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
-            
-        </activity>
-        <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:name="MessageReply"
-                  android:label="@string/app_name">
         </activity>
         
-        <activity android:name=".settings.AccountSettingsList"
-                  android:label="@string/account_settings"
+        
+        
+        <activity android:name="MessageReply"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  >
+                  android:label="@string/app_name"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
+          <intent-filter>
+            <action android:name="android.intent.action.SENDTO" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="smsto" />
+            <data android:scheme="mailto" />
+          </intent-filter>
+          <intent-filter>
+            <action android:name="android.intent.action.SENDTO" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:scheme="imto" android:host="facebook" />
+          </intent-filter>
           <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hu.rgai.android.test.MainActivity" />
         </activity>
         
+        
+        
+        <activity android:name=".settings.AccountSettingsList"
+                  android:label="@string/account_settings"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity" >
+          <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.rgai.android.test.MainActivity" />
+        </activity>
+        
+        
+        
         <activity android:name="com.facebook.LoginActivity"
                   android:label="@string/facebook_login_name">
         </activity>
+        
+        
+        
         <service
             android:name="hu.rgai.android.services.MainService"
             android:icon="@drawable/ic_launcher"
             android:label="@string/service_name" >
         </service>
+        
         <service
             android:name="hu.rgai.android.services.ThreadMsgService"
             android:icon="@drawable/ic_launcher"
@@ -119,6 +166,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        
         <receiver android:name="hu.rgai.android.services.schedulestarters.MainServiceStarter" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -143,6 +191,7 @@
         
         <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgScheduler" >
         </receiver>
+        
         <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgServiceStarter" >
         </receiver>
         

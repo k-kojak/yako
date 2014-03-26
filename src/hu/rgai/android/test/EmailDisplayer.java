@@ -6,8 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -19,7 +20,7 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.asynctasks.EmailContentGetter;
+import hu.rgai.android.asynctasks.EmailMessageMarker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -41,11 +42,13 @@ public class EmailDisplayer extends ActionBarActivity {
   private Handler handler = null;
   private FullSimpleMessageParc content = null;
   
+  // indicates if activity opens from notification or not
+  private boolean fromNotification = false;
   // the subject of the message
   private String subject = null;
   // true if the message is already opened in the past and no need to fetch message from server
   private boolean loadedWithContent = false;
-  private String emailID = "-1";
+//  private String emailID = "-1";
   // account which used to fetch email (if necessary)
   private AccountAndr account;
   // the sender of the message
@@ -78,13 +81,23 @@ public class EmailDisplayer extends ActionBarActivity {
     webView.getSettings().setDefaultTextEncodingName(mailCharCode);
 
     // getting the information which belongs to this specific message
-    MessageListElementParc mlep = (MessageListElementParc) getIntent().getExtras().getParcelable("msg_list_element");
-    // setting this message to seen
-    MainService.setMessageSeenAndRead(mlep);
-
-    // fetching information
-    emailID = mlep.getId();
+//    MessageListElementParc mlep = (MessageListElementParc) getIntent().getExtras().getParcelable("msg_list_element");
     account = getIntent().getExtras().getParcelable("account");
+    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
+    MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
+    // setting this message to seen in list
+    MainService.setMessageSeenAndRead(mlep);
+    
+    // setting message status to read at imap
+    EmailMessageMarker messageMarker = new EmailMessageMarker(handler, account);
+    messageMarker.execute(mlepId);
+
+    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+      fromNotification = true;
+    }
+    // fetching information
+//    emailID = mlep.getId();
+    
     subject = mlep.getTitle();
     from = (PersonAndr) mlep.getFrom();
 
@@ -92,22 +105,9 @@ public class EmailDisplayer extends ActionBarActivity {
     getSupportActionBar().setTitle(subject);
 
     // if message body already available, get it from there
-    if (mlep.getFullMessage() != null) {
-      loadedWithContent = true;
-      content = (FullSimpleMessageParc) mlep.getFullMessage();
-      displayMessage();
-
-    } else {
-      // if messag ebody not available, fetch it from server
-      handler = new EmailContentTaskHandler();
-      EmailContentGetter contentGetter = new EmailContentGetter(handler, account);
-      contentGetter.execute(emailID);
-
-      pd = new ProgressDialog(this);
-      pd.setMessage("Fetching email content...");
-      pd.setCancelable(true);
-      pd.show();
-    }
+    loadedWithContent = true;
+    content = (FullSimpleMessageParc) mlep.getFullMessage();
+    displayMessage();
 
     // creating webview
     webViewClient = new WebViewClient() {
@@ -161,6 +161,14 @@ public class EmailDisplayer extends ActionBarActivity {
         intent.putExtra("from", from);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
+      case android.R.id.home:
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (fromNotification) {
+          TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
+        } else {
+          finish();
+        }
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -169,58 +177,23 @@ public class EmailDisplayer extends ActionBarActivity {
   @Override
   public void finish() {
     if (!loadedWithContent) {
-      // if activity loaded without content, than set infos of it to finish it
       Intent resultIntent = new Intent();
-      resultIntent.putExtra("message_data", content);
-      resultIntent.putExtra("message_id", emailID);
-
-      resultIntent.putExtra("account", (Parcelable) account);
       setResult(Activity.RESULT_OK, resultIntent);
     }
-    super.finish(); //To change body of generated methods, choose Tools | Templates.
+    super.finish();
   }
-
+  
   /**
    * Displays the message.
    */
   private void displayMessage() {
     Bitmap img = ProfilePhotoProvider.getImageToUser(this, from.getContactId());
     ((ImageView)findViewById(R.id.avatar)).setImageBitmap(img);
-    
     ((TextView)findViewById(R.id.from_name)).setText(from.getName());
-    
     ((TextView)findViewById(R.id.date)).setText(Utils.getPrettyTime(content.getDate()));
-    
-//    ((TextView)findViewById(R.id.email)).setText(from.getId());
-    
     
     String c = content.getContent();
     webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
   }
 
-  /**
-   * Handles the result of message display.
-   */
-  private class EmailContentTaskHandler extends Handler {
-
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.get("content") != null) {
-          content = bundle.getParcelable("content");
-
-          // content holds a simple Person object, but "from" is came from the MainActivity
-          // which is already a PersonAndr, so override it with it, so when creating parcelable
-          // there will not be an error
-          content.setFrom(from);
-
-          displayMessage();
-          if (pd != null) {
-            pd.dismiss();
-          }
-        }
-      }
-    }
-  }
 }

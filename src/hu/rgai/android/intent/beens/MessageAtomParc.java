@@ -4,6 +4,7 @@ package hu.rgai.android.intent.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.File;
@@ -42,7 +43,8 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
     super(ma.getId(), ma.getSubject(), ma.getContent(), ma.getDate(), ma.getFrom(), ma.isIsMe(), ma.getMessageType(), ma.getAttachments());
   }
   
-  public MessageAtomParc(String id, String subject, String content, Date date, Person from, boolean isMe, MessageProvider.Type type, List<File> attachments) {
+  public MessageAtomParc(String id, String subject, String content, Date date, Person from,
+          boolean isMe, MessageProvider.Type type, List<Attachment> attachments) {
     super(id, subject, content, date, from, isMe, type, attachments);
   }
   

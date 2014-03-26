@@ -49,7 +49,6 @@ import android.provider.Settings.Secure;
 import android.util.Log;
 
 class Uploader implements Runnable {
-  private static final String UPLOAD_FAILED_STR = "log_upload:failed";
 
   public Uploader(LogToJsonConverter logToJsonConverter, Context context) {
     super();
@@ -84,7 +83,7 @@ class Uploader implements Runnable {
       if (uploadLogsToServer(context)) {
         EventLogger.INSTANCE.deleteLogFileAndCreateNew();
       } else {
-        EventLogger.INSTANCE.writeToLogFile(UPLOAD_FAILED_STR, true);
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.LOG_UPLOAD.UPLOAD_FAILED_STR, true);
       }
     } catch (Exception e) {
       // TODO Auto-generated catch block

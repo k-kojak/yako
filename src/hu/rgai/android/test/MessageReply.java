@@ -19,21 +19,30 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.intent.beens.FacebookRecipientAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.UnsupportedCharsetException;
 
 /**
  * 
@@ -41,16 +50,12 @@ import hu.rgai.android.intent.beens.account.SmsAccountAndr;
  */
 public class MessageReply extends ActionBarActivity {
 
-  private static final String MESSAGE_REPLY_BACKBUTTON_STR = "MessageReply:backbutton";
   public static final int MESSAGE_SENT_OK = 1;
   public static final int MESSAGE_SENT_FAILED = 2;
-  private static final String EDITTEXT_WRITE_STR = "edittext_write";
-  private static final String SPACE_STR = " ";
 
   private int messageResult;
   private Handler handler = null;
   // private String content = null;
-  private String subject = null;
   private TextView text;
   private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
@@ -58,8 +63,8 @@ public class MessageReply extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", MESSAGE_REPLY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( MESSAGE_REPLY_BACKBUTTON_STR, true);
+    Log.d( "willrgai", EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -70,15 +75,15 @@ public class MessageReply extends ActionBarActivity {
   public void onCreate( Bundle icicle) {
     super.onCreate( icicle);
 
-    getSupportActionBar().setDisplayShowTitleEnabled( false);
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayShowTitleEnabled( false);
+    actionBar.setDisplayHomeAsUpEnabled(true);
+    
     setContentView( R.layout.message_reply);
     String content = "";
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey( "content")) {
         content = getIntent().getExtras().getString( "content");
-      }
-      if (getIntent().getExtras().containsKey( "subject")) {
-        subject = getIntent().getExtras().getString( "subject");
       }
       if (getIntent().getExtras().containsKey( "account")) {
         account = getIntent().getExtras().getParcelable( "account");
@@ -103,14 +108,16 @@ public class MessageReply extends ActionBarActivity {
       @Override
       public void afterTextChanged( Editable s) {
         // TODO Auto-generated method stub
-        Log.d( "willrgai", EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile( EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString(), true);
+        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     });
     recipients = (ChipsMultiAutoCompleteTextView) findViewById( R.id.recipients);
     if (from != null && account != null
         && (account.getAccountType().equals( MessageProvider.Type.EMAIL) || account.getAccountType().equals( MessageProvider.Type.GMAIL))) {
-      RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getId(),
+      RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getName(),
           null, (int) from.getContactId());
       recipients.addRecipient(ri);
     }
@@ -130,7 +137,72 @@ public class MessageReply extends ActionBarActivity {
       Log.d( "rgai", "REPLYING TO -> " + from);
     }
     handler = new MessageReplyTaskHandler( this);
+    
+    if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
+      processImplicitIntent(getIntent());
+    }
 
+  }
+  
+  private void processImplicitIntent(Intent intent) {
+    try {
+      String uri = URLDecoder.decode(intent.getDataString(), "UTF-8");
+      String[] uriParts = uri.split(":");
+      if (uriParts.length > 1) {
+        if (uriParts[0].equals("imto")) {
+          String[] dataParts = uriParts[1].replaceFirst("^/+", "").split("/");
+          if (dataParts.length == 2 && dataParts[0].equals("facebook")) {
+            searchUserAndInsertAsRecipient(MessageProvider.Type.FACEBOOK, dataParts[1]);
+          }
+        } else if (uriParts[0].equals("smsto")) {
+          searchUserAndInsertAsRecipient(MessageProvider.Type.SMS, uriParts[1]);
+        } else if (uriParts[0].equals("mailto")) {
+          searchUserAndInsertAsRecipient(MessageProvider.Type.EMAIL, uriParts[1]);
+        }
+      }
+    } catch (UnsupportedCharsetException ex) {
+      ex.printStackTrace();
+      Toast.makeText(this, getString(R.string.unsupported_encoding), Toast.LENGTH_LONG).show();
+    } catch (UnsupportedEncodingException ex) {
+      ex.printStackTrace();
+      Toast.makeText(this, getString(R.string.unsupported_charset), Toast.LENGTH_LONG).show();
+    }
+  }
+  
+  private void searchUserAndInsertAsRecipient(MessageProvider.Type type, String id) {
+    Log.d("rgai", "ID TO SEARCH: " + id);
+    PersonAndr pa = PersonAndr.searchPersonAndr(this, new Person(id, id, type));
+    
+    if (pa != null) {
+      Log.d("rgai", "PA=" + pa.toString());
+      RecipientItem ri = null;
+      switch (type) {
+        case FACEBOOK:
+          ri = new FacebookRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        case SMS:
+          ri = new SmsMessageRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        case EMAIL:
+        case GMAIL:
+          ri = new EmailRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int)pa.getContactId());
+          break;
+        default:
+          break;
+      }
+      recipients.addRecipient(ri);
+    }
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case android.R.id.home:
+        finish();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
 
   public void setMessageResult( int messageResult) {

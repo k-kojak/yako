@@ -5,6 +5,8 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
@@ -19,6 +21,8 @@ import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -46,11 +50,13 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToFullParcMessageClass = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToFullMessageClass = null;
   private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
   
-  public static final int MAX_SNIPPET_LENGTH = 24;
+  public static final int MAX_SNIPPET_LENGTH = 36;
 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
@@ -72,6 +78,28 @@ public final class Settings {
       accountTypeToAccountClass.put(MessageProvider.Type.GMAIL, GmailAccount.class);
     }
     return accountTypeToAccountClass;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToFullParcMessageClass() {
+    if (accountTypeToFullParcMessageClass == null) {
+      accountTypeToFullParcMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessageParc.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessageParc.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessageParc.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.SMS, FullThreadMessageParc.class);
+    }
+    return accountTypeToFullParcMessageClass;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToFullMessageClass() {
+    if (accountTypeToFullMessageClass == null) {
+      accountTypeToFullMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToFullMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
+      accountTypeToFullMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
+      accountTypeToFullMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
+      accountTypeToFullMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
+    }
+    return accountTypeToFullMessageClass;
   }
   
   public static Map<MessageProvider.Type, Integer> getAccountTypeToIconResource() {

@@ -18,7 +18,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
     // listening for internet access change
     Log.d("rgai", "NEW MESSAGE ARRIVED RECEIVER");
     if (intent.getAction() != null) {
-      Log.d("rgai", intent.getAction());
+      Log.d("rgai", "CUSTOM BROADCAAST RECEIVER's ACTION: " + intent.getAction());
     }
     if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
       NetworkInfo info = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);

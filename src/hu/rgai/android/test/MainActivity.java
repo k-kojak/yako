@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -52,6 +54,9 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.test.settings.SystemPreferences;
+import java.util.List;
 
 /**
  * This is the main view of the application.
@@ -86,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
   private static View loadIndicator = null;
   // true if more messages are currently loading
   private static volatile boolean isLoading = false;
+  public static AccountAndr actSelectedFilter = null;
 
   private static final String APPLICATION_START_STR = "application:start";
 
@@ -112,6 +118,9 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    
+    // this loads the last notification dates from file
+    MainActivity.initLastNotificationDates(this);
     instance = this;
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
@@ -190,25 +199,78 @@ public class MainActivity extends ActionBarActivity {
     Intent intent;
     switch (item.getItemId()) {
       case R.id.accounts:
-        EventLogger.INSTANCE.writeToLogFile("click:account_button", true);
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
         intent = new Intent(this, AccountSettingsList.class);
         startActivityForResult(intent, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
         return true;
       case R.id.message_send_new:
-        EventLogger.INSTANCE.writeToLogFile("click:message_send_button", true);
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
         intent = new Intent(this, MessageReply.class);
         startActivity(intent);
         return true;
       case R.id.refresh_message_list:
-        EventLogger.INSTANCE.writeToLogFile("click:refresh_button", true);
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
         // item.setEnabled(false);
 
         Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_SHORT).show();
         reloadMessages();
         return true;
+      case R.id.system_preferences:
+        Intent i = new Intent(instance, SystemPreferences.class);
+        startActivity(i);
+        return true;
+      case R.id.filter_list:
+        showListFilter();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
+  }
+  
+  private void showListFilter() {
+    final List<AccountAndr> allAccount = getAllAccounts();
+    final CharSequence[] items = new CharSequence[allAccount.size() + 1];
+    int selectedIndex = 0;
+    items[0] = "All";
+    for (int i = 0; i < allAccount.size(); i++) {
+      String dn = allAccount.get(i).getDisplayName();
+      if (dn == null) {
+        items[i + 1] = allAccount.get(i).getAccountType().toString();
+      } else {
+        items[i + 1] = dn + " (" + allAccount.get(i).getAccountType().toString() + ")";
+      }
+      
+      if (allAccount.get(i).equals(actSelectedFilter)) {
+        selectedIndex = i+1;
+      }
+    }
+           
+    // Creating and Building the Dialog
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Filter list");
+    builder.setSingleChoiceItems(items, selectedIndex, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int item) {
+        if (item == 0) {
+          actSelectedFilter = null;
+        } else {
+          if (allAccount.size() >= item) {
+            actSelectedFilter = allAccount.get(item - 1);
+          }
+        }
+        dialog.dismiss();
+        setContent();
+      }
+    });
+    builder.create().show();
+  }
+  
+  private List<AccountAndr> getAllAccounts() {
+    List<AccountAndr> list = StoreHandler.getAccounts(this);
+    if (isPhone(this)) {
+      list.add(new SmsAccountAndr());
+    }
+    
+    return list;
   }
 
   @Override
@@ -217,11 +279,12 @@ public class MainActivity extends ActionBarActivity {
     switch (requestCode) {
       case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
         if (resultCode == Activity.RESULT_OK) {
-          // TODO: only saving simple string content
-          FullMessageParc fm = data.getParcelableExtra("message_data");
-          String messageId = data.getStringExtra("message_id");
-          AccountAndr acc = data.getParcelableExtra("account");
-          MainService.setMessageContent(messageId, acc, fm);
+          if (data.hasExtra("message_data")) {
+            FullMessageParc fm = data.getParcelableExtra("message_data");
+            String messageId = data.getStringExtra("message_id");
+            AccountAndr acc = data.getParcelableExtra("account");
+            MainService.setMessageContent(messageId, acc, fm);
+          }
         }
         break;
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
@@ -278,8 +341,8 @@ public class MainActivity extends ActionBarActivity {
     removeNotificationIfExists();
     Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
-    initLastNotificationDates();
-    updateLastNotification(null);
+//    initLastNotificationDates();
+    updateLastNotification(instance, null);
     setUpAndRegisterScreenReceiver();
 
     setContent();
@@ -294,12 +357,13 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Initializes the lastNotification map.
    */
-  private static void initLastNotificationDates() {
+  public static void initLastNotificationDates(Context context) {
+    last_notification_dates = StoreHandler.readLastNotificationObject(context);
     if (last_notification_dates == null) {
       last_notification_dates = new HashMap<AccountAndr, Date>();
     }
   }
-
+  
   /**
    * Sets up the screen receiver for logging.
    */
@@ -339,18 +403,15 @@ public class MainActivity extends ActionBarActivity {
    *          the account to update, or null if update all account's last event
    *          time
    */
-  public static void updateLastNotification(AccountAndr acc) {
-    initLastNotificationDates();
+  public static void updateLastNotification(Context context, AccountAndr acc) {
     if (acc != null) {
       last_notification_dates.put(acc, new Date());
     } else {
-      Log.d("rgai", "update all notification date");
-      Log.d("rgai", last_notification_dates.toString());
       for (AccountAndr a : last_notification_dates.keySet()) {
         last_notification_dates.get(a).setTime(new Date().getTime());
       }
-      Log.d("rgai", last_notification_dates.toString());
     }
+    StoreHandler.writeLastNotificationObject(context, last_notification_dates);
   }
 
   /**
@@ -360,7 +421,7 @@ public class MainActivity extends ActionBarActivity {
    *          last notification time will be set to this account
    * @return
    */
-  public static Date getLastNotification(AccountAndr acc) {
+  public static Date getLastNotification(Context context, AccountAndr acc) {
     Date ret = null;
     if (last_notification_dates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
@@ -410,7 +471,9 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable(instance);
     if (isNet || isPhone(instance)) {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
+        adapter.setListFilter(actSelectedFilter);
         adapter.notifyDataSetChanged();
+        
       } else if (!MainService.messages.isEmpty() && !isListView) {
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
@@ -421,7 +484,7 @@ public class MainActivity extends ActionBarActivity {
         loadMoreButton.setOnClickListener(new View.OnClickListener() {
           @Override
           public void onClick(View arg0) {
-            EventLogger.INSTANCE.writeToLogFile("click:load_more_button", true);
+            EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_LOAD_MORE_BTN, true);
             loadMoreMessage();
           }
         });
@@ -431,6 +494,7 @@ public class MainActivity extends ActionBarActivity {
         loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
 
         adapter = new LazyAdapter(instance);
+        adapter.setListFilter(actSelectedFilter);
         lv.setAdapter(adapter);
         lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -440,7 +504,7 @@ public class MainActivity extends ActionBarActivity {
             AccountAndr a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(instance, classToLoad);
-            intent.putExtra("msg_list_element", message);
+            intent.putExtra("msg_list_element_id", message.getId());
             intent.putExtra("account", (Parcelable) a);
 
             boolean changed = MainService.setMessageSeenAndRead(message);
@@ -595,7 +659,7 @@ public class MainActivity extends ActionBarActivity {
     is_activity_visible = false;
 
     // refreshing last notification date when closing activity
-    updateLastNotification(null);
+    updateLastNotification(instance, null);
   }
 
   /**

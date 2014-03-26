@@ -12,6 +12,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.PasswordTransformationMethod;
@@ -49,7 +51,6 @@ import java.util.regex.Pattern;
  */
 public class AccountSettingsList extends ActionBarActivity {
 
-  private static final String ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR = "AccountSettingsList:backbutton";
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
@@ -62,8 +63,7 @@ public class AccountSettingsList extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -130,6 +130,10 @@ public class AccountSettingsList extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.add_account:
         showAccountTypeChooser();
+        return true;
+      case android.R.id.home:
+        finish();
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }

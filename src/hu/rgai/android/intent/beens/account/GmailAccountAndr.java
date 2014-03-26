@@ -67,10 +67,16 @@ public class GmailAccountAndr extends GmailAccount implements AccountAndr, Parce
     }
     return true;
   }
-  
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    return hash;
+  }
+
   @Override
   public String toString() {
-    return accountType.toString() + " -> " + email;
+    return "GmailAccountAndr{"+accountType.toString() + " -> " + email+"}";
   }
   
 }

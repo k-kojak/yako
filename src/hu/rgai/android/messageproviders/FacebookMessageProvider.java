@@ -469,4 +469,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
     return getMessage(id, 0, 20);
   }
+
+  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
+    // we cannot set facebook messages status to read...
+  }
 }

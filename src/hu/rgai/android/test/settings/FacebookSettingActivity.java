@@ -50,7 +50,6 @@ import java.util.logging.Logger;
  */
 public class FacebookSettingActivity extends ActionBarActivity {
 
-private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "FacebookSettingActivity:backbutton";
   private Menu menu;
   private ProfilePictureView profilePictureView;
   private TextView name;
@@ -71,8 +70,7 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
   
   @Override
   public void onBackPressed() {
-    Log.d( "willrgai", FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile( FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -272,6 +270,9 @@ private static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "Facebook
         deleteAccountSettings();
         return true;
       case R.id.edit_account_cancel:
+        finish();
+        return true;
+      case android.R.id.home:
         finish();
         return true;
       default:

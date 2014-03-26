@@ -12,7 +12,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
@@ -25,6 +27,7 @@ public class LazyAdapter extends BaseAdapter {
 //  private List<MessageListElementParc> data;
   private static LayoutInflater inflater = null;
 //    public ImageLoader imageLoader;
+  private AccountAndr filterAcc = null;
 
   public LazyAdapter(MainActivity a) {
     activity = a;
@@ -34,12 +37,12 @@ public class LazyAdapter extends BaseAdapter {
   }
 
   public int getCount() {
-    return MainService.messages.size();
+    return MainService.getFilteredMessages(filterAcc).size();
   }
 
   public Object getItem(int position) {
     int i = 0;
-    for (MessageListElementParc mlep : MainService.messages) {
+    for (MessageListElementParc mlep : MainService.getFilteredMessages(filterAcc)) {
       if (i == position) {
         return mlep;
       }
@@ -52,6 +55,10 @@ public class LazyAdapter extends BaseAdapter {
     return position;
   }
 
+  public void setListFilter(AccountAndr filterAccount) {
+    this.filterAcc = filterAccount;
+  }
+  
   public View getView(int position, View convertView, ViewGroup parent) {
     View vi = convertView;
     if (convertView == null) {
@@ -63,9 +70,29 @@ public class LazyAdapter extends BaseAdapter {
     TextView date = (TextView) vi.findViewById(R.id.date);
     ImageView icon = (ImageView) vi.findViewById(R.id.list_image);
     ImageView msgType = (ImageView) vi.findViewById(R.id.list_acc_type);
+    ImageView attachment = (ImageView) vi.findViewById(R.id.attachment);
 
     MessageListElementParc message = (MessageListElementParc)this.getItem(position);
-
+    
+    // dealing with attachment display
+    boolean hasAttachment = false;
+    if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessageParc) {
+      FullSimpleMessageParc fsmp = (FullSimpleMessageParc)message.getFullMessage();
+      if (fsmp.getAttachments() != null && !fsmp.getAttachments().isEmpty()) {
+        hasAttachment = true;
+      } else {
+        hasAttachment = false;
+      }
+    } else {
+      hasAttachment = false;
+    }
+    if (hasAttachment) {
+      attachment.setVisibility(View.VISIBLE);
+    } else {
+      attachment.setVisibility(View.GONE);
+    }
+    
+    
     // Setting all values in listview
     // TODO: itt null pointer exceptionnel elszallunk olykor
     String subjectText = " ";
@@ -76,7 +103,7 @@ public class LazyAdapter extends BaseAdapter {
     } else {
       subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
     }
-    
+    Log.d("rgai", "subjectText: " + subjectText);
     if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
       subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
     }

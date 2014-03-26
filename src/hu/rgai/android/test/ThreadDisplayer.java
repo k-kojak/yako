@@ -16,11 +16,9 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.tools.Utils;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 
 import java.util.Date;
@@ -36,11 +34,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
@@ -58,14 +57,6 @@ import android.widget.Toast;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
-  private static final String THREAD_BACKBUTTON_STR = "thread:backbutton";
-  private static final String THREAD_PAUSE_STR = "thread:pause";
-  private static final String THREAD_RESUME_STR = "thread:resume";
-  private static final String EDITTEXT_WRITE_STR = "edittext_write";
-  private static final String SPACE_STR = " ";
-  private static final String SCROLL_END_STR = "scroll:end";
-  private static final String SCROLL_START_STR = "scroll:start";
-  
   private ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
   private FullThreadMessageParc content = null;
@@ -80,6 +71,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private boolean firstLoad = true;
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
+  private boolean fromNotification = false;
 
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
@@ -88,17 +80,17 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", THREAD_BACKBUTTON_STR + SPACE_STR + threadId);
-    EventLogger.INSTANCE.writeToLogFile(THREAD_BACKBUTTON_STR + SPACE_STR + threadId, true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId, true);
     super.onBackPressed();
   }
 
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(threadId);
-    builder.append(SPACE_STR);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
@@ -113,7 +105,10 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     tempMessageIds = new HashSet<String>();
 
-    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element");
+//    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element_id");
+    account = getIntent().getExtras().getParcelable("account");
+    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
+    MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
     MainService.setMessageSeenAndRead(mlep);
     if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedThreadChat = true;
@@ -122,7 +117,9 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
 
     threadId = mlep.getId();
-    account = getIntent().getExtras().getParcelable("account");
+    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+      fromNotification = true;
+    }
     from = mlep.getFrom();
     MainService.actViewingThreadId = threadId;
     String accName = "";
@@ -160,8 +157,10 @@ public class ThreadDisplayer extends ActionBarActivity {
         @Override
         public void afterTextChanged(Editable s) {
           // TODO Auto-generated method stub
-          Log.d("willrgai", EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString());
-          EventLogger.INSTANCE.writeToLogFile(EDITTEXT_WRITE_STR + SPACE_STR + MainService.actViewingThreadId + SPACE_STR + s.toString(), true);
+          Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                  + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+          EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
         }
       });
     }
@@ -196,7 +195,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       FacebookMessageProvider.initConnection((FacebookAccount) account, this);
     }
 
-    logActivityEvent(THREAD_RESUME_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
   }
 
   public void sendMessage(View view) {
@@ -216,14 +215,13 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   @Override
   protected void onPause() {
-    logActivityEvent(THREAD_PAUSE_STR);
+    logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
     if (dur != null) {
       unregisterReceiver(dur);
     }
     
-    Log.d("rgai", "ThreadDisplayer onPause");
     MainService.actViewingThreadId = null;
   }
 
@@ -259,6 +257,18 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           Log.d("rgai", "@@@skipping load button press for 5 sec");
         }
+        return true;
+      case android.R.id.home:
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (fromNotification) {
+          Log.d("rgai", "NEW STACKBUILDER");
+            TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
+        } else {
+          Log.d("rgai", "NO STACK BUILDER");
+//          NavUtils.navigateUpTo(this, upIntent);
+          finish();
+        }
+        return true;
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -366,7 +376,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
         builder.append((adapter.getItem(actualVisiblePosition)).getId());
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
     }
   
@@ -402,15 +412,15 @@ public class ThreadDisplayer extends ActionBarActivity {
       StringBuilder builder = new StringBuilder();
 
       builder.append(account.getAccountType().name());
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       builder.append(MainService.actViewingThreadId);
-      builder.append(SPACE_STR);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       if (scrollState == 1) {
-        builder.append(SCROLL_START_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.START_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       } else {
-        builder.append(SCROLL_END_STR);
-        builder.append(SPACE_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.SCROLL.END_STR);
+        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
       appendVisibleElementToStringBuilder(builder);
       Log.d("willrgai", builder.toString());
