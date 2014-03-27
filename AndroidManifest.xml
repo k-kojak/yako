@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="hu.rgai.android.test"
-      android:versionCode="33"
-      android:versionName="1.0.33">
+      android:versionCode="34"
+      android:versionName="1.0.34">
   
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="16"/>
   
@@ -58,7 +58,19 @@
         
         
         <activity android:name=".settings.SimpleEmailSettingActivity"
-                  android:label="@string/adding_simple_email_account"
+                  android:label="@string/setup_simple_email_account"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
+            <meta-data android:name="android.support.UI_OPTIONS"
+                   android:value="splitActionBarWhenNarrow" />
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.rgai.android.test.settings.AccountSettingsList" />
+        </activity>
+        
+        <activity android:name=".settings.InfEmailSettingActivity"
+                  android:label="@string/setup_inf_email_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
@@ -72,7 +84,7 @@
         
         
         <activity android:name=".settings.GmailSettingActivity"
-                  android:label="@string/adding_gmail_account"
+                  android:label="@string/setup_gmail_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >
@@ -96,7 +108,7 @@
         </activity>
         
         <activity android:name=".settings.FacebookSettingActivity"
-                  android:label="@string/adding_fb_account"
+                  android:label="@string/setup_fb_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.settings.AccountSettingsList" >

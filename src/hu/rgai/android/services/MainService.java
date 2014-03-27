@@ -76,7 +76,7 @@ public class MainService extends Service {
    * This variable holds the ID of the actually displayed thread. That's why if
    * a new message comes from this thread id, we set it immediately to seen.
    */
-  public static String actViewingThreadId = null;
+  public static volatile String actViewingThreadId = null;
 
   // flags for email account feedback
   public static final int OK = 0;

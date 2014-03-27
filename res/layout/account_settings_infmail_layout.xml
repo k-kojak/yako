@@ -16,7 +16,7 @@
       <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/label_gmail_account"
+        android:text="@string/label_infmail_account"
         android:paddingTop="3dip"
       />
       
@@ -31,7 +31,7 @@
         android:nextFocusLeft="@id/email_address"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/google_account_hint"
+        android:hint="@string/infmail_account_hint"
         android:inputType="textEmailAddress" />
       <TextView
         android:layout_width="fill_parent"
@@ -64,5 +64,5 @@
         android:layout_height="wrap_content" />
     </LinearLayout>
   </ScrollView>
- 
+  
 </RelativeLayout>

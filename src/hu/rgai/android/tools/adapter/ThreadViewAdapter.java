@@ -74,7 +74,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
     
 		TextView msgBubble = (TextView) row.findViewById(R.id.comment);
 
-		msgBubble.setText(coment.getContent());
+		msgBubble.setText(coment.getContent().getContent().toString());
     
 		msgBubble.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
     

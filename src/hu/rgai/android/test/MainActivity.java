@@ -162,7 +162,7 @@ public class MainActivity extends ActionBarActivity {
    */
   private static void showProgressDialog() {
     pd = new ProgressDialog(instance);
-    pd.setMessage("Fetching messages...");
+    pd.setMessage(instance.getString(R.string.loading));
     pd.setCancelable(false);
     pd.show();
   }
