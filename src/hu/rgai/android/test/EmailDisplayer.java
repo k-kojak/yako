@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -123,6 +124,10 @@ public class EmailDisplayer extends ActionBarActivity {
           intent.putExtra("account", (Parcelable) account);
           intent.putExtra("from", from);
           startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+        } else {
+          Intent i = new Intent(Intent.ACTION_VIEW);
+          i.setData(Uri.parse(url));
+          startActivity(i);
         }
         return true;
       }
