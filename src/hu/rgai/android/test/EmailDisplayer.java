@@ -2,6 +2,7 @@ package hu.rgai.android.test;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -12,9 +13,12 @@ import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
@@ -29,6 +33,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.Utils;
+import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -123,8 +128,13 @@ public class EmailDisplayer extends ActionBarActivity {
       }
     };
     webView.setWebViewClient(webViewClient);
-
+//    webView.getSettings().setLoadWithOverviewMode(true);
+//    webView.getSettings().setUseWideViewPort(true);
+//    webView.getSettings().setBuiltInZoomControls(true);
+//    webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
   }
+  
+  
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
@@ -154,7 +164,7 @@ public class EmailDisplayer extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReply.class);
-        Source source = new Source(content.getContent());
+        Source source = new Source(content.getContent().getContent());
         intent.putExtra("content", source.getRenderer().toString());
         intent.putExtra("subject", subject);
         intent.putExtra("account", (Parcelable) account);
@@ -192,8 +202,12 @@ public class EmailDisplayer extends ActionBarActivity {
     ((TextView)findViewById(R.id.from_name)).setText(from.getName());
     ((TextView)findViewById(R.id.date)).setText(Utils.getPrettyTime(content.getDate()));
     
-    String c = content.getContent();
-    webView.loadDataWithBaseURL(null, c.replaceAll("\n", "<br/>"), "text/html", mailCharCode, null);
+    HtmlContent hc = content.getContent();
+    String c = hc.getContent().toString();
+    if (hc.getContentType().equals(HtmlContent.ContentType.TEXT_PLAIN)) {
+      c = c.replaceAll("\n", "<br/>");
+    }
+    webView.loadDataWithBaseURL(null, c, "text/html", mailCharCode, null);
   }
 
 }

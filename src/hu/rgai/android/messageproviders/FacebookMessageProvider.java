@@ -48,6 +48,7 @@ import com.facebook.model.GraphObject;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -321,7 +322,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     ftm.addMessage(new MessageAtom(
                             msg.getString("message_id"),
                             "",
-                            body,
+                            new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
                             new Date(msg.getLong("created_time") * 1000),
                             new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
                             msg.getString("author_id").equals(account.getId()),

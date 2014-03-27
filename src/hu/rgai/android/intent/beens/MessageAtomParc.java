@@ -5,6 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
+import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.File;
@@ -30,7 +31,7 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
   public MessageAtomParc(Parcel in) {
     this.id = in.readString();
     this.subject = in.readString();
-    this.content = in.readString();
+    this.content = in.readParcelable(HtmlContentParc.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.from = in.readParcelable(PersonAndr.class.getClassLoader());
     this.isMe = in.readByte() == 1;
@@ -43,7 +44,7 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
     super(ma.getId(), ma.getSubject(), ma.getContent(), ma.getDate(), ma.getFrom(), ma.isIsMe(), ma.getMessageType(), ma.getAttachments());
   }
   
-  public MessageAtomParc(String id, String subject, String content, Date date, Person from,
+  public MessageAtomParc(String id, String subject, HtmlContent content, Date date, Person from,
           boolean isMe, MessageProvider.Type type, List<Attachment> attachments) {
     super(id, subject, content, date, from, isMe, type, attachments);
   }
@@ -60,7 +61,7 @@ public class MessageAtomParc extends MessageAtom implements FullMessageParc, Par
   public void writeToParcel(Parcel out, int flags) {
     out.writeString(id);
     out.writeString(subject);
-    out.writeString(content);
+    out.writeParcelable((Parcelable)content, flags);
     out.writeLong(date.getTime());
     // from MUST be parcelable here
     out.writeParcelable((Parcelable)from, flags);
