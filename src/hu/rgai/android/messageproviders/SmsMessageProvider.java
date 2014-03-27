@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.HtmlContentParc;
 import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
@@ -180,7 +181,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         ftm.addMessage(new MessageAtom(
                 cur.getString(1),
                 cur.getString(2),
-                new HtmlContent(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),
+                new HtmlContentParc(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),
                 new Date(cur.getLong(4)),
                 new Person(cur.getLong(5) + "", cur.getString(6), MessageProvider.Type.SMS),
                 cur.getLong(7) == 2, //vmit ezzel kezdeni
