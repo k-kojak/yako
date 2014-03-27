@@ -266,7 +266,6 @@ public enum EventLogger {
 
     public static class OTHER {
       public static final String CLICK_TO_MESSAGEGROUP_STR = "click to messagegroup";
-
       public static final String SPACE_STR = " ";
       public static final String UNDERLINE_SIGN_STR = "_";
       public static final String NEW_MESSAGE_STR = "newMessage";
@@ -277,12 +276,10 @@ public enum EventLogger {
 
     public static class MAINPAGE {
       public static final String PAUSE_STR = "mainpage:pause";
-
       public static final String RESUME_STR = "mainpage:resume";
-
       public static final String BACKBUTTON_STR = "mainpage:backbutton";
-
       public static final String STR = "MainPage";
+      public static final String ALL_STR = "all";
     }
 
     public static class EMAIL {
@@ -291,7 +288,6 @@ public enum EventLogger {
 
     public static class SCROLL {
       public static final String END_STR = "scroll:end";
-
       public static final String START_STR = "scroll:start";
     }
 
@@ -306,31 +302,31 @@ public enum EventLogger {
     public static class LOG_UPLOAD {
       public static final String UPLOAD_FAILED_STR = "log_upload:failed";
     }
-    
+
     public static class CLICK {
       public static final String CLICK_ACCOUNT_BTN = "click:account_button";
       public static final String CLICK_MESSAGE_SEND_BTN = "click:message_send_button";
       public static final String CLICK_REFRESH_BTN = "click:refresh_button";
       public static final String CLICK_LOAD_MORE_BTN = "click:load_more_button";
     }
-    
+
     public static class MESSAGE_REPLY {
       public static final String MESSAGE_REPLY_BACKBUTTON_STR = "MessageReply:backbutton";
     }
-    
+
     public static class THREAD {
       public static final String THREAD_BACKBUTTON_STR = "thread:backbutton";
       public static final String THREAD_PAUSE_STR = "thread:pause";
       public static final String THREAD_RESUME_STR = "thread:resume";
     }
-    
+
     public static class ACCOUNTSETTING {
       public static final String ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR = "AccountSettingsList:backbutton";
       public static final String FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR = "FacebookSettingActivity:backbutton";
       public static final String GMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "GmailSettingActivity:backbutton";
       public static final String SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR = "SimpleEmailSettingActivity:backbutton";
     }
-    
+
   }
 
 }

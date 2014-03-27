@@ -725,7 +725,12 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
-      builder.append(actSelectedFilter.getDisplayName());
+
+      if (actSelectedFilter == null)
+        builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
+      else
+        builder.append(actSelectedFilter.getDisplayName());
+
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
         builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
