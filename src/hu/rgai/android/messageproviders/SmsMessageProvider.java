@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Parcelable;
 import android.telephony.SmsManager;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
@@ -247,9 +248,14 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
-      Intent service = new Intent(context, MainService.class);
-      service.putExtra("type", MessageProvider.Type.SMS.toString());
-      context.startService(service);
+       if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+        Intent service = new Intent(context, MainService.class);
+        service.putExtra("type", MessageProvider.Type.SMS.toString());
+        if (MainService.actViewingMessage != null) {
+          service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
+        }
+        context.startService(service);
+      }
       
 //      // in case the first attempt was too quick, request the display again a little bit later
 //      try {

@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -236,10 +237,14 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
                   context.sendBroadcast(res);
                   
-                  Intent service = new Intent(context, MainService.class);
-                  service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-                  context.startService(service);
-                  
+                  if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+                    Intent service = new Intent(context, MainService.class);
+                    service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+                    if (MainService.actViewingMessage != null) {
+                      service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
+                    }
+                    context.startService(service);
+                  }
 
                 }
               }

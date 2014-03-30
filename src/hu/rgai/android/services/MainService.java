@@ -76,7 +76,7 @@ public class MainService extends Service {
    * This variable holds the ID of the actually displayed thread. That's why if
    * a new message comes from this thread id, we set it immediately to seen.
    */
-  public static volatile String actViewingThreadId = null;
+  public static volatile MessageListElementParc actViewingMessage = null;
 
   // flags for email account feedback
   public static final int OK = 0;
@@ -91,7 +91,7 @@ public class MainService extends Service {
   public static final int NO_ACCOUNT_SET = 9;
   public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
 
-  private Handler handler = null;
+  private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
 
   public static volatile Set<MessageListElementParc> messages = null;
@@ -152,14 +152,20 @@ public class MainService extends Service {
     MainActivity.openFbSession(this);
     // Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
     MessageProvider.Type type = null;
+    MessageListElementParc actViewingMessageAtThread = null;
     // if true, loading new messages at end of the lists, not checking for new
     // ones
     boolean loadMore = false;
-    if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("type")) {
-      type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
-    }
-    if (intent != null && intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
-      loadMore = intent.getExtras().getBoolean("load_more", false);
+    if (intent != null && intent.getExtras() != null) {
+      if (intent.getExtras().containsKey("type")) {
+        type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
+      }
+      if (intent.getExtras().containsKey("load_more")) {
+        loadMore = intent.getExtras().getBoolean("load_more", false);
+      }
+      if (intent.getExtras().containsKey("act_viewing_message")) {
+        actViewingMessageAtThread = (MessageListElementParc)intent.getExtras().getParcelable("act_viewing_message");
+      }
     }
 
     List<AccountAndr> accounts = StoreHandler.getAccounts(this);
@@ -178,6 +184,7 @@ public class MainService extends Service {
         msg.setData(bundle);
         handler.sendMessage(msg);
       } else {
+        handler.setActViewingMessageAtThread(actViewingMessageAtThread);
         if (isNet) {
           for (AccountAndr acc : accounts) {
             if (type == null || acc.getAccountType().equals(type)) {
@@ -326,6 +333,7 @@ public class MainService extends Service {
   private class MyHandler extends Handler {
 
     private final Context context;
+    private MessageListElementParc actViewingMessageAtThread = null;
 
     //
     public MyHandler(Context context) {
@@ -371,7 +379,7 @@ public class MainService extends Service {
             Set<AccountAndr> accountsToUpdate = new HashSet<AccountAndr>();
             
             for (MessageListElementParc mle : messages) {
-              if (mle.getId().equals(actViewingThreadId)) {
+              if (mle.equals(actViewingMessageAtThread)) {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
@@ -396,6 +404,10 @@ public class MainService extends Service {
           MainActivity.notifyMessageChange(loadMore);
         }
       }
+    }
+    
+    private void setActViewingMessageAtThread(MessageListElementParc actViewingMessageAtThread) {
+      this.actViewingMessageAtThread = actViewingMessageAtThread;
     }
     
     private void builNotification(int newMessageCount, MessageListElementParc lastUnreadMsg) {
@@ -474,7 +486,7 @@ public class MainService extends Service {
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
         builder.append(mle.getId());
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-        builder.append(actViewingThreadId);
+        builder.append(actViewingMessage == null ? "null" : actViewingMessage.getId());
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
         builder.append(messageIsVisible);
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
@@ -503,9 +515,8 @@ public class MainService extends Service {
         if (!contains) {
           messages.add(newMessage);
 
-          if (((actViewingThreadId != null)
-                  && (newMessage.getId().contains(actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.UNDERLINE_SIGN_STR)))
-                  || ((actViewingThreadId == null) && (MainActivity.isMainActivityVisible()))) {
+          if ((actViewingMessage != null && newMessage.equals(actViewingMessage))
+                  || (actViewingMessage == null && MainActivity.isMainActivityVisible())) {
             loggingNewMessageArrived(newMessage, true);
           } else {
             loggingNewMessageArrived(newMessage, false);

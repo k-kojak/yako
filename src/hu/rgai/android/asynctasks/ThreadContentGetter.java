@@ -86,9 +86,9 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           } else {
         	  constructor = providerClass.getConstructor(accountClass);
 	          mp = (ThreadMessageProvider) constructor.newInstance(account);
-	          // force result to ThreadMessage, since this is a thread displayer
+	          
           }
-//          Log.d("rgai", "mp.getmessage offset: " + offset);
+          // cast result to ThreadMessage, since this is a thread displayer
           threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0], offset, 20));
           Iterator<MessageAtom> iterator = threadMessage.getMessages().iterator();
           while (iterator.hasNext()) {

@@ -110,9 +110,9 @@ public class MessageReply extends ActionBarActivity {
       public void afterTextChanged( Editable s) {
         // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+                + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+                + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     });
     recipients = (ChipsMultiAutoCompleteTextView) findViewById( R.id.recipients);

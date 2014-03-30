@@ -57,6 +57,7 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 
 /**
  * This is the main view of the application.
@@ -297,6 +298,16 @@ public class MainActivity extends ActionBarActivity {
             String messageId = data.getStringExtra("message_id");
             AccountAndr acc = data.getParcelableExtra("account");
             MainService.setMessageContent(messageId, acc, fm);
+          }
+          if (data.hasExtra("thread_displayer")) {
+            Intent service = new Intent(this, MainService.class);
+            
+            String accType = data.getStringExtra("account_type");
+            MessageListElementParc actMsg = (MessageListElementParc)data.getParcelableExtra("act_view_msg");
+            
+            service.putExtra("type", accType);
+            service.putExtra("act_viewing_message", (Parcelable)actMsg);
+            this.startService(service);
           }
         }
         break;

@@ -54,10 +54,11 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+import static hu.rgai.android.test.MessageReply.MESSAGE_SENT_OK;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
-  private ProgressDialog pd = null;
+  private static ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
   private FullThreadMessageParc content = null;
   private String threadId = "-1";
@@ -76,7 +77,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-  private static boolean unsopportedThreadChat = false;
+  private static boolean unsopportedGroupChat = false;
   
   @Override
   public void onBackPressed() {
@@ -111,9 +112,9 @@ public class ThreadDisplayer extends ActionBarActivity {
     MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
     MainService.setMessageSeenAndRead(mlep);
     if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
-      unsopportedThreadChat = true;
+      unsopportedGroupChat = true;
     } else {
-      unsopportedThreadChat = false;
+      unsopportedGroupChat = false;
     }
 
     threadId = mlep.getId();
@@ -121,19 +122,19 @@ public class ThreadDisplayer extends ActionBarActivity {
       fromNotification = true;
     }
     from = mlep.getFrom();
-    MainService.actViewingThreadId = threadId;
+    MainService.actViewingMessage = mlep;
     
     getSupportActionBar().setTitle(from.getName() + " | " + account.getAccountType().toString());
 
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time
-    refreshMessageList();
+    
 
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     text = (EditText) findViewById(R.id.text);
     
-    if (unsopportedThreadChat) {
+    if (unsopportedGroupChat) {
       Toast.makeText(this, "Sorry, but group message sending is not possible (because of Facebook).", Toast.LENGTH_LONG).show();
       text.setVisibility(View.GONE);
       findViewById(R.id.sendButton).setVisibility(View.GONE);
@@ -155,9 +156,9 @@ public class ThreadDisplayer extends ActionBarActivity {
         public void afterTextChanged(Editable s) {
           // TODO Auto-generated method stub
           Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                  + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+                  + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
           EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingThreadId + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
         }
       });
     }
@@ -175,6 +176,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       pd.setMessage(getString(R.string.loading));
       pd.setCancelable(true);
       pd.show();
+      refreshMessageList();
     }
   }
 
@@ -196,6 +198,12 @@ public class ThreadDisplayer extends ActionBarActivity {
   }
 
   public void sendMessage(View view) {
+    String t = text.getText().toString().trim();
+    if (t.length() == 0) {
+      Toast.makeText(this, "Empty message", Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
     List<AccountAndr> accs = new LinkedList<AccountAndr>();
     accs.add(account);
     RecipientItem ri = null;
@@ -204,14 +212,14 @@ public class ThreadDisplayer extends ActionBarActivity {
     } else {
       ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
     }
-    MessageSender rs = new MessageSender(ri, accs, null, text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), text.getText().toString(), this);
     rs.execute();
     text.setText("");
-    refreshMessageList();
   }
 
   @Override
   protected void onPause() {
+    Log.d("rgai", "TD-pause");
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
@@ -219,7 +227,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       unregisterReceiver(dur);
     }
     
-    MainService.actViewingThreadId = null;
+    MainService.actViewingMessage = null;
   }
 
   @Override
@@ -273,12 +281,16 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   @Override
   public void finish() {
+    Log.d("rgai", "TD-finish");
     Intent resultIntent = new Intent();
-    resultIntent.putExtra("message_data", content);
-    resultIntent.putExtra("message_id", threadId);
+    resultIntent.putExtra("thread_displayer", true);
+    resultIntent.putExtra("account_type", account.getAccountType().toString());
+    resultIntent.putExtra("act_view_msg", (Parcelable)MainService.actViewingMessage);
+    
+//    resultIntent.putExtra("message_id", threadId);
 
     // if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-    resultIntent.putExtra("account", (Parcelable) account);
+//    resultIntent.putExtra("account", (Parcelable) account);
     setResult(Activity.RESULT_OK, resultIntent);
     super.finish(); 
   }
@@ -309,6 +321,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   }
   
   private void refreshMessageList(int offset) {
+    Log.d("rgai", "LEKERDEZES");
     ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, true);
     if (offset > 0) {
       myThread.setOffset(offset);
@@ -318,6 +331,26 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   private void refreshMessageList() {
     refreshMessageList(-1);
+  }
+  
+  private class MessageSendHandler extends Handler {
+    
+    private final Context context;
+    
+    public MessageSendHandler(Context context) {
+      this.context = context;
+    }
+    
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle bundle = msg.getData();
+      if (bundle != null) {
+        if (bundle.containsKey("success") && bundle.get("success") != null) {
+          refreshMessageList();
+        }
+      }
+    }
+    
   }
 
   private class NewMessageHandler extends Handler {
@@ -358,6 +391,7 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           content = newMessages;
         }
+        MainService.setMessageContent(threadId, account, content);
         displayMessage(scrollToBottom);
         if (pd != null) {
           pd.dismiss();
@@ -389,7 +423,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null) {
         if (intent.getAction().equals(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE)
-                && unsopportedThreadChat) {
+                && unsopportedGroupChat) {
           activity.refreshMessageList();
         } else if (intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
           activity.refreshMessageList();
@@ -410,7 +444,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
       builder.append(account.getAccountType().name());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(MainService.actViewingThreadId);
+      builder.append(MainService.actViewingMessage.getId());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       if (scrollState == 1) {
         builder.append(EventLogger.LOGGER_STRINGS.SCROLL.START_STR);
