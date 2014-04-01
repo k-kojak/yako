@@ -73,6 +73,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
   private boolean fromNotification = false;
+  private MessageListElementParc mlep = null;
 
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
@@ -109,7 +110,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 //    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element_id");
     account = getIntent().getExtras().getParcelable("account");
     String mlepId = getIntent().getExtras().getString("msg_list_element_id");
-    MessageListElementParc mlep = MainService.getListElementById(mlepId, account);
+    mlep = MainService.getListElementById(mlepId, account);
     MainService.setMessageSeenAndRead(mlep);
     if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedGroupChat = true;
@@ -122,7 +123,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       fromNotification = true;
     }
     from = mlep.getFrom();
-    MainService.actViewingMessage = mlep;
+    
     
     getSupportActionBar().setTitle(from.getName() + " | " + account.getAccountType().toString());
 
@@ -155,10 +156,12 @@ public class ThreadDisplayer extends ActionBarActivity {
         @Override
         public void afterTextChanged(Editable s) {
           // TODO Auto-generated method stub
-          Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                  + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-          EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+          if (MainService.actViewingMessage != null) {
+            Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                    + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+            EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                    + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+          }
         }
       });
     }
@@ -183,6 +186,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    MainService.actViewingMessage = mlep;
     dur = new DataUpdateReceiver(this);
     IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
