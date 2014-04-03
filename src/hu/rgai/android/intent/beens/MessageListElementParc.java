@@ -2,15 +2,12 @@ package hu.rgai.android.intent.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.EmailAccountAndr;
 import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
 import hu.rgai.android.intent.beens.account.GmailAccountAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.tools.Utils;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
@@ -26,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.ocpsoft.prettytime.PrettyTime;
 
 /**
  *
@@ -35,7 +31,8 @@ import org.ocpsoft.prettytime.PrettyTime;
 public class MessageListElementParc extends MessageListElement implements Parcelable, Comparable<MessageListElementParc> {
 
   // TODO: replace fromTemp with Person object
-  AccountAndr account;
+  private AccountAndr account;
+  private String prettyDate;
   private static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
   
   public static final Parcelable.Creator<MessageListElementParc> CREATOR = new Parcelable.Creator<MessageListElementParc>() {
@@ -73,6 +70,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     this.fullMessage = in.readParcelable(FullMessageParc.class.getClassLoader());
+    this.prettyDate = in.readString();
     
     if (!stringToClassLoader.containsKey(messageType)) {
       // TODO: display error message
@@ -86,6 +84,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
     this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
             mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.getFullMessage(), account);
+    prettyDate = Utils.getPrettyTime(mle.getDate());
   }
   
   public MessageListElementParc(String id, boolean seen, String title, String subTitle,
@@ -95,6 +94,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     convertFullMessageToParc(fullMessage, messageType);
     
     this.account = account;
+    this.prettyDate = Utils.getPrettyTime(date);
   }
   
   private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
@@ -132,7 +132,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public String getPrettyDate() {
-    return Utils.getPrettyTime(date);
+    return prettyDate;
   }
   
   public AccountAndr getAccount() {
@@ -156,6 +156,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable((Parcelable)fullMessage, flags);
+    out.writeString(prettyDate);
     if (!stringToClassLoader.containsKey(messageType)) {
     	
     } else {
