@@ -148,7 +148,7 @@ public class LazyAdapter extends BaseAdapter {
     if (message.getFrom() != null) {
       img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
     } else {
-      img = BitmapFactory.decodeResource(activity.getResources(), R.drawable.group_chat);
+      img = ProfilePhotoProvider.getGroupChatPhoto(activity);
     }
     holder.icon.setImageBitmap(img);
     

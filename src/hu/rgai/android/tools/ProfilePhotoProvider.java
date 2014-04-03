@@ -18,6 +18,7 @@ import java.util.Map;
 public class ProfilePhotoProvider {
 
   private static Map<Long, Bitmap> photos = null;
+  private static Bitmap groupChatPhoto = null;
   
   /**
    * 
@@ -45,6 +46,14 @@ public class ProfilePhotoProvider {
       img = photos.get(-1l);
     }
     return img;
+  }
+  
+  public static Bitmap getGroupChatPhoto(Context context) {
+    if (groupChatPhoto == null) {
+      groupChatPhoto = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
+    }
+    
+    return groupChatPhoto;
   }
   
   private static Bitmap getImgToUserId(Context context, long uid) {
