@@ -132,7 +132,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   }
   
   public String getPrettyDate() {
-    return prettyDate;
+    return Utils.getPrettyTime(date);
   }
   
   public AccountAndr getAccount() {
