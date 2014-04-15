@@ -120,6 +120,7 @@ class Uploader implements Runnable {
     try {
       httpContactListEntity = new StringEntity(encryptedContactInformations, org.apache.http.protocol.HTTP.UTF_8);
       httpContactListEntity.setContentType("application/json");
+      httpPost.setEntity(httpContactListEntity);
       response = getNewHttpClient().execute(httpPost);
     } catch (UnsupportedEncodingException e) {
       // TODO Auto-generated catch block
