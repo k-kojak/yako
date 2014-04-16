@@ -5,6 +5,8 @@
 !src/*
 !res
 !res/*
+!libs
+!libs/*
 !AndroidManifest.xml
 !ant.properties
 !.gitignore
