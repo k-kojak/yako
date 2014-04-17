@@ -56,7 +56,7 @@
     <WebView xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/email_content"
             android:layout_width="fill_parent" 
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:scrollbarStyle="outsideOverlay"
             android:padding="10dip" > 
     </WebView>
