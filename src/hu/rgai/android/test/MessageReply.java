@@ -28,6 +28,8 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -222,7 +224,11 @@ public class MessageReply extends ActionBarActivity {
 
     for (RecipientItem ri : to) {
       MessageSender rs = new MessageSender( ri, accs, handler, text.getText().toString(), this);
-      rs.execute();
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      } else {
+        rs.execute();
+      }
     }
 
   }

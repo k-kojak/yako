@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -96,7 +98,12 @@ public class EmailDisplayer extends ActionBarActivity {
     
     // setting message status to read at imap
     EmailMessageMarker messageMarker = new EmailMessageMarker(handler, account);
-    messageMarker.execute(mlepId);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      messageMarker.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mlepId);
+    } else {
+      messageMarker.execute(mlepId);
+    }
+    
 
     if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
       fromNotification = true;

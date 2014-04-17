@@ -6,6 +6,8 @@ package hu.rgai.android.test.settings;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -288,7 +290,12 @@ public class FacebookSettingActivity extends ActionBarActivity {
         Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
                 new IntegrationHandler(FacebookSettingActivity.this));
-        integrator.execute(user.getId());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+          integrator.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, user.getId());
+        } else {
+          integrator.execute(user.getId());
+        }
+        
       }
     } else {
       Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();

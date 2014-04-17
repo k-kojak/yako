@@ -34,6 +34,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -217,7 +219,11 @@ public class ThreadDisplayer extends ActionBarActivity {
       ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
     }
     MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), text.getText().toString(), this);
-    rs.execute();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    } else {
+      rs.execute();
+    }
     text.setText("");
   }
 
