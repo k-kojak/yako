@@ -54,6 +54,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -132,7 +133,12 @@ public class MainService extends Service {
       FacebookAccountAndr fba = StoreHandler.getFacebookAccount(this);
       if (fba != null) {
         XmppConnector xmppc = new XmppConnector(fba, this);
-        xmppc.execute();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+          xmppc.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } else {
+          xmppc.execute();
+        }
+        
       }
     }
   }
@@ -185,20 +191,30 @@ public class MainService extends Service {
         handler.sendMessage(msg);
       } else {
         handler.setActViewingMessageAtThread(actViewingMessageAtThread);
+        
+        if (type == null || type.equals(MessageProvider.Type.SMS)) {
+          AccountAndr smsAcc = new SmsAccountAndr();
+          LongOperation myThread = new LongOperation(this, handler, smsAcc, loadMore);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+          } else {
+            myThread.execute();
+          }
+        }
+        
         if (isNet) {
           for (AccountAndr acc : accounts) {
             if (type == null || acc.getAccountType().equals(type)) {
               LongOperation myThread = new LongOperation(this, handler, acc, loadMore);
-              myThread.execute();
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+              } else {
+                myThread.execute();
+              }
             }
           }
         }
-
-        if (type == null || type.equals(MessageProvider.Type.SMS)) {
-          AccountAndr smsAcc = new SmsAccountAndr();
-          LongOperation myThread = new LongOperation(this, handler, smsAcc, loadMore);
-          myThread.execute();
-        }
+        
       }
     }
     
@@ -575,6 +591,7 @@ public class MainService extends Service {
 
     @Override
     protected List<MessageListElementParc> doInBackground(String... params) {
+      Log.d("rgai", "long operation started with account: " + acc);
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {
@@ -675,12 +692,13 @@ public class MainService extends Service {
         // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);
       }
-
+      Log.d("rgai", "long operation ended with account: " + acc);
       return parc;
     }
 
     @Override
     protected void onPostExecute(List<MessageListElementParc> messages) {
+      
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
       if (this.result == OK) {
