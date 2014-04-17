@@ -167,8 +167,6 @@ public class LazyAdapter extends BaseAdapter {
       holder.msgType.setImageResource(R.drawable.ic_gmail);
     }
     
-    
-    
     holder.date.setText(message.getPrettyDate());
     return view;
   }

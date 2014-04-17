@@ -66,6 +66,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import java.text.SimpleDateFormat;
 import java.util.HashSet;
 
 public class MainService extends Service {
@@ -150,9 +151,22 @@ public class MainService extends Service {
     // unregisterReceiver(emailContentChangeReceiver);
   }
 
+  private void updateMessagesPrettyDate() {
+    if (messages != null) {
+      SimpleDateFormat sdf = new SimpleDateFormat();
+      for (MessageListElementParc mlep : messages) {
+        mlep.updatePrettyDateString(sdf);
+      }
+    }
+  }
+  
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
+    
+    MessageListElementParc.refreshCurrentDates();
+    updateMessagesPrettyDate();
+    
     connectXmpp();
     iterationCount++;
     MainActivity.openFbSession(this);
@@ -591,7 +605,6 @@ public class MainService extends Service {
 
     @Override
     protected List<MessageListElementParc> doInBackground(String... params) {
-      Log.d("rgai", "long operation started with account: " + acc);
       List<MessageListElementParc> messages = new LinkedList<MessageListElementParc>();
       String accountName = "";
       try {
@@ -692,7 +705,6 @@ public class MainService extends Service {
         // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);
       }
-      Log.d("rgai", "long operation ended with account: " + acc);
       return parc;
     }
 

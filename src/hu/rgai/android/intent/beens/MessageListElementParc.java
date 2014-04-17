@@ -16,8 +16,12 @@ import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +36,10 @@ public class MessageListElementParc extends MessageListElement implements Parcel
 
   // TODO: replace fromTemp with Person object
   private AccountAndr account;
-  private String prettyDate;
+  private String prettyDate = null;
   private static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
+  private static Date today = new Date();
+  private static Date thisYear = new Date();
   
   public static final Parcelable.Creator<MessageListElementParc> CREATOR = new Parcelable.Creator<MessageListElementParc>() {
     public MessageListElementParc createFromParcel(Parcel in) {
@@ -70,7 +76,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     this.fullMessage = in.readParcelable(FullMessageParc.class.getClassLoader());
-    this.prettyDate = in.readString();
+//    this.prettyDate = in.readString();
     
     if (!stringToClassLoader.containsKey(messageType)) {
       // TODO: display error message
@@ -84,7 +90,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
     this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
             mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.getFullMessage(), account);
-    prettyDate = Utils.getPrettyTime(mle.getDate());
+    updatePrettyDateString();
   }
   
   public MessageListElementParc(String id, boolean seen, String title, String subTitle,
@@ -94,7 +100,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     convertFullMessageToParc(fullMessage, messageType);
     
     this.account = account;
-    this.prettyDate = Utils.getPrettyTime(date);
+    updatePrettyDateString();
   }
   
   private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
@@ -127,12 +133,48 @@ public class MessageListElementParc extends MessageListElement implements Parcel
 //    this.account = account;
 //  }
 
+  public static void refreshCurrentDates() {
+    Date d = new Date();
+    
+    Calendar c = new GregorianCalendar();
+    c.setTime(d);
+    c.set(Calendar.HOUR, 0);
+    c.set(Calendar.MINUTE, 0);
+    c.set(Calendar.SECOND, 0);
+    c.set(Calendar.MILLISECOND, 0);
+    today = c.getTime();
+    
+    c.set(Calendar.DAY_OF_MONTH, 1);
+    c.set(Calendar.MONTH, 0);
+    thisYear = c.getTime();
+  }
+  
   public int describeContents() {
     return 0;
   }
   
   public String getPrettyDate() {
-    return Utils.getPrettyTime(date);
+    if (prettyDate == null) {
+      updatePrettyDateString(new SimpleDateFormat());
+    }
+    return prettyDate;
+  }
+  
+  
+  public void updatePrettyDateString(SimpleDateFormat sdf) {
+    if (date.before(thisYear)) {
+      sdf.applyPattern("yyyy/MM/dd");
+    } else if (date.after(today)) {
+      sdf.applyPattern("HH:mm");
+    } else {
+      sdf.applyPattern("MMM d");
+    }
+    
+    prettyDate = sdf.format(date);
+  }
+  
+  public final void updatePrettyDateString() {
+    updatePrettyDateString(new SimpleDateFormat());
   }
   
   public AccountAndr getAccount() {
@@ -156,7 +198,7 @@ public class MessageListElementParc extends MessageListElement implements Parcel
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable((Parcelable)fullMessage, flags);
-    out.writeString(prettyDate);
+//    out.writeString(prettyDate);
     if (!stringToClassLoader.containsKey(messageType)) {
     	
     } else {

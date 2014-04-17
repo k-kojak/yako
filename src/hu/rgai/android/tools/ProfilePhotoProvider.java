@@ -9,7 +9,9 @@ import android.provider.ContactsContract;
 import android.util.Log;
 import hu.rgai.android.test.R;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -19,6 +21,8 @@ public class ProfilePhotoProvider {
 
   private static Map<Long, Bitmap> photos = null;
   private static Bitmap groupChatPhoto = null;
+  private static Set<Long> noImageToTheseUsers;
+  private static long noImageCacheTime = System.currentTimeMillis();
   
   /**
    * 
@@ -29,6 +33,11 @@ public class ProfilePhotoProvider {
    */
   public static Bitmap getImageToUser(Context context, long contactId) {
     Bitmap img = null;
+    long noImageCacheCooldownTime = 600; // seconds
+    if (noImageToTheseUsers == null || noImageCacheTime + 1000l * noImageCacheCooldownTime < System.currentTimeMillis()) {
+      noImageToTheseUsers = new HashSet<Long>();
+      noImageCacheTime = System.currentTimeMillis();
+    }
     if (photos == null) {
       photos = new HashMap<Long, Bitmap>();
       Bitmap defaultImg = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
@@ -36,10 +45,14 @@ public class ProfilePhotoProvider {
     }
     if (photos.containsKey(contactId)) {
       img = photos.get(contactId);
+    } else if (noImageToTheseUsers.contains(contactId)) {
+      img = photos.get(-1l);
     } else {
       img = getImgToUserId(context, contactId);
       if (img != null) {
         photos.put(contactId, img);
+      } else {
+        noImageToTheseUsers.add(contactId);
       }
     }
     if (img == null) {
