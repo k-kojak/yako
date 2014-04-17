@@ -49,16 +49,17 @@
   </RelativeLayout>
     
   
-  <ScrollView
+<!--  <ScrollView
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffffff" >
+    android:background="#ffffffff" >-->
     <WebView xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/email_content"
             android:layout_width="fill_parent" 
             android:layout_height="wrap_content"
+            android:scrollbarStyle="outsideOverlay"
             android:padding="10dip" > 
     </WebView>
-  </ScrollView>
+  <!--</ScrollView>-->
 
 </LinearLayout>
