@@ -218,7 +218,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     } else {
       ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
     }
-    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     } else {

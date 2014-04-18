@@ -45,15 +45,17 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
   private final Handler handler;
   private final List<AccountAndr> accounts;
   private final String content;
-  // private String subject;
+  private final String subject;
   // private String recipients;
 
   private final String result = null;
 
-  public MessageSender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler, String content, Context context) {
+  public MessageSender(RecipientItem recipient, List<AccountAndr> accounts, Handler handler,
+          String subject, String content, Context context) {
     this.recipient = recipient;
     this.accounts = accounts;
     this.handler = handler;
+    this.subject = subject;
     this.content = content;
     this.context = context;
     // this.subject = subject;
@@ -94,7 +96,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
       if (mp != null && recipients != null) {
         while (true) {
           try {
-            mp.sendMessage(recipients, content, content.substring(0, Math.min(content.length(), 10)));
+            mp.sendMessage(recipients, content, subject);
           } catch (NoSuchProviderException ex) {
             Logger.getLogger(MessageReply.class.getName()).log(Level.SEVERE, null, ex);
             break;

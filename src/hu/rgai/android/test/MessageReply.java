@@ -9,7 +9,6 @@ import hu.rgai.android.intent.beens.RecipientItem;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
@@ -45,6 +44,7 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import net.htmlparser.jericho.Source;
 
 /**
  * 
@@ -63,6 +63,7 @@ public class MessageReply extends ActionBarActivity {
   private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
   private PersonAndr from;
+  private String messageSubject = null;
 
   @Override
   public void onBackPressed() {
@@ -85,14 +86,17 @@ public class MessageReply extends ActionBarActivity {
     setContentView( R.layout.message_reply);
     String content = "";
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey( "content")) {
-        content = getIntent().getExtras().getString( "content");
+      if (getIntent().getExtras().containsKey("content")) {
+        content = getIntent().getExtras().getString("content");
       }
-      if (getIntent().getExtras().containsKey( "account")) {
-        account = getIntent().getExtras().getParcelable( "account");
+      if (getIntent().getExtras().containsKey("subject")) {
+        messageSubject = getIntent().getExtras().getString("subject");
       }
-      if (getIntent().getExtras().containsKey( "from")) {
-        from = getIntent().getExtras().getParcelable( "from");
+      if (getIntent().getExtras().containsKey("account")) {
+        account = getIntent().getExtras().getParcelable("account");
+      }
+      if (getIntent().getExtras().containsKey("from")) {
+        from = getIntent().getExtras().getParcelable("from");
       }
     }
     text = (TextView) findViewById( R.id.message_content);
@@ -221,9 +225,14 @@ public class MessageReply extends ActionBarActivity {
     List<RecipientItem> to = recipients.getRecipients();
     List<AccountAndr> accs = new LinkedList<AccountAndr>();
     accs.add( from);
-
+    String content = text.getText().toString().trim();
+    if (messageSubject == null) {
+      Source source = new Source(content);
+      messageSubject = source.getRenderer().toString();
+      messageSubject = messageSubject.substring(0, Math.min(messageSubject.length(), 10));
+    }
     for (RecipientItem ri : to) {
-      MessageSender rs = new MessageSender( ri, accs, handler, text.getText().toString(), this);
+      MessageSender rs = new MessageSender( ri, accs, handler, messageSubject, content, this);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
         rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
       } else {
