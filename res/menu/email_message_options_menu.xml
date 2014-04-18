@@ -7,13 +7,13 @@
           messagelogger:showAsAction="ifRoom"
           />
   
-<!--  <item android:id="@+id/message_reply_all"
-    android:icon="@drawable/ic_action_reply_all"  
-        android:title="@string/message_reply_all"
+  <item android:id="@+id/attachments"
+        android:icon="@drawable/ic_attachment_menu"
+        android:title="@string/view_attachments"
         messagelogger:showAsAction="ifRoom"
         />
   
-  <item android:id="@+id/forward"
+  <!--<item android:id="@+id/forward"
   android:icon="@drawable/ic_action_forward"  
       android:title="@string/message_forward"
       messagelogger:showAsAction="ifRoom"

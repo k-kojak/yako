@@ -1,6 +1,5 @@
 package hu.rgai.android.config;
 
-import android.content.Context;
 import android.os.Build;
 import android.provider.ContactsContract;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
@@ -10,12 +9,12 @@ import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
-import hu.rgai.android.test.EmailDisplayer;
 import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
+import hu.rgai.android.view.activities.EmailDisplayerActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -116,9 +115,9 @@ public final class Settings {
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
     if (accountTypeToMessageDisplayer == null) {
       accountTypeToMessageDisplayer = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
-      accountTypeToMessageDisplayer.put(MessageProvider.Type.EMAIL, EmailDisplayer.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.EMAIL, EmailDisplayerActivity.class);
       accountTypeToMessageDisplayer.put(MessageProvider.Type.FACEBOOK, ThreadDisplayer.class);
-      accountTypeToMessageDisplayer.put(MessageProvider.Type.GMAIL, EmailDisplayer.class);
+      accountTypeToMessageDisplayer.put(MessageProvider.Type.GMAIL, EmailDisplayerActivity.class);
       accountTypeToMessageDisplayer.put(MessageProvider.Type.SMS, ThreadDisplayer.class);
     }
     return accountTypeToMessageDisplayer;

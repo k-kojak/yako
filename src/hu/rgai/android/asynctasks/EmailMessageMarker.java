@@ -21,11 +21,9 @@ import javax.mail.NoSuchProviderException;
  */
 public class EmailMessageMarker extends AsyncTask<String, Integer, Void> {
 
-    Handler handler;
     AccountAndr account;
     
-    public EmailMessageMarker(Handler handler, AccountAndr account) {
-      this.handler = handler;
+    public EmailMessageMarker(AccountAndr account) {
       this.account = account;
     }
     

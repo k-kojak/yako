@@ -14,6 +14,7 @@
   <string name="notifications_sound_summary">Make sound when you receive new message</string>
   <string name="notifications_vibration">Vibrate</string>
   <string name="notifications_vibration_summary">Vibrate when notified</string>
+  <string name="view_attachments">View attachments</string>
   
   <string name="account_settings">Account settings</string>
   <string name="service_name">This is my service</string>

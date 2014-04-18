@@ -45,6 +45,7 @@ public class EmailDisplayer extends ActionBarActivity {
   private ProgressDialog pd = null;
   private Handler handler = null;
   private FullSimpleMessageParc content = null;
+  private Menu menu;
   
   // indicates if activity opens from notification or not
   private boolean fromNotification = false;
@@ -93,7 +94,7 @@ public class EmailDisplayer extends ActionBarActivity {
     MainService.setMessageSeenAndRead(mlep);
     
     // setting message status to read at imap
-    EmailMessageMarker messageMarker = new EmailMessageMarker(handler, account);
+    EmailMessageMarker messageMarker = new EmailMessageMarker(account);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       messageMarker.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mlepId);
     } else {
@@ -146,11 +147,16 @@ public class EmailDisplayer extends ActionBarActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
+    this.menu = menu;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.email_message_options_menu, menu);
+    
+    if (content.getAttachments() == null || content.getAttachments().isEmpty()) {
+      menu.findItem(R.id.attachments).setVisible(false);
+    }
     return true;
   }
-
+  
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
@@ -182,7 +188,7 @@ public class EmailDisplayer extends ActionBarActivity {
       case android.R.id.home:
         Intent upIntent = NavUtils.getParentActivityIntent(this);
         if (fromNotification) {
-          TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
+//          TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
         } else {
           finish();
         }
