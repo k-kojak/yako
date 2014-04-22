@@ -460,7 +460,7 @@ public class MainService extends Service {
 
         Bitmap largeIcon;
         if (lastUnreadMsg.getFrom() != null) {
-          largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
+          largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId()).getBitmap();
         } else {
           largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
         }
