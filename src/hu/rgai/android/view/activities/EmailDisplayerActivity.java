@@ -92,6 +92,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     String mlepId = getIntent().getExtras().getString("msg_list_element_id");
     mMessage = MainService.getListElementById(mlepId, mAccount);
     mContent = (FullSimpleMessageParc)mMessage.getFullMessage();
+    mFrom = mMessage.getFrom();
     MainService.setMessageSeenAndRead(mMessage);
 
     EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
