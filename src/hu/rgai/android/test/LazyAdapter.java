@@ -2,16 +2,13 @@ package hu.rgai.android.test;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.facebook.android.AsyncFacebookRunner;
 import hu.rgai.android.beens.BitmapResult;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;

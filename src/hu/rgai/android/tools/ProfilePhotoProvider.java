@@ -28,7 +28,6 @@ public class ProfilePhotoProvider {
   /**
    * 
    * @param context
-   * @param type type of 
    * @param contactId android contact id
    * @return 
    */
@@ -46,7 +45,11 @@ public class ProfilePhotoProvider {
     }
     if (photos.containsKey(contactId)) {
       img = photos.get(contactId);
-      isDefaultImage = false;
+      if (contactId == -1) {
+        isDefaultImage = true;
+      } else {
+        isDefaultImage = false;
+      }
     } else if (noImageToTheseUsers.contains(contactId)) {
       img = photos.get(-1l);
       isDefaultImage = true;
@@ -55,6 +58,7 @@ public class ProfilePhotoProvider {
       if (img != null) {
         photos.put(contactId, img);
         isDefaultImage = false;
+        Log.d("rgai", "NOT DEFAULT IMAGE 2");
       } else {
         noImageToTheseUsers.add(contactId);
         isDefaultImage = true;
