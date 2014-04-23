@@ -43,6 +43,8 @@ import static hu.rgai.android.test.EmailDisplayer.MESSAGE_REPLY_REQ_CODE;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.view.NonSwipeableViewPager;
+import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
 import net.htmlparser.jericho.Source;
 
@@ -64,7 +66,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   /**
    * The number of pages (wizard steps) to show in this demo.
    */
-  private static final int NUM_PAGES = 5;
   private MessageListElementParc mMessage = null;
   private AccountAndr mAccount = null;
   private boolean mFromNotification = false;
@@ -73,14 +74,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private FullSimpleMessageParc mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
-  /**
-   * The pager widget, which handles animation and allows swiping horizontally to access
-   * previous and next wizard steps.
-   */
-  private ViewPager mPager;
-  /**
-   * The pager adapter, which provides the pages to the view pager widget.
-   */
+  private NonSwipeableViewPager mPager;
   private PagerAdapter mPagerAdapter;
 
   @Override
@@ -107,7 +101,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     }
 
     // Instantiate a ViewPager and a PagerAdapter.
-    mPager = (ViewPager) findViewById(R.id.pager);
+    mPager = (NonSwipeableViewPager) findViewById(R.id.pager);
     mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(),
             mContent.getAttachments() != null && !mContent.getAttachments().isEmpty());
     mPager.setAdapter(mPagerAdapter);
@@ -190,8 +184,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
 
     private boolean mIsAttachmentPresent = false;
-    private boolean mIsAttachmentVisible = false;
-
+    
     public ScreenSlidePagerAdapter(FragmentManager fm, boolean attachmentPresent) {
       super(fm);
       this.mIsAttachmentPresent = attachmentPresent;
@@ -199,13 +192,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
 
     @Override
     public Fragment getItem(int position) {
-      Log.d("rgai", "getItem: " + position);
       if (position == 0) {
         EmailDisplayerFragment edf = new EmailDisplayerFragment(mAccount, mMessage);
         return edf;
       } else {
-        EmailDisplayerFragment edf = new EmailDisplayerFragment(mAccount, mMessage);
-        return edf;
+        EmailAttachmentFragment eaf = new EmailAttachmentFragment(mAccount, mMessage);
+        return eaf;
 //            return ScreenSlidePageFragment.create(position);
       }
 

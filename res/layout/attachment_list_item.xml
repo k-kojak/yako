@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="1dip" >
+ 
+    <RelativeLayout
+      android:id="@+id/first_block"
+      android:padding="0dip"
+      android:layout_alignParentLeft="true"
+      android:layout_width="49dip"
+      android:layout_height="49dip" >
+      
+      <ImageView
+        android:id="@+id/attachment_image"
+        android:layout_width="46dip"
+        android:layout_height="46dip"
+        android:src="@drawable/gmail_icon" />
+      
+    </RelativeLayout>
+ 
+    
+    <RelativeLayout
+      android:id="@+id/second_block"
+      android:layout_toRightOf="@id/first_block"
+      android:layout_toLeftOf="@+id/third_block"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content">
+      
+      <ProgressBar
+        android:id="@+id/progressbar"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+      />
+      
+      <TextView
+        android:id="@+id/file_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/progressbar"
+        android:layout_alignLeft="@id/progressbar"
+      />
+      
+    </RelativeLayout>
+      
+    <RelativeLayout
+      android:id="@+id/third_block"
+      android:layout_alignParentRight="true"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content">
+      
+      <ImageButton
+        android:id="@+id/download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/progressbar"
+        android:src="@drawable/ic_action_download" />
+      
+    </RelativeLayout>
+ 
+</RelativeLayout>

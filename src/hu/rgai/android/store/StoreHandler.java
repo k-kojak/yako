@@ -70,7 +70,6 @@ public class StoreHandler {
     
   }
   
-  
   public static void writeLastNotificationObject(Context context, HashMap<AccountAndr, Date> map) {
     if (map != null) {
       FileOutputStream fos = null;
@@ -169,16 +168,26 @@ public class StoreHandler {
     return data;
   }
   
+  public static void saveByteArrayToDownloadFolder(byte[] data, String fileName) {
+    saveByteArray(null, data, null, fileName);
+  }
+  
   private static void saveByteArray(Context context, byte[] data, String folder, String filename) {
 
     try {
-      ContextWrapper cw = new ContextWrapper(context);
-      File mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
-      mainFilePath = new File(mainFilePath, folder);
+      File mainFilePath;
+      if (folder == null) {
+        mainFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); 
+      } else {
+        ContextWrapper cw = new ContextWrapper(context);
+        mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
+        mainFilePath = new File(mainFilePath, folder);
+      }
+      
       if (!mainFilePath.isDirectory()) {
         mainFilePath.mkdirs();
       }
-      Log.d("rgai", mainFilePath.getAbsolutePath());
+      
       File file = new File(mainFilePath, filename);
       file.createNewFile();
       FileOutputStream outs = new FileOutputStream(file);

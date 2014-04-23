@@ -8,8 +8,6 @@ import android.widget.ImageView;
 import hu.rgai.android.beens.BitmapResult;
 import hu.rgai.android.test.R;
 import java.lang.ref.WeakReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
