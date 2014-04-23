@@ -12,7 +12,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
-import hu.rgai.android.asynctasks.ThreadContentGetter;
+import hu.rgai.android.workers.ThreadContentGetter;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullThreadMessageParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;

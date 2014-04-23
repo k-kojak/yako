@@ -1,6 +1,6 @@
 package hu.rgai.android.services;
 
-import hu.rgai.android.asynctasks.XmppConnector;
+import hu.rgai.android.workers.XmppConnector;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;

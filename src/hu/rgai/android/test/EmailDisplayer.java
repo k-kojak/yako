@@ -23,7 +23,7 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.asynctasks.EmailMessageMarker;
+import hu.rgai.android.workers.EmailMessageMarker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;

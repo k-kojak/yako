@@ -2,6 +2,7 @@ package hu.rgai.android.tools.adapter;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import hu.rgai.android.beens.ProgressAttachment;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
+import hu.rgai.android.workers.AttachmentDownloader;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -76,44 +78,19 @@ public class AttachmentAdapter extends BaseAdapter {
     
     holder.progressBar.setProgress(attachment.getProgress());
     holder.textView.setText(attachment.getFileName());
+    if (attachment.isInProgress() && !attachment.isDownloaded() && attachment.getAttachmentDownloader() != null) {
+      attachment.getAttachmentDownloader().setProgressBar(holder.progressBar);
+    }
     holder.button.setOnClickListener(new View.OnClickListener() {
       public void onClick(View arg0) {
         if (!attachment.isInProgress() && !attachment.isDownloaded()) {
+          Log.d("rgai", "START");
           attachment.setInProgress(true);
-          new Thread(new Runnable() {
-            public void run() {
-              SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider(mAccount);
-              semp.setAttachmentProgressUpdateListener(new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
-                public void onProgressUpdate(int progress) {
-                  attachment.setProgress(progress);
-                  progBarHandler.post(new Runnable() {
-                    public void run() {
-                      holder.progressBar.setProgress(attachment.getProgress());
-                    }
-                  });
-                }
-              });
-              try {
-                byte[] file = semp.getAttachmentOfMessage(mMessageId, attachment.getFileName());
-                attachment.setProgress(100);
-                holder.progressBar.setProgress(100);
-                StoreHandler.saveByteArrayToDownloadFolder(file, attachment.getFileName());
-                progBarHandler.post(new Runnable() {
-                  public void run() {
-                    Toast.makeText(mContext, attachment.getFileName() + " saved in Downloads", Toast.LENGTH_SHORT).show();
-                  }
-                });
-              } catch (NoSuchProviderException ex) {
-                Logger.getLogger(AttachmentAdapter.class.getName()).log(Level.SEVERE, null, ex);
-              } catch (MessagingException ex) {
-                Logger.getLogger(AttachmentAdapter.class.getName()).log(Level.SEVERE, null, ex);
-              } catch (IOException ex) {
-                Logger.getLogger(AttachmentAdapter.class.getName()).log(Level.SEVERE, null, ex);
-              }
-            }
-          }).start();
+          AttachmentDownloader ad = new AttachmentDownloader(attachment, progBarHandler,
+                  mAccount, mMessageId, holder.progressBar, mContext);
+          attachment.setAttachmentDownloader(ad);
+          new Thread(ad).start();
         }
-
       }
     });
     

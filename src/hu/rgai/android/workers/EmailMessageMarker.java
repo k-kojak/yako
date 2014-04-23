@@ -1,5 +1,5 @@
 
-package hu.rgai.android.asynctasks;
+package hu.rgai.android.workers;
 
 import android.os.AsyncTask;
 import android.os.Handler;

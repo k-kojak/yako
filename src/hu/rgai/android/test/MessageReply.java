@@ -1,6 +1,6 @@
 package hu.rgai.android.test;
 
-import hu.rgai.android.asynctasks.MessageSender;
+import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.EmailRecipientAndr;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;

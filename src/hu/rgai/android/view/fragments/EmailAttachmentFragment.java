@@ -22,8 +22,8 @@ import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 public class EmailAttachmentFragment extends Fragment {
 
   private View mView;
-  private AccountAndr mAccount;
-  private MessageListElementParc mMessage;
+  private final AccountAndr mAccount;
+  private final MessageListElementParc mMessage;
   private ListView mListView;
   private AttachmentAdapter mListAdapter;
   
@@ -36,10 +36,11 @@ public class EmailAttachmentFragment extends Fragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     mView = inflater.inflate(R.layout.attachment_displayer, container, false);
     mListView = (ListView) mView.findViewById(R.id.list);
+    convertAttachments();
     mListAdapter = new AttachmentAdapter(this.getActivity(),
             ((FullSimpleMessageParc)mMessage.getFullMessage()).getAttachments(),
             mAccount, mMessage.getId());
-    convertAttachments();
+    
     
     mListView.setAdapter(mListAdapter);
     return mView;
@@ -50,7 +51,6 @@ public class EmailAttachmentFragment extends Fragment {
     for (int i = 0; i < fsm.getAttachments().size(); i++) {
       Attachment a = fsm.getAttachments().get(i);
       if (a instanceof ProgressAttachment) {
-        Log.d("rgai", "SKIP PROGRESS BECAUSE ITS ALREADY A PROGRESS IZE..JUHUHUUHUHUHUH");
         continue;
       }
 //      int progress = Math.random() > 0.5 ? 100 : 0;

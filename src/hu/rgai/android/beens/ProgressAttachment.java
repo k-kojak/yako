@@ -1,6 +1,7 @@
 
 package hu.rgai.android.beens;
 
+import hu.rgai.android.workers.AttachmentDownloader;
 import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 
 /**
@@ -11,6 +12,7 @@ public class ProgressAttachment extends Attachment {
   
   private volatile int mProgress;
   private volatile boolean inProgress = false;
+  private volatile AttachmentDownloader mAttachmentDownloader;
   
   public ProgressAttachment(Attachment attachment) {
     this(attachment.getFileName(), attachment.getSize());
@@ -47,6 +49,22 @@ public class ProgressAttachment extends Attachment {
   
   public boolean isDownloaded() {
     return !inProgress && mProgress == 100;
+  }
+
+  public int getmProgress() {
+    return mProgress;
+  }
+
+  public void setmProgress(int mProgress) {
+    this.mProgress = mProgress;
+  }
+
+  public AttachmentDownloader getAttachmentDownloader() {
+    return mAttachmentDownloader;
+  }
+
+  public void setAttachmentDownloader(AttachmentDownloader mAttachmentDownloader) {
+    this.mAttachmentDownloader = mAttachmentDownloader;
   }
   
 }

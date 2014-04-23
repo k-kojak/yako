@@ -1,4 +1,4 @@
-package hu.rgai.android.asynctasks;
+package hu.rgai.android.workers;
 
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;

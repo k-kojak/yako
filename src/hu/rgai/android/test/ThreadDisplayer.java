@@ -1,8 +1,8 @@
 package hu.rgai.android.test;
 
 
-import hu.rgai.android.asynctasks.MessageSender;
-import hu.rgai.android.asynctasks.ThreadContentGetter;
+import hu.rgai.android.workers.MessageSender;
+import hu.rgai.android.workers.ThreadContentGetter;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.intent.beens.FacebookRecipientAndr;
