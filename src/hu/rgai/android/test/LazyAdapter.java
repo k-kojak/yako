@@ -2,7 +2,6 @@ package hu.rgai.android.test;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +9,15 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import hu.rgai.android.beens.BitmapResult;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import hu.rgai.android.tools.view.AsyncImageLoadProvider;
+import hu.rgai.android.tools.view.AsyncImageView;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 
@@ -63,7 +65,7 @@ public class LazyAdapter extends BaseAdapter {
       holder.subject = (TextView) view.findViewById(R.id.subject);
       holder.from = (TextView) view.findViewById(R.id.from);
       holder.date = (TextView) view.findViewById(R.id.date);
-      holder.icon = (ImageView) view.findViewById(R.id.list_image);
+      holder.icon = (AsyncImageView) view.findViewById(R.id.list_image);
       holder.msgType = (ImageView) view.findViewById(R.id.list_acc_type);
       holder.attachment = (ImageView) view.findViewById(R.id.attachment);
       view.setTag(holder);
@@ -72,7 +74,7 @@ public class LazyAdapter extends BaseAdapter {
     }
     
 
-    MessageListElementParc message = (MessageListElementParc)this.getItem(position);
+    final MessageListElementParc message = (MessageListElementParc)this.getItem(position);
     
     // dealing with attachment display
     boolean hasAttachment = false;
@@ -146,12 +148,35 @@ public class LazyAdapter extends BaseAdapter {
     
     Bitmap img;
     if (message.getFrom() != null) {
-      img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
+      holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
+        public BitmapResult getBitmap(long id) {
+          return ProfilePhotoProvider.getImageToUser(activity, id);
+        }
+        public boolean isBitmapLoaded(long id) {
+          return ProfilePhotoProvider.isImageToUserInCache(id);
+        }
+        public Bitmap getDefaultBitmap(Context c) {
+          return ProfilePhotoProvider.getDefaultBitmap(c);
+        }
+      }, message.getFrom().getContactId());
+//      img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
     } else {
-      img = ProfilePhotoProvider.getGroupChatPhoto(activity);
+      holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
+        public BitmapResult getBitmap(long id) {
+          return ProfilePhotoProvider.getGroupChatPhoto(activity);
+        }
+
+        public boolean isBitmapLoaded(long id) {
+          return ProfilePhotoProvider.isGroupChatPhotoLoaded();
+        }
+        public Bitmap getDefaultBitmap(Context c) {
+          return ProfilePhotoProvider.getGroupChatPhoto(c).getBitmap();
+        }
+      }, 0);
+//      img = ProfilePhotoProvider.getGroupChatPhoto(activity);
+//      holder.icon.setImageBitmap(img);
     }
-    holder.icon.setImageBitmap(img);
-    
+//    holder.icon.setImageBitmap(img);
     
     
     
@@ -180,11 +205,33 @@ public class LazyAdapter extends BaseAdapter {
     return Settings.EmailUtils.getResourceIdToEmailDomain(dom);
   }
   
+//  private class ImageLoaderWorker extends AsyncTask<Long, Void, Bitmap> {
+//
+//    private ImageView mImageView = null;
+//    private Context mContext;
+//
+//    public ImageLoaderWorker(ImageView imageView, Context context) {
+//      this.mImageView = imageView;
+//      mContext = context;
+//    }
+//    
+//    @Override
+//    protected Bitmap doInBackground(Long... arg0) {
+//      return ProfilePhotoProvider.getImageToUser(mContext, NO_SELECTION);
+//    }
+//    
+//    @Override
+//    protected void onPostExecute(Bitmap bitmap) {
+//      mImageView.setImageBitmap(bitmap);
+//    }
+//    
+//  }
+  
   static class ViewHolder {
     TextView subject;
     TextView from;
     TextView date;
-    ImageView icon;
+    AsyncImageView icon;
     ImageView msgType;
     ImageView attachment;
   }

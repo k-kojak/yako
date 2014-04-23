@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.ContactsContract;
 import android.util.Log;
+import hu.rgai.android.beens.BitmapResult;
 import hu.rgai.android.test.R;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,11 +28,12 @@ public class ProfilePhotoProvider {
   /**
    * 
    * @param context
-   * @param type type of 
    * @param contactId android contact id
    * @return 
    */
-  public static Bitmap getImageToUser(Context context, long contactId) {
+  public static BitmapResult getImageToUser(Context context, long contactId) {
+    
+    boolean isDefaultImage;
     Bitmap img = null;
     long noImageCacheCooldownTime = 600; // seconds
     if (noImageToTheseUsers == null || noImageCacheTime + 1000l * noImageCacheCooldownTime < System.currentTimeMillis()) {
@@ -39,34 +41,72 @@ public class ProfilePhotoProvider {
       noImageCacheTime = System.currentTimeMillis();
     }
     if (photos == null) {
-      photos = new HashMap<Long, Bitmap>();
-      Bitmap defaultImg = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
-      photos.put(-1l, defaultImg);
+      initPhotosMap(context);
     }
     if (photos.containsKey(contactId)) {
       img = photos.get(contactId);
+      if (contactId == -1) {
+        isDefaultImage = true;
+      } else {
+        isDefaultImage = false;
+      }
     } else if (noImageToTheseUsers.contains(contactId)) {
       img = photos.get(-1l);
+      isDefaultImage = true;
     } else {
       img = getImgToUserId(context, contactId);
       if (img != null) {
         photos.put(contactId, img);
+        isDefaultImage = false;
+        Log.d("rgai", "NOT DEFAULT IMAGE 2");
       } else {
         noImageToTheseUsers.add(contactId);
+        isDefaultImage = true;
       }
     }
     if (img == null) {
       img = photos.get(-1l);
     }
-    return img;
+    
+    
+    return new BitmapResult(img, isDefaultImage);
   }
   
-  public static Bitmap getGroupChatPhoto(Context context) {
+  public static Bitmap getDefaultBitmap(Context c) {
+    if (photos == null) {
+      initPhotosMap(c);
+    }
+    return photos.get(-1l);
+  }
+  
+  private static void initPhotosMap(Context c) {
+    photos = new HashMap<Long, Bitmap>();
+    Bitmap defaultImg = BitmapFactory.decodeResource(c.getResources(), R.drawable.ic_contact_picture);
+    photos.put(-1l, defaultImg);
+  }
+  
+  public static boolean isImageToUserInCache(long id) {
+    if (photos == null) {
+      return false;
+    } else if (photos.containsKey(id)) {
+      return true;
+    } else if (noImageToTheseUsers != null && noImageToTheseUsers.contains(id)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  public static BitmapResult getGroupChatPhoto(Context context) {
     if (groupChatPhoto == null) {
       groupChatPhoto = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
     }
     
-    return groupChatPhoto;
+    return new BitmapResult(groupChatPhoto, true);
+  }
+  
+  public static boolean isGroupChatPhotoLoaded() {
+    return groupChatPhoto != null;
   }
   
   private static Bitmap getImgToUserId(Context context, long uid) {

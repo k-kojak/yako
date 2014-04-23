@@ -343,7 +343,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   }
   
   public void setImageIcon(TextView textView, int id) {
-    Bitmap bitmap = ProfilePhotoProvider.getImageToUser(this.getContext(), id);
+    Bitmap bitmap = ProfilePhotoProvider.getImageToUser(this.getContext(), id).getBitmap();
     int px = dipToPixels(CHIP_TEXT_DIMENSION_IN_DIP);
     Log.d("rgai", CHIP_TEXT_DIMENSION_IN_DIP + " DIP = " + px + " PX");
     BitmapDrawable bd = new BitmapDrawable(null, Bitmap.createScaledBitmap(bitmap, px, px, true));
