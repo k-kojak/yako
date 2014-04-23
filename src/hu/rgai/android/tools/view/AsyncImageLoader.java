@@ -32,11 +32,6 @@ public class AsyncImageLoader extends AsyncTask<Long, Void, BitmapResult> {
     if (!running) {
       return null;
     }
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException ex) {
-      Logger.getLogger(AsyncImageLoader.class.getName()).log(Level.SEVERE, null, ex);
-    }
     return mLoadProvider.getBitmap(ids[0]);
   }
 
