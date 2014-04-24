@@ -460,7 +460,7 @@ public class MainService extends Service {
 
         Bitmap largeIcon;
         if (lastUnreadMsg.getFrom() != null) {
-          largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId());
+          largeIcon = ProfilePhotoProvider.getImageToUser(context, lastUnreadMsg.getFrom().getContactId()).getBitmap();
         } else {
           largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
         }
@@ -484,17 +484,17 @@ public class MainService extends Service {
         }
           
         Intent resultIntent;
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(context, classToLoad);
           resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
           resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
+          stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(context, MainActivity.class);
         }
         resultIntent.putExtra("from_notifier", true);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);

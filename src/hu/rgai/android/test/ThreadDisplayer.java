@@ -127,7 +127,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     from = mlep.getFrom();
     
     
-    getSupportActionBar().setTitle(from.getName() + " | " + account.getAccountType().toString());
+    getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + account.getAccountType().toString());
 
     messageArrivedHandler = new NewMessageHandler(this);
     // getting content at first time

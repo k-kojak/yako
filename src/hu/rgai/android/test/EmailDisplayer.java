@@ -205,7 +205,7 @@ public class EmailDisplayer extends ActionBarActivity {
    * Displays the message.
    */
   private void displayMessage() {
-    Bitmap img = ProfilePhotoProvider.getImageToUser(this, from.getContactId());
+    Bitmap img = ProfilePhotoProvider.getImageToUser(this, from.getContactId()).getBitmap();
     ((ImageView)findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)findViewById(R.id.from_name)).setText(from.getName());
     ((TextView)findViewById(R.id.date)).setText(Utils.getPrettyTime(content.getDate()));
