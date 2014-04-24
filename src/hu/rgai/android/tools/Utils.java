@@ -1,6 +1,7 @@
 
 package hu.rgai.android.tools;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,6 +25,29 @@ public class Utils {
     
     
     return sb.toString();
+  }
+  
+  public static String getPrettyFileSize(int bytes) {
+    String[] units = {"kB", "MB", "GB"};
+    String value;
+    double size = bytes / 1024.0;
+    int i;
+    for (i = 0; i < units.length; i++) {
+      if (size > 1024) {
+        size /= 1024.0;
+      } else {
+        break;
+      }
+    }
+    if (i >= units.length) {
+      i = units.length - 1;
+    }
+    
+    DecimalFormat df = new DecimalFormat("####.#");
+  
+    value = df.format(size) + " " + units[i];
+    
+    return value;
   }
   
   public static String getPrettyTime(Date date) {

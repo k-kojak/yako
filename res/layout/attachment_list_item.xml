@@ -7,40 +7,49 @@
  
     <RelativeLayout
       android:id="@+id/first_block"
-      android:padding="0dip"
-      android:layout_alignParentLeft="true"
-      android:layout_width="49dip"
-      android:layout_height="49dip" >
-      
-      <ImageView
-        android:id="@+id/attachment_image"
-        android:layout_width="46dip"
-        android:layout_height="46dip"
-        android:src="@drawable/gmail_icon" />
-      
-    </RelativeLayout>
- 
-    
-    <RelativeLayout
-      android:id="@+id/second_block"
-      android:layout_toRightOf="@id/first_block"
       android:layout_toLeftOf="@+id/third_block"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content">
+      
+      
+      
+        <LinearLayout
+          android:id="@+id/file_infos"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content">
+
+          <TextView
+            android:id="@+id/file_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:maxLines="1"
+          />
+
+          <TextView
+            android:id="@+id/file_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:layout_alignParentRight="true"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:layout_gravity="right"
+            android:textStyle="bold"
+            android:layout_marginRight="1dip"
+          />
+
+        </LinearLayout>
       
       <ProgressBar
         android:id="@+id/progressbar"
         android:layout_width="match_parent"
         android:layout_height="3dp"
+        android:layout_below="@id/file_infos"
+        android:layout_alignLeft="@id/file_infos"
         style="@android:style/Widget.ProgressBar.Horizontal"
-      />
-      
-      <TextView
-        android:id="@+id/file_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/progressbar"
-        android:layout_alignLeft="@id/progressbar"
       />
       
     </RelativeLayout>

@@ -15,6 +15,7 @@ import hu.rgai.android.beens.ProgressAttachment;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.Utils;
 import hu.rgai.android.workers.AttachmentDownloader;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
@@ -66,7 +67,8 @@ public class AttachmentAdapter extends BaseAdapter {
       holder = new ViewHolder();
       
       holder.progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
-      holder.textView = (TextView) view.findViewById(R.id.file_name);
+      holder.fileName = (TextView) view.findViewById(R.id.file_name);
+      holder.fileSize = (TextView) view.findViewById(R.id.file_size);
       holder.button = (ImageButton) view.findViewById(R.id.download);
       view.setTag(holder);
     } else {
@@ -77,7 +79,8 @@ public class AttachmentAdapter extends BaseAdapter {
     final Handler progBarHandler = new Handler();
     
     holder.progressBar.setProgress(attachment.getProgress());
-    holder.textView.setText(attachment.getFileName());
+    holder.fileName.setText(attachment.getFileName());
+    holder.fileSize.setText(Utils.getPrettyFileSize(attachment.getSize()));
     if (attachment.isInProgress() && !attachment.isDownloaded() && attachment.getAttachmentDownloader() != null) {
       attachment.getAttachmentDownloader().setProgressBar(holder.progressBar);
     }
@@ -100,7 +103,8 @@ public class AttachmentAdapter extends BaseAdapter {
   
   static class ViewHolder {
     ProgressBar progressBar;
-    TextView textView;
+    TextView fileName;
+    TextView fileSize;
     ImageButton button;
   }
   
