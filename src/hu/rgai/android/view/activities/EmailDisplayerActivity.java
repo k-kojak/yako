@@ -33,6 +33,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.workers.EmailMessageMarker;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
 import hu.rgai.android.intent.beens.MessageListElementParc;
@@ -210,4 +211,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       return (mIsAttachmentPresent ? 2 : 1);
     }
   }
+  
+  @Override
+  public void onBackPressed() {
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR, true);
+    super.onBackPressed();
+  }
+  
 }
