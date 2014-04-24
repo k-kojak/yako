@@ -22,7 +22,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.NavUtils;
@@ -40,8 +39,6 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
-import static hu.rgai.android.test.EmailDisplayer.MESSAGE_REPLY_REQ_CODE;
-import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
@@ -70,13 +67,14 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private MessageListElementParc mMessage = null;
   private AccountAndr mAccount = null;
   private boolean mFromNotification = false;
-  private String mSubject = null;
+  private final String mSubject = null;
   private PersonAndr mFrom = null;
   private FullSimpleMessageParc mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
   private NonSwipeableViewPager mPager;
   private PagerAdapter mPagerAdapter;
+  public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
