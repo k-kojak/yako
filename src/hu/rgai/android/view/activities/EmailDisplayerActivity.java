@@ -88,6 +88,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mContent = (FullSimpleMessageParc)mMessage.getFullMessage();
     mFrom = mMessage.getFrom();
     MainService.setMessageSeenAndRead(mMessage);
+    
+    getSupportActionBar().setTitle(mContent.getSubject());
 
     EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
