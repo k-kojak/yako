@@ -21,6 +21,7 @@ import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.Utils;
+import hu.rgai.android.view.activities.EmailDisplayerActivity;
 import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 
 /**
@@ -47,11 +48,22 @@ public class EmailDisplayerFragment extends Fragment {
   private String mailCharCode = "UTF-8";
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-  public EmailDisplayerFragment(AccountAndr account, MessageListElementParc mlep) {
-    this.mAccount = account;
-    this.mMessage = mlep;
-  }
+//  public EmailDisplayerFragment() {
+//  }
 
+  public static final EmailDisplayerFragment newInstance() {
+    EmailDisplayerFragment edf = new EmailDisplayerFragment();
+    
+    return edf;
+  }
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
+    mAccount = eda.getAccount();
+    mMessage = eda.getMessage();
+  }
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

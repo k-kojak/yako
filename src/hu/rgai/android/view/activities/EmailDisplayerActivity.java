@@ -164,6 +164,14 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     return super.onOptionsItemSelected(item);
   }
 
+  public MessageListElementParc getMessage() {
+    return mMessage;
+  }
+
+  public AccountAndr getAccount() {
+    return mAccount;
+  }
+
   /**
    * A simple pager adapter that represents 5 {@link ScreenSlidePageFragment} objects, in
    * sequence.
@@ -194,7 +202,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     @Override
     public Fragment getItem(int position) {
       if (position == 0) {
-        EmailDisplayerFragment edf = new EmailDisplayerFragment(mAccount, mMessage);
+        EmailDisplayerFragment edf = EmailDisplayerFragment.newInstance();
         return edf;
       } else {
         EmailAttachmentFragment eaf = new EmailAttachmentFragment(mAccount, mMessage);
