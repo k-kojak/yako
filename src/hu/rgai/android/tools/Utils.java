@@ -27,7 +27,7 @@ public class Utils {
     return sb.toString();
   }
   
-  public static String getPrettyFileSize(int bytes) {
+  public static String getPrettyFileSize(long bytes) {
     String[] units = {"kB", "MB", "GB"};
     String value;
     double size = bytes / 1024.0;

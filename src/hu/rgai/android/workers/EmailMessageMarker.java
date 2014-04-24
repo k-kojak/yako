@@ -4,7 +4,7 @@ package hu.rgai.android.workers;
 import android.os.AsyncTask;
 import android.os.Handler;
 import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.test.EmailDisplayer;
+import hu.rgai.android.view.activities.EmailDisplayerActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
@@ -39,11 +39,11 @@ public class EmailMessageMarker extends AsyncTask<String, Integer, Void> {
           semp.markMessageAsRead(params[0]);
         }
       } catch (NoSuchProviderException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(EmailDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
       } catch (MessagingException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(EmailDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
       } catch (IOException ex) {
-        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(EmailDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
       }
 
       return null;

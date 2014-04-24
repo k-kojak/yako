@@ -18,12 +18,12 @@ public class ProgressAttachment extends Attachment {
     this(attachment.getFileName(), attachment.getSize());
   }
   
-  public ProgressAttachment(String fileName, int size) {
+  public ProgressAttachment(String fileName, long size) {
     super(fileName, size);
     setProgress(0);
   }
   
-  public ProgressAttachment(String fileName, int size, int progress) {
+  public ProgressAttachment(String fileName, long size, int progress) {
     super(fileName, size);
     setProgress(progress);
   }
@@ -49,14 +49,6 @@ public class ProgressAttachment extends Attachment {
   
   public boolean isDownloaded() {
     return !inProgress && mProgress == 100;
-  }
-
-  public int getmProgress() {
-    return mProgress;
-  }
-
-  public void setmProgress(int mProgress) {
-    this.mProgress = mProgress;
   }
 
   public AttachmentDownloader getAttachmentDownloader() {

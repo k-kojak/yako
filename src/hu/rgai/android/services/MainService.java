@@ -613,11 +613,11 @@ public class MainService extends Service {
           accountName = ((GmailAccount) acc).getEmail();
           mp = new SimpleEmailMessageProvider((GmailAccount) acc);
         } else if (acc instanceof EmailAccountAndr) {
-          if (iterationCount % 2 == 1) {
+//          if (iterationCount % 2 == 1) {
             // Log.d("rgai", "GETTING MAIL WITH ACCOUNT: " + acc);
             accountName = ((EmailAccount) acc).getEmail();
             mp = new SimpleEmailMessageProvider((EmailAccount) acc);
-          }
+//          }
         } else if (acc instanceof FacebookAccountAndr) {
           accountName = ((FacebookAccountAndr) acc).getDisplayName();
           mp = new FacebookMessageProvider((FacebookAccount) acc);

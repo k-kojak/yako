@@ -82,17 +82,18 @@ public class AttachmentAdapter extends BaseAdapter {
     holder.fileName.setText(attachment.getFileName());
     holder.fileSize.setText(Utils.getPrettyFileSize(attachment.getSize()));
     if (attachment.isInProgress() && !attachment.isDownloaded() && attachment.getAttachmentDownloader() != null) {
-      attachment.getAttachmentDownloader().setProgressBar(holder.progressBar);
+      attachment.getAttachmentDownloader().setProgressBarView(holder.progressBar);
+      attachment.getAttachmentDownloader().setFileSizeView(holder.fileSize);
     }
     holder.button.setOnClickListener(new View.OnClickListener() {
       public void onClick(View arg0) {
         if (!attachment.isInProgress() && !attachment.isDownloaded()) {
-          Log.d("rgai", "START");
-          attachment.setInProgress(true);
           AttachmentDownloader ad = new AttachmentDownloader(attachment, progBarHandler,
-                  mAccount, mMessageId, holder.progressBar, mContext);
+                  mAccount, mMessageId, holder.progressBar, holder.fileSize, mContext);
           attachment.setAttachmentDownloader(ad);
           new Thread(ad).start();
+        } else if (attachment.isDownloaded()) {
+          Toast.makeText(mContext, "The file is in the Download folder.", Toast.LENGTH_LONG).show();
         }
       }
     });

@@ -168,16 +168,20 @@ public class StoreHandler {
     return data;
   }
   
-  public static void saveByteArrayToDownloadFolder(byte[] data, String fileName) {
-    saveByteArray(null, data, null, fileName);
+  public static boolean saveByteArrayToDownloadFolder(Context context, byte[] data, String fileName) {
+    return saveByteArray(context, data, null, fileName);
   }
   
-  private static void saveByteArray(Context context, byte[] data, String folder, String filename) {
+  private static boolean saveByteArray(Context context, byte[] data, String folder, String filename) {
 
     try {
       File mainFilePath;
       if (folder == null) {
-        mainFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); 
+        if (isExternalStorageWritable()) {
+          mainFilePath = getEmailAttachmentDownloadLocation();
+        } else {
+          return false;
+        }
       } else {
         ContextWrapper cw = new ContextWrapper(context);
         mainFilePath = cw.getDir("media", Context.MODE_PRIVATE);
@@ -196,7 +200,21 @@ public class StoreHandler {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    return true;
   }
+  
+  public static File getEmailAttachmentDownloadLocation() {
+    return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); 
+  }
+  
+  public static boolean isExternalStorageWritable() {
+    String state = Environment.getExternalStorageState();
+    if (Environment.MEDIA_MOUNTED.equals(state)) {
+      return true;
+    }
+    return false;
+  }
+
   
   public static void storeFacebookAccessToken(Context context, String token, Date expirationDate) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
