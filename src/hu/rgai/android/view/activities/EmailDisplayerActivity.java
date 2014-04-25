@@ -205,7 +205,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
         EmailDisplayerFragment edf = EmailDisplayerFragment.newInstance();
         return edf;
       } else {
-        EmailAttachmentFragment eaf = new EmailAttachmentFragment(mAccount, mMessage);
+        EmailAttachmentFragment eaf = EmailAttachmentFragment.newInstance();
         return eaf;
 //            return ScreenSlidePageFragment.create(position);
       }

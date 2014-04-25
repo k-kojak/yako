@@ -14,6 +14,7 @@ import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.adapter.AttachmentAdapter;
+import hu.rgai.android.view.activities.EmailDisplayerActivity;
 import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 import java.io.File;
 
@@ -24,16 +25,26 @@ import java.io.File;
 public class EmailAttachmentFragment extends Fragment {
 
   private View mView;
-  private final AccountAndr mAccount;
-  private final MessageListElementParc mMessage;
+  private AccountAndr mAccount;
+  private MessageListElementParc mMessage;
   private ListView mListView;
   private AttachmentAdapter mListAdapter;
   
-  public EmailAttachmentFragment(AccountAndr account, MessageListElementParc message) {
-    this.mAccount = account;
-    this.mMessage = message;
+  public static EmailAttachmentFragment newInstance() {
+    EmailAttachmentFragment eaf = new EmailAttachmentFragment();
+    return eaf;
   }
 
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState); //To change body of generated methods, choose Tools | Templates.
+    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
+    mAccount = eda.getAccount();
+    mMessage = eda.getMessage();
+  }
+
+  
+  
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     mView = inflater.inflate(R.layout.attachment_displayer, container, false);
