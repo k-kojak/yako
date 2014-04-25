@@ -47,7 +47,7 @@ public class FacebookIdSaver {
   }
   
   public void integrate(Context context, FacebookIntegrateItem fbii) {
-    ContactUpdateItem[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getName());
+    ContactUpdateItem[] rawContactIdsToUpdate = this.getUserIdToUpdate(context, fbii.getFbId());
 //    Log.d("rgai", "UPDATE COUNT -> " + rawContactIdsToUpdate.length);
     
 //    Log.d("rgai", fbii.toString());
@@ -80,7 +80,7 @@ public class FacebookIdSaver {
     // If there was no update, then insert new facebook id to existing user
     if (rawContactIdsToUpdate.length == 0) {
 //      Log.d("rgai", "THERE WAS NO UPDATE");
-      ContactUpdateItem[] rawContactIdsToInsert = this.getUserIdToInsert(context, fbii.getName());
+      ContactUpdateItem[] rawContactIdsToInsert = this.getUserIdToInsert(context, fbii.getFbId());
 //      Log.d("rgai", "INSERT COUNT -> " + rawContactIdsToInsert.length);
     
       for (ContactUpdateItem contact : rawContactIdsToInsert) {
@@ -189,18 +189,19 @@ public class FacebookIdSaver {
     
   }
   
-  private ContactUpdateItem[] getUserIdToUpdate(Context context, String name) {
-    return getUserIds(context, name, true);
+  private ContactUpdateItem[] getUserIdToUpdate(Context context, String id) {
+    return getUserIds(context, id, true);
   }
   
-  private ContactUpdateItem[] getUserIdToInsert(Context context, String name) {
-    return getUserIds(context, name, false);
+  private ContactUpdateItem[] getUserIdToInsert(Context context, String id) {
+    return getUserIds(context, id, false);
   }
   
-  private ContactUpdateItem[] getUserIds(Context context, String name, boolean update) {
-    name = replaceAccents(name);
+  private ContactUpdateItem[] getUserIds(Context context, String id, boolean update) {
+
+	  //name = replaceAccents(name);
     ContentResolver cr = context.getContentResolver();
-    name = name.toUpperCase();
+    //name = name.toUpperCase();
     String[] projection = new String[] {
         ContactsContract.Data.RAW_CONTACT_ID,
         ContactsContract.Data.DISPLAY_NAME_PRIMARY,
@@ -210,23 +211,23 @@ public class FacebookIdSaver {
     String selection = "";
     String[] selectionArgs = null;
     if (update) {
-      selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "
+      selection = ContactsContract.Data.DATA10 + " LIKE ? "
             + " AND " + ContactsContract.Data.MIMETYPE + " = ? "
             + " AND " + ContactsContract.Data.DATA2 + " = ? "
             + " AND " + ContactsContract.Data.DATA5 + " = ?"
             + " AND " + ContactsContract.Data.DATA6 + " = ?";
       selectionArgs = new String[]{
-              "%" + name + "%",
+              id,
               ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE,
               ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
               ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "",
               Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME + ""
       };
     } else {
-      selection = "UPPER(" + ContactsContract.Data.DISPLAY_NAME_PRIMARY + ") LIKE ? "
+      selection = ContactsContract.Data.DATA10 + " LIKE ? "
             + " AND " + ContactsContract.Data.MIMETYPE + " = ?";
       selectionArgs = new String[]{
-              "%" + name + "%",
+              id,
               ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
       };
     }
