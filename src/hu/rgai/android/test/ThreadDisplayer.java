@@ -59,7 +59,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import static hu.rgai.android.test.MessageReply.MESSAGE_SENT_OK;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
