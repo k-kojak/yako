@@ -39,6 +39,7 @@
             android:maxLines="1"
             android:layout_gravity="right"
             android:textStyle="bold"
+            android:layout_marginLeft="6dp"
             android:layout_marginRight="1dip"
           />
 
