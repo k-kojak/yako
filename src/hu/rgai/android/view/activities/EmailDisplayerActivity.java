@@ -32,6 +32,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.workers.EmailMessageMarker;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
@@ -39,6 +41,7 @@ import hu.rgai.android.intent.beens.MessageListElementParc;
 import hu.rgai.android.intent.beens.PersonAndr;
 import hu.rgai.android.intent.beens.account.AccountAndr;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
@@ -79,6 +82,11 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     setContentView(R.layout.activity_email_displayer);
 
     mAccount = getIntent().getExtras().getParcelable("account");
@@ -108,6 +116,14 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
   }
 
   @Override

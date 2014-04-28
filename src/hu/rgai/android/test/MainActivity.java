@@ -57,7 +57,8 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 /**
  * This is the main view of the application.
@@ -131,7 +132,11 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
+    
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     instance = this;
@@ -682,6 +687,10 @@ public class MainActivity extends ActionBarActivity {
     super.onPause();
     is_activity_visible = false;
 
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     // refreshing last notification date when closing activity
     updateLastNotification(instance, null);
   }

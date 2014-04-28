@@ -57,6 +57,8 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import static hu.rgai.android.test.MessageReply.MESSAGE_SENT_OK;
 
 public class ThreadDisplayer extends ActionBarActivity {
@@ -104,6 +106,10 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
+    
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -230,7 +236,9 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   @Override
   protected void onPause() {
-    Log.d("rgai", "TD-pause");
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
