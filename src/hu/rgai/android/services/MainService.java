@@ -16,6 +16,7 @@ import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
+import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -40,6 +41,8 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
+
+import net.htmlparser.jericho.Source;
 
 import android.app.KeyguardManager;
 import android.app.NotificationManager;
@@ -73,6 +76,7 @@ public class MainService extends Service {
 
   public static boolean RUNNING = false;
   private static int iterationCount = 0;
+  //public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
@@ -95,6 +99,8 @@ public class MainService extends Service {
 
   private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
+  
+  FullSimpleMessageParc mContent = null;
 
   public static volatile Set<MessageListElementParc> messages = null;
 
@@ -473,6 +479,9 @@ public class MainService extends Service {
             .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
             .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
             .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
+ 
+
+        notificationButtonHandling(lastUnreadMsg, mBuilder);
         
         if (StoreHandler.SystemSettings.isNotificationSoundTurnedOn(context)) {
           Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
@@ -505,6 +514,25 @@ public class MainService extends Service {
                 + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
       }
     }
+
+	private void notificationButtonHandling(
+			MessageListElementParc lastUnreadMsg,
+			NotificationCompat.Builder mBuilder) {
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)){
+
+        	Intent intent = new Intent(context, MessageReply.class);
+        	mContent = (FullSimpleMessageParc)lastUnreadMsg.getFullMessage();
+        	Source source = new Source(mContent.getContent().getContent());
+        	intent.putExtra("content", source.getRenderer().toString());
+        	intent.putExtra("subject", "");
+        	intent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
+        	intent.putExtra("from", lastUnreadMsg.getFrom());
+            //startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+            PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        	mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
+        	
+        }
+	}
 
     private void loggingNewMessageArrived(MessageListElementParc mle, boolean messageIsVisible) {
       if (mle.getDate().getTime() > EventLogger.INSTANCE.getLogfileCreatedTime()) {
