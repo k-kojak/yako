@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 //import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
@@ -174,11 +175,21 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
   }
 
+  
+  private void removeNotificationIfExists() {
+    if (mlep.equals(MainService.mLastNotifiedMessage)) {
+      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+      MainService.mLastNotifiedMessage = null;
+    }
+  }
+  
   @Override
   protected void onResume() {
     super.onResume();
     
     mlep = MainService.getListElementById(mThreadId, account);
+    removeNotificationIfExists();
     MainService.setMessageSeenAndRead(mlep);
     if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedGroupChat = true;

@@ -97,6 +97,7 @@ public class MainService extends Service {
   private final IBinder mBinder = new MyBinder();
 
   public static volatile Set<MessageListElementParc> messages = null;
+  public static volatile MessageListElementParc mLastNotifiedMessage = null;
 
   public MainService() {}
 
@@ -441,6 +442,7 @@ public class MainService extends Service {
     }
     
     private void builNotification(int newMessageCount, MessageListElementParc lastUnreadMsg) {
+      mLastNotifiedMessage = lastUnreadMsg;
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       if (!MainActivity.isMainActivityVisible() && lastUnreadMsg != null) {
         String fromNameText = "?";
