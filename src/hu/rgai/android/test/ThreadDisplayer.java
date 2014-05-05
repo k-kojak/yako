@@ -83,6 +83,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private TextWatcher mTextWatcher = null;
   private boolean mTextWatcherAdded = false;
 
+  private static boolean firstResume = true;
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
@@ -201,7 +202,10 @@ public class ThreadDisplayer extends ActionBarActivity {
       text.removeTextChangedListener(mTextWatcher);
     }
     if (unsopportedGroupChat) {
-      Toast.makeText(this, "Sorry, but group message sending is not available (because of Facebook).", Toast.LENGTH_LONG).show();
+      if (firstResume) {
+        Toast.makeText(this, "Sorry, but group message sending is not available (because of Facebook).", Toast.LENGTH_LONG).show();
+        firstResume = false;
+      }
       text.setVisibility(View.GONE);
       findViewById(R.id.sendButton).setVisibility(View.GONE);
       mTextWatcherAdded = false;

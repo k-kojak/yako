@@ -467,7 +467,6 @@ public class MainService extends Service {
           largeIcon = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
         }
         
-
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
             .setLargeIcon(largeIcon)
             .setSmallIcon(R.drawable.not_ic_action_email)
