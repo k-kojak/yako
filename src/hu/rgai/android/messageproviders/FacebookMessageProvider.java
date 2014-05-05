@@ -240,9 +240,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
                     Intent service = new Intent(context, MainService.class);
                     service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-                    if (MainService.actViewingMessage != null) {
-                      service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
-                    }
                     context.startService(service);
                   }
 

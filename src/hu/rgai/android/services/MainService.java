@@ -409,7 +409,7 @@ public class MainService extends Service {
             Set<AccountAndr> accountsToUpdate = new HashSet<AccountAndr>();
             
             for (MessageListElementParc mle : messages) {
-              if (mle.equals(actViewingMessageAtThread)) {
+              if (mle.equals(MainService.actViewingMessage) || mle.equals(actViewingMessageAtThread)) {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
               }
@@ -565,14 +565,14 @@ public class MainService extends Service {
                * when opening them, so we have to handle it at client side. OR
                * if we check the message at FB, then turn it seen at the app
                */
-              if (newMessage.getDate().after( oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+              if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
                 itemToRemove = oldMessage;
                 break;
               }
             }
           }
           if (itemToRemove != null) {
-            messages.remove( itemToRemove);
+            messages.remove(itemToRemove);
             messages.add(newMessage);
           }
         }

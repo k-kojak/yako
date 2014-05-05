@@ -251,9 +251,6 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
        if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainService.class);
         service.putExtra("type", MessageProvider.Type.SMS.toString());
-        if (MainService.actViewingMessage != null) {
-          service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
-        }
         context.startService(service);
       }
       
