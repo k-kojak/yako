@@ -1,27 +1,5 @@
 package hu.rgai.android.test;
 
-import hu.rgai.android.workers.MessageSender;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.EmailRecipientAndr;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.tools.adapter.ContactListAdapter;
-import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.UnsupportedCharsetException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -32,18 +10,45 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.provider.ContactsContract;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.intent.beens.EmailRecipientAndr;
+import hu.rgai.android.intent.beens.FacebookRecipientAndr;
+import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.PersonAndr;
+import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
+import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.tools.adapter.ContactListAdapter;
+import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
+import hu.rgai.android.workers.MessageSender;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -62,8 +67,10 @@ public class MessageReply extends ActionBarActivity {
   private TextView text;
   private ChipsMultiAutoCompleteTextView recipients;
   private AccountAndr account;
-  private PersonAndr from;
-  private String messageSubject = null;
+  private WebView mQuotedMessage = null;
+  private CheckBox mQuoteCheckbox = null;
+  private MessageListElementParc mMessage = null;
+  private FullSimpleMessageParc mFullMessage = null;
 
   @Override
   public void onBackPressed() {
@@ -84,22 +91,21 @@ public class MessageReply extends ActionBarActivity {
     actionBar.setDisplayHomeAsUpEnabled(true);
     
     setContentView( R.layout.message_reply);
-    String content = "";
+//    String content = "";
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey("content")) {
-        content = getIntent().getExtras().getString("content");
-      }
-      if (getIntent().getExtras().containsKey("subject")) {
-        messageSubject = getIntent().getExtras().getString("subject");
+      if (getIntent().getExtras().containsKey("message")) {
+        mMessage = getIntent().getExtras().getParcelable("message");
+        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessageParc) {
+          mFullMessage = (FullSimpleMessageParc)mMessage.getFullMessage();
+        }
       }
       if (getIntent().getExtras().containsKey("account")) {
         account = getIntent().getExtras().getParcelable("account");
       }
-      if (getIntent().getExtras().containsKey("from")) {
-        from = getIntent().getExtras().getParcelable("from");
-      }
     }
     text = (TextView) findViewById( R.id.message_content);
+    mQuotedMessage = (WebView)findViewById(R.id.quoted_message);
+    mQuoteCheckbox = (CheckBox)findViewById(R.id.quote_origi);
     text.addTextChangedListener( new TextWatcher() {
 
       @Override
@@ -108,12 +114,12 @@ public class MessageReply extends ActionBarActivity {
       }
 
       @Override
-      public void beforeTextChanged( CharSequence s, int start, int count, int after) {
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         // TODO Auto-generated method stub
       }
 
       @Override
-      public void afterTextChanged( Editable s) {
+      public void afterTextChanged(Editable s) {
         // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
@@ -121,27 +127,32 @@ public class MessageReply extends ActionBarActivity {
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     });
-    recipients = (ChipsMultiAutoCompleteTextView) findViewById( R.id.recipients);
-    if (from != null && account != null
-        && (account.getAccountType().equals( MessageProvider.Type.EMAIL) || account.getAccountType().equals( MessageProvider.Type.GMAIL))) {
-      RecipientItem ri = new EmailRecipientAndr( from.getName(), from.getId(), from.getName(),
-          null, (int) from.getContactId());
-      recipients.addRecipient(ri);
+    recipients = (ChipsMultiAutoCompleteTextView) findViewById(R.id.recipients);
+    if (mMessage != null) {
+      if (mMessage.getFrom() != null && account != null
+              && (account.getAccountType().equals(MessageProvider.Type.EMAIL) || account.getAccountType().equals( MessageProvider.Type.GMAIL))) {
+        
+        RecipientItem ri = new EmailRecipientAndr(mMessage.getFrom().getName(), mMessage.getFrom().getId(), mMessage.getFrom().getName(),
+                null, (int) mMessage.getFrom().getContactId());
+        recipients.addRecipient(ri);
+      }
+    } else {
+      mQuotedMessage.setVisibility(View.GONE);
+      mQuoteCheckbox.setVisibility(View.GONE);
     }
 
-    Cursor c = getContentResolver().query( ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
+    Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
     ContactListAdapter adapter = new ContactListAdapter( this, c);
     // adapter.
     // CustomAdapter adapter = new CustomAdapter(this, c);
     recipients.setAdapter( adapter);
     recipients.setTokenizer( new MultiAutoCompleteTextView.CommaTokenizer());
-    LinearLayout fake = (LinearLayout) findViewById( R.id.fake_focus);
+    LinearLayout fake = (LinearLayout) findViewById(R.id.fake_focus);
     fake.requestFocus();
-    if (content.length() > 0) {
-      text.setText( "\n\n" + content);
-    }
-    if (from != null) {
-      Log.d( "rgai", "REPLYING TO -> " + from);
+    if (mFullMessage != null) {
+      mQuotedMessage.loadDataWithBaseURL(null, mFullMessage.getContent().getContent().toString(),
+              mFullMessage.getContent().getContentType().getMimeName(), "UTF-8", null);
+//      text.setText( "\n\n" + content);
     }
     handler = new MessageReplyTaskHandler( this);
     
@@ -149,6 +160,17 @@ public class MessageReply extends ActionBarActivity {
       processImplicitIntent(getIntent());
     }
 
+  }
+  
+  public void onQuoteClicked(View view) {
+    Log.d("rgai", "CLICKED");
+    int visibility;
+    if (mQuoteCheckbox.isChecked()) {
+      visibility = View.VISIBLE;
+    } else {
+      visibility = View.GONE;
+    }
+    mQuotedMessage.setVisibility(visibility);
   }
   
   private void processImplicitIntent(Intent intent) {
@@ -203,10 +225,22 @@ public class MessageReply extends ActionBarActivity {
   }
 
   @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    super.onCreateOptionsMenu(menu);
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.email_message_send_options_menu, menu);
+
+    return true;
+  }
+  
+  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case android.R.id.home:
         finish();
+        return true;
+      case R.id.send_message:
+        prepareMessageSending();
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -217,7 +251,7 @@ public class MessageReply extends ActionBarActivity {
     this.messageResult = messageResult;
   }
 
-  public void sendMessage( AccountAndr from) {
+  public void sendMessage(AccountAndr from) {
     if (from == null) {
       return;
     }
@@ -226,13 +260,24 @@ public class MessageReply extends ActionBarActivity {
     List<AccountAndr> accs = new LinkedList<AccountAndr>();
     accs.add( from);
     String content = text.getText().toString().trim();
-    if (messageSubject == null) {
-      Source source = new Source(content);
-      messageSubject = source.getRenderer().toString();
-      messageSubject = messageSubject.substring(0, Math.min(messageSubject.length(), 10));
+    String subject = null;
+    if (mMessage != null && mMessage.getFullMessage() != null) {
+      if (mMessage.getFullMessage() instanceof FullSimpleMessageParc) {
+        FullSimpleMessageParc fsm = (FullSimpleMessageParc)mMessage.getFullMessage();
+        if (fsm.getSubject() != null) {
+          subject = fsm.getSubject();
+        }
+      }
+    }
+    if (subject == null) {
+      subject = "";
     }
     for (RecipientItem ri : to) {
-      MessageSender rs = new MessageSender( ri, accs, handler, messageSubject, content, this);
+      if (mQuotedMessage.getVisibility() == View.VISIBLE) {
+        Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
+        content +=  source.getRenderer().toString();
+      }
+      MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
         rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
       } else {
@@ -242,8 +287,18 @@ public class MessageReply extends ActionBarActivity {
 
   }
 
-  public void prepareMessageSending( View v) {
+  private void prepareMessageSending() {
     List<RecipientItem> to = recipients.getRecipients();
+    if (to.isEmpty()) {
+      Toast.makeText(this, R.string.no_recipient_selected, Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
+    if (text.getText().toString().trim().length() == 0) {
+      Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
     List<AccountAndr> accs = StoreHandler.getAccounts( this);
     
     boolean isPhone = MainActivity.isPhone(this);
@@ -269,9 +324,9 @@ public class MessageReply extends ActionBarActivity {
             "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " account required for that.",
             Toast.LENGTH_LONG).show();
       } else if (selectedAccs.size() == 1) {
-        sendMessage( selectedAccs.get( 0));
+        sendMessage(selectedAccs.get( 0));
       } else {
-        chooseAccount( selectedAccs);
+        chooseAccount(selectedAccs);
       }
     }
 
@@ -290,7 +345,7 @@ public class MessageReply extends ActionBarActivity {
     builder.setItems( items, new DialogInterface.OnClickListener() {
       @Override
       public void onClick( DialogInterface dialog, int which) {
-        sendMessage( accs.get( which));
+        sendMessage(accs.get( which));
       }
     });
 

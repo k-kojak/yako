@@ -88,6 +88,9 @@
   <string name="label_password">Password</string>
   <string name="label_initial_email_num">Initial amount of emails to load</string>
   <string name="label_initial_msg_num">Initial amount of messages to load</string>
+  <string name="quote_original_message">Quote original message</string>
+  <string name="no_recipient_selected">No recipient selected</string>
+  <string name="empty_message">Empty message</string>
   <string-array name="initial_emails_num">
     <item>5</item>
     <item>10</item>

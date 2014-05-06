@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,13 +61,18 @@ public class EmailDisplayerFragment extends Fragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
-    mAccount = eda.getAccount();
-    mMessage = eda.getMessage();
+    Log.d("rgai", "email displayer fragment: ONCREATE");
+   
   }
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    Log.d("rgai", "email displayer fragment: ONCREATE VIEW");
+    
+    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
+    mAccount = eda.getAccount();
+    mMessage = eda.getMessage();
+    
     mView = inflater.inflate(R.layout.email_displayer, container, false);
    
     mWebView = (WebView) mView.findViewById(R.id.email_content);
