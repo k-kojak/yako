@@ -5,13 +5,11 @@ and open the template in the editor.
 -->
 
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:padding="5dip">
-  <ScrollView
+
+  <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="5dip">
     <LinearLayout
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
@@ -51,7 +49,7 @@ and open the template in the editor.
         android:hint="Content"
         android:background="#ffffff"
         android:minLines="5"
-        android:inputType="textMultiLine" />
+        android:inputType="textCapSentences|textMultiLine" />
 
       <CheckBox android:id="@+id/quote_origi"
         android:layout_width="fill_parent"
@@ -68,4 +66,3 @@ and open the template in the editor.
       
     </LinearLayout>
   </ScrollView>
-</LinearLayout>
