@@ -37,6 +37,14 @@ and open the template in the editor.
       />
       
       <EditText
+        android:id="@+id/subject"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Subject"
+        android:singleLine="true"
+        android:inputType="text" />
+      
+      <EditText
         android:id="@+id/message_content"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
