@@ -121,12 +121,9 @@
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
         </activity>
         
-        
-        
         <activity android:name="MessageReply"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:label="@string/app_name"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.MainActivity" >
           <intent-filter>
             <action android:name="android.intent.action.SENDTO" />

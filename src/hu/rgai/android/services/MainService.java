@@ -1,46 +1,5 @@
 package hu.rgai.android.services;
 
-import hu.rgai.android.workers.XmppConnector;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.eventlogger.LogUploadScheduler;
-import hu.rgai.android.eventlogger.rsa.RSAENCODING;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.EmailAccountAndr;
-import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
-import hu.rgai.android.intent.beens.account.GmailAccountAndr;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
-import hu.rgai.android.messageproviders.SmsMessageProvider;
-import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.MainActivity;
-import hu.rgai.android.test.R;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.security.cert.CertPathValidatorException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.mail.AuthenticationFailedException;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
-import javax.net.ssl.SSLHandshakeException;
-
 import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -64,10 +23,50 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.LogUploadScheduler;
+import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.intent.beens.HtmlContentParc;
+import hu.rgai.android.intent.beens.MessageListElementParc;
+import hu.rgai.android.intent.beens.PersonAndr;
+import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.EmailAccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.MainActivity;
+import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import hu.rgai.android.workers.XmppConnector;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
+import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
+import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.security.cert.CertPathValidatorException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.mail.AuthenticationFailedException;
+import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
+import javax.net.ssl.SSLHandshakeException;
 
 public class MainService extends Service {
 
@@ -694,6 +693,8 @@ public class MainService extends Service {
         PersonAndr paFound = PersonAndr.searchPersonAndr(context, mle.getFrom());
         if (mlep.getFullMessage() != null && mlep.getFullMessage() instanceof FullSimpleMessageParc) {
           ((FullSimpleMessageParc)mlep.getFullMessage()).setFrom(paFound);
+          HtmlContent htmlC = ((FullSimpleMessageParc)mlep.getFullMessage()).getContent();
+          ((FullSimpleMessageParc)mlep.getFullMessage()).setContent(new HtmlContentParc(htmlC));
         }
         mlep.setFrom(paFound);
         // Log.d("rgai", "Found from -> " + paFound.toString());

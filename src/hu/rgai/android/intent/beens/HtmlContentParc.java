@@ -26,6 +26,10 @@ public class HtmlContentParc extends HtmlContent implements Parcelable {
     this.contentType = HtmlContent.ContentType.valueOf(in.readString());
   }
   
+  public HtmlContentParc(HtmlContent htmlContent) {
+    this(htmlContent.getContent().toString(), htmlContent.getContentType());
+  }
+  
   public HtmlContentParc(String content, ContentType contentType) {
     super(content, contentType);
   }

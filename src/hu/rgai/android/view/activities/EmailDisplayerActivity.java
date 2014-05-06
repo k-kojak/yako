@@ -82,6 +82,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
     
     Tracker t = ((AnalyticsApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -143,11 +144,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReply.class);
-        Source source = new Source(mContent.getContent().getContent());
-        intent.putExtra("content", source.getRenderer().toString());
-        intent.putExtra("subject", mSubject);
+//        Source source = new Source(mContent.getContent().getContent());
+        intent.putExtra("message", (Parcelable)mMessage);
         intent.putExtra("account", (Parcelable) mAccount);
-        intent.putExtra("from", mFrom);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:
@@ -223,9 +222,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       } else {
         EmailAttachmentFragment eaf = EmailAttachmentFragment.newInstance();
         return eaf;
-//            return ScreenSlidePageFragment.create(position);
       }
-
     }
 
     @Override
