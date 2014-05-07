@@ -89,14 +89,15 @@ public class MessageListElementParc extends MessageListElement implements Parcel
   
   public MessageListElementParc(MessageListElement mle, AccountAndr account) {
     this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
-            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.getFullMessage(), account);
+            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.isUpdateFlags(),
+            mle.getFullMessage(), account);
     updatePrettyDateString();
   }
   
   public MessageListElementParc(String id, boolean seen, String title, String subTitle,
           int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
-          FullMessage fullMessage, AccountAndr account) {
-    super(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType);
+          boolean updateFlags, FullMessage fullMessage, AccountAndr account) {
+    super(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType, updateFlags);
     convertFullMessageToParc(fullMessage, messageType);
     
     this.account = account;
@@ -237,6 +238,8 @@ public class MessageListElementParc extends MessageListElement implements Parcel
 
   public int compareTo(MessageListElementParc o) {
     if (this.equals(o)) {
+      // TODO: THIS IS A SOURCE OF UGLY BUGS!
+      // FIXME
       return 0;
     } else {
       return -1 * this.date.compareTo(o.date);

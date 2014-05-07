@@ -398,7 +398,7 @@ public class MainService extends Service {
               boolean sendBC = false;
               for (int i = 0; i < newMessages.length; i++) {
                 MessageListElementParc m = newMessages[i];
-                if (m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
+                if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
                   sendBC = true;
                   break;
                 }
@@ -539,6 +539,7 @@ public class MainService extends Service {
       }
       for (MessageListElementParc newMessage : newMessages) {
         boolean contains = false;
+        MessageListElementParc storedFoundMessage = null;
         // .contains not work, because the date of new item != date of old item
         // and
         // tree search does not return a valid value
@@ -546,6 +547,7 @@ public class MainService extends Service {
         for (MessageListElementParc storedMessage : messages) {
           if (storedMessage.equals(newMessage)) {
             contains = true;
+            storedFoundMessage = storedMessage;
           }
         }
         if (!contains) {
@@ -558,28 +560,39 @@ public class MainService extends Service {
             loggingNewMessageArrived(newMessage, false);
           }
         } else {
-          MessageListElementParc itemToRemove = null;
-          for (MessageListElementParc oldMessage : messages) {
-            if (newMessage.equals( oldMessage)) {
-              // first updating person info anyway..
-              oldMessage.setFrom( newMessage.getFrom());
+//          Log.d("rgai", "MESSAGE ALREADY IN LIST -> " + newMessage);
+          // only update old messages' flags with the new one, and nothing else
+          if (newMessage.isUpdateFlags()) {
+            Log.d("rgai", "JUST UPDATE SEEN INFO!");
+            if (storedFoundMessage != null) {
+              storedFoundMessage.setSeen(newMessage.isSeen());
+              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
+            }
+          } else {
+//            Log.d("rgai", "HANDLE AS \"NEW\" MESSAGE -> " + newMessage);
+            MessageListElementParc itemToRemove = null;
+            for (MessageListElementParc oldMessage : messages) {
+              if (newMessage.equals( oldMessage)) {
+                // first updating person info anyway..
+                oldMessage.setFrom( newMessage.getFrom());
 
-              /*
-               * "Marking" FB message seen here. Do not change info of the item,
-               * if the date is the same, so the queried data will not override
-               * the displayed object. Facebook does not mark messages as seen
-               * when opening them, so we have to handle it at client side. OR
-               * if we check the message at FB, then turn it seen at the app
-               */
-              if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
-                itemToRemove = oldMessage;
-                break;
+                /*
+                 * "Marking" FB message seen here. Do not change info of the item,
+                 * if the date is the same, so the queried data will not override
+                 * the displayed object. Facebook does not mark messages as seen
+                 * when opening them, so we have to handle it at client side. OR
+                 * if we check the message at FB, then turn it seen at the app
+                 */
+                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+                  itemToRemove = oldMessage;
+                  break;
+                }
               }
             }
-          }
-          if (itemToRemove != null) {
-            messages.remove(itemToRemove);
-            messages.add(newMessage);
+            if (itemToRemove != null) {
+              messages.remove(itemToRemove);
+              messages.add(newMessage);
+            }
           }
         }
       }
@@ -642,12 +655,18 @@ public class MainService extends Service {
               }
             }
           }
-          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount, acc.getMessageLimit(), Settings.MAX_SNIPPET_LENGTH));
+          Set<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
+//          Log.d("rgai", "loadedMessages: " + loadedMessages);
+          List<MessageListElementParc> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount,
+                  acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH));
+          
           for (MessageListElementParc mlep : parcelableMessages) {
             if (!messages.contains(mlep)) {
               messages.add(mlep);
             } else {
-              messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
+              if (!mlep.isUpdateFlags()) {
+                messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
+              }
             }
           }
         }
@@ -689,26 +708,43 @@ public class MainService extends Service {
       this.result = OK;
       return messages;
     }
+    
+    private Set<MessageListElement> getLoadedMessages(AccountAndr account, Set<MessageListElementParc> messages) {
+      Set<MessageListElement> selected = new HashSet<MessageListElement>();
+      for (MessageListElementParc mle : messages) {
+        if (mle.getAccount().equals(account)) {
+          selected.add(mle);
+        }
+      }
+      return selected;
+    }
 
     private List<MessageListElementParc> nonParcToParc(List<MessageListElement> origi) {
       List<MessageListElementParc> parc = new LinkedList<MessageListElementParc>();
       for (MessageListElement mle : origi) {
-        MessageListElementParc mlep = new MessageListElementParc(mle, acc);
         
-        // Log.d("rgai", "@A message from user -> " + mle.getFrom());
+        MessageListElementParc mlep = new MessageListElementParc(mle, acc);
         PersonAndr paFound = PersonAndr.searchPersonAndr(context, mle.getFrom());
-        if (mlep.getFullMessage() != null && mlep.getFullMessage() instanceof FullSimpleMessageParc) {
-          ((FullSimpleMessageParc)mlep.getFullMessage()).setFrom(paFound);
-          HtmlContent htmlC = ((FullSimpleMessageParc)mlep.getFullMessage()).getContent();
-          ((FullSimpleMessageParc)mlep.getFullMessage()).setContent(new HtmlContentParc(htmlC));
-        }
         mlep.setFrom(paFound);
-        // Log.d("rgai", "Found from -> " + paFound.toString());
-        if (mlep.getRecipientsList() != null) {
-          for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
-            PersonAndr pa = PersonAndr.searchPersonAndr(context, mlep.getRecipientsList().get(i));
-            mlep.getRecipientsList().set(i, pa);
+        
+        if (!mle.isUpdateFlags()) {
+          
+          if (mlep.getFullMessage() != null && mlep.getFullMessage() instanceof FullSimpleMessageParc) {
+            ((FullSimpleMessageParc)mlep.getFullMessage()).setFrom(paFound);
+            HtmlContent htmlC = ((FullSimpleMessageParc)mlep.getFullMessage()).getContent();
+            ((FullSimpleMessageParc)mlep.getFullMessage()).setContent(new HtmlContentParc(htmlC));
           }
+          
+          if (mlep.getRecipientsList() != null) {
+            for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
+              PersonAndr pa = PersonAndr.searchPersonAndr(context, mlep.getRecipientsList().get(i));
+              mlep.getRecipientsList().set(i, pa);
+            }
+          }
+          
+        } else {
+          // just make sure if we have a flag updating message, then it does not have a message part
+          mlep.setFullMessage(null);
         }
         // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());
         parc.add(mlep);

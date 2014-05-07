@@ -2,14 +2,29 @@ package hu.rgai.android.messageproviders;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.os.StrictMode;
+import android.util.Log;
+import com.facebook.HttpMethod;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.model.GraphObject;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.intent.beens.HtmlContentParc;
+import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
-
+import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -22,39 +37,18 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
-
 import org.jivesoftware.smack.Chat;
-
+import org.jivesoftware.smack.ChatManagerListener;
 import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
+import org.jivesoftware.smack.packet.Message;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.os.StrictMode;
-import android.util.Log;
-
-
-import com.facebook.HttpMethod;
-import com.facebook.Request;
-import com.facebook.Session;
-import com.facebook.Response;
-import com.facebook.model.GraphObject;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.HtmlContentParc;
-import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import org.jivesoftware.smack.ChatManagerListener;
-import org.jivesoftware.smack.packet.Message;
 
 /**
  *
@@ -70,15 +64,15 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     this.account = account;
   }
 
-  public List<MessageListElement> getMessageList(int offset, int limit)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
-    return getMessageList(offset, limit, 20);
+    return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {

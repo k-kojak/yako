@@ -1,26 +1,6 @@
 package hu.rgai.android.messageproviders;
 
 import android.content.BroadcastReceiver;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.security.cert.CertPathValidatorException;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
-import javax.mail.AuthenticationFailedException;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
-import javax.net.ssl.SSLHandshakeException;
-
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -32,13 +12,31 @@ import android.telephony.SmsManager;
 import android.util.Log;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.intent.beens.HtmlContentParc;
+import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
 import hu.rgai.android.services.MainService;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
+import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
+import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
+import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.security.cert.CertPathValidatorException;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.mail.AuthenticationFailedException;
+import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
+import javax.net.ssl.SSLHandshakeException;
 
 public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
@@ -50,15 +48,15 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     context = myContext;
   }
 
-  public List<MessageListElement> getMessageList(int offset, int limit)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
-    return getMessageList(offset, limit, 20);
+    return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
