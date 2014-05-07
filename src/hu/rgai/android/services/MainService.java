@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -104,7 +105,7 @@ public class MainService extends Service {
   public void onCreate() {
     RUNNING = true;
     handler = new MyHandler(this);
-    
+
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -148,6 +149,7 @@ public class MainService extends Service {
   public void onDestroy() {
     super.onDestroy();
     RUNNING = false;
+    
     // unregisterReceiver(emailContentChangeReceiver);
   }
 
@@ -168,6 +170,10 @@ public class MainService extends Service {
     updateMessagesPrettyDate();
     
     connectXmpp();
+//    if (iterationCount == 1) {
+//      Debug.startMethodTracing("calc_store_connect_repaired");
+//      Log.d("rgai", "STARTING DEBUG NOW!!!");
+//    }
     iterationCount++;
     MainActivity.openFbSession(this);
     // Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);

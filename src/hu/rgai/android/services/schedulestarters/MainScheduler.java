@@ -5,7 +5,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import java.util.Calendar;
 
 
@@ -15,9 +14,7 @@ public class MainScheduler extends BroadcastReceiver {
   
   @Override
   public void onReceive(Context context, Intent intent) {
-    System.out.println("....ACTION -> " + intent.getAction());
     if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals(Context.ALARM_SERVICE)) {
-//      Log.d("rgai", "MainScheduler onReceive");
       AlarmManager service = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       Intent i = new Intent(context, MainServiceStarter.class);
       if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
