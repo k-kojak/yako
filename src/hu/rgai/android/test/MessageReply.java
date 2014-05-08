@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,22 +31,21 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.beens.EmailMessageRecipient;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.EmailRecipientAndr;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
+import hu.rgai.android.intent.beens.Person;
 import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.SmsMessageRecipient;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.intent.beens.account.SmsAccountAndr;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.rgai.android.workers.MessageSender;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
@@ -70,12 +70,12 @@ public class MessageReply extends ActionBarActivity {
   // private String content = null;
   private TextView text;
   private ChipsMultiAutoCompleteTextView recipients;
-  private AccountAndr account;
+  private Account account;
   private WebView mQuotedMessage = null;
   private CheckBox mQuoteCheckbox = null;
   private EditText mSubject = null;
-  private MessageListElementParc mMessage = null;
-  private FullSimpleMessageParc mFullMessage = null;
+  private MessageListElement mMessage = null;
+  private FullSimpleMessage mFullMessage = null;
 
   @Override
   public void onBackPressed() {
@@ -100,8 +100,8 @@ public class MessageReply extends ActionBarActivity {
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey("message")) {
         mMessage = getIntent().getExtras().getParcelable("message");
-        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessageParc) {
-          mFullMessage = (FullSimpleMessageParc) mMessage.getFullMessage();
+        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessage) {
+          mFullMessage = (FullSimpleMessage) mMessage.getFullMessage();
           mSubject.setText(mFullMessage.getSubject());
         }
       }
@@ -145,7 +145,7 @@ public class MessageReply extends ActionBarActivity {
       if (mMessage.getFrom() != null && account != null
               && (account.getAccountType().equals(MessageProvider.Type.EMAIL) || account.getAccountType().equals(MessageProvider.Type.GMAIL))) {
 
-        RecipientItem ri = new EmailRecipientAndr(mMessage.getFrom().getName(), mMessage.getFrom().getId(), mMessage.getFrom().getName(),
+        RecipientItem ri = new EmailMessageRecipient(mMessage.getFrom().getName(), mMessage.getFrom().getId(), mMessage.getFrom().getName(),
                 null, (int) mMessage.getFrom().getContactId());
         recipients.addRecipient(ri);
       }
@@ -230,20 +230,20 @@ public class MessageReply extends ActionBarActivity {
   }
 
   private void searchUserAndInsertAsRecipient(MessageProvider.Type type, String id) {
-    PersonAndr pa = PersonAndr.searchPersonAndr(this, new Person(id, id, type));
+    Person pa = Person.searchPersonAndr(this, new Person(id, id, type));
 
     if (pa != null) {
       RecipientItem ri = null;
       switch (type) {
         case FACEBOOK:
-          ri = new FacebookRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
+          ri = new FacebookMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
           break;
         case SMS:
-          ri = new SmsMessageRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
+          ri = new SmsMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
           break;
         case EMAIL:
         case GMAIL:
-          ri = new EmailRecipientAndr(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
+          ri = new EmailMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
           break;
         default:
           break;
@@ -279,13 +279,13 @@ public class MessageReply extends ActionBarActivity {
     this.messageResult = messageResult;
   }
 
-  public void sendMessage(AccountAndr from) {
+  public void sendMessage(Account from) {
     if (from == null) {
       return;
     }
 
     List<RecipientItem> to = recipients.getRecipients();
-    List<AccountAndr> accs = new LinkedList<AccountAndr>();
+    List<Account> accs = new LinkedList<Account>();
     accs.add(from);
     String content = text.getText().toString().trim();
     String subject = null;
@@ -322,18 +322,18 @@ public class MessageReply extends ActionBarActivity {
       return;
     }
 
-    List<AccountAndr> accs = StoreHandler.getAccounts(this);
+    List<Account> accs = StoreHandler.getAccounts(this);
 
     boolean isPhone = MainActivity.isPhone(this);
 
     for (RecipientItem ri : to) {
-      List<AccountAndr> selectedAccs = new LinkedList<AccountAndr>();
-      Iterator<AccountAndr> accIt = accs.iterator();
+      List<Account> selectedAccs = new LinkedList<Account>();
+      Iterator<Account> accIt = accs.iterator();
       if (ri.getType().equals(MessageProvider.Type.SMS) && isPhone) {
         selectedAccs.add(new SmsAccountAndr());
       } else {
         while (accIt.hasNext()) {
-          AccountAndr actAcc = accIt.next();
+          Account actAcc = accIt.next();
           if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
                   && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
                   || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
@@ -408,11 +408,11 @@ public class MessageReply extends ActionBarActivity {
     v.startAnimation(a);
   }
 
-  private void chooseAccount(final List<AccountAndr> accs) {
+  private void chooseAccount(final List<Account> accs) {
 
     String[] items = new String[accs.size()];
     int i = 0;
-    for (AccountAndr a : accs) {
+    for (Account a : accs) {
       items[i++] = a.getDisplayName();
     }
 

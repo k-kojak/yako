@@ -2,34 +2,45 @@
 package hu.rgai.android.beens;
 
 import hu.rgai.android.workers.AttachmentDownloader;
-import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class ProgressAttachment extends Attachment {
+public class Attachment {
   
-  private volatile int mProgress;
-  private volatile boolean inProgress = false;
+  private String fileName;
+  private long size; // in bytes
+  private volatile int mProgress; // in percent
+  private volatile boolean inProgress;
   private volatile AttachmentDownloader mAttachmentDownloader;
   
-  public ProgressAttachment(Attachment attachment) {
-    this(attachment.getFileName(), attachment.getSize());
+  public Attachment(String fileName, long size) {
+    this(fileName, size, 0);
   }
   
-  public ProgressAttachment(String fileName, long size) {
-    super(fileName, size);
-    setProgress(0);
-  }
-  
-  public ProgressAttachment(String fileName, long size, int progress) {
-    super(fileName, size);
+  public Attachment(String fileName, long size, int progress) {
+    this.fileName = fileName;
+    this.size = size;
+    mAttachmentDownloader = null;
+    
     setProgress(progress);
   }
-
+  
   public int getProgress() {
     return mProgress;
+  }
+  
+  public String getFileName() {
+    return fileName;
+  }
+
+  public long getSize() {
+    return size;
+  }
+  
+  public void setSize(long size) {
+    this.size = size;
   }
 
   public final void setProgress(int mProgress) {
@@ -57,6 +68,11 @@ public class ProgressAttachment extends Attachment {
 
   public void setAttachmentDownloader(AttachmentDownloader mAttachmentDownloader) {
     this.mAttachmentDownloader = mAttachmentDownloader;
+  }
+  
+  @Override
+  public String toString() {
+    return "Attachment{" + "fileName=" + fileName + ", size=" + size + '}';
   }
   
 }

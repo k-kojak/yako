@@ -7,11 +7,11 @@ package hu.rgai.android.beens.fbintegrate;
  */
 public class FacebookIntegrateItem {
   
-  private String name;
-  private String fbAliasId;
-  private String fbId;
-  private String thumbImgUrl;
-  private String bigThumbImgUrl;
+  private final String name;
+  private final String fbAliasId;
+  private final String fbId;
+  private final String thumbImgUrl;
+  private final String bigThumbImgUrl;
 
   public FacebookIntegrateItem(String name, String fbAliasId, String fbId, String thumbImgUrl, String bigThumbImgUrl) {
     this.name = name;

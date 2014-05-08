@@ -1,34 +1,33 @@
-package hu.rgai.android.intent.beens;
+package hu.rgai.android.beens;
 
 import android.net.Uri;
+import hu.rgai.android.intent.beens.RecipientItem;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookRecipientAndr extends FacebookMessageRecipient implements RecipientItem {
-
-  private String displayName;
-  private String displayData;
-  private Uri imgUri;
-  private int contactId;
+public class FacebookMessageRecipient implements RecipientItem {
   
-  public FacebookRecipientAndr(String displayData, String fbId, String displayName, Uri imgUri, int contactId) {
-    super(fbId);
+  protected String id;
+  protected String displayName;
+  protected String displayData;
+  protected Uri imgUri;
+  protected int contactId;
+
+  public FacebookMessageRecipient(String displayData, String fbId, String displayName, Uri imgUri, int contactId) {
+    this.id = fbId;
     this.displayData = displayData;
     this.displayName = displayName;
     this.imgUri = imgUri;
     this.contactId = contactId;
   }
 
-  //  public FacebookRecipientAndr(int id, long fbId, String name, Uri imgUri) {
-  //    super(fbId);
-  //    this.displayName = name;
-  //    this.imgUri = imgUri;
-  //    this.contactId = id;
-  //  }
+  public String getId() {
+    return id;
+  }
+  
   public String getDisplayData() {
     return displayData;
   }
@@ -52,5 +51,5 @@ public class FacebookRecipientAndr extends FacebookMessageRecipient implements R
   public MessageProvider.Type getType() {
     return MessageProvider.Type.FACEBOOK;
   }
-  
+
 }

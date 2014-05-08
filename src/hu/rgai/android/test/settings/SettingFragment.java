@@ -1,6 +1,6 @@
 package hu.rgai.android.test.settings;
 
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 
 /**
@@ -9,5 +9,5 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
  */
 public interface SettingFragment {
   public Type getType();
-  public AccountAndr getAccount();
+  public Account getAccount();
 }

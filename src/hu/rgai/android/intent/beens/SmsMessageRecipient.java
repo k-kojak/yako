@@ -2,9 +2,8 @@ package hu.rgai.android.intent.beens;
 
 import android.net.Uri;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 
-public class SmsMessageRecipientAndr implements MessageRecipient, RecipientItem {
+public class SmsMessageRecipient implements RecipientItem {
 
 	private String displayData;
   private String phoneNum;
@@ -12,7 +11,7 @@ public class SmsMessageRecipientAndr implements MessageRecipient, RecipientItem 
   private Uri imgUri;
   private int contactId;
 
-  public SmsMessageRecipientAndr(String displayData, String phoneNum, String displayName, Uri imgUri, int contactId) {
+  public SmsMessageRecipient(String displayData, String phoneNum, String displayName, Uri imgUri, int contactId) {
     this.displayData = displayData;
     this.phoneNum = phoneNum;
     this.displayName = displayName;

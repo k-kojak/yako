@@ -5,7 +5,7 @@ import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class SmsAccountAndr implements AccountAndr, Parcelable {
+public class SmsAccountAndr implements Account, Parcelable {
 	public static final Parcelable.Creator<SmsAccountAndr> CREATOR = new Parcelable.Creator<SmsAccountAndr>() {
 	    public SmsAccountAndr createFromParcel(Parcel in) {
 	      return new SmsAccountAndr(in);

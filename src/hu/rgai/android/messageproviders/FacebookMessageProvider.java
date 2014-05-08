@@ -12,7 +12,7 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.HtmlContentParc;
+import hu.rgai.android.intent.beens.account.FacebookAccount;
 import hu.rgai.android.services.MainService;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
@@ -21,7 +21,6 @@ import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
 import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
 import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
@@ -318,7 +317,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     ftm.addMessage(new MessageAtom(
                             msg.getString("message_id"),
                             "",
-                            new HtmlContentParc(body, HtmlContent.ContentType.TEXT_PLAIN),
+                            new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
                             new Date(msg.getLong("created_time") * 1000),
                             new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
                             msg.getString("author_id").equals(account.getId()),

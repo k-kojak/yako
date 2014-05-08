@@ -1,37 +1,9 @@
 package hu.rgai.android.test;
 
 
-import hu.rgai.android.workers.MessageSender;
-import hu.rgai.android.workers.ThreadContentGetter;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
-import hu.rgai.android.services.MainService;
-import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.tools.adapter.ThreadViewAdapter;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
-//import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -60,15 +32,40 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.intent.beens.Person;
+import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.intent.beens.SmsMessageRecipient;
+import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.intent.beens.account.FacebookAccount;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.ThreadMsgService;
+import hu.rgai.android.tools.adapter.ThreadViewAdapter;
+import hu.rgai.android.workers.MessageSender;
+import hu.rgai.android.workers.ThreadContentGetter;
+import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
   private static ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
-  private FullThreadMessageParc content = null;
+  private FullThreadMessage content = null;
 //  private String threadId = "-1";
-  private AccountAndr account;
-  private PersonAndr from;
+  private Account account;
+  private Person from;
   private ListView lv = null;
   private EditText text = null;
   private ThreadViewAdapter adapter = null;
@@ -78,7 +75,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
   private boolean fromNotification = false;
-  private MessageListElementParc mlep = null;
+  private MessageListElement mlep = null;
   private String mThreadId = null;
   private TextWatcher mTextWatcher = null;
   private boolean mTextWatcherAdded = false;
@@ -162,10 +159,10 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   }
   
-  private void displayContent(MessageListElementParc mlep) {
+  private void displayContent(MessageListElement mlep) {
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use that here
-      content = (FullThreadMessageParc) mlep.getFullMessage();
+      content = (FullThreadMessage) mlep.getFullMessage();
       displayMessage(true);
     } else {
       pd = new ProgressDialog(this);
@@ -246,13 +243,13 @@ public class ThreadDisplayer extends ActionBarActivity {
       return;
     }
     
-    List<AccountAndr> accs = new LinkedList<AccountAndr>();
+    List<Account> accs = new LinkedList<Account>();
     accs.add(account);
     RecipientItem ri = null;
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
+      ri = new FacebookMessageRecipient("", from.getId(), from.getName(), null, 1);
     } else {
-      ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
+      ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
     }
     MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -305,7 +302,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.load_more:
         if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
-          refreshMessageList(content.getMessagesParc().size());
+          refreshMessageList(content.getMessages().size());
           Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
         } else {
           Log.d("rgai", "@@@skipping load button press for 5 sec");
@@ -352,8 +349,8 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     if (content != null) {
       adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item, account);
-      for (MessageAtomParc ma : content.getMessagesParc()) {
-        adapter.add(ma);
+      for (FullSimpleMessage m : content.getMessages()) {
+        adapter.add(m);
       }
       lv.setAdapter(adapter);
       los = new LogOnScrollListener();
@@ -424,12 +421,12 @@ public class ThreadDisplayer extends ActionBarActivity {
         }
       } else {
         // Log.d("rgai", "HANDLING MESSAGE CONTENT");
-        FullThreadMessageParc newMessages = bundle.getParcelable("threadMessage");
+        FullThreadMessage newMessages = bundle.getParcelable("threadMessage");
         if (content != null) {
-          content.getMessagesParc().addAll(newMessages.getMessagesParc());
+          content.getMessages().addAll(newMessages.getMessages());
           if (!tempMessageIds.isEmpty()) {
-            for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext();) {
-              MessageAtom ma = it.next();
+            for (Iterator<FullSimpleMessage> it = content.getMessages().iterator(); it.hasNext();) {
+              FullSimpleMessage ma = it.next();
               if (tempMessageIds.contains(ma.getId())) {
                 tempMessageIds.remove(ma.getId());
                 it.remove();

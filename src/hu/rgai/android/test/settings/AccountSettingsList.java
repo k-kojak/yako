@@ -34,8 +34,8 @@ import com.facebook.Session;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.EmailAccountAndr;
+import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.intent.beens.account.EmailAccount;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
@@ -81,7 +81,7 @@ public class AccountSettingsList extends ActionBarActivity {
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
-    List<AccountAndr> accounts = null;
+    List<Account> accounts = null;
     try {
       accounts = StoreHandler.getAccounts(this);
       Log.d("rgai", accounts.toString());
@@ -100,7 +100,7 @@ public class AccountSettingsList extends ActionBarActivity {
       lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-          AccountAndr account = (AccountAndr) av.getItemAtPosition(itemIndex);
+          Account account = (Account) av.getItemAtPosition(itemIndex);
 
           Class classToLoad = Settings.getAccountTypeToSettingClass().get(account.getAccountType());
           if (classToLoad == null) {
@@ -119,9 +119,9 @@ public class AccountSettingsList extends ActionBarActivity {
     }
   }
   
-  private boolean isInfMail(AccountAndr acc) {
-    if (acc instanceof EmailAccountAndr) {
-      EmailAccountAndr ea = (EmailAccountAndr)acc;
+  private boolean isInfMail(Account acc) {
+    if (acc instanceof EmailAccount) {
+      EmailAccount ea = (EmailAccount)acc;
       if (ea.getImapAddress().equals(InfEmailSettingActivity.IMAP_ADDRESS)) {
         return true;
       }
@@ -169,14 +169,14 @@ public class AccountSettingsList extends ActionBarActivity {
       stillAddingFacebookAccount = false;
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
-          StoreHandler.addAccount(this, (AccountAndr) data.getParcelableExtra("new_account"));
+          StoreHandler.addAccount(this, (Account) data.getParcelableExtra("new_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
           StoreHandler.modifyAccount(this,
-                  (AccountAndr) data.getParcelableExtra("old_account"),
-                  (AccountAndr) data.getParcelableExtra("new_account"));
+                  (Account) data.getParcelableExtra("old_account"),
+                  (Account) data.getParcelableExtra("new_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
-          StoreHandler.removeAccount(this, (AccountAndr) data.getParcelableExtra("old_account"));
-          removeMessagesToAccount((AccountAndr) data.getParcelableExtra("old_account"));
+          StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
+          removeMessagesToAccount((Account) data.getParcelableExtra("old_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }
@@ -188,7 +188,7 @@ public class AccountSettingsList extends ActionBarActivity {
     }
   }
 
-  private void removeMessagesToAccount(final AccountAndr acc) {
+  private void removeMessagesToAccount(final Account acc) {
     MainActivity.removeMessagesToAccount(acc);
     ServiceConnection serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName className, IBinder binder) {

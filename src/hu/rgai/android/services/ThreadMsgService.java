@@ -14,8 +14,7 @@ import android.os.Message;
 import android.util.Log;
 import hu.rgai.android.workers.ThreadContentGetter;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.Account;
 
 /**
  *
@@ -25,7 +24,7 @@ public class ThreadMsgService extends Service {
 
   private final IBinder mBinder = new MyBinder();
   private Handler handler = null;
-  private AccountAndr account = null;
+  private Account account = null;
   private String threadId = null;
   
   public static final int OK = 0;
@@ -57,7 +56,7 @@ public class ThreadMsgService extends Service {
     return Service.START_STICKY;
   }
   
-  public void setAccount(AccountAndr account) {
+  public void setAccount(Account account) {
     this.account = account;
   }
   

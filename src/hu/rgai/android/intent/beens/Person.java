@@ -3,7 +3,6 @@ package hu.rgai.android.intent.beens;
 import android.content.ContentResolver;
 import hu.rgai.android.config.Settings;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -28,34 +27,56 @@ import android.util.Log;
  * 
  * @author Tamas Kojedzinszky
  */
-public final class PersonAndr extends Person implements Parcelable {
+public final class Person implements Parcelable {
 
-  private static Map<String, PersonAndr> storedPerson = null;
+  protected String id;
+  protected String name;
+  protected MessageProvider.Type type;
+  
+  private static Map<String, Person> storedPerson = null;
 
-  private final long contactId;
+  private long contactId;
   private Map<MessageProvider.Type, Set<String>> idMap = null;
 
-  public static final Parcelable.Creator<PersonAndr> CREATOR = new Parcelable.Creator<PersonAndr>() {
+  public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
     @Override
-    public PersonAndr createFromParcel(Parcel in) {
-      return new PersonAndr(in);
+    public Person createFromParcel(Parcel in) {
+      return new Person(in);
     }
 
     @Override
-    public PersonAndr[] newArray(int size) {
-      return new PersonAndr[size];
+    public Person[] newArray(int size) {
+      return new Person[size];
     }
   };
 
-  // public PersonAndr(long contactId, String name) {
-  // this.contactId = contactId;
-  // this.name = name;
-  // }
-
-  public PersonAndr(long contactId, String name, String id) {
+  public Person(String id, String name, MessageProvider.Type type) {
+    this.id = id;
+    this.name = name;
+    this.type = type;
+    this.contactId = -1;
+  }
+  
+  public Person(long contactId, String name, String id) {
     this.contactId = contactId;
     this.name = name;
     this.id = id;
+  }
+  
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public MessageProvider.Type getType() {
+    return type;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
   
   public void addId(MessageProvider.Type type, String id) {
@@ -91,7 +112,7 @@ public final class PersonAndr extends Person implements Parcelable {
     return contactId;
   }
 
-  public PersonAndr(Parcel in) {
+  public Person(Parcel in) {
     this.id = in.readString();
     this.name = in.readString();
     this.contactId = in.readLong();
@@ -136,10 +157,10 @@ public final class PersonAndr extends Person implements Parcelable {
 
   @Override
   public String toString() {
-    return "PersonAndr{" + "contactId=" + contactId + ", id = " + id + ", name=" + name + ", type=" + type + '}';
+    return "Person{" + "contactId=" + contactId + ", id = " + id + ", name=" + name + ", type=" + type + '}';
   }
 
-  public static PersonAndr searchPersonAndr(Context context, Person p) {
+  public static Person searchPersonAndr(Context context, Person p) {
 //    Log.d("rgai", "search person: " + p.toString());
     if (p == null) {
       return null;
@@ -147,7 +168,7 @@ public final class PersonAndr extends Person implements Parcelable {
     String key = p.getType().toString() + "_" + p.getId();
 //    Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {
-      storedPerson = new HashMap<String, PersonAndr>();
+      storedPerson = new HashMap<String, Person>();
     }
     if (storedPerson.containsKey(key)) {
       return storedPerson.get(key);
@@ -159,7 +180,7 @@ public final class PersonAndr extends Person implements Parcelable {
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
       } else {
-        PersonAndr pa = null;
+        Person pa = null;
         if (rawContactId != -1) {
           // if dealing with sms, than p.getName() contains the phone number, so
           // that is the user id for sending message
@@ -176,9 +197,9 @@ public final class PersonAndr extends Person implements Parcelable {
         // user is not in contact list
         else {
           if (p.getType().equals(MessageProvider.Type.SMS)) {
-            pa = new PersonAndr(-1, p.getName(), p.getName());
+            pa = new Person(-1, p.getName(), p.getName());
           } else {
-            pa = new PersonAndr(-1, p.getName(), p.getId());
+            pa = new Person(-1, p.getName(), p.getId());
           }
           // pa = new PersonAndr(-1, p.getName());
         }
@@ -187,18 +208,18 @@ public final class PersonAndr extends Person implements Parcelable {
     }
   }
 
-  private static PersonAndr getUserData(Context context, long rawContactId, String userAddrId) {
+  private static Person getUserData(Context context, long rawContactId, String userAddrId) {
 //    if (userAddrId.equals("+36306184242")) {
 //      Log.d("rgai", "getting user data to Istvan: " + userAddrId);
 //    }
-    PersonAndr pa = null;
+    Person pa = null;
 
     // selecting name
     Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { Settings.CONTACT_DISPLAY_NAME }, ContactsContract.Data.RAW_CONTACT_ID + " = ?",
         new String[] { rawContactId + "" }, null);
     if (cursor.getCount() > 0) {
       cursor.moveToNext();
-      pa = new PersonAndr(rawContactId, cursor.getString(0), userAddrId);
+      pa = new Person(rawContactId, cursor.getString(0), userAddrId);
     }
     cursor.close();
     if (pa != null) {
@@ -322,7 +343,7 @@ public final class PersonAndr extends Person implements Parcelable {
     
     return uid;
   }
-
+  
   @Override
   public int hashCode() {
     return Long.valueOf(contactId).hashCode();
@@ -330,10 +351,10 @@ public final class PersonAndr extends Person implements Parcelable {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof PersonAndr))
+    if (!(obj instanceof Person))
       return false;
     if (obj == this)
       return true;
-    return (this.contactId == ((PersonAndr) obj).contactId) && (this.id.equals(((PersonAndr) obj).id)) && (this.name.equals(((PersonAndr) obj).name)) && (this.type == ((PersonAndr) obj).type);
+    return (this.contactId == ((Person) obj).contactId) && (this.id.equals(((Person) obj).id)) && (this.name.equals(((Person) obj).name)) && (this.type == ((Person) obj).type);
   }
 }

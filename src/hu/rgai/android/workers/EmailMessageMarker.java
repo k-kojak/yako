@@ -3,7 +3,7 @@ package hu.rgai.android.workers;
 
 import android.os.AsyncTask;
 import android.os.Handler;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
 import hu.uszeged.inf.rgai.messagelog.MessageProvider;
 import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
@@ -21,9 +21,9 @@ import javax.mail.NoSuchProviderException;
  */
 public class EmailMessageMarker extends AsyncTask<String, Integer, Void> {
 
-    AccountAndr account;
+    Account account;
     
-    public EmailMessageMarker(AccountAndr account) {
+    public EmailMessageMarker(Account account) {
       this.account = account;
     }
     

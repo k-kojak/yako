@@ -15,28 +15,28 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.Utils;
 
-public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
+public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 
 //	private TextView msgBubble;
-	private List<MessageAtomParc> messages = new ArrayList<MessageAtomParc>();
+	private List<FullSimpleMessage> messages = new ArrayList<FullSimpleMessage>();
 	private LinearLayout wrapper;
-  private AccountAndr account = null;
+  private Account account = null;
   private Context context;
 
 	@Override
-	public void add(MessageAtomParc object) {
+	public void add(FullSimpleMessage object) {
 		messages.add(object);
 		super.add(object);
 	}
 
-	public ThreadViewAdapter(Context context, int textViewResourceId, AccountAndr account) {
+	public ThreadViewAdapter(Context context, int textViewResourceId, Account account) {
 		super(context, textViewResourceId);
     this.account = account;
     this.context = context;
@@ -48,14 +48,14 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 	}
 
   @Override
-	public MessageAtomParc getItem(int index) {
+	public FullSimpleMessage getItem(int index) {
 		return this.messages.get(index);
 	}
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View row = convertView;
-    MessageAtomParc coment = getItem(position);
+    FullSimpleMessage coment = getItem(position);
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		if (row == null) {
       if (coment.isIsMe()) {
@@ -106,7 +106,7 @@ public class ThreadViewAdapter extends ArrayAdapter<MessageAtomParc> {
 //    }
 //    iv.setImageBitmap(img);
 
-    MessageAtomParc prevMsg = null;
+    FullSimpleMessage prevMsg = null;
     if (position - 1 >= 0) {
       prevMsg = getItem(position - 1);
     }

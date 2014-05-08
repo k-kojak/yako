@@ -37,9 +37,9 @@ import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.workers.EmailMessageMarker;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.intent.beens.Person;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
@@ -67,11 +67,11 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   /**
    * The number of pages (wizard steps) to show in this demo.
    */
-  private MessageListElementParc mMessage = null;
-  private AccountAndr mAccount = null;
+  private MessageListElement mMessage = null;
+  private Account mAccount = null;
   private boolean mFromNotification = false;
   private final String mSubject = null;
-  private PersonAndr mFrom = null;
+  private Person mFrom = null;
   private FullSimpleMessageParc mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
@@ -179,11 +179,11 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     return super.onOptionsItemSelected(item);
   }
 
-  public MessageListElementParc getMessage() {
+  public MessageListElement getMessage() {
     return mMessage;
   }
 
-  public AccountAndr getAccount() {
+  public Account getAccount() {
     return mAccount;
   }
 

@@ -39,7 +39,7 @@ import hu.rgai.android.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.FacebookAccountAndr;
+import hu.rgai.android.intent.beens.account.FacebookAccount;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import java.util.logging.Level;
@@ -59,7 +59,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   private EditText password;
   private String id = null;
   private Spinner messageAmount;
-  private FacebookAccountAndr oldAccount = null;
+  private FacebookAccount oldAccount = null;
   private UiLifecycleHelper uiHelper;
   private GraphUser user;
   private Session.StatusCallback callback = new Session.StatusCallback() {
@@ -166,7 +166,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (FacebookAccountAndr)b.getParcelable("account");
+      oldAccount = (FacebookAccount)b.getParcelable("account");
       setFieldsByAccount(oldAccount);
     }
     
@@ -195,7 +195,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
   }
 
-  private void setFieldsByAccount(FacebookAccountAndr fba) {
+  private void setFieldsByAccount(FacebookAccount fba) {
     if (fba != null) {
       setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getId(), fba.getMessageLimit());
     }
@@ -352,9 +352,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
   public void saveAccountSettings() {
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    FacebookAccountAndr newAccount = new FacebookAccountAndr(messageLimit,
-            name.getText().toString(), uniqueName, id,
-            password.getText().toString());
+    FacebookAccount newAccount = new FacebookAccount(name.getText().toString(), uniqueName, id,
+            password.getText().toString(), messageLimit);
     Log.d("rgai", "SAVING ACCOUNT -> " + newAccount.toString());
     Log.d("rgai", "id->" + id);
     

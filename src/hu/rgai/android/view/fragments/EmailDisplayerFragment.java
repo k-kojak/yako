@@ -15,9 +15,9 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.intent.beens.Person;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
@@ -35,11 +35,11 @@ public class EmailDisplayerFragment extends Fragment {
   private FullSimpleMessageParc mContent = null;
   
   // account which used to fetch email (if necessary)
-  private AccountAndr mAccount;
+  private Account mAccount;
   
-  private MessageListElementParc mMessage;
+  private MessMessageListElementssage;
   // the sender of the message
-  private PersonAndr mFrom;
+  private Person mFrom;
   
   private View mView;
   // a view for displaying content
@@ -78,7 +78,7 @@ public class EmailDisplayerFragment extends Fragment {
     mWebView = (WebView) mView.findViewById(R.id.email_content);
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
-    mFrom = (PersonAndr) mMessage.getFrom();
+    mFrom = (Person) mMessage.getFrom();
     mContent = (FullSimpleMessageParc) mMessage.getFullMessage();
     displayMessage();
     

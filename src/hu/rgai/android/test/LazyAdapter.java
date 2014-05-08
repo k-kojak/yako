@@ -10,10 +10,10 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.beens.BitmapResult;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.intent.beens.account.Account;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.view.AsyncImageLoadProvider;
@@ -25,7 +25,7 @@ public class LazyAdapter extends BaseAdapter {
 
   private MainActivity activity;
   private static LayoutInflater inflater = null;
-  private AccountAndr filterAcc = null;
+  private Account filterAcc = null;
 
   public LazyAdapter(MainActivity a) {
     activity = a;
@@ -38,7 +38,7 @@ public class LazyAdapter extends BaseAdapter {
 
   public Object getItem(int position) {
     int i = 0;
-    for (MessageListElementParc mlep : MainService.getFilteredMessages(filterAcc)) {
+    for (MessageListElement mlep : MainService.getFilteredMessages(filterAcc)) {
       if (i == position) {
         return mlep;
       }
@@ -51,7 +51,7 @@ public class LazyAdapter extends BaseAdapter {
     return position;
   }
 
-  public void setListFilter(AccountAndr filterAccount) {
+  public void setListFilter(Account filterAccount) {
     this.filterAcc = filterAccount;
   }
   
@@ -74,12 +74,12 @@ public class LazyAdapter extends BaseAdapter {
     }
     
 
-    final MessageListElementParc message = (MessageListElementParc)this.getItem(position);
+    final MessageListElement message = (MessageListElement)getItem(position);
     
     // dealing with attachment display
     boolean hasAttachment = false;
-    if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessageParc) {
-      FullSimpleMessageParc fsmp = (FullSimpleMessageParc)message.getFullMessage();
+    if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessage) {
+      FullSimpleMessage fsmp = (FullSimpleMessage)message.getFullMessage();
       if (fsmp.getAttachments() != null && !fsmp.getAttachments().isEmpty()) {
         hasAttachment = true;
       } else {
