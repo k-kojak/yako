@@ -1,7 +1,9 @@
 package hu.rgai.android.tools;
 
 import android.app.Activity;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract.Data;
 import android.util.Log;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
@@ -10,8 +12,13 @@ import com.facebook.Session;
 import com.facebook.model.GraphObject;
 import hu.rgai.android.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
+
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,12 +33,38 @@ public class FacebookFriendProvider {
   }
 
   public List<FacebookIntegrateItem> getFacebookFriends(final Activity activity, final FacebookSettingActivity.ToastHelper th) {
-    getUserDataWithFql(activity, th);
+    	  
+	  getUserDataWithFql(activity, th, getContactsFacebookIds(activity));
 
     return null;
   }
+  
+  
+  private static Set<String> getContactsFacebookIds(final Activity activity){
+	  
+	  Set<String> FacebookIds = new HashSet<String>();
+	  
+	  String selection = "data10 IS NOT NULL";	  
+	  Cursor cursor = activity.getContentResolver().query(Data.CONTENT_URI,
+	          new String[] {Data.DATA10},
+	          selection,
+	          null, 
+	          null);
+ 
+	  
+	  while (cursor.moveToNext()) {
+		  
+		  FacebookIds.add(cursor.getString(0));
+		  		  
+	  }
+	  	  
+	  return FacebookIds;
+	  
+	  
+  }
+  
 
-  private static void getUserDataWithFql(final Activity activity, final FacebookSettingActivity.ToastHelper th) {
+  private static void getUserDataWithFql(final Activity activity, final FacebookSettingActivity.ToastHelper th, final Set<String> FacebookIds) {
     String fql = "SELECT uid, name, username, pic, pic_big FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
 
     Bundle params = new Bundle();
@@ -71,7 +104,11 @@ public class FacebookFriendProvider {
               nextToast += toastInterval * 1000;
             }
             JSONObject json_obj = arr.getJSONObject(i);
+            
 
+            if(!(FacebookIds.contains(json_obj.getString("uid")))){
+            	
+            
             //ezek adják vissza a szükséges adatokat
             String uid = json_obj.getString("uid");
             String name = json_obj.getString("name");
@@ -79,6 +116,11 @@ public class FacebookFriendProvider {
 
             FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"), json_obj.getString("pic_big"));
             fbs.integrate(activity, fbii);
+            
+            }
+            
+            
+            
 //            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
           }
         } catch (JSONException e) {
