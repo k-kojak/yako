@@ -480,8 +480,11 @@ public class MainService extends Service {
             .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
             .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
  
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)){
 
         notificationButtonHandling(lastUnreadMsg, mBuilder);
+        
+		}
         
         if (StoreHandler.SystemSettings.isNotificationSoundTurnedOn(context)) {
           Uri soundURI = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alarm);
@@ -518,7 +521,6 @@ public class MainService extends Service {
 	private void notificationButtonHandling(
 			MessageListElementParc lastUnreadMsg,
 			NotificationCompat.Builder mBuilder) {
-		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)){
 
         	Intent intent = new Intent(context, MessageReply.class);
         	mContent = (FullSimpleMessageParc)lastUnreadMsg.getFullMessage();
@@ -531,7 +533,7 @@ public class MainService extends Service {
             PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         	mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
         	
-        }
+        
 	}
 
     private void loggingNewMessageArrived(MessageListElementParc mle, boolean messageIsVisible) {
