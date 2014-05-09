@@ -1,9 +1,11 @@
 package hu.rgai.android.messageproviders;
 
+import android.content.Context;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
 import hu.rgai.android.beens.Attachment;
+import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.beens.EmailContent;
 import hu.rgai.android.beens.EmailMessageRecipient;
 import hu.rgai.android.beens.FullMessage;
@@ -12,7 +14,6 @@ import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
-import hu.rgai.android.beens.EmailAccount;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -616,10 +617,26 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Message ms = folder.getMessage(Integer.parseInt(id));
     ms.setFlag(Flags.Flag.SEEN, true);
   }
+
+  public boolean canBroadcastOnNewMessage() {
+    return false;
+  }
+
+  public boolean isConnectionAlive() {
+    return false;
+  }
+
+  public void establishConnection(Context context) {
+    // we cannot establish a live connection with the server
+  }
   
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);
   }
-  
+
+  @Override
+  public String toString() {
+    return "SimpleEmailMessageProvider{" + "account=" + account + '}';
+  }
   
 }

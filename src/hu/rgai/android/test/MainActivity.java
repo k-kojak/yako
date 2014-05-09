@@ -151,11 +151,12 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (!MainService.RUNNING) {
-      Intent intent = new Intent(this, MainScheduler.class);
-      intent.setAction(Context.ALARM_SERVICE);
-      this.sendBroadcast(intent);
+      reloadMessages();
       // disaplying loading dialog, since the mails are not ready, but the user
       // opened the list
+      Log.d("rgai", "MAIN ACTIVITY: START MAIN SERVICE FROM HERE");
+    } else {
+      Log.d("rgai", "MAIN SERVICE ALREADY RUNNIG, ALTHOUGH THE MAINACTIVITY JUST STARTED...");
     }
     showProgressDialog();
   }
@@ -330,6 +331,7 @@ public class MainActivity extends ActionBarActivity {
   private void reloadMessages() {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
+    intent.putExtra("force_query", true);
     this.sendBroadcast(intent);
   }
 

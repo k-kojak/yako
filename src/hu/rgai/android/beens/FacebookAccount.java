@@ -115,6 +115,10 @@ public class FacebookAccount implements Account, Parcelable {
   public String toString() {
     return "FacebookAccount{" + "displayName=" + displayName + ", uniqueName=" + uniqueName + ", type=" + accountType + '}';
   }
+
+  public boolean isInternetNeededForLoad() {
+    return true;
+  }
   
   
   

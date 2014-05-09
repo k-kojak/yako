@@ -149,4 +149,8 @@ public class EmailAccount implements Account, Parcelable {
     return email;
   }
 
+  public boolean isInternetNeededForLoad() {
+    return true;
+  }
+
 }

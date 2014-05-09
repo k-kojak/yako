@@ -51,8 +51,9 @@ import org.json.JSONObject;
  *
  * @author Tamas Kojedzinszky
  */
+// TODO: this should be a singletone class
 public class FacebookMessageProvider implements ThreadMessageProvider {
-
+  
   private static volatile XMPPConnection xmpp = null;
   // use this variable to access facebook
   private FacebookAccount account;
@@ -195,7 +196,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return xmpp != null && xmpp.isConnected();
   }
 
-  public static void initConnection(FacebookAccount fba, final Context context) {
+  private void initConnection(FacebookAccount fba, final Context context) {
     Log.d("rgai", "initing xmpp connection");
     if (xmpp == null || !xmpp.isConnected()) {
       Log.d("rgai", "try connecting to XMPP");
@@ -224,7 +225,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
             chat.addMessageListener(new MessageListener() {
               public void processMessage(Chat chat, Message message) {
                 if (message != null && message.getBody() != null) {
-                  Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
+//                  Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
                   Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
                   res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
                   context.sendBroadcast(res);
@@ -232,6 +233,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   // always run MainService, so new messages can be stored
                   Intent service = new Intent(context, MainService.class);
                   service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+                  service.putExtra("force_query", true);
                   context.startService(service);
 
                 }
@@ -468,4 +470,24 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     // we cannot set facebook messages status to read...
   }
+
+  public boolean canBroadcastOnNewMessage() {
+    return true;
+  }
+
+  public boolean isConnectionAlive() {
+    return xmpp != null && xmpp.isConnected();
+  }
+
+  public void establishConnection(Context context) {
+    if (!isConnectionAlive()) {
+      initConnection(account, context);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "FacebookMessageProvider{" + "account=" + account + '}';
+  }
+  
 }

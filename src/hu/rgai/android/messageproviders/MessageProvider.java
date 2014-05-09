@@ -1,5 +1,6 @@
 package hu.rgai.android.messageproviders;
 
+import android.content.Context;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
@@ -83,6 +84,35 @@ public interface MessageProvider {
    * @throws IOException 
    */
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException;
+  
+  /**
+   * Tells that if the message provider sends broadcast to the system when new message arrives.
+   * 
+   * If so, then the system does not has to select messages on cycle events.
+   * For this kind of behaviour some kind of live connection needed.
+   * 
+   * @return true if message provider can broadcast on new message, false otherwise
+   */
+  public boolean canBroadcastOnNewMessage();
+  
+  
+  /**
+   * If this is a broadcasting message provider, then this functions value must base on the
+   * state of the live connection, otherwise it must be false.
+   * 
+   * @return true if is there a live connection with a server, false otherwise
+   */
+  public boolean isConnectionAlive();
+
+  
+  /**
+   * Establishis a connection to a server if possible.
+   * 
+   * This funcion can be empty, you should write a body to it only when you can create a 
+   * live connection to a server so that can notify you on a new event or new message.
+   * @param context a Context object if needed for broadcast sending
+   */
+  public void establishConnection(Context context);
   
   /**
    * Sends a message to the given recipient with the given content.

@@ -23,4 +23,6 @@ public interface Account extends Parcelable {
   @Override
   public String toString();
   
+  public boolean isInternetNeededForLoad();
+  
 }

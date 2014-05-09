@@ -237,15 +237,17 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       } catch (InterruptedException ex) {
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
-      Log.d("rgai", "SMS notif received");
       
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
-       if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+      // TODO: do not make a full query to the given account/type, query only the
+      // affected message element, so select only 1 element instead of all messages of the given account
+      if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainService.class);
         service.putExtra("type", MessageProvider.Type.SMS.toString());
+        service.putExtra("force_query", true);
         context.startService(service);
       }
       
@@ -266,6 +268,18 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     // we do nothing here, getMessage sets the status to read anyway
+  }
+
+  public boolean canBroadcastOnNewMessage() {
+    return true;
+  }
+
+  public boolean isConnectionAlive() {
+    return true;
+  }
+
+  public void establishConnection(Context context) {
+    // this class is a broadcast receiver too, so the connection is established this way
   }
 
   private class MessageItem {
@@ -293,5 +307,12 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     }
 
   }
+
+  @Override
+  public String toString() {
+    return "SmsMessageProvider{" + '}';
+  }
+  
+  
   
 }

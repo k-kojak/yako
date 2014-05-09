@@ -229,7 +229,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      FacebookMessageProvider.initConnection((FacebookAccount) account, this);
+//      FacebookMessageProvider.initConnection((FacebookAccount) account, this);
     }
 
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
@@ -366,7 +366,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   }
   
   private void refreshMessageList(int offset) {
-    Log.d("rgai", "LEKERDEZES");
+//    Log.d("rgai", "LEKERDEZES");
     ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, true);
     if (offset > 0) {
       myThread.setOffset(offset);

@@ -101,6 +101,10 @@ public class MainService extends Service {
     RUNNING = true;
     handler = new MyHandler(this);
 
+    List<Account> accounts = StoreHandler.getAccounts(this);
+    
+    connectConnectableMessageProviders(accounts);
+    
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -125,17 +129,18 @@ public class MainService extends Service {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
   }
 
-  private void connectXmpp() {
-    if (!FacebookMessageProvider.isXmppAlive()) {
-      FacebookAccount fba = StoreHandler.getFacebookAccount(this);
-      if (fba != null) {
-        XmppConnector xmppc = new XmppConnector(fba, this);
+  private void connectConnectableMessageProviders(List<Account> accounts) {
+    for (Account a : accounts) {
+      Log.d("rgai", "try connecting account -> " + a);
+      MessageProvider mp = getMessageProviderByAccount(a, this);
+      if (mp.canBroadcastOnNewMessage() && !mp.isConnectionAlive()) {
+        Log.d("rgai", "yes, connectable account -> " + a);
+        XmppConnector xmppc = new XmppConnector(mp, this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
           xmppc.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
           xmppc.execute();
         }
-        
       }
     }
   }
@@ -164,7 +169,8 @@ public class MainService extends Service {
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
-    connectXmpp();
+    List<Account> accounts = StoreHandler.getAccounts(this);
+    
 //    if (iterationCount == 1) {
 //      Debug.startMethodTracing("calc_store_connect_repaired");
 //      Log.d("rgai", "STARTING DEBUG NOW!!!");
@@ -177,6 +183,7 @@ public class MainService extends Service {
     // if true, loading new messages at end of the lists, not checking for new
     // ones
     boolean loadMore = false;
+    boolean forceQuery = false;
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey("type")) {
         type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
@@ -184,12 +191,15 @@ public class MainService extends Service {
       if (intent.getExtras().containsKey("load_more")) {
         loadMore = intent.getExtras().getBoolean("load_more", false);
       }
+      if (intent.getExtras().containsKey("force_query")) {
+        forceQuery = intent.getExtras().getBoolean("force_query", false);
+      }
       if (intent.getExtras().containsKey("act_viewing_message")) {
         actViewingMessageAtThread = (MessageListElement)intent.getExtras().getParcelable("act_viewing_message");
       }
     }
 
-    List<Account> accounts = StoreHandler.getAccounts(this);
+    
     boolean isNet = isNetworkAvailable();
     if (accounts.isEmpty() && !isPhone()) {
       Message msg = handler.obtainMessage();
@@ -208,27 +218,45 @@ public class MainService extends Service {
         handler.setActViewingMessageAtThread(actViewingMessageAtThread);
         
         if (type == null || type.equals(MessageProvider.Type.SMS)) {
-          LongOperation myThread = new LongOperation(this, handler, SmsAccount.account, loadMore);
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-          } else {
-            myThread.execute();
-          }
+          accounts.add(SmsAccount.account);
+//          MessageProvider provider = getMessageProviderByAccount(SmsAccount.account, this);
+//          LongOperation myThread = new LongOperation(this, handler, SmsAccount.account, provider, loadMore);
+//          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//            myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//          } else {
+//            myThread.execute();
+//          }
         }
         
-        if (isNet) {
+//        if (isNet) {
           for (Account acc : accounts) {
+            
             if (type == null || acc.getAccountType().equals(type)) {
-              LongOperation myThread = new LongOperation(this, handler, acc, loadMore);
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+              MessageProvider provider = getMessageProviderByAccount(acc, this);
+              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
+              
+              if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()) {
+                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
+                if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
+                  
+                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
+                
+                  LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                  } else {
+                    myThread.execute();
+                  }
+                } else {
+                  Log.d("rgai", "nem, nem kell lekerdeznunk: " + provider);
+                }
               } else {
-                myThread.execute();
+                Log.d("rgai", "nem, nem kell lekerdeznunk: " + provider);
               }
             }
           }
-        }
-        
+          Log.d("rgai", " . ");
+//        }
       }
     }
     
@@ -359,6 +387,20 @@ public class MainService extends Service {
         }
       }
     }
+  }
+  
+  private MessageProvider getMessageProviderByAccount(Account account, Context context) {
+    MessageProvider mp = null;
+    if (account instanceof GmailAccount) {
+      mp = new SimpleEmailMessageProvider((GmailAccount) account);
+    } else if (account instanceof EmailAccount) {
+      mp = new SimpleEmailMessageProvider((EmailAccount) account);
+    } else if (account instanceof FacebookAccount) {
+      mp = new FacebookMessageProvider((FacebookAccount) account);
+    } else if (account instanceof SmsAccount) {
+      mp = new SmsMessageProvider(context);
+    }
+    return mp;
   }
 
   private class MyHandler extends Handler {
@@ -607,12 +649,15 @@ public class MainService extends Service {
     private String errorMessage = null;
     private final Handler handler;
     private final Account acc;
+    private final MessageProvider messageProvider;
     private boolean loadMore = false;
 
-    public LongOperation( Context context, Handler handler, Account acc, boolean loadMore) {
+    public LongOperation(Context context, Handler handler, Account acc, MessageProvider messageProvider,
+            boolean loadMore) {
       this.context = context;
       this.handler = handler;
       this.acc = acc;
+      this.messageProvider = messageProvider;
       this.context = context;
       this.loadMore = loadMore;
     }
@@ -620,27 +665,8 @@ public class MainService extends Service {
     @Override
     protected List<MessageListElement> doInBackground(String... params) {
       List<MessageListElement> messages = null;
-      String accountName = "";
       try {
-        MessageProvider mp = null;
-        if (acc instanceof GmailAccount) {
-          accountName = ((GmailAccount) acc).getEmail();
-          mp = new SimpleEmailMessageProvider((GmailAccount) acc);
-        } else if (acc instanceof EmailAccount) {
-//          if (iterationCount % 2 == 1) {
-            // Log.d("rgai", "GETTING MAIL WITH ACCOUNT: " + acc);
-            accountName = ((EmailAccount) acc).getEmail();
-            mp = new SimpleEmailMessageProvider((EmailAccount) acc);
-//          }
-        } else if (acc instanceof FacebookAccount) {
-          accountName = ((FacebookAccount) acc).getDisplayName();
-          mp = new FacebookMessageProvider((FacebookAccount) acc);
-        } else if (acc instanceof SmsAccount) {
-          accountName = "SMS";
-          mp = new SmsMessageProvider(this.context);
-        }
-        
-        if (mp != null) {
+        if (messageProvider != null) {
           int currentMessagesToAccount = 0;
           if (loadMore) {
             if (MainService.messages != null) {
@@ -655,7 +681,7 @@ public class MainService extends Service {
           // the already loaded messages to the specific content type...
           Set<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
           
-          messages = mp.getMessageList(currentMessagesToAccount,
+          messages = messageProvider.getMessageList(currentMessagesToAccount,
                   acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH);
           
           // searching for android contacts
@@ -677,7 +703,7 @@ public class MainService extends Service {
       } catch (AuthenticationFailedException ex) {
         ex.printStackTrace();
         this.result = AUTHENTICATION_FAILED_EXCEPTION;
-        this.errorMessage = accountName;
+        this.errorMessage = acc.getDisplayName();
         return null;
       } catch (CertPathValidatorException ex) {
         ex.printStackTrace();

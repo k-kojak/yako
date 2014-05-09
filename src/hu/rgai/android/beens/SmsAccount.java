@@ -28,7 +28,7 @@ public final class SmsAccount implements Account, Parcelable {
 	@Override
 	public String getDisplayName() {
 		// TODO Auto-generated method stub
-		return null;
+		return "SMS";
 	}
 
 	@Override
@@ -71,6 +71,10 @@ public final class SmsAccount implements Account, Parcelable {
   public int hashCode() {
     int hash = 7;
     return hash;
+  }
+
+  public boolean isInternetNeededForLoad() {
+    return false;
   }
   
 }
