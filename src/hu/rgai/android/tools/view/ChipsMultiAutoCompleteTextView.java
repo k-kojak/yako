@@ -21,7 +21,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.List;
 
 public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView implements OnItemClickListener {
 
-  private ArrayList<RecipientItem> recipients;
+  private ArrayList<MessageRecipient> recipients;
   private static int CHIP_TEXT_DIMENSION_IN_DIP = 55;
   private OnChipChangeListener mChipListener = null;
 
@@ -58,7 +58,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   }
   
   public void init(Context context) {
-    recipients = new ArrayList<RecipientItem>();
+    recipients = new ArrayList<MessageRecipient>();
     setOnItemClickListener(this);
     addTextChangedListener(textWather);
   }
@@ -91,7 +91,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
         Spannable sp = ((Spannable)getText());
         ChipsMultiAutoCompleteTextView.ImageSpanExt[] annsToRemove = sp.getSpans(0, getText().length(), ChipsMultiAutoCompleteTextView.ImageSpanExt.class);
         for (int i = 0; i < annsToRemove.length; i++) {
-          recipients.add((RecipientItem)annsToRemove[i].getSpecVal());
+          recipients.add((MessageRecipient)annsToRemove[i].getSpecVal());
         }
         callChipChangeListener();
       }
@@ -127,7 +127,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     
     String newText = "";
     int ind = 0;
-    for (RecipientItem u : recipients) {
+    for (MessageRecipient u : recipients) {
       if (ind > 0) {
         newText += ",";
       }
@@ -159,8 +159,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
 //      SpannableStringBuilder ssb = new SpannableStringBuilder(t);
       int x = 0;
 // loop will generate ImageSpan for every country name separated by comma
-      for (RecipientItem u : recipients) {
-//        c = c.trim();
+      for (MessageRecipient u : recipients) {
 // inflate chips_edittext layout
           LayoutInflater lf = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
           TextView textView = (TextView) lf.inflate(R.layout.chips_edittext, null);
@@ -344,11 +343,11 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     setChips2(); // call generate chips when user select any item from auto complete
   }
   
-  public List<RecipientItem> getRecipients() {
+  public List<MessageRecipient> getRecipients() {
     return recipients;
   }
   
-  public void addRecipient(RecipientItem ri) {
+  public void addRecipient(MessageRecipient ri) {
     recipients.add(ri);
     callChipChangeListener();
     setChips2();

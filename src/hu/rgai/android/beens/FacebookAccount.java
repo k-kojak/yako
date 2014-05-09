@@ -2,12 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package hu.rgai.android.intent.beens.account;
+package hu.rgai.android.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
@@ -38,15 +38,13 @@ public class FacebookAccount implements Account, Parcelable {
     this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt());
   }
   
-  public FacebookAccount(int messageLimit, String displayName, String uniqueName, String id, String password) {
-    this(displayName, uniqueName, id, password, messageLimit);
-  }
-  
   public FacebookAccount(String displayName, String uniqueName, String id, String password, int messageLimit) {
     this.displayName = displayName;
     this.uniqueName = uniqueName;
     this.id = id;
     this.password = password;
+    this.messageLimit = messageLimit;
+    
     this.accountType = MessageProvider.Type.FACEBOOK;
   }
 
@@ -68,6 +66,7 @@ public class FacebookAccount implements Account, Parcelable {
 
   @Override
   public boolean equals(Object obj) {
+    
     if (obj == null) {
       return false;
     }
@@ -78,7 +77,7 @@ public class FacebookAccount implements Account, Parcelable {
     if ((uniqueName == null) ? (other.getUniqueName() != null) : !uniqueName.equals(other.getUniqueName())) {
       return false;
     }
-    if (accountType.equals(other.getAccountType())) {
+    if (!accountType.equals(other.getAccountType())) {
       return false;
     }
     return true;
@@ -114,7 +113,7 @@ public class FacebookAccount implements Account, Parcelable {
 
   @Override
   public String toString() {
-    return "FacebookAccountAndr{" + "displayName=" + displayName + ", uniqueName=" + uniqueName +'}';
+    return "FacebookAccount{" + "displayName=" + displayName + ", uniqueName=" + uniqueName + ", type=" + accountType + '}';
   }
   
   

@@ -4,7 +4,7 @@ package hu.rgai.android.workers;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 
 /**

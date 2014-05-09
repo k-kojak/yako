@@ -7,21 +7,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.telephony.SmsManager;
 import android.util.Log;
+import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.SmsMessageRecipient;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.SmsAccount;
+import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -117,9 +115,9 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         Person from = null;
   //      if (!ti.isMe) {
         if (ti.personId == 0) {
-          from = new Person(ti.address, ti.address, Type.SMS);
+          from = new Person(ti.address, ti.address, MessageProvider.Type.SMS);
         } else {
-          from = new Person(ti.personId+"", ti.address, Type.SMS);
+          from = new Person(ti.personId+"", ti.address, MessageProvider.Type.SMS);
         }
   //      } else {
   ////        from = new Person(ti.personId+"", ti.address, Type.SMS);
@@ -137,7 +135,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           foundThreads++;
           if (foundThreads > limit + offset) break;
           messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
-                  from, null, new Date(ti.date), Type.SMS));
+                  from, null, new Date(ti.date), SmsAccount.account, Type.SMS));
         }
       }
       cur.close();
@@ -176,7 +174,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 //        Log.d("rgai", "SMS STATUS -> " + cur.getLong(8));
 //        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
 //        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
-        ftm.addMessage(new MessageAtom(
+        ftm.addMessage(new FullSimpleMessage(
                 cur.getString(1),
                 cur.getString(2),
                 new HtmlContent(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),

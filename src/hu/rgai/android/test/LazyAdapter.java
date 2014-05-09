@@ -13,13 +13,13 @@ import hu.rgai.android.beens.BitmapResult;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.view.AsyncImageLoadProvider;
 import hu.rgai.android.tools.view.AsyncImageView;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 
 public class LazyAdapter extends BaseAdapter {
 

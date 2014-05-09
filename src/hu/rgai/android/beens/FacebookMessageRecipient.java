@@ -1,14 +1,13 @@
 package hu.rgai.android.beens;
 
 import android.net.Uri;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookMessageRecipient implements RecipientItem {
+public class FacebookMessageRecipient implements MessageRecipient {
   
   protected String id;
   protected String displayName;
@@ -16,6 +15,10 @@ public class FacebookMessageRecipient implements RecipientItem {
   protected Uri imgUri;
   protected int contactId;
 
+  public FacebookMessageRecipient(String id) {
+    this.id = id;
+  }
+  
   public FacebookMessageRecipient(String displayData, String fbId, String displayName, Uri imgUri, int contactId) {
     this.id = fbId;
     this.displayData = displayData;

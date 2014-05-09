@@ -19,7 +19,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.EmailAccount;
+import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.test.R;
 
 import java.util.HashMap;

@@ -16,7 +16,7 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.view.AutoCompleteRow;
 import java.lang.reflect.Constructor;
@@ -123,10 +123,10 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
 
     Class recipientClass = Settings.getContactDataTypeToRecipientClass().get(type);
     Constructor constructor = null;
-    RecipientItem ri = null;
+    MessageRecipient ri = null;
     try {
       constructor = recipientClass.getConstructor(String.class, String.class, String.class, Uri.class, int.class);
-      ri = (RecipientItem) constructor.newInstance(displayData, data, name, photoUri, Integer.parseInt(id));
+      ri = (MessageRecipient) constructor.newInstance(displayData, data, name, photoUri, Integer.parseInt(id));
     } catch (NoSuchMethodException ex) {
       Log.d("rgai", "NoSuchMethodException");
     } catch (InstantiationException ex) {

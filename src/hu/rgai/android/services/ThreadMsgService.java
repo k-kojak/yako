@@ -14,7 +14,7 @@ import android.os.Message;
 import android.util.Log;
 import hu.rgai.android.workers.ThreadContentGetter;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Account;
 
 /**
  *

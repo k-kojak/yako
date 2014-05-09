@@ -1,9 +1,16 @@
-package hu.rgai.android.intent.beens;
+package hu.rgai.android.beens;
 
 import android.content.ContentResolver;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.PhoneLookup;
+import android.util.Log;
 import hu.rgai.android.config.Settings;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-
+import hu.rgai.android.messageproviders.MessageProvider;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -13,15 +20,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.PhoneLookup;
-import android.util.Log;
 
 /**
  * 
@@ -51,18 +49,24 @@ public final class Person implements Parcelable {
   };
 
   public Person(String id, String name, MessageProvider.Type type) {
+    this(-1, id, name, type);
+  }
+  
+  public Person(long contactId, String id, String name, MessageProvider.Type type) {
+    this.contactId = contactId;
     this.id = id;
     this.name = name;
     this.type = type;
-    this.contactId = -1;
   }
   
-  public Person(long contactId, String name, String id) {
-    this.contactId = contactId;
-    this.name = name;
-    this.id = id;
-  }
-  
+  /**
+   * The data which identifies the person.
+   * Although this is not enough to be unique, the type of the Person should be used with this
+   * data to be sure that the person and it's id is unique.
+   * The id holds something like: phone number, email address or Facebook user ID, etc.
+   * 
+   * @return the id of the user
+   */
   public String getId() {
     return id;
   }
@@ -161,12 +165,10 @@ public final class Person implements Parcelable {
   }
 
   public static Person searchPersonAndr(Context context, Person p) {
-//    Log.d("rgai", "search person: " + p.toString());
     if (p == null) {
       return null;
     }
     String key = p.getType().toString() + "_" + p.getId();
-//    Log.d("rgai", "MAP KEY -> " + key);
     if (storedPerson == null) {
       storedPerson = new HashMap<String, Person>();
     }
@@ -175,7 +177,7 @@ public final class Person implements Parcelable {
     } else {
 
       long rawContactId = getUid(context, p.getType(), p.getId(), p.getName());
-//      Log.d("rgai", "UID of user " + p.toString() + ": " + rawContactId);
+      
       key = p.getType().toString() + "_" + rawContactId;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
@@ -197,9 +199,9 @@ public final class Person implements Parcelable {
         // user is not in contact list
         else {
           if (p.getType().equals(MessageProvider.Type.SMS)) {
-            pa = new Person(-1, p.getName(), p.getName());
+            pa = new Person(-1, p.getName(), p.getName(), MessageProvider.Type.SMS);
           } else {
-            pa = new Person(-1, p.getName(), p.getId());
+            pa = new Person(-1, p.getId(), p.getName(), MessageProvider.Type.SMS);
           }
           // pa = new PersonAndr(-1, p.getName());
         }
@@ -219,7 +221,7 @@ public final class Person implements Parcelable {
         new String[] { rawContactId + "" }, null);
     if (cursor.getCount() > 0) {
       cursor.moveToNext();
-      pa = new Person(rawContactId, cursor.getString(0), userAddrId);
+      pa = new Person(rawContactId, userAddrId, cursor.getString(0), MessageProvider.Type.SMS);
     }
     cursor.close();
     if (pa != null) {

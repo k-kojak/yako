@@ -1,9 +1,9 @@
-package hu.rgai.android.intent.beens;
+package hu.rgai.android.beens;
 
 import android.net.Uri;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
-public class SmsMessageRecipient implements RecipientItem {
+public class SmsMessageRecipient implements MessageRecipient {
 
 	private String displayData;
   private String phoneNum;

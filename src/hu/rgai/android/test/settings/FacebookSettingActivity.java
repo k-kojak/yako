@@ -39,7 +39,7 @@ import hu.rgai.android.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import java.util.logging.Level;
@@ -118,7 +118,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
 
   private void updateUI() {
-    Log.d("rgai", "updateUI() ");
 //      Session session = Session.getActiveSession();
     if (user != null) {
       profilePictureView.setProfileId(user.getId());
@@ -314,7 +313,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
 //      onSessionStateChange(session, session.getState(), null);
 //    }
 //    uiHelper.onResume();
-    Log.d("rgai", "onResume");
     updateUI();
   }
 

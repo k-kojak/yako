@@ -5,23 +5,21 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.widget.Toast;
+import hu.rgai.android.beens.EmailMessageRecipient;
+import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.MessageReply;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.EmailMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +36,7 @@ import javax.mail.NoSuchProviderException;
 public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   private final Context context;
-  private final RecipientItem recipient;
+  private final MessageRecipient recipient;
   private final Handler handler;
   private final List<Account> accounts;
   private final String content;
@@ -47,7 +45,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   private final String result = null;
 
-  public MessageSender(RecipientItem recipient, List<Account> accounts, Handler handler,
+  public MessageSender(MessageRecipient recipient, List<Account> accounts, Handler handler,
           String subject, String content, Context context) {
     this.recipient = recipient;
     this.accounts = accounts;
@@ -143,7 +141,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
       }
     }
     if (type.equals(MessageProvider.Type.SMS)) {
-      return new SmsAccountAndr();
+      return SmsAccount.account;
     }
     return null;
   }

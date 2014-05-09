@@ -1,12 +1,14 @@
+package hu.rgai.android.beens;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package hu.rgai.android.intent.beens.account;
 
+//android.os.Parcel;
 import android.os.Parcel;
 import android.os.Parcelable;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *

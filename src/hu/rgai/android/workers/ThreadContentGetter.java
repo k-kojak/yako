@@ -9,13 +9,12 @@ import android.util.Log;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -87,17 +86,17 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
 	          
           }
           // cast result to ThreadMessage, since this is a thread displayer
-          threadMessage = mp.getMessage(params[0], offset, 20));
+          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, 20);
           Iterator<FullSimpleMessage> iterator = threadMessage.getMessages().iterator();
-          // ONLY SEARCH FOR ANDROID PERSONS HERE IF THERES ANY, BUT SKIP THE PARCELABLE CONVERT STUFF
+          // ONLY SEARCH FOR ANDROID PERSONS HERE IF THERE IS ANY, BUT SKIP THE PARCELABLE CONVERT STUFF
           while (iterator.hasNext()) {
-            MessageAtom ma = iterator.next();
-            FullSimpleMessage map = new FullSi(ma);
+            FullSimpleMessage ma = iterator.next();
+//            FullSimpleMessage map = new FullSimpleMessage(ma);
 //            Log.d("rgai", "PERSON BEFORE repl (thread) -> " + ma.getFrom());
-            map.setFrom(Person.searchPersonAndr(context, ma.getFrom()));
+//            map.setFrom(Person.searchPersonAndr(context, ma.getFrom()));
 //            Log.d("rgai", "PERSON AFTER  repl (thread) -> " + map.getFrom());
-            threadMessage.getMessagesParc().add(map);
-            iterator.remove();
+//            threadMessage.getMessagesParc().add(map);
+//            iterator.remove();
           }
         }
 
@@ -133,7 +132,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     }
 
     @Override
-    protected void onPostExecute(FullThreadMessageParc result) {
+    protected void onPostExecute(FullThreadMessage result) {
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
       bundle.putParcelable("threadMessage", result);

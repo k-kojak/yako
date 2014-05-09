@@ -1,14 +1,13 @@
 package hu.rgai.android.beens;
 
 import android.net.Uri;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class EmailMessageRecipient implements RecipientItem {
+public class EmailMessageRecipient implements MessageRecipient {
   
   protected String name;
   protected String email;

@@ -11,19 +11,17 @@ import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -151,6 +149,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                             from,
                             recipients,
                             new Date(msg.getLong("updated_time") * 1000),
+                            account,
                             MessageProvider.Type.FACEBOOK));
                   }
                 } else if (resSetName.equals("friend")) {
@@ -188,7 +187,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     });
     Request.executeAndWait(request);
-
+    
     return messages;
   }
   
@@ -314,7 +313,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 //                    int unreadCount = msg.getInt("unread");
                     String body = msg.getString("body");
 
-                    ftm.addMessage(new MessageAtom(
+                    ftm.addMessage(new FullSimpleMessage(
                             msg.getString("message_id"),
                             "",
                             new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
@@ -330,7 +329,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   for (int j = 0; j < userArr.length(); j++) {
                     JSONObject user = userArr.getJSONObject(j);
                     // matching friend names to messages by id
-                    for (MessageAtom ma : ftm.getMessages()) {
+                    for (FullSimpleMessage ma : ftm.getMessages()) {
                       if (ma.getFrom().getId().equals(user.getString("uid"))) {
                         ma.getFrom().setName(user.getString("name"));
                       }

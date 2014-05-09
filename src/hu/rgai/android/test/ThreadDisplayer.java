@@ -38,19 +38,18 @@ import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.SmsMessageRecipient;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.SmsMessageRecipient;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.workers.ThreadContentGetter;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -75,7 +74,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
   private boolean fromNotification = false;
-  private MessageListElement mlep = null;
+  private MessageListElement mle = null;
   private String mThreadId = null;
   private TextWatcher mTextWatcher = null;
   private boolean mTextWatcherAdded = false;
@@ -175,7 +174,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   
   private void removeNotificationIfExists() {
-    if (mlep.equals(MainService.mLastNotifiedMessage)) {
+    if (mle.equals(MainService.mLastNotifiedMessage)) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
       MainService.mLastNotifiedMessage = null;
@@ -186,10 +185,11 @@ public class ThreadDisplayer extends ActionBarActivity {
   protected void onResume() {
     super.onResume();
     
-    mlep = MainService.getListElementById(mThreadId, account);
+    mle = MainService.getListElementById(mThreadId, account);
+    Log.d("rgai", "the found message list element: " + mle);
     removeNotificationIfExists();
-    MainService.setMessageSeenAndRead(mlep);
-    if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+    MainService.setMessageSeenAndRead(mle);
+    if (mle.isGroupMessage() && mle.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedGroupChat = true;
     } else {
       unsopportedGroupChat = false;
@@ -211,15 +211,15 @@ public class ThreadDisplayer extends ActionBarActivity {
       mTextWatcherAdded = true;
     }
       
-    from = mlep.getFrom();
+    from = mle.getFrom();
     
     getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + account.getAccountType().toString());
 
     
     
     
-    MainService.actViewingMessage = mlep;
-    Log.d("rgai", "MainService.actViewingMessage = " + mlep);
+    MainService.actViewingMessage = mle;
+    Log.d("rgai", "MainService.actViewingMessage = " + mle);
     
     dur = new DataUpdateReceiver(this);
     IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
@@ -233,7 +233,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
 
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
-    displayContent(mlep);
+    displayContent(mle);
   }
 
   public void sendMessage(View view) {
@@ -245,7 +245,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     List<Account> accs = new LinkedList<Account>();
     accs.add(account);
-    RecipientItem ri = null;
+    MessageRecipient ri = null;
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       ri = new FacebookMessageRecipient("", from.getId(), from.getName(), null, 1);
     } else {

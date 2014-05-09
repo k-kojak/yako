@@ -3,9 +3,7 @@ package hu.rgai.android.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import hu.rgai.android.intent.beens.Person;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
+import hu.rgai.android.messageproviders.MessageProvider;
 import java.util.Date;
 import java.util.List;
 

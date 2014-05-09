@@ -34,12 +34,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.workers.EmailMessageMarker;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
@@ -47,6 +46,7 @@ import hu.rgai.android.test.R;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
+import hu.rgai.android.workers.EmailMessageMarker;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -72,7 +72,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private boolean mFromNotification = false;
   private final String mSubject = null;
   private Person mFrom = null;
-  private FullSimpleMessageParc mContent = null;
+  private FullSimpleMessage mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
   private NonSwipeableViewPager mPager;
@@ -93,7 +93,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mAccount = getIntent().getExtras().getParcelable("account");
     String mlepId = getIntent().getExtras().getString("msg_list_element_id");
     mMessage = MainService.getListElementById(mlepId, mAccount);
-    mContent = (FullSimpleMessageParc)mMessage.getFullMessage();
+    mContent = (FullSimpleMessage)mMessage.getFullMessage();
     mFrom = mMessage.getFrom();
     MainService.setMessageSeenAndRead(mMessage);
     

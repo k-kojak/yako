@@ -16,7 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;

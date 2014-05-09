@@ -20,7 +20,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.GmailAccount;
+import hu.rgai.android.beens.GmailAccount;
 import hu.rgai.android.test.R;
 import java.util.regex.Pattern;
 

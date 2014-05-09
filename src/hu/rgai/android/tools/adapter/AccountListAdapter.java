@@ -10,11 +10,11 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.util.List;
 import java.util.Map;
 

@@ -1,7 +1,7 @@
-package hu.rgai.android.intent.beens.account;
+package hu.rgai.android.beens;
 
 import android.os.Parcelable;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 
 

@@ -45,8 +45,8 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
@@ -284,7 +284,7 @@ public class MainActivity extends ActionBarActivity {
   private List<Account> getAllAccounts() {
     List<Account> list = StoreHandler.getAccounts(this);
     if (isPhone(this)) {
-      list.add(new SmsAccountAndr());
+      list.add(SmsAccount.account);
     }
 
     return list;
@@ -366,7 +366,6 @@ public class MainActivity extends ActionBarActivity {
   protected void onResume() {
     super.onResume();
     removeNotificationIfExists();
-    Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
     // initLastNotificationDates();
     updateLastNotification(instance, null);

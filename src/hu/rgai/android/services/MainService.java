@@ -25,29 +25,28 @@ import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
-import hu.rgai.android.intent.beens.FullSimpleMessage;
-import hu.rgai.android.intent.beens.HtmlContent;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
-import hu.rgai.android.intent.beens.account.GmailAccount;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.beens.GmailAccount;
+import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.workers.XmppConnector;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -209,8 +208,7 @@ public class MainService extends Service {
         handler.setActViewingMessageAtThread(actViewingMessageAtThread);
         
         if (type == null || type.equals(MessageProvider.Type.SMS)) {
-          Account smsAcc = new SmsAccountAndr();
-          LongOperation myThread = new LongOperation(this, handler, smsAcc, loadMore);
+          LongOperation myThread = new LongOperation(this, handler, SmsAccount.account, loadMore);
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
           } else {
@@ -326,17 +324,17 @@ public class MainService extends Service {
   }
 
   public void setAllMessagesToSeen() {
-    for (MessageListElement mlep : messages) {
-      mlep.setSeen(true);
+    for (MessageListElement mle : messages) {
+      mle.setSeen(true);
     }
   }
 
   public static MessageListElement getListElementById(String id, Account a) {
     // TODO: if we display a notification, and later..much later we open the message from notification bar
     //then it is possible that messages variable is unitialized..so null..
-    for (MessageListElement mlep : messages) {
-      if (mlep.getId().equals(id) && mlep.getAccount().equals(a)) {
-        return mlep;
+    for (MessageListElement mle : messages) {
+      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
+        return mle;
       }
     }
     return null;
@@ -560,7 +558,7 @@ public class MainService extends Service {
 //          Log.d("rgai", "MESSAGE ALREADY IN LIST -> " + newMessage);
           // only update old messages' flags with the new one, and nothing else
           if (newMessage.isUpdateFlags()) {
-            Log.d("rgai", "JUST UPDATE SEEN INFO!");
+//            Log.d("rgai", "JUST UPDATE SEEN INFO!");
             if (storedFoundMessage != null) {
               storedFoundMessage.setSeen(newMessage.isSeen());
               storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
@@ -621,7 +619,7 @@ public class MainService extends Service {
 
     @Override
     protected List<MessageListElement> doInBackground(String... params) {
-      List<MessageListElement> messages = new LinkedList<MessageListElement>();
+      List<MessageListElement> messages = null;
       String accountName = "";
       try {
         MessageProvider mp = null;
@@ -637,35 +635,43 @@ public class MainService extends Service {
         } else if (acc instanceof FacebookAccount) {
           accountName = ((FacebookAccount) acc).getDisplayName();
           mp = new FacebookMessageProvider((FacebookAccount) acc);
-        } else if (acc instanceof SmsAccountAndr) {
+        } else if (acc instanceof SmsAccount) {
           accountName = "SMS";
           mp = new SmsMessageProvider(this.context);
         }
+        
         if (mp != null) {
           int currentMessagesToAccount = 0;
           if (loadMore) {
-            if (MainService.this.messages != null) {
-              for (MessageListElement m : MainService.this.messages) {
+            if (MainService.messages != null) {
+              for (MessageListElement m : MainService.messages) {
                 if (m.getAccount().equals(acc)) {
                   currentMessagesToAccount++;
                 }
               }
             }
           }
-          Set<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
-//          Log.d("rgai", "loadedMessages: " + loadedMessages);
-          List<MessageListElement> parcelableMessages = nonParcToParc(mp.getMessageList(currentMessagesToAccount,
-                  acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH));
           
-          for (MessageListElement mlep : parcelableMessages) {
-            if (!messages.contains(mlep)) {
-              messages.add(mlep);
-            } else {
-              if (!mlep.isUpdateFlags()) {
-                messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
-              }
-            }
-          }
+          // the already loaded messages to the specific content type...
+          Set<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
+          
+          messages = mp.getMessageList(currentMessagesToAccount,
+                  acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+          
+          // searching for android contacts
+          extendPersonObject(messages);
+          
+//          List<MessageListElement> parcelableMessages = extendPersonObject();
+          
+//          for (MessageListElement mlep : parcelableMessages) {
+//            if (!messages.contains(mlep)) {
+//              messages.add(mlep);
+//            } else {
+//              if (!mlep.isUpdateFlags()) {
+//                messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
+//              }
+//            }
+//          }
         }
 
       } catch (AuthenticationFailedException ex) {
@@ -718,37 +724,24 @@ public class MainService extends Service {
       return selected;
     }
 
-    private List<MessageListElement> nonParcToParc(List<MessageListElement> origi) {
-      List<MessageListElement> parc = new LinkedList<MessageListElement>();
+    private void extendPersonObject(List<MessageListElement> origi) {
+      Person p;
       for (MessageListElement mle : origi) {
-        
-        MessageListElement mlep = new MessageListElement(mle, acc);
-        Person paFound = Person.searchPersonAndr(context, mle.getFrom());
-        mlep.setFrom(paFound);
-        
+        p = Person.searchPersonAndr(context, mle.getFrom());
+        mle.setFrom(p);
         if (!mle.isUpdateFlags()) {
-          
-          if (mlep.getFullMessage() != null && mlep.getFullMessage() instanceof FullSimpleMessage) {
-            ((FullSimpleMessage)mlep.getFullMessage()).setFrom(paFound);
-            HtmlContent htmlC = ((FullSimpleMessage)mlep.getFullMessage()).getContent();
-            ((FullSimpleMessage)mlep.getFullMessage()).setContent(new HtmlContent(htmlC));
+          if (mle.getFullMessage() != null && mle.getFullMessage() instanceof FullSimpleMessage) {
+            ((FullSimpleMessage)mle.getFullMessage()).setFrom(p);
           }
           
-          if (mlep.getRecipientsList() != null) {
-            for (int i = 0; i < mlep.getRecipientsList().size(); i++) {
-              Person pa = Person.searchPersonAndr(context, mlep.getRecipientsList().get(i));
-              mlep.getRecipientsList().set(i, pa);
+          if (mle.getRecipientsList() != null) {
+            for (int i = 0; i < mle.getRecipientsList().size(); i++) {
+              p = Person.searchPersonAndr(context, mle.getRecipientsList().get(i));
+              mle.getRecipientsList().set(i, p);
             }
           }
-          
-        } else {
-          // just make sure if we have a flag updating message, then it does not have a message part
-          mlep.setFullMessage(null);
         }
-        // Log.d("rgai", "@A message from REPLACED user -> " + mlep.getFrom());
-        parc.add(mlep);
       }
-      return parc;
     }
 
     @Override

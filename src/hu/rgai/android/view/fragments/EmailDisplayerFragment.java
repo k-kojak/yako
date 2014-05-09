@@ -14,16 +14,16 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Person;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.Utils;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 
 /**
  * This class responsible for displaying an email message.
@@ -32,12 +32,12 @@ import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
  */
 public class EmailDisplayerFragment extends Fragment {
 
-  private FullSimpleMessageParc mContent = null;
+  private FullSimpleMessage mContent = null;
   
   // account which used to fetch email (if necessary)
   private Account mAccount;
   
-  private MessMessageListElementssage;
+  private MessageListElement mMessage;
   // the sender of the message
   private Person mFrom;
   
@@ -79,7 +79,7 @@ public class EmailDisplayerFragment extends Fragment {
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
     mFrom = (Person) mMessage.getFrom();
-    mContent = (FullSimpleMessageParc) mMessage.getFullMessage();
+    mContent = (FullSimpleMessage) mMessage.getFullMessage();
     displayMessage();
     
     mWebViewClient = new WebViewClient() {

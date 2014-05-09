@@ -2,15 +2,14 @@ package hu.rgai.android.view.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import hu.rgai.android.beens.Attachment;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
+import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.intent.beens.account.Account;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.adapter.AttachmentAdapter;
@@ -51,7 +50,7 @@ public class EmailAttachmentFragment extends Fragment {
     convertAttachments();
     checkAttachments();
     mListAdapter = new AttachmentAdapter(this.getActivity(),
-            ((FullSimpleMessageParc)mMessage.getFullMessage()).getAttachments(),
+            ((FullSimpleMessage)mMessage.getFullMessage()).getAttachments(),
             mAccount, mMessage.getId());
     
     
@@ -60,7 +59,7 @@ public class EmailAttachmentFragment extends Fragment {
   }
   
   private void checkAttachments() {
-    FullSimpleMessageParc fsm = (FullSimpleMessageParc)mMessage.getFullMessage();
+    FullSimpleMessage fsm = (FullSimpleMessage)mMessage.getFullMessage();
     File folder = StoreHandler.getEmailAttachmentDownloadLocation();
     for (int i = 0; i < fsm.getAttachments().size(); i++) {
       Attachment a = (Attachment)fsm.getAttachments().get(i);
@@ -76,7 +75,7 @@ public class EmailAttachmentFragment extends Fragment {
   }
   
   private void convertAttachments() {
-    FullSimpleMessageParc fsm = (FullSimpleMessageParc)mMessage.getFullMessage();
+    FullSimpleMessage fsm = (FullSimpleMessage)mMessage.getFullMessage();
     for (int i = 0; i < fsm.getAttachments().size(); i++) {
       Attachment a = fsm.getAttachments().get(i);
       if (a instanceof Attachment) {

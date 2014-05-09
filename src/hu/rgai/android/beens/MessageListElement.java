@@ -3,14 +3,8 @@ package hu.rgai.android.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.Person;
-import hu.rgai.android.intent.beens.account.Account;
-import hu.rgai.android.intent.beens.account.EmailAccount;
-import hu.rgai.android.intent.beens.account.FacebookAccount;
-import hu.rgai.android.intent.beens.account.GmailAccount;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
@@ -76,15 +70,16 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
   public MessageListElement(String id, boolean seen, String title, String subTitle, int unreadCount, Person from,
-          List<Person> recipients, Date date, Type messageType, boolean updateFlags) {
+          List<Person> recipients, Date date, Account account, Type messageType, boolean updateFlags) {
     this.id = id;
     this.seen = seen;
     this.title = title;
+    this.subTitle = subTitle;
+    this.unreadCount = unreadCount;
     this.from = from;
     this.recipients = recipients;
     this.date = date;
-    this.subTitle = subTitle;
-    this.unreadCount = unreadCount;
+    this.account = account;
     this.messageType = messageType;
     this.updateFlags = updateFlags;
   }
@@ -115,22 +110,22 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     }
   }
   
-  public MessageListElement(MessageListElement mle, Account account) {
-    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
-            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.isUpdateFlags(),
-            mle.getFullMessage(), account);
-    updatePrettyDateString();
-  }
+//  public MessageListElement(MessageListElement mle, Account account) {
+//    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
+//            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.isUpdateFlags(),
+//            mle.getFullMessage(), account);
+//    updatePrettyDateString();
+//  }
   
-  public MessageListElement(String id, boolean seen, String title, String subTitle,
-          int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
-          boolean updateFlags, FullMessage fullMessage, Account account) {
-    this(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType, updateFlags);
-    convertFullMessageToParc(fullMessage, messageType);
-    
-    this.account = account;
-    updatePrettyDateString();
-  }
+//  public MessageListElement(String id, boolean seen, String title, String subTitle,
+//          int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
+//          boolean updateFlags, FullMessage fullMessage, Account account) {
+//    this(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType, updateFlags);
+//    convertFullMessageToParc(fullMessage, messageType);
+//    
+//    this.account = account;
+//    updatePrettyDateString();
+//  }
   
   /**
    * Default constructor.
@@ -150,8 +145,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param date date of the message
    * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, int unreadCount, Person from, List<Person> recipients, Date date, Type messageType) {
-    this(id, seen, title, null, unreadCount, from, recipients, date, messageType, false);
+  public MessageListElement(String id, boolean seen, String title, int unreadCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
+    this(id, seen, title, null, unreadCount, from, recipients, date, account, messageType, false);
   }
   
   /**
@@ -165,8 +160,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param recipients the original recipients
    * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, Person from, List<Person> recipients, Date date, Type messageType) {
-    this(id, seen, title, null, -1, from, recipients, date, messageType, false);
+  public MessageListElement(String id, boolean seen, String title, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
+    this(id, seen, title, null, -1, from, recipients, date, account, messageType, false);
   }
   
    /**
@@ -182,16 +177,12 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
    */
   public MessageListElement(String id, boolean seen, String title, String snippet,
-          Person from, List<Person> recipients, Date date, Type messageType) {
-    this(id, seen, title, snippet, -1, from, recipients, date, messageType, false);
+          Person from, List<Person> recipients, Date date, Account account, Type messageType) {
+    this(id, seen, title, snippet, -1, from, recipients, date, account, messageType, false);
   }
   
-  public MessageListElement(String id, boolean seen, Person from, Date date, Type messageType, boolean updateFlags) {
-    this(id, seen, null, null, -1, from, null, date, messageType, updateFlags);
-  }
-  
-  public MessageListElement(String id, Person from, Date date, Type messageType) {
-    this(id, false, null, null, -1, from, null, date, messageType, false);
+  public MessageListElement(String id, boolean seen, Person from, Date date, Account account, Type messageType, boolean updateFlags) {
+    this(id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
   }
   
   private void initStringToClassLoader() {
@@ -200,33 +191,33 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 	      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccount.class.getClassLoader());
 	      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class.getClassLoader());
 	      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccountAndr.class.getClassLoader());
+	      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccount.class.getClassLoader());
 	    }	  
   }
   
-  private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
-    if (fullMessage != null) {
-      Class fullParcMessageClass = Settings.getAccountTypeToFullParcMessageClass().get(type);
-      Class fullMessageClass = Settings.getAccountTypeToFullMessageClass().get(type);
-      if (fullParcMessageClass == null) {
-        throw new RuntimeException("Full message class is null, " + account.getAccountType() + " is not a valid TYPE.");
-      }
-      try {
-        Constructor constructor = fullParcMessageClass.getConstructor(fullMessageClass);
-        this.fullMessage = (FullMessage) constructor.newInstance(fullMessage);
-      } catch (NoSuchMethodException ex) {
-        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (InstantiationException ex) {
-        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IllegalAccessException ex) {
-        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IllegalArgumentException ex) {
-        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (InvocationTargetException ex) {
-        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-      }
-    }
-  }
+//  private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
+//    if (fullMessage != null) {
+//      Class fullParcMessageClass = Settings.getAccountTypeToFullParcMessageClass().get(type);
+//      Class fullMessageClass = Settings.getAccountTypeToFullMessageClass().get(type);
+//      if (fullParcMessageClass == null) {
+//        throw new RuntimeException("Full message class is null, " + account.getAccountType() + " is not a valid TYPE.");
+//      }
+//      try {
+//        Constructor constructor = fullParcMessageClass.getConstructor(fullMessageClass);
+//        this.fullMessage = (FullMessage) constructor.newInstance(fullMessage);
+//      } catch (NoSuchMethodException ex) {
+//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
+//      } catch (InstantiationException ex) {
+//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
+//      } catch (IllegalAccessException ex) {
+//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
+//      } catch (IllegalArgumentException ex) {
+//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
+//      } catch (InvocationTargetException ex) {
+//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
+//      }
+//    }
+//  }
           
 
   public static void refreshCurrentDates() {
@@ -272,7 +263,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public final void updatePrettyDateString() {
     updatePrettyDateString(new SimpleDateFormat());
   }
-  
+
   public Account getAccount() {
     return account;
   }

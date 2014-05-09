@@ -1,13 +1,13 @@
 package hu.rgai.android.test.settings;
 
-import hu.rgai.android.intent.beens.account.Account;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
 public interface SettingFragment {
-  public Type getType();
+  public MessageProvider.Type getType();
   public Account getAccount();
 }

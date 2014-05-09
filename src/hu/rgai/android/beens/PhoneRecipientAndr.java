@@ -1,23 +1,28 @@
-package hu.rgai.android.intent.beens;
+package hu.rgai.android.beens;
 
 import android.net.Uri;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class PhoneRecipientAndr extends PhoneRecipient implements RecipientItem {
+public class PhoneRecipientAndr implements MessageRecipient {
 
   private String displayName;
   private Uri imgUri;
   private int contactId;
+  private String number;
   
   public PhoneRecipientAndr(String displayData, String number, String displayName, Uri imgUri, int contactId) {
-    super(number);
+    this.number = number;
     this.displayName = displayName;
     this.imgUri = imgUri;
     this.contactId = contactId;
+  }
+  
+  public String getNumber() {
+    return number;
   }
   
   public String getData() {
