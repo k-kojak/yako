@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
@@ -45,6 +46,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     context = myContext;
   }
 
+  public Account getAccount() {
+    return SmsAccount.account;
+  }
+  
   public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,

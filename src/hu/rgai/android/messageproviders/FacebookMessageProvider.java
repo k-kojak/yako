@@ -11,16 +11,17 @@ import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.MessageRecipient;
-import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -62,6 +63,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     this.account = account;
   }
 
+  public Account getAccount() {
+    return account;
+  }
+  
   public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,

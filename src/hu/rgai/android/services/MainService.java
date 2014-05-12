@@ -13,9 +13,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -26,7 +24,6 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
@@ -34,20 +31,13 @@ import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.EmailAccount;
-import hu.rgai.android.beens.FacebookAccount;
-import hu.rgai.android.beens.GmailAccount;
 import hu.rgai.android.beens.SmsAccount;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
-import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.rgai.android.workers.ActiveConnectionConnector;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -56,7 +46,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -102,8 +91,6 @@ public class MainService extends Service {
     RUNNING = true;
     handler = new MyHandler(this);
 
-    AndroidUtils.connectConnectableMessageProviders(this);
-    
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -134,7 +121,6 @@ public class MainService extends Service {
     RUNNING = false;
     Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
     
-    // unregisterReceiver(emailContentChangeReceiver);
   }
 
   private void updateMessagesPrettyDate() {
@@ -203,40 +189,27 @@ public class MainService extends Service {
         
         if (type == null || type.equals(MessageProvider.Type.SMS)) {
           accounts.add(SmsAccount.account);
-//          MessageProvider provider = getMessageProviderByAccount(SmsAccount.account, this);
-//          LongOperation myThread = new LongOperation(this, handler, SmsAccount.account, provider, loadMore);
-//          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//            myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-//          } else {
-//            myThread.execute();
-//          }
         }
         
-//        if (isNet) {
-          for (Account acc : accounts) {
-            
-            if (type == null || acc.getAccountType().equals(type)) {
-              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
-              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
-              
-              if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()) {
-                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
-                if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
-                  
-                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
-                
-                  LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
-                  AndroidUtils.<String, Integer, List<MessageListElement>>startAsyncTask(myThread);
-                } else {
-                  Log.d("rgai", "nem, nem kell lekerdeznunk: " + provider);
-                }
-              } else {
-                Log.d("rgai", "nem, nem kell lekerdeznunk: " + provider);
+        for (Account acc : accounts) {
+          if (type == null || acc.getAccountType().equals(type)) {
+            MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
+//              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
+
+            // checking if live connections are still alive, reconnect them if not
+            AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, this);
+            if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()) {
+//                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
+              if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
+//                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
+
+                LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
+                AndroidUtils.<String, Integer, List<MessageListElement>>startAsyncTask(myThread);
               }
             }
           }
-          Log.d("rgai", " . ");
-//        }
+        }
+//          Log.d("rgai", " . ");
       }
     }
     

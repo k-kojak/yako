@@ -26,17 +26,20 @@ public class AndroidUtils {
 
   
   public static void connectConnectableMessageProviders(Context context) {
-    
     List<Account> accounts = StoreHandler.getAccounts(context);
     
     for (Account a : accounts) {
       Log.d("rgai", "try connecting account -> " + a);
       MessageProvider mp = getMessageProviderInstanceByAccount(a, context);
-      if (mp.canBroadcastOnNewMessage() && !mp.isConnectionAlive()) {
-        Log.d("rgai", "yes, connectable account -> " + a);
-        ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
-        AndroidUtils.<String, Integer, Boolean>startAsyncTask(connector);
-      }
+      checkAndConnectMessageProviderIfConnectable(mp, context);
+    }
+  }
+  
+  public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, Context context) {
+    if (mp.canBroadcastOnNewMessage() && !mp.isConnectionAlive()) {
+      Log.d("rgai", "yes, connectable account -> " + mp.getAccount());
+      ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
+      AndroidUtils.<String, Integer, Boolean>startAsyncTask(connector);
     }
   }
   

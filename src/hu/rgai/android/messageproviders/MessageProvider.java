@@ -1,6 +1,7 @@
 package hu.rgai.android.messageproviders;
 
 import android.content.Context;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
@@ -22,6 +23,9 @@ import javax.net.ssl.SSLHandshakeException;
 public interface MessageProvider {
   
   public enum Type {EMAIL, GMAIL, FACEBOOK, SMS};
+  
+  
+  public Account getAccount();
   
   /**
    * Returns the list of messages.

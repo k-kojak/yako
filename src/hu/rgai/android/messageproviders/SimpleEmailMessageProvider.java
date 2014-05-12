@@ -5,6 +5,7 @@ import android.util.Log;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.Attachment;
 import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.beens.EmailContent;
@@ -89,6 +90,10 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     this.account = account;
   }
   
+  public Account getAccount() {
+    return account;
+  }
+  
   private Store getStore(EmailAccount account) throws MessagingException {
     Store store = null;
     if (connections == null) {
@@ -100,8 +105,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         System.out.println("STORE EXISTS");
       }
     }
-    if (store == null) {
-      System.out.println("CREATING STORE");
+    
+    if (store == null || !store.isConnected()) {
+      System.out.println("CREATING STORE || reconnection store");
       store = getStore();
       connections.put(account, store);
     } else if (!store.isConnected()) {
@@ -185,7 +191,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Store store = this.getStore(account);
     
     if (store == null || !store.isConnected()) {
-      Log.d("rgai", "IT WAS UNABLE TO CONNECT TO STORE: " + account);
+      Log.d("rgai", "IT WAS UNABLE TO CONNECT TO STORE: " + account + ", " + store);
       return emails;
     }
       
