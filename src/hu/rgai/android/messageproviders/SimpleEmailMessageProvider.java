@@ -1,6 +1,7 @@
 package hu.rgai.android.messageproviders;
 
 import android.content.Context;
+import android.util.Log;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -182,7 +183,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     List<MessageListElement> emails = new LinkedList<MessageListElement>();
     Store store = this.getStore(account);
-
+    
+    if (store == null || !store.isConnected()) {
+      Log.d("rgai", "IT WAS UNABLE TO CONNECT TO STORE: " + account);
+      return emails;
+    }
+      
+    
     IMAPFolder inbox = (IMAPFolder)store.getFolder("Inbox");
     inbox.open(Folder.READ_ONLY);
     int messageCount = inbox.getMessageCount();
@@ -610,6 +617,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     Store store = this.getStore(account);
+    // TODO: exception handling, not connected to store...
+    if (store == null || !store.isConnected()) return;
     IMAPFolder folder;
     folder = (IMAPFolder)store.getFolder("INBOX");
     folder.open(Folder.READ_WRITE);

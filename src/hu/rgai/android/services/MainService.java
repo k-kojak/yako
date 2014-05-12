@@ -149,6 +149,7 @@ public class MainService extends Service {
   public void onDestroy() {
     super.onDestroy();
     RUNNING = false;
+    Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
     
     // unregisterReceiver(emailContentChangeReceiver);
   }

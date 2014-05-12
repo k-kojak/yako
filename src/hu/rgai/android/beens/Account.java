@@ -2,6 +2,7 @@ package hu.rgai.android.beens;
 
 import android.os.Parcelable;
 import hu.rgai.android.messageproviders.MessageProvider;
+import java.io.Serializable;
 
 
 
@@ -9,7 +10,7 @@ import hu.rgai.android.messageproviders.MessageProvider;
  *
  * @author Tamas Kojedzinszky
  */
-public interface Account extends Parcelable {
+public interface Account extends Parcelable, Serializable {
   
   public String getDisplayName();
   
