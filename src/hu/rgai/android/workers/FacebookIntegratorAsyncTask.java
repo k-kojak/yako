@@ -58,7 +58,7 @@ import java.util.logging.Logger;
 
 
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
-      fbfp.getFacebookFriends(activity, new FacebookSettingActivity.ToastHelper() {
+      fbfp.insertFriends(activity, new FacebookSettingActivity.ToastHelper() {
 
         public void showToast(String msg) {
           publishProgress(msg);
