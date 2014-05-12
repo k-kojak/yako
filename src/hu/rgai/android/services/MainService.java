@@ -45,8 +45,9 @@ import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.rgai.android.workers.XmppConnector;
+import hu.rgai.android.workers.ActiveConnectionConnector;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -101,9 +102,7 @@ public class MainService extends Service {
     RUNNING = true;
     handler = new MyHandler(this);
 
-    List<Account> accounts = StoreHandler.getAccounts(this);
-    
-    connectConnectableMessageProviders(accounts);
+    AndroidUtils.connectConnectableMessageProviders(this);
     
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
@@ -127,22 +126,6 @@ public class MainService extends Service {
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning)
       LogUploadScheduler.INSTANCE.startRepeatingTask();
-  }
-
-  private void connectConnectableMessageProviders(List<Account> accounts) {
-    for (Account a : accounts) {
-      Log.d("rgai", "try connecting account -> " + a);
-      MessageProvider mp = getMessageProviderByAccount(a, this);
-      if (mp.canBroadcastOnNewMessage() && !mp.isConnectionAlive()) {
-        Log.d("rgai", "yes, connectable account -> " + a);
-        XmppConnector xmppc = new XmppConnector(mp, this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-          xmppc.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        } else {
-          xmppc.execute();
-        }
-      }
-    }
   }
 
   @Override
@@ -233,7 +216,7 @@ public class MainService extends Service {
           for (Account acc : accounts) {
             
             if (type == null || acc.getAccountType().equals(type)) {
-              MessageProvider provider = getMessageProviderByAccount(acc, this);
+              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
               Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
               
               if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()) {
@@ -243,11 +226,7 @@ public class MainService extends Service {
                   Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
                 
                   LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    myThread.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-                  } else {
-                    myThread.execute();
-                  }
+                  AndroidUtils.<String, Integer, List<MessageListElement>>startAsyncTask(myThread);
                 } else {
                   Log.d("rgai", "nem, nem kell lekerdeznunk: " + provider);
                 }
@@ -390,20 +369,6 @@ public class MainService extends Service {
     }
   }
   
-  private MessageProvider getMessageProviderByAccount(Account account, Context context) {
-    MessageProvider mp = null;
-    if (account instanceof GmailAccount) {
-      mp = new SimpleEmailMessageProvider((GmailAccount) account);
-    } else if (account instanceof EmailAccount) {
-      mp = new SimpleEmailMessageProvider((EmailAccount) account);
-    } else if (account instanceof FacebookAccount) {
-      mp = new FacebookMessageProvider((FacebookAccount) account);
-    } else if (account instanceof SmsAccount) {
-      mp = new SmsMessageProvider(context);
-    }
-    return mp;
-  }
-
   private class MyHandler extends Handler {
 
     private final Context context;

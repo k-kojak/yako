@@ -191,10 +191,9 @@
         </receiver>
         
         <receiver android:name="hu.rgai.android.broadcastreceivers.CustomBroadcastReceiver" >
-<!--            <intent-filter>
-                <action android:name="hu.rgai.android.new_message_arrived_broadcast" />
+            <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>-->
+            </intent-filter>
         </receiver>
         
         <receiver android:name="hu.rgai.android.test.ThreadDisplayer$NewMessageReceiver">

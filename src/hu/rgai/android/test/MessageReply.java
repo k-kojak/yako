@@ -42,6 +42,7 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.rgai.android.workers.MessageSender;
@@ -299,11 +300,8 @@ public class MessageReply extends ActionBarActivity {
         content += source.getRenderer().toString();
       }
       MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this);
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-        rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-      } else {
-        rs.execute();
-      }
+      AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
+      
     }
 
   }

@@ -366,6 +366,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     config.setSendPresence(false);
 
      if (xmpp == null || !xmpp.isConnected()) {
+       // TODO: show notification if connection was unsuccessful and message was not sent!
       try {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
@@ -373,8 +374,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       } catch (XMPPException e) {
         xmpp.disconnect();
         e.printStackTrace();
+        return;
       } catch (Exception e) {
         e.printStackTrace();
+        return;
       }
     }
 

@@ -42,6 +42,7 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.AndroidUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -289,11 +290,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
         Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
                 new IntegrationHandler(FacebookSettingActivity.this));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-          integrator.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, user.getId());
-        } else {
-          integrator.execute(user.getId());
-        }
+        AndroidUtils.<String, String, String>startAsyncTask(integrator, user.getId());
         
       }
     } else {

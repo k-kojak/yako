@@ -14,7 +14,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;

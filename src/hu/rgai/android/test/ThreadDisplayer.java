@@ -47,6 +47,7 @@ import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.workers.ThreadContentGetter;
@@ -252,11 +253,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
     }
     MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    } else {
-      rs.execute();
-    }
+    AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
     text.setText("");
   }
 

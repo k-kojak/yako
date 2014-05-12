@@ -10,12 +10,12 @@ import hu.rgai.android.messageproviders.MessageProvider;
  *
  * @author Tamas Kojedzinszky
  */
-public class XmppConnector extends AsyncTask<String, Integer, Boolean> {
+public class ActiveConnectionConnector extends AsyncTask<String, Integer, Boolean> {
 
   private MessageProvider messageProvider = null;
   private Context context = null;
   
-  public XmppConnector(MessageProvider messageProvider, Context context) {
+  public ActiveConnectionConnector(MessageProvider messageProvider, Context context) {
     Log.d("rgai", "initing connection for messageProider: " + messageProvider);
     this.messageProvider = messageProvider;
     this.context = context;

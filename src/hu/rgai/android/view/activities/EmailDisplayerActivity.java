@@ -43,6 +43,7 @@ import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
@@ -100,11 +101,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     getSupportActionBar().setTitle(mContent.getSubject());
 
     EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      messageMarker.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mlepId);
-    } else {
-      messageMarker.execute(mlepId);
-    }
+    AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
 
     if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
       mFromNotification = true;
