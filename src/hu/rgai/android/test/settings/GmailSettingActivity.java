@@ -20,7 +20,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.GmailAccountAndr;
+import hu.rgai.android.beens.GmailAccount;
 import hu.rgai.android.test.R;
 import java.util.regex.Pattern;
 
@@ -33,7 +33,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   private EditText email;
   private EditText pass;
   private Spinner messageAmount;
-  private GmailAccountAndr oldAccount = null;
+  private GmailAccount oldAccount = null;
 
   @Override
   public void onCreate(Bundle bundle) {
@@ -58,7 +58,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (GmailAccountAndr)b.getParcelable("account");
+      oldAccount = (GmailAccount)b.getParcelable("account");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
       messageAmount.setSelection(AccountSettingsList.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
@@ -109,7 +109,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     String m = email.getText().toString();
     String p = pass.getText().toString();
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    GmailAccountAndr newAccount = new GmailAccountAndr(messageLimit, m, p);
+    GmailAccount newAccount = new GmailAccount(m, p, messageLimit);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);

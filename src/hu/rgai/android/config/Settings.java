@@ -2,12 +2,17 @@ package hu.rgai.android.config;
 
 import android.os.Build;
 import android.provider.ContactsContract;
-import hu.rgai.android.intent.beens.EmailRecipientAndr;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
+import hu.rgai.android.beens.EmailMessageRecipient;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.SmsMessageRecipient;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.beens.GmailAccount;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
@@ -15,13 +20,6 @@ import hu.rgai.android.test.settings.FacebookSettingActivity;
 import hu.rgai.android.test.settings.GmailSettingActivity;
 import hu.rgai.android.test.settings.SimpleEmailSettingActivity;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullSimpleMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -61,10 +59,10 @@ public final class Settings {
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
     if (contactDataTypeToRecipientClass == null) {
       contactDataTypeToRecipientClass = new HashMap<String, Class>();
-      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailRecipientAndr.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailMessageRecipient.class);
 //      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
-      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, SmsMessageRecipientAndr.class);
-      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookRecipientAndr.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, SmsMessageRecipient.class);
+      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, FacebookMessageRecipient.class);
     }
     return contactDataTypeToRecipientClass;
   }
@@ -82,10 +80,10 @@ public final class Settings {
   public static Map<MessageProvider.Type, Class> getAccountTypeToFullParcMessageClass() {
     if (accountTypeToFullParcMessageClass == null) {
       accountTypeToFullParcMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessageParc.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessageParc.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessageParc.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.SMS, FullThreadMessageParc.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
+      accountTypeToFullParcMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
     }
     return accountTypeToFullParcMessageClass;
   }

@@ -19,7 +19,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.account.EmailAccountAndr;
+import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.test.R;
 
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
   private EditText smtp;
   private Spinner securityType;
   private Spinner messageAmount;
-  private EmailAccountAndr oldAccount = null;
+  private EmailAccount oldAccount = null;
   private Map<String, String> domainMap;
 
   @Override
@@ -105,7 +105,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (EmailAccountAndr)b.getParcelable("account");
+      oldAccount = (EmailAccount)b.getParcelable("account");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
       imap.setText(oldAccount.getImapAddress());
@@ -173,7 +173,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     String s = smtp.getText().toString();
     boolean ssl = this.isSsl();
     int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    EmailAccountAndr newAccount = new EmailAccountAndr(m, p, i, s, ssl, messageLimit);
+    EmailAccount newAccount = new EmailAccount(m, p, i, s, ssl, messageLimit);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);

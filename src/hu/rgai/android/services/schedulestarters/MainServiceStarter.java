@@ -18,6 +18,9 @@ public class MainServiceStarter extends BroadcastReceiver {
     if (intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
       service.putExtra("load_more", intent.getExtras().getBoolean("load_more"));
     }
+    if (intent.getExtras() != null && intent.getExtras().containsKey("force_query")) {
+      service.putExtra("force_query", intent.getExtras().getBoolean("force_query"));
+    }
     context.startService(service);
   }
 

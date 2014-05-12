@@ -11,12 +11,12 @@ import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.beens.ProgressAttachment;
+import hu.rgai.android.beens.Attachment;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.Utils;
 import hu.rgai.android.tools.adapter.AttachmentAdapter;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.logging.Level;
@@ -30,7 +30,7 @@ import javax.mail.NoSuchProviderException;
  */
 public class AttachmentDownloader implements Runnable {
 
-  private final ProgressAttachment mAttachment;
+  private final Attachment mAttachment;
   private final Handler mHandler;
   private final EmailAccount mAccount;
   private final String mMessageId;
@@ -38,7 +38,7 @@ public class AttachmentDownloader implements Runnable {
   private final Context mContext;
   private WeakReference<TextView> mFileSize;
   
-  public AttachmentDownloader(ProgressAttachment attachment, Handler handler, EmailAccount account,
+  public AttachmentDownloader(Attachment attachment, Handler handler, EmailAccount account,
           String messageId, ProgressBar progressBar, TextView fileSize, Context context) {
     this.mAttachment = attachment;
     this.mHandler = handler;

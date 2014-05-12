@@ -10,11 +10,11 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.util.List;
 import java.util.Map;
 
@@ -25,10 +25,10 @@ import java.util.Map;
 public class AccountListAdapter extends BaseAdapter {
 
 //  private Context context;
-  private List<AccountAndr> accounts;
+  private List<Account> accounts;
   private static LayoutInflater inflater = null;
   
-  public AccountListAdapter(Context context, List<AccountAndr> accounts ) {
+  public AccountListAdapter(Context context, List<Account> accounts ) {
 //    this.context = context;
     this.accounts = accounts;
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -55,7 +55,7 @@ public class AccountListAdapter extends BaseAdapter {
     TextView type = (TextView) view.findViewById(R.id.type);
     ImageView icon = (ImageView) view.findViewById(R.id.img);
 
-    AccountAndr account = accounts.get(position);
+    Account account = accounts.get(position);
 
     // Setting all values in listview
     name.setText((String)account.getDisplayName());

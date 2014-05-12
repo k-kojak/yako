@@ -1,7 +1,26 @@
 package hu.rgai.android.messageproviders;
 
 import android.content.BroadcastReceiver;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.telephony.SmsManager;
+import android.util.Log;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.SmsAccount;
+import hu.rgai.android.beens.SmsMessageRecipient;
+import hu.rgai.android.services.MainService;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -10,35 +29,12 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
-
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Parcelable;
-import android.telephony.SmsManager;
-import android.util.Log;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.HtmlContentParc;
-import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
@@ -50,15 +46,19 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     context = myContext;
   }
 
-  public List<MessageListElement> getMessageList(int offset, int limit)
+  public Account getAccount() {
+    return SmsAccount.account;
+  }
+  
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
-    return getMessageList(offset, limit, 20);
+    return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
@@ -120,9 +120,9 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         Person from = null;
   //      if (!ti.isMe) {
         if (ti.personId == 0) {
-          from = new Person(ti.address, ti.address, Type.SMS);
+          from = new Person(ti.address, ti.address, MessageProvider.Type.SMS);
         } else {
-          from = new Person(ti.personId+"", ti.address, Type.SMS);
+          from = new Person(ti.personId+"", ti.address, MessageProvider.Type.SMS);
         }
   //      } else {
   ////        from = new Person(ti.personId+"", ti.address, Type.SMS);
@@ -140,7 +140,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           foundThreads++;
           if (foundThreads > limit + offset) break;
           messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
-                  from, null, new Date(ti.date), Type.SMS));
+                  from, null, new Date(ti.date), SmsAccount.account, Type.SMS));
         }
       }
       cur.close();
@@ -179,10 +179,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 //        Log.d("rgai", "SMS STATUS -> " + cur.getLong(8));
 //        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
 //        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
-        ftm.addMessage(new MessageAtom(
+        ftm.addMessage(new FullSimpleMessage(
                 cur.getString(1),
                 cur.getString(2),
-                new HtmlContentParc(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),
+                new HtmlContent(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),
                 new Date(cur.getLong(4)),
                 new Person(cur.getLong(5) + "", cur.getString(6), MessageProvider.Type.SMS),
                 cur.getLong(7) == 2, //vmit ezzel kezdeni
@@ -211,7 +211,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
     for (MessageRecipient mr : to) {
 
-      SmsMessageRecipientAndr smr = (SmsMessageRecipientAndr) mr;
+      SmsMessageRecipient smr = (SmsMessageRecipient) mr;
 
       SmsManager smsman = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
@@ -242,18 +242,17 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       } catch (InterruptedException ex) {
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
-      Log.d("rgai", "SMS notif received");
       
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
-       if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+      // TODO: do not make a full query to the given account/type, query only the
+      // affected message element, so select only 1 element instead of all messages of the given account
+      if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainService.class);
         service.putExtra("type", MessageProvider.Type.SMS.toString());
-        if (MainService.actViewingMessage != null) {
-          service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
-        }
+        service.putExtra("force_query", true);
         context.startService(service);
       }
       
@@ -274,6 +273,18 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     // we do nothing here, getMessage sets the status to read anyway
+  }
+
+  public boolean canBroadcastOnNewMessage() {
+    return true;
+  }
+
+  public boolean isConnectionAlive() {
+    return true;
+  }
+
+  public void establishConnection(Context context) {
+    // this class is a broadcast receiver too, so the connection is established this way
   }
 
   private class MessageItem {
@@ -301,5 +312,12 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     }
 
   }
+
+  @Override
+  public String toString() {
+    return "SmsMessageProvider{" + '}';
+  }
+  
+  
   
 }

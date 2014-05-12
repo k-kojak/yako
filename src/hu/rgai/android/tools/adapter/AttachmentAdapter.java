@@ -11,15 +11,13 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.beens.ProgressAttachment;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Attachment;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.Utils;
 import hu.rgai.android.workers.AttachmentDownloader;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
@@ -38,7 +36,7 @@ public class AttachmentAdapter extends BaseAdapter {
   private String mMessageId;
   
 
-  public AttachmentAdapter(Context context, List<Attachment> attachments, AccountAndr account, String messageId) {
+  public AttachmentAdapter(Context context, List<Attachment> attachments, Account account, String messageId) {
     this.mContext = context;
     this.mAttachments = attachments;
     this.mAccount = (EmailAccount)account;
@@ -75,7 +73,7 @@ public class AttachmentAdapter extends BaseAdapter {
       holder = (ViewHolder)view.getTag();
     }
     
-    final ProgressAttachment attachment = (ProgressAttachment)this.getItem(position);
+    final Attachment attachment = (Attachment)this.getItem(position);
     final Handler progBarHandler = new Handler();
     
     holder.progressBar.setProgress(attachment.getProgress());

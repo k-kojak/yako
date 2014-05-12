@@ -6,18 +6,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.test.ThreadDisplayer;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -27,16 +24,16 @@ import java.util.logging.Logger;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 
-public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessageParc> {
+public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessage> {
   
     private Context context;
     private Handler handler;
-    private AccountAndr account;
+    private Account account;
     private int delay;
     private int offset = 0;
     private boolean scrollBottomAfterLoad = false;
     
-    public ThreadContentGetter(Context context, Handler handler, AccountAndr account,
+    public ThreadContentGetter(Context context, Handler handler, Account account,
             int delay, boolean scrollBottomAfterLoad) {
       this.context = context;
       this.handler = handler;
@@ -51,7 +48,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     }
     
     @Override
-    protected FullThreadMessageParc doInBackground(String... params) {
+    protected FullThreadMessage doInBackground(String... params) {
 //      SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
 //      String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
 //      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
@@ -64,7 +61,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           Logger.getLogger(ThreadContentGetter.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
-      FullThreadMessageParc threadMessage = null;
+      FullThreadMessage threadMessage = null;
 //      Log.d("rgai", "GETTING MESSAGE CONTENT");
       try {
         if (account == null) {
@@ -89,16 +86,17 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
 	          
           }
           // cast result to ThreadMessage, since this is a thread displayer
-          threadMessage = new FullThreadMessageParc((FullThreadMessage)mp.getMessage(params[0], offset, 20));
-          Iterator<MessageAtom> iterator = threadMessage.getMessages().iterator();
+          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, 20);
+          Iterator<FullSimpleMessage> iterator = threadMessage.getMessages().iterator();
+          // ONLY SEARCH FOR ANDROID PERSONS HERE IF THERE IS ANY, BUT SKIP THE PARCELABLE CONVERT STUFF
           while (iterator.hasNext()) {
-            MessageAtom ma = iterator.next();
-            MessageAtomParc map = new MessageAtomParc(ma);
+            FullSimpleMessage ma = iterator.next();
+//            FullSimpleMessage map = new FullSimpleMessage(ma);
 //            Log.d("rgai", "PERSON BEFORE repl (thread) -> " + ma.getFrom());
-            map.setFrom(PersonAndr.searchPersonAndr(context, ma.getFrom()));
+//            map.setFrom(Person.searchPersonAndr(context, ma.getFrom()));
 //            Log.d("rgai", "PERSON AFTER  repl (thread) -> " + map.getFrom());
-            threadMessage.getMessagesParc().add(map);
-            iterator.remove();
+//            threadMessage.getMessagesParc().add(map);
+//            iterator.remove();
           }
         }
 
@@ -134,7 +132,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     }
 
     @Override
-    protected void onPostExecute(FullThreadMessageParc result) {
+    protected void onPostExecute(FullThreadMessage result) {
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
       bundle.putParcelable("threadMessage", result);

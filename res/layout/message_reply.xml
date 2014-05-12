@@ -5,13 +5,11 @@ and open the template in the editor.
 -->
 
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:padding="5dip">
-  <ScrollView
+
+  <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="5dip">
     <LinearLayout
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
@@ -35,20 +33,36 @@ and open the template in the editor.
         android:maxLines="4"
         android:scrollbars = "vertical"
       />
-
+      
+      <EditText
+        android:id="@+id/subject"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Subject"
+        android:singleLine="true"
+        android:inputType="text" />
+      
       <EditText
         android:id="@+id/message_content"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="Content"
-        android:inputType="textMultiLine" />
+        android:background="#ffffff"
+        android:minLines="5"
+        android:inputType="textCapSentences|textMultiLine" />
 
-      <Button
-        android:id="@+id/save_account_button"
-        android:layout_height="wrap_content"
+      <CheckBox android:id="@+id/quote_origi"
         android:layout_width="fill_parent"
-        android:text="@string/send"
-        android:onClick="prepareMessageSending" />
+        android:layout_height="wrap_content"
+        android:text="@string/quote_original_message"
+        android:onClick="onQuoteClicked"
+        android:checked="true" />
+      
+      <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/quoted_message"
+            android:layout_width="fill_parent" 
+            android:layout_height="fill_parent"
+            android:scrollbarStyle="outsideOverlay" /> 
+      
     </LinearLayout>
   </ScrollView>
-</LinearLayout>

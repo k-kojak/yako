@@ -1,36 +1,9 @@
 package hu.rgai.android.test;
 
 
-import hu.rgai.android.workers.MessageSender;
-import hu.rgai.android.workers.ThreadContentGetter;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.intent.beens.FacebookRecipientAndr;
-import hu.rgai.android.intent.beens.FullThreadMessageParc;
-import hu.rgai.android.intent.beens.MessageAtomParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.RecipientItem;
-import hu.rgai.android.intent.beens.SmsMessageRecipientAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
-import hu.rgai.android.services.MainService;
-import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.tools.adapter.ThreadViewAdapter;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
-//import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -57,16 +30,42 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
-import static hu.rgai.android.test.MessageReply.MESSAGE_SENT_OK;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.SmsMessageRecipient;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.messageproviders.FacebookMessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.ThreadMsgService;
+import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.tools.adapter.ThreadViewAdapter;
+import hu.rgai.android.workers.MessageSender;
+import hu.rgai.android.workers.ThreadContentGetter;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
   private static ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
-  private FullThreadMessageParc content = null;
-  private String threadId = "-1";
-  private AccountAndr account;
-  private PersonAndr from;
+  private FullThreadMessage content = null;
+//  private String threadId = "-1";
+  private Account account;
+  private Person from;
   private ListView lv = null;
   private EditText text = null;
   private ThreadViewAdapter adapter = null;
@@ -76,17 +75,21 @@ public class ThreadDisplayer extends ActionBarActivity {
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
   private boolean fromNotification = false;
-  private MessageListElementParc mlep = null;
+  private MessageListElement mle = null;
+  private String mThreadId = null;
+  private TextWatcher mTextWatcher = null;
+  private boolean mTextWatcherAdded = false;
 
+  private static boolean firstResume = true;
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-  private static boolean unsopportedGroupChat = false;
+  private boolean unsopportedGroupChat = false;
   
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId);
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + threadId, true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mThreadId);
+    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mThreadId, true);
     super.onBackPressed();
   }
 
@@ -94,7 +97,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(threadId);
+    builder.append(mThreadId);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
@@ -105,77 +108,61 @@ public class ThreadDisplayer extends ActionBarActivity {
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     
     tempMessageIds = new HashSet<String>();
 
-//    MessageListElementParc mlep = (MessageListElementParc)getIntent().getExtras().getParcelable("msg_list_element_id");
     account = getIntent().getExtras().getParcelable("account");
-    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
-    mlep = MainService.getListElementById(mlepId, account);
-    MainService.setMessageSeenAndRead(mlep);
-    if (mlep.isGroupMessage() && mlep.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
-      unsopportedGroupChat = true;
-    } else {
-      unsopportedGroupChat = false;
-    }
-
-    threadId = mlep.getId();
-    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+    mThreadId = getIntent().getExtras().getString("msg_list_element_id");
+    
+    if (getIntent().getExtras().containsKey(MainService.FROM_NOTIFIER) && getIntent().getExtras().getBoolean(MainService.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    from = mlep.getFrom();
     
-    
-    getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + account.getAccountType().toString());
-
-    messageArrivedHandler = new NewMessageHandler(this);
-    // getting content at first time
-    
-
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     text = (EditText) findViewById(R.id.text);
     
-    if (unsopportedGroupChat) {
-      Toast.makeText(this, "Sorry, but group message sending is not possible (because of Facebook).", Toast.LENGTH_LONG).show();
-      text.setVisibility(View.GONE);
-      findViewById(R.id.sendButton).setVisibility(View.GONE);
-    } else {
-    
-      text.addTextChangedListener(new TextWatcher() {
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-          // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-          // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-          // TODO Auto-generated method stub
-          if (MainService.actViewingMessage != null) {
-            Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                    + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-            EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                    + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
-          }
-        }
-      });
-    }
-
+    messageArrivedHandler = new NewMessageHandler(this);
     adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
     lv.setAdapter(adapter);
     lv.setOnScrollListener(new LogOnScrollListener());
+    
+    mTextWatcher = new TextWatcher() {
 
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // TODO Auto-generated method stub
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // TODO Auto-generated method stub
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // TODO Auto-generated method stub
+        if (MainService.actViewingMessage != null) {
+          Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                  + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+          EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + MainService.actViewingMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+        }
+      }
+    };
+
+  }
+  
+  private void displayContent(MessageListElement mlep) {
     if (mlep.getFullMessage() != null) {
       // converting to full thread message, since we MUST use that here
-      content = (FullThreadMessageParc) mlep.getFullMessage();
+      content = (FullThreadMessage) mlep.getFullMessage();
       displayMessage(true);
     } else {
       pd = new ProgressDialog(this);
@@ -186,10 +173,55 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
   }
 
+  
+  private void removeNotificationIfExists() {
+    if (mle.equals(MainService.mLastNotifiedMessage)) {
+      NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+      mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+      MainService.mLastNotifiedMessage = null;
+    }
+  }
+  
   @Override
   protected void onResume() {
     super.onResume();
-    MainService.actViewingMessage = mlep;
+    
+    mle = MainService.getListElementById(mThreadId, account);
+    Log.d("rgai", "the found message list element: " + mle);
+    removeNotificationIfExists();
+    MainService.setMessageSeenAndRead(mle);
+    if (mle.isGroupMessage() && mle.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+      unsopportedGroupChat = true;
+    } else {
+      unsopportedGroupChat = false;
+    }
+
+    if (mTextWatcherAdded) {
+      text.removeTextChangedListener(mTextWatcher);
+    }
+    if (unsopportedGroupChat) {
+      if (firstResume) {
+        Toast.makeText(this, "Sorry, but group message sending is not available (because of Facebook).", Toast.LENGTH_LONG).show();
+        firstResume = false;
+      }
+      text.setVisibility(View.GONE);
+      findViewById(R.id.sendButton).setVisibility(View.GONE);
+      mTextWatcherAdded = false;
+    } else {
+      text.addTextChangedListener(mTextWatcher);
+      mTextWatcherAdded = true;
+    }
+      
+    from = mle.getFrom();
+    
+    getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + account.getAccountType().toString());
+
+    
+    
+    
+    MainService.actViewingMessage = mle;
+    Log.d("rgai", "MainService.actViewingMessage = " + mle);
+    
     dur = new DataUpdateReceiver(this);
     IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
@@ -198,10 +230,11 @@ public class ThreadDisplayer extends ActionBarActivity {
     // init connection...Facebook needs this
     // TODO: ugly code
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      FacebookMessageProvider.initConnection((FacebookAccount) account, this);
+//      FacebookMessageProvider.initConnection((FacebookAccount) account, this);
     }
 
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
+    displayContent(mle);
   }
 
   public void sendMessage(View view) {
@@ -211,26 +244,24 @@ public class ThreadDisplayer extends ActionBarActivity {
       return;
     }
     
-    List<AccountAndr> accs = new LinkedList<AccountAndr>();
+    List<Account> accs = new LinkedList<Account>();
     accs.add(account);
-    RecipientItem ri = null;
+    MessageRecipient ri = null;
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      ri = new FacebookRecipientAndr("a", from.getId(), from.getName(), null, 1);
+      ri = new FacebookMessageRecipient("", from.getId(), from.getName(), null, 1);
     } else {
-      ri = new SmsMessageRecipientAndr(from.getId(), from.getId(), from.getName(), null, 1);
+      ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
     }
     MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      rs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    } else {
-      rs.execute();
-    }
+    AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
     text.setText("");
   }
 
   @Override
   protected void onPause() {
-    Log.d("rgai", "TD-pause");
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
@@ -268,7 +299,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.load_more:
         if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
-          refreshMessageList(content.getMessagesParc().size());
+          refreshMessageList(content.getMessages().size());
           Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
         } else {
           Log.d("rgai", "@@@skipping load button press for 5 sec");
@@ -315,8 +346,8 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     if (content != null) {
       adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item, account);
-      for (MessageAtomParc ma : content.getMessagesParc()) {
-        adapter.add(ma);
+      for (FullSimpleMessage m : content.getMessages()) {
+        adapter.add(m);
       }
       lv.setAdapter(adapter);
       los = new LogOnScrollListener();
@@ -332,12 +363,12 @@ public class ThreadDisplayer extends ActionBarActivity {
   }
   
   private void refreshMessageList(int offset) {
-    Log.d("rgai", "LEKERDEZES");
+//    Log.d("rgai", "LEKERDEZES");
     ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, true);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
-    myThread.execute(threadId);
+    myThread.execute(mThreadId);
   }
   
   private void refreshMessageList() {
@@ -387,12 +418,12 @@ public class ThreadDisplayer extends ActionBarActivity {
         }
       } else {
         // Log.d("rgai", "HANDLING MESSAGE CONTENT");
-        FullThreadMessageParc newMessages = bundle.getParcelable("threadMessage");
+        FullThreadMessage newMessages = bundle.getParcelable("threadMessage");
         if (content != null) {
-          content.getMessagesParc().addAll(newMessages.getMessagesParc());
+          content.getMessages().addAll(newMessages.getMessages());
           if (!tempMessageIds.isEmpty()) {
-            for (Iterator<MessageAtomParc> it = content.getMessagesParc().iterator(); it.hasNext();) {
-              MessageAtom ma = it.next();
+            for (Iterator<FullSimpleMessage> it = content.getMessages().iterator(); it.hasNext();) {
+              FullSimpleMessage ma = it.next();
               if (tempMessageIds.contains(ma.getId())) {
                 tempMessageIds.remove(ma.getId());
                 it.remove();
@@ -402,7 +433,7 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           content = newMessages;
         }
-        MainService.setMessageContent(threadId, account, content);
+        MainService.setMessageContent(mThreadId, account, content);
         displayMessage(scrollToBottom);
         if (pd != null) {
           pd.dismiss();

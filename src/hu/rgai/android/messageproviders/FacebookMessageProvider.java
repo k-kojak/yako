@@ -2,14 +2,27 @@ package hu.rgai.android.messageproviders;
 
 import android.content.Context;
 import android.content.Intent;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.FacebookAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.FacebookMessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.MessageAtom;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageListElement;
-import hu.uszeged.inf.rgai.messagelog.beans.MessageRecipient;
-import hu.uszeged.inf.rgai.messagelog.beans.Person;
-
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.os.StrictMode;
+import android.util.Log;
+import com.facebook.HttpMethod;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.model.GraphObject;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FacebookAccount;
+import hu.rgai.android.beens.FacebookMessageRecipient;
+import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.FullThreadMessage;
+import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageRecipient;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.services.MainService;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -22,46 +35,26 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
-
 import org.jivesoftware.smack.Chat;
-
+import org.jivesoftware.smack.ChatManagerListener;
 import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
+import org.jivesoftware.smack.packet.Message;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.os.StrictMode;
-import android.util.Log;
-
-
-import com.facebook.HttpMethod;
-import com.facebook.Request;
-import com.facebook.Session;
-import com.facebook.Response;
-import com.facebook.model.GraphObject;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.intent.beens.HtmlContentParc;
-import hu.rgai.android.services.MainService;
-import hu.uszeged.inf.rgai.messagelog.ThreadMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullMessage;
-import hu.uszeged.inf.rgai.messagelog.beans.fullmessage.FullThreadMessage;
-import org.jivesoftware.smack.ChatManagerListener;
-import org.jivesoftware.smack.packet.Message;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
+// TODO: this should be a singletone class
 public class FacebookMessageProvider implements ThreadMessageProvider {
-
+  
   private static volatile XMPPConnection xmpp = null;
   // use this variable to access facebook
   private FacebookAccount account;
@@ -70,15 +63,19 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     this.account = account;
   }
 
-  public List<MessageListElement> getMessageList(int offset, int limit)
+  public Account getAccount() {
+    return account;
+  }
+  
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
-    return getMessageList(offset, limit, 20);
+    return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
@@ -158,6 +155,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                             from,
                             recipients,
                             new Date(msg.getLong("updated_time") * 1000),
+                            account,
                             MessageProvider.Type.FACEBOOK));
                   }
                 } else if (resSetName.equals("friend")) {
@@ -195,7 +193,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     });
     Request.executeAndWait(request);
-
+    
     return messages;
   }
   
@@ -203,7 +201,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return xmpp != null && xmpp.isConnected();
   }
 
-  public static void initConnection(FacebookAccount fba, final Context context) {
+  private void initConnection(FacebookAccount fba, final Context context) {
     Log.d("rgai", "initing xmpp connection");
     if (xmpp == null || !xmpp.isConnected()) {
       Log.d("rgai", "try connecting to XMPP");
@@ -232,19 +230,16 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
             chat.addMessageListener(new MessageListener() {
               public void processMessage(Chat chat, Message message) {
                 if (message != null && message.getBody() != null) {
-                  Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
+//                  Log.d("rgai", "MESSAGE FROM -> " + message.getFrom());
                   Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
                   res.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
                   context.sendBroadcast(res);
                   
-                  if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
-                    Intent service = new Intent(context, MainService.class);
-                    service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-                    if (MainService.actViewingMessage != null) {
-                      service.putExtra("act_viewing_message", (Parcelable)MainService.actViewingMessage);
-                    }
-                    context.startService(service);
-                  }
+                  // always run MainService, so new messages can be stored
+                  Intent service = new Intent(context, MainService.class);
+                  service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
+                  service.putExtra("force_query", true);
+                  context.startService(service);
 
                 }
               }
@@ -325,10 +320,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 //                    int unreadCount = msg.getInt("unread");
                     String body = msg.getString("body");
 
-                    ftm.addMessage(new MessageAtom(
+                    ftm.addMessage(new FullSimpleMessage(
                             msg.getString("message_id"),
                             "",
-                            new HtmlContentParc(body, HtmlContent.ContentType.TEXT_PLAIN),
+                            new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
                             new Date(msg.getLong("created_time") * 1000),
                             new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
                             msg.getString("author_id").equals(account.getId()),
@@ -341,7 +336,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   for (int j = 0; j < userArr.length(); j++) {
                     JSONObject user = userArr.getJSONObject(j);
                     // matching friend names to messages by id
-                    for (MessageAtom ma : ftm.getMessages()) {
+                    for (FullSimpleMessage ma : ftm.getMessages()) {
                       if (ma.getFrom().getId().equals(user.getString("uid"))) {
                         ma.getFrom().setName(user.getString("name"));
                       }
@@ -376,6 +371,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     config.setSendPresence(false);
 
      if (xmpp == null || !xmpp.isConnected()) {
+       // TODO: show notification if connection was unsuccessful and message was not sent!
       try {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
@@ -383,8 +379,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       } catch (XMPPException e) {
         xmpp.disconnect();
         e.printStackTrace();
+        return;
       } catch (Exception e) {
         e.printStackTrace();
+        return;
       }
     }
 
@@ -480,4 +478,24 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     // we cannot set facebook messages status to read...
   }
+
+  public boolean canBroadcastOnNewMessage() {
+    return true;
+  }
+
+  public boolean isConnectionAlive() {
+    return xmpp != null && xmpp.isConnected();
+  }
+
+  public void establishConnection(Context context) {
+    if (!isConnectionAlive()) {
+      initConnection(account, context);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "FacebookMessageProvider{" + "account=" + account + '}';
+  }
+  
 }
