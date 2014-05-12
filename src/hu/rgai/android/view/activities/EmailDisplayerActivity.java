@@ -32,18 +32,22 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.workers.EmailMessageMarker;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
+import hu.rgai.android.workers.EmailMessageMarker;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -64,12 +68,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   /**
    * The number of pages (wizard steps) to show in this demo.
    */
-  private MessageListElementParc mMessage = null;
-  private AccountAndr mAccount = null;
+  private MessageListElement mMessage = null;
+  private Account mAccount = null;
   private boolean mFromNotification = false;
   private final String mSubject = null;
-  private PersonAndr mFrom = null;
-  private FullSimpleMessageParc mContent = null;
+  private Person mFrom = null;
+  private FullSimpleMessage mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
   private NonSwipeableViewPager mPager;
@@ -79,25 +83,27 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
+    
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     setContentView(R.layout.activity_email_displayer);
 
     mAccount = getIntent().getExtras().getParcelable("account");
     String mlepId = getIntent().getExtras().getString("msg_list_element_id");
     mMessage = MainService.getListElementById(mlepId, mAccount);
-    mContent = (FullSimpleMessageParc)mMessage.getFullMessage();
+    mContent = (FullSimpleMessage)mMessage.getFullMessage();
     mFrom = mMessage.getFrom();
     MainService.setMessageSeenAndRead(mMessage);
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
     EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      messageMarker.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mlepId);
-    } else {
-      messageMarker.execute(mlepId);
-    }
+    AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
 
-    if (getIntent().getExtras().containsKey("from_notifier") && getIntent().getExtras().getBoolean("from_notifier")) {
+    if (getIntent().getExtras().containsKey(MainService.FROM_NOTIFIER) && getIntent().getExtras().getBoolean(MainService.FROM_NOTIFIER)) {
       mFromNotification = true;
     }
 
@@ -108,6 +114,14 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause(); //To change body of generated methods, choose Tools | Templates.
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
   }
 
   @Override
@@ -127,11 +141,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReply.class);
-        Source source = new Source(mContent.getContent().getContent());
-        intent.putExtra("content", source.getRenderer().toString());
-        intent.putExtra("subject", mSubject);
-        intent.putExtra("account", (Parcelable) mAccount);
-        intent.putExtra("from", mFrom);
+//        Source source = new Source(mContent.getContent().getContent());
+        intent.putExtra("message", (Parcelable)mMessage);
+//        intent.putExtra("account", (Parcelable) mAccount);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:
@@ -140,7 +152,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
         if (mFromNotification) {
           Intent upIntent = NavUtils.getParentActivityIntent(this);
           TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
-
         } else {
           finish();
         }
@@ -164,11 +175,11 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     return super.onOptionsItemSelected(item);
   }
 
-  public MessageListElementParc getMessage() {
+  public MessageListElement getMessage() {
     return mMessage;
   }
 
-  public AccountAndr getAccount() {
+  public Account getAccount() {
     return mAccount;
   }
 
@@ -207,9 +218,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       } else {
         EmailAttachmentFragment eaf = EmailAttachmentFragment.newInstance();
         return eaf;
-//            return ScreenSlidePageFragment.create(position);
       }
-
     }
 
     @Override

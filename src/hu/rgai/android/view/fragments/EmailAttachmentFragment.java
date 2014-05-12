@@ -2,20 +2,18 @@ package hu.rgai.android.view.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import hu.rgai.android.beens.ProgressAttachment;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Attachment;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.adapter.AttachmentAdapter;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
-import hu.uszeged.inf.rgai.messagelog.beans.Attachment;
 import java.io.File;
 
 /**
@@ -25,8 +23,8 @@ import java.io.File;
 public class EmailAttachmentFragment extends Fragment {
 
   private View mView;
-  private AccountAndr mAccount;
-  private MessageListElementParc mMessage;
+  private Account mAccount;
+  private MessageListElement mMessage;
   private ListView mListView;
   private AttachmentAdapter mListAdapter;
   
@@ -52,7 +50,7 @@ public class EmailAttachmentFragment extends Fragment {
     convertAttachments();
     checkAttachments();
     mListAdapter = new AttachmentAdapter(this.getActivity(),
-            ((FullSimpleMessageParc)mMessage.getFullMessage()).getAttachments(),
+            ((FullSimpleMessage)mMessage.getFullMessage()).getAttachments(),
             mAccount, mMessage.getId());
     
     
@@ -61,10 +59,10 @@ public class EmailAttachmentFragment extends Fragment {
   }
   
   private void checkAttachments() {
-    FullSimpleMessageParc fsm = (FullSimpleMessageParc)mMessage.getFullMessage();
+    FullSimpleMessage fsm = (FullSimpleMessage)mMessage.getFullMessage();
     File folder = StoreHandler.getEmailAttachmentDownloadLocation();
     for (int i = 0; i < fsm.getAttachments().size(); i++) {
-      ProgressAttachment a = (ProgressAttachment)fsm.getAttachments().get(i);
+      Attachment a = (Attachment)fsm.getAttachments().get(i);
       File f = new File(folder, a.getFileName());
       if (f.exists()) {
         a.setSize(f.length());
@@ -77,14 +75,14 @@ public class EmailAttachmentFragment extends Fragment {
   }
   
   private void convertAttachments() {
-    FullSimpleMessageParc fsm = (FullSimpleMessageParc)mMessage.getFullMessage();
+    FullSimpleMessage fsm = (FullSimpleMessage)mMessage.getFullMessage();
     for (int i = 0; i < fsm.getAttachments().size(); i++) {
       Attachment a = fsm.getAttachments().get(i);
-      if (a instanceof ProgressAttachment) {
+      if (a instanceof Attachment) {
         continue;
       }
 //      int progress = Math.random() > 0.5 ? 100 : 0;
-      fsm.getAttachments().set(i, new ProgressAttachment(a.getFileName(), a.getSize()));
+      fsm.getAttachments().set(i, new Attachment(a.getFileName(), a.getSize()));
     }
   }
 }

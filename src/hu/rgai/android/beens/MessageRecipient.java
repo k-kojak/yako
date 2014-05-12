@@ -1,13 +1,13 @@
-package hu.rgai.android.intent.beens;
+package hu.rgai.android.beens;
 
 import android.net.Uri;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public interface RecipientItem {
+public interface MessageRecipient {
   public String getDisplayData();
   public String getData();
   public String getDisplayName();

@@ -3,12 +3,12 @@ package hu.rgai.android.workers;
 
 import android.os.AsyncTask;
 import android.os.Handler;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.beens.GmailAccount;
+import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.SimpleEmailMessageProvider;
-import hu.uszeged.inf.rgai.messagelog.beans.account.EmailAccount;
-import hu.uszeged.inf.rgai.messagelog.beans.account.GmailAccount;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,9 +21,9 @@ import javax.mail.NoSuchProviderException;
  */
 public class EmailMessageMarker extends AsyncTask<String, Integer, Void> {
 
-    AccountAndr account;
+    Account account;
     
-    public EmailMessageMarker(AccountAndr account) {
+    public EmailMessageMarker(Account account) {
       this.account = account;
     }
     

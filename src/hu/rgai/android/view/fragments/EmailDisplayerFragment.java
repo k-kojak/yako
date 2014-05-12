@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,16 +14,16 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.FullSimpleMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.PersonAndr;
-import hu.rgai.android.intent.beens.account.AccountAndr;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.Person;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.tools.Utils;
 import hu.rgai.android.view.activities.EmailDisplayerActivity;
-import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
 
 /**
  * This class responsible for displaying an email message.
@@ -31,14 +32,14 @@ import hu.uszeged.inf.rgai.messagelog.beans.HtmlContent;
  */
 public class EmailDisplayerFragment extends Fragment {
 
-  private FullSimpleMessageParc mContent = null;
+  private FullSimpleMessage mContent = null;
   
   // account which used to fetch email (if necessary)
-  private AccountAndr mAccount;
+  private Account mAccount;
   
-  private MessageListElementParc mMessage;
+  private MessageListElement mMessage;
   // the sender of the message
-  private PersonAndr mFrom;
+  private Person mFrom;
   
   private View mView;
   // a view for displaying content
@@ -60,20 +61,25 @@ public class EmailDisplayerFragment extends Fragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
-    mAccount = eda.getAccount();
-    mMessage = eda.getMessage();
+    Log.d("rgai", "email displayer fragment: ONCREATE");
+   
   }
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    Log.d("rgai", "email displayer fragment: ONCREATE VIEW");
+    
+    EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
+    mAccount = eda.getAccount();
+    mMessage = eda.getMessage();
+    
     mView = inflater.inflate(R.layout.email_displayer, container, false);
    
     mWebView = (WebView) mView.findViewById(R.id.email_content);
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
-    mFrom = (PersonAndr) mMessage.getFrom();
-    mContent = (FullSimpleMessageParc) mMessage.getFullMessage();
+    mFrom = (Person) mMessage.getFrom();
+    mContent = (FullSimpleMessage) mMessage.getFullMessage();
     displayMessage();
     
     mWebViewClient = new WebViewClient() {

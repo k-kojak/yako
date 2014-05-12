@@ -5,6 +5,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.widget.ImageView;
+import hu.rgai.android.beens.BitmapResult;
+import hu.rgai.android.tools.AndroidUtils;
 import java.lang.ref.WeakReference;
 
 /**
@@ -40,7 +42,7 @@ public class AsyncImageView extends ImageView {
       this.setImageBitmap(loadProvider.getDefaultBitmap(this.getContext()));
       
       AsyncImageLoader loader = new AsyncImageLoader(this, loadProvider);
-      loader.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, contactId);
+      AndroidUtils.<Long, Void, BitmapResult>startAsyncTask(loader, contactId);
       mLoader = new WeakReference<AsyncImageLoader>(loader);
     }
   }

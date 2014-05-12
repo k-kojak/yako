@@ -2,26 +2,6 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.eventlogger.LogUploadScheduler;
-import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.intent.beens.FullMessageParc;
-import hu.rgai.android.intent.beens.MessageListElementParc;
-import hu.rgai.android.intent.beens.account.AccountAndr;
-import hu.rgai.android.intent.beens.account.SmsAccountAndr;
-import hu.rgai.android.services.MainService;
-import hu.rgai.android.services.schedulestarters.MainScheduler;
-import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.settings.AccountSettingsList;
-import hu.rgai.android.test.settings.SystemPreferences;
-
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -52,12 +32,30 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.eventlogger.LogUploadScheduler;
+import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.SmsAccount;
+import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
+import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.settings.AccountSettingsList;
+import hu.rgai.android.test.settings.SystemPreferences;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This is the main view of the application.
@@ -78,7 +76,7 @@ public class MainActivity extends ActionBarActivity {
   private static boolean is_activity_visible = false;
 
   // stores the last notification state to all different account types
-  private static HashMap<AccountAndr, Date> last_notification_dates = null;
+  private static HashMap<Account, Date> last_notification_dates = null;
 
   // this is the adapter for the main view
   private static volatile LazyAdapter adapter;
@@ -104,7 +102,7 @@ public class MainActivity extends ActionBarActivity {
   // true if more messages are currently loading
   private static volatile boolean isLoading = false;
 
-  public static AccountAndr actSelectedFilter = null;
+  public static Account actSelectedFilter = null;
 
   private static final String APPLICATION_START_STR = "application:start";
 
@@ -131,7 +129,11 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
+//    Debug.startMethodTracing("calc_store_connect");
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     instance = this;
@@ -148,11 +150,12 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (!MainService.RUNNING) {
-      Intent intent = new Intent(this, MainScheduler.class);
-      intent.setAction(Context.ALARM_SERVICE);
-      this.sendBroadcast(intent);
+      reloadMessages();
       // disaplying loading dialog, since the mails are not ready, but the user
       // opened the list
+      Log.d("rgai", "MAIN ACTIVITY: START MAIN SERVICE FROM HERE");
+    } else {
+      Log.d("rgai", "MAIN SERVICE ALREADY RUNNIG, ALTHOUGH THE MAINACTIVITY JUST STARTED...");
     }
     showProgressDialog();
   }
@@ -241,7 +244,7 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void showListFilter() {
-    final List<AccountAndr> allAccount = getAllAccounts();
+    final List<Account> allAccount = getAllAccounts();
     final CharSequence[] items = new CharSequence[allAccount.size() + 1];
     int selectedIndex = 0;
     items[0] = "All";
@@ -278,10 +281,10 @@ public class MainActivity extends ActionBarActivity {
     builder.create().show();
   }
 
-  private List<AccountAndr> getAllAccounts() {
-    List<AccountAndr> list = StoreHandler.getAccounts(this);
+  private List<Account> getAllAccounts() {
+    List<Account> list = StoreHandler.getAccounts(this);
     if (isPhone(this)) {
-      list.add(new SmsAccountAndr());
+      list.add(SmsAccount.account);
     }
 
     return list;
@@ -294,16 +297,16 @@ public class MainActivity extends ActionBarActivity {
       case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           if (data.hasExtra("message_data")) {
-            FullMessageParc fm = data.getParcelableExtra("message_data");
+            FullMessage fm = data.getParcelableExtra("message_data");
             String messageId = data.getStringExtra("message_id");
-            AccountAndr acc = data.getParcelableExtra("account");
+            Account acc = data.getParcelableExtra("account");
             MainService.setMessageContent(messageId, acc, fm);
           }
           if (data.hasExtra("thread_displayer")) {
             Intent service = new Intent(this, MainService.class);
             
             String accType = data.getStringExtra("account_type");
-            MessageListElementParc actMsg = (MessageListElementParc)data.getParcelableExtra("act_view_msg");
+            MessageListElement actMsg = (MessageListElement)data.getParcelableExtra("act_view_msg");
             
             service.putExtra("type", accType);
             service.putExtra("act_viewing_message", (Parcelable)actMsg);
@@ -327,6 +330,7 @@ public class MainActivity extends ActionBarActivity {
   private void reloadMessages() {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
+    intent.putExtra("force_query", true);
     this.sendBroadcast(intent);
   }
 
@@ -349,11 +353,11 @@ public class MainActivity extends ActionBarActivity {
    * Sets a message's status to seen.
    * @param message the message to set seen
    */
-  private static void setMessageSeen(MessageListElementParc message) {
-    for (MessageListElementParc mlep : MainService.messages) {
-      if (mlep.equals(message)) {
-        mlep.setSeen(true);
-        mlep.setUnreadCount(0);
+  private static void setMessageSeen(MessageListElement message) {
+    for (MessageListElement m : MainService.messages) {
+      if (m.equals(message)) {
+        m.setSeen(true);
+        m.setUnreadCount(0);
         break;
       }
     }
@@ -363,7 +367,6 @@ public class MainActivity extends ActionBarActivity {
   protected void onResume() {
     super.onResume();
     removeNotificationIfExists();
-    Log.d("rgai", "MainActivitiy.onResume");
     is_activity_visible = true;
     // initLastNotificationDates();
     updateLastNotification(instance, null);
@@ -384,7 +387,7 @@ public class MainActivity extends ActionBarActivity {
   public static void initLastNotificationDates(Context context) {
     last_notification_dates = StoreHandler.readLastNotificationObject(context);
     if (last_notification_dates == null) {
-      last_notification_dates = new HashMap<AccountAndr, Date>();
+      last_notification_dates = new HashMap<Account, Date>();
     }
   }
 
@@ -407,7 +410,7 @@ public class MainActivity extends ActionBarActivity {
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
     }
-
+//    Debug.stopMethodTracing();
   }
 
   /**
@@ -427,11 +430,11 @@ public class MainActivity extends ActionBarActivity {
    *          the account to update, or null if update all account's last event
    *          time
    */
-  public static void updateLastNotification(Context context, AccountAndr acc) {
+  public static void updateLastNotification(Context context, Account acc) {
     if (acc != null) {
       last_notification_dates.put(acc, new Date());
     } else {
-      for (AccountAndr a : last_notification_dates.keySet()) {
+      for (Account a : last_notification_dates.keySet()) {
         last_notification_dates.get(a).setTime(new Date().getTime());
       }
     }
@@ -445,7 +448,7 @@ public class MainActivity extends ActionBarActivity {
    *          last notification time will be set to this account
    * @return
    */
-  public static Date getLastNotification(Context context, AccountAndr acc) {
+  public static Date getLastNotification(Context context, Account acc) {
     Date ret = null;
     if (last_notification_dates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
@@ -464,11 +467,11 @@ public class MainActivity extends ActionBarActivity {
    * @param acc
    *          messages connected to this account will be removed
    */
-  public static void removeMessagesToAccount(final AccountAndr acc) {
+  public static void removeMessagesToAccount(final Account acc) {
     Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
-    Iterator<MessageListElementParc> it = MainService.messages.iterator();
+    Iterator<MessageListElement> it = MainService.messages.iterator();
     while (it.hasNext()) {
-      MessageListElementParc mle = it.next();
+      MessageListElement mle = it.next();
       if (mle.getAccount().equals(acc)) {
         it.remove();
       }
@@ -524,8 +527,8 @@ public class MainActivity extends ActionBarActivity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
-            MessageListElementParc message = (MessageListElementParc) av.getItemAtPosition(itemIndex);
-            AccountAndr a = message.getAccount();
+            MessageListElement message = (MessageListElement) av.getItemAtPosition(itemIndex);
+            Account a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(instance, classToLoad);
             intent.putExtra("msg_list_element_id", message.getId());
@@ -544,7 +547,7 @@ public class MainActivity extends ActionBarActivity {
           /**
            * Performs a log event when an item clicked on the main view list.
            */
-          private void loggingOnClickEvent(MessageListElementParc message, boolean changed) {
+          private void loggingOnClickEvent(MessageListElement message, boolean changed) {
             StringBuilder builder = new StringBuilder();
             appendClickedElementDatasToBuilder(message, builder);
             instance.appendVisibleElementToStringBuilder(builder, lv, adapter);
@@ -552,7 +555,7 @@ public class MainActivity extends ActionBarActivity {
             EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
           }
 
-          private void appendClickedElementDatasToBuilder(MessageListElementParc message, StringBuilder builder) {
+          private void appendClickedElementDatasToBuilder(MessageListElement message, StringBuilder builder) {
             builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
             builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
             builder.append(EventLogger.LOGGER_STRINGS.OTHER.CLICK_TO_MESSAGEGROUP_STR);
@@ -682,6 +685,10 @@ public class MainActivity extends ActionBarActivity {
     super.onPause();
     is_activity_visible = false;
 
+    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName() + " - pause");
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
     // refreshing last notification date when closing activity
     updateLastNotification(instance, null);
   }
@@ -744,7 +751,7 @@ public class MainActivity extends ActionBarActivity {
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
-        builder.append(((MessageListElementParc) (adapter.getItem(actualVisiblePosition))).getId());
+        builder.append(((MessageListElement) (adapter.getItem(actualVisiblePosition))).getId());
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
     } catch (Exception ex) {

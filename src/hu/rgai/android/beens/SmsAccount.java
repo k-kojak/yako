@@ -1,35 +1,38 @@
-package hu.rgai.android.intent.beens.account;
+package hu.rgai.android.beens;
 
-import hu.uszeged.inf.rgai.messagelog.MessageProvider;
-import hu.uszeged.inf.rgai.messagelog.MessageProvider.Type;
 import android.os.Parcel;
 import android.os.Parcelable;
+import hu.rgai.android.messageproviders.MessageProvider;
 
-public class SmsAccountAndr implements AccountAndr, Parcelable {
-	public static final Parcelable.Creator<SmsAccountAndr> CREATOR = new Parcelable.Creator<SmsAccountAndr>() {
-	    public SmsAccountAndr createFromParcel(Parcel in) {
-	      return new SmsAccountAndr(in);
+// TODO: this class should be a singletone
+public final class SmsAccount implements Account, Parcelable {
+  
+  public static final SmsAccount account = new SmsAccount();
+  
+	public static final Parcelable.Creator<SmsAccount> CREATOR = new Parcelable.Creator<SmsAccount>() {
+	    public SmsAccount createFromParcel(Parcel in) {
+	      return new SmsAccount(in);
 	    }
 
-	    public SmsAccountAndr[] newArray(int size) {
-	      return new SmsAccountAndr[size];
+	    public SmsAccount[] newArray(int size) {
+	      return new SmsAccount[size];
 	    }
 	};
 	  
 	
-	public SmsAccountAndr() {}
+	private SmsAccount() {}
 	
-	public SmsAccountAndr(Parcel in) {
+	public SmsAccount(Parcel in) {
 	}
 
 	@Override
 	public String getDisplayName() {
 		// TODO Auto-generated method stub
-		return null;
+		return "SMS";
 	}
 
 	@Override
-	public Type getAccountType() {
+	public MessageProvider.Type getAccountType() {
 		// TODO Auto-generated method stub
 		return MessageProvider.Type.SMS;
 	}
@@ -68,6 +71,10 @@ public class SmsAccountAndr implements AccountAndr, Parcelable {
   public int hashCode() {
     int hash = 7;
     return hash;
+  }
+
+  public boolean isInternetNeededForLoad() {
+    return false;
   }
   
 }

@@ -3,7 +3,7 @@ package hu.rgai.android.tools.view;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
-import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.beens.MessageRecipient;
 
 /**
  *
@@ -11,7 +11,7 @@ import hu.rgai.android.intent.beens.RecipientItem;
  */
 public class AutoCompleteRow extends RelativeLayout {
 
-  private RecipientItem user;
+  private MessageRecipient user;
   
   public AutoCompleteRow(Context context) {
     super(context);
@@ -25,11 +25,11 @@ public class AutoCompleteRow extends RelativeLayout {
     super(context, attrs, defStyle);
   }
 
-  public void setRecipient(RecipientItem user) {
+  public void setRecipient(MessageRecipient user) {
     this.user = user;
   }
   
-  public RecipientItem getRecipient() {
+  public MessageRecipient getRecipient() {
     return user;
   }
 

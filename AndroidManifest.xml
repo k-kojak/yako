@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="hu.rgai.android.test"
-      android:versionCode="50"
-      android:versionName="1.0.50">
+      android:versionCode="56"
+      android:versionName="1.0.56">
   
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="16"/>
   
@@ -25,7 +25,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     
-    <application android:label="@string/app_name" android:icon="@drawable/yako" android:debuggable="false">
+    <application
+      android:name="hu.rgai.android.test.AnalyticsApp"
+      android:label="@string/app_name" android:icon="@drawable/yako" android:debuggable="false">
       <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
         <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
           android:name="MainActivity"
@@ -119,12 +121,9 @@
                 android:value="hu.rgai.android.test.settings.AccountSettingsList" />
         </activity>
         
-        
-        
         <activity android:name="MessageReply"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
                   android:label="@string/app_name"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.android.test.MainActivity" >
           <intent-filter>
             <action android:name="android.intent.action.SENDTO" />
@@ -192,10 +191,9 @@
         </receiver>
         
         <receiver android:name="hu.rgai.android.broadcastreceivers.CustomBroadcastReceiver" >
-<!--            <intent-filter>
-                <action android:name="hu.rgai.android.new_message_arrived_broadcast" />
+            <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>-->
+            </intent-filter>
         </receiver>
         
         <receiver android:name="hu.rgai.android.test.ThreadDisplayer$NewMessageReceiver">

@@ -21,7 +21,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
-import hu.rgai.android.intent.beens.RecipientItem;
+import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import java.util.ArrayList;
@@ -29,9 +29,9 @@ import java.util.List;
 
 public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView implements OnItemClickListener {
 
-  private final String TAG = "ChipsMultiAutoCompleteTextview";
-  private ArrayList<RecipientItem> recipients;
+  private ArrayList<MessageRecipient> recipients;
   private static int CHIP_TEXT_DIMENSION_IN_DIP = 55;
+  private OnChipChangeListener mChipListener = null;
 
   /* Constructor */
   public ChipsMultiAutoCompleteTextView(Context context) {
@@ -53,8 +53,12 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   }
   /* set listeners for item click and text change */
 
+  public void addOnChipChangeListener(OnChipChangeListener listener) {
+    mChipListener = listener;
+  }
+  
   public void init(Context context) {
-    recipients = new ArrayList<RecipientItem>();
+    recipients = new ArrayList<MessageRecipient>();
     setOnItemClickListener(this);
     addTextChangedListener(textWather);
   }
@@ -84,12 +88,12 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     public void onTextChanged(CharSequence s, int start, int before, int count) {
       if (count == 0) {
         recipients.clear();
-        Log.d("rgai", "toroltunk!");
         Spannable sp = ((Spannable)getText());
         ChipsMultiAutoCompleteTextView.ImageSpanExt[] annsToRemove = sp.getSpans(0, getText().length(), ChipsMultiAutoCompleteTextView.ImageSpanExt.class);
         for (int i = 0; i < annsToRemove.length; i++) {
-          recipients.add((RecipientItem)annsToRemove[i].getSpecVal());
+          recipients.add((MessageRecipient)annsToRemove[i].getSpecVal());
         }
+        callChipChangeListener();
       }
     }
 
@@ -101,8 +105,14 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     public void afterTextChanged(Editable s) {
     }
   };
+  
+  private void callChipChangeListener() {
+    if (mChipListener != null) {
+      mChipListener.onChipListChange();
+    }
+  }
+  
   /*This function has whole logic for chips generate*/
-
   public void setChips2() {
     
     // removing spans
@@ -117,7 +127,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
     
     String newText = "";
     int ind = 0;
-    for (RecipientItem u : recipients) {
+    for (MessageRecipient u : recipients) {
       if (ind > 0) {
         newText += ",";
       }
@@ -149,8 +159,7 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
 //      SpannableStringBuilder ssb = new SpannableStringBuilder(t);
       int x = 0;
 // loop will generate ImageSpan for every country name separated by comma
-      for (RecipientItem u : recipients) {
-//        c = c.trim();
+      for (MessageRecipient u : recipients) {
 // inflate chips_edittext layout
           LayoutInflater lf = (LayoutInflater) getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
           TextView textView = (TextView) lf.inflate(R.layout.chips_edittext, null);
@@ -321,24 +330,26 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   @Override
   public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
     recipients.add(((AutoCompleteRow)view).getRecipient());
+    callChipChangeListener();
 //    TextView tv = (TextView) view.findViewById(R.id.name);
-    Log.d("rgai", "parent child number -> " + parent.getChildCount());
+//    Log.d("rgai", "parent child number -> " + parent.getChildCount());
 //    Log.d("rgai", "parent nth child -> " + parent.getChildAt(position - 1).toString());
-    Log.d("rgai", "position -> " + position);
-    Log.d("rgai", "id -> " + id);
-    Log.d("rgai", "parent -> " + parent.getClass().toString());
-    Log.d("rgai", view.toString());
-    Log.d("rgai", view.getClass().toString());
+//    Log.d("rgai", "position -> " + position);
+//    Log.d("rgai", "id -> " + id);
+//    Log.d("rgai", "parent -> " + parent.getClass().toString());
+//    Log.d("rgai", view.toString());
+//    Log.d("rgai", view.getClass().toString());
 //    Log.d("rgai", tv.getText().toString());
     setChips2(); // call generate chips when user select any item from auto complete
   }
   
-  public List<RecipientItem> getRecipients() {
+  public List<MessageRecipient> getRecipients() {
     return recipients;
   }
   
-  public void addRecipient(RecipientItem ri) {
+  public void addRecipient(MessageRecipient ri) {
     recipients.add(ri);
+    callChipChangeListener();
     setChips2();
   }
   
@@ -357,6 +368,10 @@ public class ChipsMultiAutoCompleteTextView extends MultiAutoCompleteTextView im
   private int dipToPixels(float dipValue) {
     DisplayMetrics metrics = this.getResources().getDisplayMetrics();
     return (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
+  }
+  
+  public interface OnChipChangeListener {
+    public void onChipListChange();
   }
   
 //  public void setImageIcon(TextView textView, Uri imgUri, int id) {
