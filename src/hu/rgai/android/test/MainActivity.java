@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -41,6 +43,7 @@ import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.AccelerometerListener;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
@@ -107,6 +110,8 @@ public class MainActivity extends ActionBarActivity {
   private static final String APPLICATION_START_STR = "application:start";
 
   private UncaughtExceptionHandler defaultUEH;
+  
+  private SensorManager sensorManager;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
@@ -158,6 +163,14 @@ public class MainActivity extends ActionBarActivity {
       Log.d("rgai", "MAIN SERVICE ALREADY RUNNIG, ALTHOUGH THE MAINACTIVITY JUST STARTED...");
     }
     showProgressDialog();
+    
+    sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
+	// add listener. The listener will be HelloAndroid (this) class
+	sensorManager.registerListener(new AccelerometerListener(), 
+			sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+			SensorManager.SENSOR_DELAY_NORMAL);
+    
+    
   }
 
   /**

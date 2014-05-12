@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -26,6 +28,7 @@ import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.AccelerometerListener;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
@@ -80,6 +83,7 @@ public class MainService extends Service {
 
   private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
+  private SensorManager sensorManager;
 
   public static volatile Set<MessageListElement> messages = null;
   public static volatile MessageListElement mLastNotifiedMessage = null;
@@ -113,6 +117,12 @@ public class MainService extends Service {
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning)
       LogUploadScheduler.INSTANCE.startRepeatingTask();
+    
+    sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
+	// add listener. The listener will be HelloAndroid (this) class
+	sensorManager.registerListener(new AccelerometerListener(), 
+			sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+			SensorManager.SENSOR_DELAY_NORMAL);
   }
 
   @Override
