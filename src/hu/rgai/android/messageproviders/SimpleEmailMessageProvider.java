@@ -1,3 +1,5 @@
+// TODO: if NO FRESH MAIL result comes, but then the amount of initial messages changed, then refresh pressed, then it works incorrect: not loads more message
+
 package hu.rgai.android.messageproviders;
 
 import android.content.Context;
@@ -14,8 +16,10 @@ import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
+import hu.rgai.android.test.MainActivity;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -50,12 +54,6 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
-import javax.mail.event.FolderEvent;
-import javax.mail.event.FolderListener;
-import javax.mail.event.MessageChangedEvent;
-import javax.mail.event.MessageChangedListener;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -107,54 +105,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return account;
   }
   
-  private Store getStore(EmailAccount account) throws MessagingException {
-    Store store = null;
-    if (connections == null) {
-      Log.d("rgai", "CREATING STORE CONTAINER");
-      connections = new HashMap<EmailAccount, Store>();
-    } else {
-      if (connections.containsKey(account)) {
-        store = connections.get(account);
-        Log.d("rgai", "STORE EXISTS");
-      }
-    }
-    
-    if (store == null || !store.isConnected()) {
-      Log.d("rgai", "CREATING STORE || reconnection store");
-      store = getStore();
-      connections.put(account, store);
-    }
-    
-    return store;
-  }
-  
-  private IMAPFolder getFolder(EmailAccount account, String folder) throws MessagingException {
-    IMAPFolder imapFolder = null;
-    AccountFolder accFolder = new AccountFolder(account, folder);
-    if (folders == null) {
-      Log.d("rgai", "CREATING FOLDER CONTAINER");
-      folders = new HashMap<AccountFolder, IMAPFolder>();
-    } else {
-      if (folders.containsKey(accFolder)) {
-        imapFolder = folders.get(accFolder);
-        Log.d("rgai", "FOLDER EXISTS");
-      }
-    }
-    
-    if (imapFolder == null) {
-      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
-      Store store = getStore(account);
-      if (store != null) {
-        imapFolder = (IMAPFolder)store.getFolder(folder);
-        folders.put(accFolder, imapFolder);
-      }
-    } else {
-      Log.d("rgai", "IMAPFolder OK, already opened");
-    }
-    
-    return imapFolder;
-  }
-  
   /**
    * Sets properties for the given object.
    * 
@@ -178,8 +128,61 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       props.setProperty("mail.store.protocol", "imap");
       props.put("mail.imap.fetchsize", "819200");
     }
-    
   }
+  
+  private Store getStore(EmailAccount account) throws MessagingException {
+    Store store = null;
+    if (connections == null) {
+//      Log.d("rgai", "CREATING STORE CONTAINER");
+      connections = new HashMap<EmailAccount, Store>();
+    } else {
+      if (connections.containsKey(account)) {
+        store = connections.get(account);
+//        Log.d("rgai", "STORE EXISTS");
+      }
+    }
+    
+    if (store == null || !store.isConnected()) {
+//      Log.d("rgai", "CREATING STORE || reconnection store");
+      store = getStore();
+      connections.put(account, store);
+    }
+    
+    return store;
+  }
+  
+  private IMAPFolder getFolder(EmailAccount account, String folder) throws MessagingException {
+    IMAPFolder imapFolder = null;
+    AccountFolder accFolder = new AccountFolder(account, folder);
+    if (folders == null) {
+//      Log.d("rgai", "CREATING FOLDER CONTAINER");
+      folders = new HashMap<AccountFolder, IMAPFolder>();
+    } else {
+      if (folders.containsKey(accFolder)) {
+        imapFolder = folders.get(accFolder);
+//        Log.d("rgai", "FOLDER EXISTS");
+      }
+    }
+    
+    if (imapFolder == null) {
+//      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
+      Store store = getStore(account);
+      if (store != null) {
+        imapFolder = (IMAPFolder)store.getFolder(folder);
+        folders.put(accFolder, imapFolder);
+      }
+    } else {
+//      Log.d("rgai", "IMAPFolder OK, already opened");
+    }
+    
+    if (imapFolder != null && !imapFolder.isOpen()) {
+      imapFolder.open(Folder.READ_ONLY);
+    }
+    
+    return imapFolder;
+  }
+  
+  
   
   /**
    * Connects to imap, returns a store.
@@ -210,49 +213,56 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
     return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
     
     List<MessageListElement> emails = new LinkedList<MessageListElement>();
     
-    IMAPFolder inbox = getFolder(account, "Inbox");
+    IMAPFolder imapFolder = getFolder(account, "Inbox");
     
-    if (inbox == null) {
-      Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
-      return emails;
-    }
-
-    if (offset == 0 && !hasNewMail(inbox, loadedMessages)) {
-      Log.d("rgai", "JUHU, RETURN HERE");
-      return emails;
+    if (imapFolder == null) {
+//      Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
+      return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
     }
     
-    if (!inbox.isOpen()) {
-      inbox.open(Folder.READ_ONLY);
+    int messageCount = imapFolder.getMessageCount();
+    
+    if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
+//      Log.d("rgai", "NO FRESH MAIL");
+      if (MainActivity.isMainActivityVisible()) {
+//        Log.d("rgai", "CHECKING FLAG STATUS: MainA is visible");
+        return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
+      } else {
+//        Log.d("rgai", "NOT CHECKING FLAG STATUS: MainA is not visible");
+        return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE);
+      }
     }
     
-    int messageCount = inbox.getMessageCount();
+//    int messageCount = inbox.getMessageCount();
     int start = Math.max(1, messageCount - limit - offset + 1);
     int end = start + limit > messageCount ? messageCount : start + limit;
     
     // we are refreshing here, not loading older messages
     
-    
-    Message messages[] = inbox.getMessages(start, end);
+//    Log.d("rgai", "messageCount: " + messageCount);
+//    Log.d("rgai", "start: " + start);
+//    Log.d("rgai", "end: " + end);
+//    Log.d("rgai", "account: " + account);
+    Message messages[] = imapFolder.getMessages(start, end);
 //    inbox.get
     
 
     for (int i = messages.length - 1; i >= 0; i--) {
       Message m = messages[i];
-      long uid = inbox.getUID(m);
+      long uid = imapFolder.getUID(m);
       
       Flags flags = m.getFlags();
       boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -271,23 +281,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       } else {
         
         MessageListElement testerElement = new MessageListElement(uid + "", seen, fromPerson, date, account, Type.EMAIL, true);
-        
-        
-//        MessageListElement firstLoaded = null;
-//        for (MessageListElement mle : loadedMessages) {
-//          firstLoaded = mle;
-//          break;
-//        }
-        
-        // checking the timestamp of the first element, if match, we can return, because we have no new mail
-//        if (firstLoaded != null) {
-//          if (firstLoaded.getDate().equals(testerElement.getDate()) && firstLoaded.getFrom().getId().equals(fromPerson.getId())) {
-//            Log.d("rgai", "JUHU, RETURN HERE");
-////            return emails;
-//          }
-//        }
-        
-        
         
         
         if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
@@ -330,13 +323,40 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         emails.add(mle);
       }
     }
-    inbox.close(true);
+    imapFolder.close(true);
 //    store.close();
-    
-    return emails;
+    return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
   }
   
-  private boolean hasNewMail(IMAPFolder inbox, TreeSet<MessageListElement> loadedMessages) throws MessagingException {
+  private MessageListResult getFlagChangesOfMessages(int messageCount,
+          int limit, int offset, TreeSet<MessageListElement> loadedMessages) throws MessagingException {
+    
+    List<MessageListElement> emails = new LinkedList<MessageListElement>();
+    
+    IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+    imapFolder.open(Folder.READ_ONLY);
+    
+    int start = Math.max(1, messageCount - limit - offset + 1);
+    int end = start + limit > messageCount ? messageCount : start + limit;
+    Message messages[] = imapFolder.getMessages(start, end);
+
+    for (int i = messages.length - 1; i >= 0; i--) {
+      Message m = messages[i];
+      long uid = imapFolder.getUID(m);
+      
+      Flags flags = m.getFlags();
+      boolean seen = flags.contains(Flags.Flag.SEEN);
+      
+      MessageListElement testerElement = new MessageListElement(uid + "", seen, null, null, account, Type.EMAIL, true);
+      if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
+        emails.add(testerElement);
+      }
+    }
+    
+    return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE);
+  }
+  
+  private boolean hasNewMail(IMAPFolder inbox, TreeSet<MessageListElement> loadedMessages, int messageCount) throws MessagingException {
     
 //    Store s = getStore(account);
     
@@ -344,9 +364,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //    Log.d("rgai", "uidValidity: " + inbox.getUIDValidity());
     
     String nextUID = inbox.getUIDNext() + "";
-    String msgCount = inbox.getMessageCount() + "";
     
-    String newKey = nextUID+"_"+msgCount;
+    
+    String newKey = nextUID+"_"+messageCount;
     
     String storedKey = getValidityString(account);
     if (newKey.equals(storedKey)) {
@@ -623,9 +643,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     if (folder == null) return null;
     
-    if (!folder.isOpen()) {
-      folder.open(Folder.READ_WRITE);
-    }
+//    if (!folder.isOpen()) {
+//      folder.open(Folder.READ_WRITE);
+//    }
     EmailContent content;
     
     Message ms = folder.getMessage(Integer.parseInt(id));
@@ -656,9 +676,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     if (folder == null) return null;
     
-    if (!folder.isOpen()) {
-      folder.open(Folder.READ_WRITE);
-    }
+//    if (!folder.isOpen()) {
+//      folder.open(Folder.READ_WRITE);
+//    }
     
     Message ms = folder.getMessage(Integer.parseInt(messageId));
     
@@ -761,9 +781,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     if (folder == null) return;
     
-    if (!folder.isOpen()) {
-      folder.open(Folder.READ_WRITE);
-    }
+//    if (!folder.isOpen()) {
+//      folder.open(Folder.READ_WRITE);
+//    }
     
     Message ms = folder.getMessageByUID(Long.parseLong(id));
     if (ms != null) {

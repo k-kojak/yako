@@ -4,12 +4,12 @@ import android.content.Context;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.mail.AuthenticationFailedException;
@@ -44,7 +44,7 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException,
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException;
   
@@ -65,7 +65,7 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength) throws CertPathValidatorException,
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException;
   
@@ -136,7 +136,7 @@ public interface MessageProvider {
     
     public static boolean isMessageLoaded(TreeSet<MessageListElement> messages, MessageListElement message) {
       for (MessageListElement mle : messages) {
-        if (mle.getId().equals(message.getId()) && mle.getDate().equals(message.getDate()) && mle.getFrom().getId().equals(message.getFrom().getId())) {
+        if (mle.getId().equals(message.getId()) && mle.getAccount().equals(message.getAccount())) {
           return true;
         }
       }

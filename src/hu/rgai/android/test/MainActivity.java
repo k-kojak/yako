@@ -24,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
@@ -38,14 +39,14 @@ import com.facebook.Session;
 import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
@@ -70,13 +71,13 @@ public class MainActivity extends ActionBarActivity {
   public static volatile MainActivity instance;
 
   // holds the Facebook token
-  private static String fbToken = null;
+  private static volatile String fbToken = null;
 
   // holds the activity visibility state
-  private static boolean is_activity_visible = false;
+  private static volatile boolean is_activity_visible = false;
 
   // stores the last notification state to all different account types
-  private static HashMap<Account, Date> last_notification_dates = null;
+  private static volatile HashMap<Account, Date> last_notification_dates = null;
 
   // this is the adapter for the main view
   private static volatile LazyAdapter adapter;
@@ -107,6 +108,8 @@ public class MainActivity extends ActionBarActivity {
   private static final String APPLICATION_START_STR = "application:start";
 
   private UncaughtExceptionHandler defaultUEH;
+  
+  private static Menu mMenu;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
@@ -129,6 +132,7 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 //    Debug.startMethodTracing("calc_store_connect");
     Tracker t = ((AnalyticsApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -149,14 +153,8 @@ public class MainActivity extends ActionBarActivity {
 
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-    if (!MainService.RUNNING) {
-      reloadMessages();
-      // disaplying loading dialog, since the mails are not ready, but the user
-      // opened the list
-      Log.d("rgai", "MAIN ACTIVITY: START MAIN SERVICE FROM HERE");
-    } else {
-      Log.d("rgai", "MAIN SERVICE ALREADY RUNNIG, ALTHOUGH THE MAINACTIVITY JUST STARTED...");
-    }
+    
+    // disaplying loading dialog, since the mails are not ready, but the user
     showProgressDialog();
   }
 
@@ -165,6 +163,8 @@ public class MainActivity extends ActionBarActivity {
    * loading.
    */
   private static void showProgressDialog() {
+//    instance.setProgressBarIndeterminateVisibility(Boolean.TRUE); 
+//    mMenu.findItem(R.id.refresh_message_list).setVisible(false);
     pd = new ProgressDialog(instance);
     pd.setMessage(instance.getString(R.string.loading));
     pd.setCancelable(false);
@@ -175,6 +175,12 @@ public class MainActivity extends ActionBarActivity {
    * Hides the message loading dialog if is there any.
    */
   private static void hideProgressDialog() {
+//    if (instance != null) {
+//      instance.setProgressBarIndeterminateVisibility(Boolean.FALSE); 
+//    }
+//    if (mMenu != null) {
+//      mMenu.findItem(R.id.refresh_message_list).setVisible(true);
+//    }
     if (pd != null) {
       pd.dismiss();
     }
@@ -206,6 +212,7 @@ public class MainActivity extends ActionBarActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
+    this.mMenu = menu;
     return true;
   }
 
@@ -229,7 +236,7 @@ public class MainActivity extends ActionBarActivity {
         // item.setEnabled(false);
 
         Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_SHORT).show();
-        reloadMessages();
+        reloadMessages(true);
         return true;
       case R.id.system_preferences:
         Intent i = new Intent(instance, SystemPreferences.class);
@@ -316,7 +323,7 @@ public class MainActivity extends ActionBarActivity {
         break;
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
         if (resultCode == Activity.RESULT_OK) {
-          reloadMessages();
+          reloadMessages(true);
         }
         break;
       default:
@@ -327,10 +334,12 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Sends a broadcast to the Service to load fresh messages again.
    */
-  private void reloadMessages() {
+  private void reloadMessages(boolean forceQuery) {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
-    intent.putExtra("force_query", true);
+    if (forceQuery) {
+      intent.putExtra("force_query", true);
+    }
     this.sendBroadcast(intent);
   }
 
@@ -366,8 +375,15 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    removeNotificationIfExists();
     is_activity_visible = true;
+    removeNotificationIfExists();
+    
+    if (!MainService.RUNNING) {
+      reloadMessages(true);
+    } else {
+      reloadMessages(false);
+    }
+    
     // initLastNotificationDates();
     updateLastNotification(instance, null);
     setUpAndRegisterScreenReceiver();

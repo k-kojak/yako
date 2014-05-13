@@ -27,6 +27,7 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.config.Settings;
@@ -209,7 +210,7 @@ public class MainService extends Service {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 
                 LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
-                AndroidUtils.<String, Integer, List<MessageListElement>>startAsyncTask(myThread);
+                AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
             }
           }
@@ -368,8 +369,15 @@ public class MainService extends Service {
             MainActivity.showErrorMessage(bundle.getInt("result"), bundle.getString("errorMessage"));
           }
           boolean loadMore = bundle.getBoolean("load_more");
-          if (bundle.getInt( "result") == OK && bundle.get( "messages") != null) {
+          if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
             MessageListElement[] newMessages = (MessageListElement[]) bundle.getParcelableArray( "messages");
+            MessageListResult.ResultType resultType = MessageListResult.ResultType.valueOf(bundle.getString("message_result_type"));
+            
+            // if NO_CHANGE or ERROR, then just return, we do not have to merge because messages
+            // is probably empty anyway...
+            if (resultType.equals(MessageListResult.ResultType.NO_CHANGE) || resultType.equals(MessageListResult.ResultType.ERROR)) {
+              return;
+            }
 
             /*
              * If new message packet comes from Facebook, and newMessages contains groupMessages,
@@ -379,6 +387,7 @@ public class MainService extends Service {
               boolean sendBC = false;
               for (int i = 0; i < newMessages.length; i++) {
                 MessageListElement m = newMessages[i];
+//                Log.d("rgai", "m:" + m);
                 if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
                   sendBC = true;
                   break;
@@ -390,7 +399,7 @@ public class MainService extends Service {
               }
             }
 
-            this.mergeMessages(newMessages);
+            this.mergeMessages(newMessages, loadMore);
             MessageListElement lastUnreadMsg = null;
 
             Set<Account> accountsToUpdate = new HashSet<Account>();
@@ -532,7 +541,13 @@ public class MainService extends Service {
       }
     }
 
-    private void mergeMessages(MessageListElement[] newMessages) {
+    /**
+     * 
+     * @param newMessages the list of new messages
+     * @param loadMoreRequest true if result of "load more" action, false otherwise, which
+     * means this is a refresh action
+     */
+    private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest) {
       if (messages == null) {
         initMessages();
       }
@@ -543,6 +558,7 @@ public class MainService extends Service {
         // and
         // tree search does not return a valid value
         // causes problem at thread type messages like Facebook
+        
         for (MessageListElement storedMessage : messages) {
           if (storedMessage.equals(newMessage)) {
             contains = true;
@@ -604,7 +620,7 @@ public class MainService extends Service {
     }
   }
 
-  private class LongOperation extends AsyncTask<String, Integer, List<MessageListElement>> {
+  private class LongOperation extends AsyncTask<String, Integer, MessageListResult> {
 
     private Context context;
     private int result;
@@ -625,8 +641,8 @@ public class MainService extends Service {
     }
 
     @Override
-    protected List<MessageListElement> doInBackground(String... params) {
-      List<MessageListElement> messages = null;
+    protected MessageListResult doInBackground(String... params) {
+      MessageListResult messageResult = null;
       try {
         if (messageProvider != null) {
           int currentMessagesToAccount = 0;
@@ -643,23 +659,13 @@ public class MainService extends Service {
           // the already loaded messages to the specific content type...
           TreeSet<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
           
-          messages = messageProvider.getMessageList(currentMessagesToAccount,
+          messageResult = messageProvider.getMessageList(currentMessagesToAccount,
                   acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+          if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
+            // searching for android contacts
+            extendPersonObject(messageResult.getMessages());
+          }
           
-          // searching for android contacts
-          extendPersonObject(messages);
-          
-//          List<MessageListElement> parcelableMessages = extendPersonObject();
-          
-//          for (MessageListElement mlep : parcelableMessages) {
-//            if (!messages.contains(mlep)) {
-//              messages.add(mlep);
-//            } else {
-//              if (!mlep.isUpdateFlags()) {
-//                messages.get(messages.indexOf(mlep)).setFrom(mlep.getFrom());
-//              }
-//            }
-//          }
         }
 
       } catch (AuthenticationFailedException ex) {
@@ -697,7 +703,7 @@ public class MainService extends Service {
         return null;
       }
       this.result = OK;
-      return messages;
+      return messageResult;
     }
     
     private TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
@@ -733,12 +739,14 @@ public class MainService extends Service {
     }
 
     @Override
-    protected void onPostExecute(List<MessageListElement> messages) {
+    protected void onPostExecute(MessageListResult messageResult) {
       
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
       if (this.result == OK) {
-        bundle.putParcelableArray("messages", messages.toArray(new MessageListElement[messages.size()]));
+        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
+        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
+        bundle.putString("message_result_type", messageResult.getResultType().toString());
         // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
       }
       bundle.putBoolean("load_more", loadMore);

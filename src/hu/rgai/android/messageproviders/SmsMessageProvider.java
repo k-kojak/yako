@@ -15,6 +15,7 @@ import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsAccount;
@@ -51,7 +52,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     return SmsAccount.account;
   }
   
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
@@ -59,7 +60,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
@@ -146,10 +147,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
       cur.close();
     }
-
-    return messages;
-
-
+    return new MessageListResult(messages, MessageListResult.ResultType.CHANGED);
+    
   }
 
   @Override

@@ -353,7 +353,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   @Override
   public String toString() {
     return "MessageListElement{" + "id=" + id + ", account="+ account +", seen=" + seen + ", title=" + title
-            + ", subTitle=" + subTitle + ", from=" + from + ", date=" + date + " ("+ date.getTime() +"), messageType="
+            + ", subTitle=" + subTitle + ", from=" + from + ", date=" + date + " ("+ (date != null ? date.getTime() : "-") +"), messageType="
             + messageType + ", updateFlags=" + updateFlags +'}';
   }
   

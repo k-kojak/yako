@@ -3,7 +3,6 @@ package hu.rgai.android.messageproviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.StrictMode;
 import android.util.Log;
 import com.facebook.HttpMethod;
@@ -19,6 +18,7 @@ import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.config.Settings;
@@ -68,7 +68,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return account;
   }
   
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
@@ -76,7 +76,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
@@ -194,8 +194,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     });
     Request.executeAndWait(request);
-    
-    return messages;
+    MessageListResult mlr = new MessageListResult(messages, MessageListResult.ResultType.CHANGED);
+    return mlr;
   }
   
   public static boolean isXmppAlive() {
