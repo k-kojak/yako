@@ -332,8 +332,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           int limit, int offset, TreeSet<MessageListElement> loadedMessages) throws MessagingException {
     
     List<MessageListElement> emails = new LinkedList<MessageListElement>();
+    Store store = getStore(account);
     
-    IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+    if (store == null || !store.isConnected()) {
+      return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
+    }
+    
+    IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
     imapFolder.open(Folder.READ_ONLY);
     
     int start = Math.max(1, messageCount - limit - offset + 1);
