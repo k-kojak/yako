@@ -15,11 +15,11 @@ import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.config.Settings;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.beens.SmsMessageRecipient;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.AuthenticationFailedException;
@@ -50,7 +51,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     return SmsAccount.account;
   }
   
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {
@@ -58,7 +59,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException {

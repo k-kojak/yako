@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -49,6 +50,12 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.event.FolderEvent;
+import javax.mail.event.FolderListener;
+import javax.mail.event.MessageChangedEvent;
+import javax.mail.event.MessageChangedListener;
+import javax.mail.event.MessageCountEvent;
+import javax.mail.event.MessageCountListener;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -69,6 +76,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private String attachmentFolder = "../files/";
   private AttachmentProgressUpdate progressUpdate = null;
   private static HashMap<EmailAccount, Store> connections;
+  private static HashMap<AccountFolder, IMAPFolder> folders;
+  
+  // this map holds a unique state id for a query
+  // String is a concatenation of nextMessageUID+messageCount
+  // this string is unique for a state
+  private static HashMap<EmailAccount, String> validityMap;
 
   /**
    * Constructs a SimpleEmailMessageProvider object.
@@ -97,28 +110,49 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private Store getStore(EmailAccount account) throws MessagingException {
     Store store = null;
     if (connections == null) {
-      System.out.println("CREATING STORE CONTAINER");
+      Log.d("rgai", "CREATING STORE CONTAINER");
       connections = new HashMap<EmailAccount, Store>();
     } else {
       if (connections.containsKey(account)) {
         store = connections.get(account);
-        System.out.println("STORE EXISTS");
+        Log.d("rgai", "STORE EXISTS");
       }
     }
     
     if (store == null || !store.isConnected()) {
-      System.out.println("CREATING STORE || reconnection store");
+      Log.d("rgai", "CREATING STORE || reconnection store");
       store = getStore();
       connections.put(account, store);
-    } else if (!store.isConnected()) {
-      System.out.println("RECONNECTING STORE");
-      store = getStore();
-      connections.put(account, store);
-    } else {
-      // do nothing: store exists and connected
     }
     
     return store;
+  }
+  
+  private IMAPFolder getFolder(EmailAccount account, String folder) throws MessagingException {
+    IMAPFolder imapFolder = null;
+    AccountFolder accFolder = new AccountFolder(account, folder);
+    if (folders == null) {
+      Log.d("rgai", "CREATING FOLDER CONTAINER");
+      folders = new HashMap<AccountFolder, IMAPFolder>();
+    } else {
+      if (folders.containsKey(accFolder)) {
+        imapFolder = folders.get(accFolder);
+        Log.d("rgai", "FOLDER EXISTS");
+      }
+    }
+    
+    if (imapFolder == null) {
+      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
+      Store store = getStore(account);
+      if (store != null) {
+        imapFolder = (IMAPFolder)store.getFolder(folder);
+        folders.put(accFolder, imapFolder);
+      }
+    } else {
+      Log.d("rgai", "IMAPFolder OK, already opened");
+    }
+    
+    return imapFolder;
   }
   
   /**
@@ -176,80 +210,86 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
     return getMessageList(offset, limit, loadedMessages, 20);
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
     
     List<MessageListElement> emails = new LinkedList<MessageListElement>();
-    Store store = this.getStore(account);
     
-    if (store == null || !store.isConnected()) {
-      Log.d("rgai", "IT WAS UNABLE TO CONNECT TO STORE: " + account + ", " + store);
+    IMAPFolder inbox = getFolder(account, "Inbox");
+    
+    if (inbox == null) {
+      Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
       return emails;
     }
-      
+
+    if (offset == 0 && !hasNewMail(inbox, loadedMessages)) {
+      Log.d("rgai", "JUHU, RETURN HERE");
+      return emails;
+    }
     
-    IMAPFolder inbox = (IMAPFolder)store.getFolder("Inbox");
-    inbox.open(Folder.READ_ONLY);
+    if (!inbox.isOpen()) {
+      inbox.open(Folder.READ_ONLY);
+    }
+    
     int messageCount = inbox.getMessageCount();
     int start = Math.max(1, messageCount - limit - offset + 1);
     int end = start + limit > messageCount ? messageCount : start + limit;
+    
+    // we are refreshing here, not loading older messages
+    
+    
     Message messages[] = inbox.getMessages(start, end);
+//    inbox.get
+    
 
     for (int i = messages.length - 1; i >= 0; i--) {
       Message m = messages[i];
+      long uid = inbox.getUID(m);
+      
       Flags flags = m.getFlags();
       boolean seen = flags.contains(Flags.Flag.SEEN);
       
       
       Date date = m.getSentDate();
-      String from = null;
-      if (m.getFrom() != null) {
-        from = m.getFrom()[0].toString();
-        from = prepareMimeFieldToDecode(from);
-      }
-      if (from != null) {
-        try {
-          from = MimeUtility.decodeText(from);
-        } catch (java.io.UnsupportedEncodingException ex) {
-          ex.printStackTrace();
-        }
-      }
+
       
       // Skipping email from listing, because it is a spam probably,
       // ...at least citromail does not give any information about the email in some cases,
       // and in web browsing it displays an "x" sign before the title, which may indicate
       // that this is a spam
-      if (from == null) {
+      Person fromPerson = getSenderPersonObject(m);
+      if (fromPerson == null) {
         // skipping email
       } else {
-        String fromName = null;
-        String fromEmail = null;
-        String regex = "(.*)<([^<>]*)>";
-//        System.out.println("SimpleEmailMessageProvider: from -> " + from);
-        if (from.matches(regex)) {
-          Pattern pattern = Pattern.compile(regex);
-          Matcher matcher = pattern.matcher(from);
-          while(matcher.find()) {
-            fromName = matcher.group(1);
-            fromEmail = matcher.group(2);
-            break;
-          }
-        } else {
-          fromName = from;
-          fromEmail = from;
-        }
-        Person fromPerson = new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+        
+        MessageListElement testerElement = new MessageListElement(uid + "", seen, fromPerson, date, account, Type.EMAIL, true);
         
         
-        MessageListElement testerElement = new MessageListElement(m.getMessageNumber() + "", seen, fromPerson, date, account, Type.EMAIL, true);
+//        MessageListElement firstLoaded = null;
+//        for (MessageListElement mle : loadedMessages) {
+//          firstLoaded = mle;
+//          break;
+//        }
+        
+        // checking the timestamp of the first element, if match, we can return, because we have no new mail
+//        if (firstLoaded != null) {
+//          if (firstLoaded.getDate().equals(testerElement.getDate()) && firstLoaded.getFrom().getId().equals(fromPerson.getId())) {
+//            Log.d("rgai", "JUHU, RETURN HERE");
+////            return emails;
+//          }
+//        }
+        
+        
+        
+        
         if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
           emails.add(testerElement);
           continue;
@@ -282,9 +322,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //        System.out.println("fromName -> " + fromName);
 //        System.out.println("fromEmail -> " + fromEmail);
         
-        MessageListElement mle = new MessageListElement(m.getMessageNumber() + "", seen, subject, "",
+        MessageListElement mle = new MessageListElement(uid + "", seen, subject, "",
                 fromPerson, null, date, account, Type.EMAIL);
-        FullSimpleMessage fsm = new FullSimpleMessage(m.getMessageNumber() + "", subject,
+        FullSimpleMessage fsm = new FullSimpleMessage(uid + "", subject,
                 content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
         mle.setFullMessage(fsm);
         emails.add(mle);
@@ -296,7 +336,95 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return emails;
   }
   
+  private boolean hasNewMail(IMAPFolder inbox, TreeSet<MessageListElement> loadedMessages) throws MessagingException {
+    
+//    Store s = getStore(account);
+    
+//    Message messages[] = inbox.getMessages(endIndex, endIndex);
+//    Log.d("rgai", "uidValidity: " + inbox.getUIDValidity());
+    
+    String nextUID = inbox.getUIDNext() + "";
+    String msgCount = inbox.getMessageCount() + "";
+    
+    String newKey = nextUID+"_"+msgCount;
+    
+    String storedKey = getValidityString(account);
+    if (newKey.equals(storedKey)) {
+      return false;
+    } else {
+      validityMap.put(account, newKey);
+      return true;
+    }
+    
+    
+    
+//    for (Message m : messages) {
+//      String uid = inbox.getUID(m) + "";
+//      MessageListElement firstLoaded = null;
+//      if (loadedMessages != null && !loadedMessages.isEmpty()) {
+//        firstLoaded = loadedMessages.first();
+//      }
+//      if (firstLoaded != null) {
+////        Log.d("rgai", "FirstLoaded: " + firstLoaded.toString());
+////        Log.d("rgai", "current uid: " + uid);
+//        if (firstLoaded.getId().equals(uid)) {
+//          return false;
+//        }
+//      }
+//    }
+//    return true;
+  }
   
+  private String getValidityString(EmailAccount account) {
+    if (validityMap == null) {
+      validityMap = new HashMap<EmailAccount, String>();
+      return null;
+    } else {
+      return validityMap.get(account);
+    }
+  }
+  
+  private Person getSenderPersonObject(Message m) throws MessagingException {
+    String from = null;
+    if (m.getFrom() != null) {
+      from = m.getFrom()[0].toString();
+      from = prepareMimeFieldToDecode(from);
+    }
+    if (from != null) {
+      try {
+        from = MimeUtility.decodeText(from);
+      } catch (java.io.UnsupportedEncodingException ex) {
+        ex.printStackTrace();
+      }
+    }
+
+    // Skipping email from listing, because it is a spam probably,
+    // ...at least citromail does not give any information about the email in some cases,
+    // and in web browsing it displays an "x" sign before the title, which may indicate
+    // that this is a spam
+    if (from == null) {
+      // skipping email
+      return null;
+    } else {
+      String fromName = null;
+      String fromEmail = null;
+      String regex = "(.*)<([^<>]*)>";
+//        System.out.println("SimpleEmailMessageProvider: from -> " + from);
+      if (from.matches(regex)) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(from);
+        while(matcher.find()) {
+          fromName = matcher.group(1);
+          fromEmail = matcher.group(2);
+          break;
+        }
+      } else {
+        fromName = from;
+        fromEmail = from;
+      }
+      return new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+    }
+  }
   
   /**
    * Replaces the "x-unknown" encoding type with "iso-8859-2" to be able to decode the mime
@@ -491,11 +619,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
 
-    Store store = this.getStore(account);
-    IMAPFolder folder;
+    IMAPFolder folder = getFolder(account, "Inbox");
+    
+    if (folder == null) return null;
+    
+    if (!folder.isOpen()) {
+      folder.open(Folder.READ_WRITE);
+    }
     EmailContent content;
-    folder = (IMAPFolder)store.getFolder("INBOX");
-    folder.open(Folder.READ_WRITE);
     
     Message ms = folder.getMessage(Integer.parseInt(id));
 //    ms.s
@@ -521,10 +652,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   public byte[] getAttachmentOfMessage(String messageId, String attachmentId) throws NoSuchProviderException, MessagingException, IOException {
-    Store store = this.getStore(account);
-    IMAPFolder folder;
-    folder = (IMAPFolder)store.getFolder("INBOX");
-    folder.open(Folder.READ_WRITE);
+    IMAPFolder folder = getFolder(account, "Inbox");
+    
+    if (folder == null) return null;
+    
+    if (!folder.isOpen()) {
+      folder.open(Folder.READ_WRITE);
+    }
     
     Message ms = folder.getMessage(Integer.parseInt(messageId));
     
@@ -622,15 +756,19 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
   @Override
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
-    Store store = this.getStore(account);
-    // TODO: exception handling, not connected to store...
-    if (store == null || !store.isConnected()) return;
-    IMAPFolder folder;
-    folder = (IMAPFolder)store.getFolder("INBOX");
-    folder.open(Folder.READ_WRITE);
     
-    Message ms = folder.getMessage(Integer.parseInt(id));
-    ms.setFlag(Flags.Flag.SEEN, true);
+    IMAPFolder folder = getFolder(account, "Inbox");
+    
+    if (folder == null) return;
+    
+    if (!folder.isOpen()) {
+      folder.open(Folder.READ_WRITE);
+    }
+    
+    Message ms = folder.getMessageByUID(Long.parseLong(id));
+    if (ms != null) {
+      ms.setFlag(Flags.Flag.SEEN, true);
+    }
   }
 
   public boolean canBroadcastOnNewMessage() {
@@ -647,6 +785,43 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);
+  }
+
+  private class AccountFolder {
+    private EmailAccount account = null;
+    private String folder = null;
+
+    public AccountFolder(EmailAccount account, String folder) {
+      this.account = account;
+      this.folder = folder;
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 3;
+      hash = 67 * hash + (this.account != null ? this.account.hashCode() : 0);
+      hash = 67 * hash + (this.folder != null ? this.folder.hashCode() : 0);
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      final AccountFolder other = (AccountFolder) obj;
+      if (this.account != other.account && (this.account == null || !this.account.equals(other.account))) {
+        return false;
+      }
+      if ((this.folder == null) ? (other.folder != null) : !this.folder.equals(other.folder)) {
+        return false;
+      }
+      return true;
+    }
+    
   }
 
   @Override

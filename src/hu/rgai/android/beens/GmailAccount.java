@@ -47,7 +47,7 @@ public class GmailAccount extends EmailAccount {
   
   @Override
   public String toString() {
-    return "GmailAccount{" + "email=" + email + ", password=" + password + '}';
+    return "GmailAccount{" + "email=" + email + '}';
   }
   
 }

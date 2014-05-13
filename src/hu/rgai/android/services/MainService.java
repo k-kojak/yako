@@ -86,7 +86,7 @@ public class MainService extends Service {
   private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
-  public static volatile Set<MessageListElement> messages = null;
+  public static volatile TreeSet<MessageListElement> messages = null;
   public static volatile MessageListElement mLastNotifiedMessage = null;
 
   public MainService() {}
@@ -641,7 +641,7 @@ public class MainService extends Service {
           }
           
           // the already loaded messages to the specific content type...
-          Set<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
+          TreeSet<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
           
           messages = messageProvider.getMessageList(currentMessagesToAccount,
                   acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH);
@@ -700,8 +700,8 @@ public class MainService extends Service {
       return messages;
     }
     
-    private Set<MessageListElement> getLoadedMessages(Account account, Set<MessageListElement> messages) {
-      Set<MessageListElement> selected = new HashSet<MessageListElement>();
+    private TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
+      TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
       if (messages != null) {
         for (MessageListElement mle : messages) {
           if (mle.getAccount().equals(account)) {

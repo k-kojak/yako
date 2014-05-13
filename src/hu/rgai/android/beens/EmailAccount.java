@@ -102,9 +102,12 @@ public class EmailAccount implements Account, Parcelable {
 
   @Override
   public int hashCode() {
-    int hash = 7;
+    int hash = 3;
+    hash = 79 * hash + (this.email != null ? this.email.hashCode() : 0);
+    hash = 79 * hash + (this.accountType != null ? this.accountType.hashCode() : 0);
     return hash;
   }
+  
 
   @Override
   public String toString() {

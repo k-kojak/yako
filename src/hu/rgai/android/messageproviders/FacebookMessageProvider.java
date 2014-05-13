@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -67,7 +68,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return account;
   }
   
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages)
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
@@ -75,7 +76,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
   
   @Override
-  public List<MessageListElement> getMessageList(int offset, int limit, Set<MessageListElement> loadedMessages, int snippetMaxLength)
+  public List<MessageListElement> getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException,
           NoSuchProviderException, UnknownHostException, IOException, MessagingException,
           AuthenticationFailedException {
