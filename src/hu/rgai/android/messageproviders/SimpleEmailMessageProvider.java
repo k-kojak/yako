@@ -341,6 +341,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
     imapFolder.open(Folder.READ_ONLY);
     
+    messageCount = imapFolder.getMessageCount();
+    
     int start = Math.max(1, messageCount - limit - offset + 1);
     int end = start + limit > messageCount ? messageCount : start + limit;
     Message messages[] = imapFolder.getMessages(start, end);
