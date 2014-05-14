@@ -16,7 +16,6 @@ public class ActiveConnectionConnector extends AsyncTask<String, Integer, Boolea
   private Context context = null;
   
   public ActiveConnectionConnector(MessageProvider messageProvider, Context context) {
-    Log.d("rgai", "initing connection for messageProider: " + messageProvider);
     this.messageProvider = messageProvider;
     this.context = context;
   }

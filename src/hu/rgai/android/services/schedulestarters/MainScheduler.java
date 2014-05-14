@@ -28,14 +28,14 @@ public class MainScheduler extends BroadcastReceiver {
       
       Intent singleIntent = new Intent(context, MainService.class);
       // TODO: it should copy all bundles automatically
-      if (intent.getExtras() != null && intent.getExtras().containsKey("type")) {
-        singleIntent.putExtra("type", intent.getExtras().getString("type"));
+      if (intent.getExtras() != null && intent.getExtras().containsKey(MainService.IntentParams.TYPE)) {
+        singleIntent.putExtra(MainService.IntentParams.TYPE, intent.getExtras().getString(MainService.IntentParams.TYPE));
       }
-      if (intent.getExtras() != null && intent.getExtras().containsKey("load_more")) {
-        singleIntent.putExtra("load_more", intent.getExtras().getBoolean("load_more"));
+      if (intent.getExtras() != null && intent.getExtras().containsKey(MainService.IntentParams.LOAD_MORE)) {
+        singleIntent.putExtra(MainService.IntentParams.LOAD_MORE, intent.getExtras().getBoolean(MainService.IntentParams.LOAD_MORE));
       }
-      if (intent.getExtras() != null && intent.getExtras().containsKey("force_query")) {
-        singleIntent.putExtra("force_query", intent.getExtras().getBoolean("force_query"));
+      if (intent.getExtras() != null && intent.getExtras().containsKey(MainService.IntentParams.FORCE_QUERY)) {
+        singleIntent.putExtra(MainService.IntentParams.FORCE_QUERY, intent.getExtras().getBoolean(MainService.IntentParams.FORCE_QUERY));
       }
       
       context.startService(singleIntent);

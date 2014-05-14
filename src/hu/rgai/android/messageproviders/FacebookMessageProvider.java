@@ -488,7 +488,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return xmpp != null && xmpp.isConnected();
   }
 
-  public void establishConnection(Context context) {
+  public synchronized void establishConnection(Context context) {
     if (!isConnectionAlive()) {
       initConnection(account, context);
     }

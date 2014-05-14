@@ -58,8 +58,18 @@ import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
 
 public class MainService extends Service {
-
-  public static final String FROM_NOTIFIER = "from_notifier";
+  
+  public static class IntentParams {
+    public static final String FROM_NOTIFIER = "from_notifier";
+    public static final String QUERY_LIMIT = "query_limit";
+    public static final String QUERY_OFFSET = "query_offset";
+    public static final String LOAD_MORE = "load_more";
+    public static final String TYPE = "type";
+    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
+    public static final String FORCE_QUERY = "force_query";
+    public static final String RESULT = "result";
+  }
+  
   
   public static boolean RUNNING = false;
   private static int iterationCount = 0;
@@ -141,7 +151,7 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
-    
+    Log.d("rgai", "Service:onStartCommand");
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
@@ -160,18 +170,28 @@ public class MainService extends Service {
     // ones
     boolean loadMore = false;
     boolean forceQuery = false;
+    
+    // we can set the limit and offset explicitly for 1 query if we want!
+    int queryOffset = -1;
+    int queryLimit = -1;
     if (intent != null && intent.getExtras() != null) {
-      if (intent.getExtras().containsKey("type")) {
-        type = MessageProvider.Type.valueOf(intent.getExtras().getString("type"));
+      if (intent.getExtras().containsKey(IntentParams.TYPE)) {
+        type = MessageProvider.Type.valueOf(intent.getExtras().getString(IntentParams.TYPE));
       }
-      if (intent.getExtras().containsKey("load_more")) {
-        loadMore = intent.getExtras().getBoolean("load_more", false);
+      if (intent.getExtras().containsKey(IntentParams.LOAD_MORE)) {
+        loadMore = intent.getExtras().getBoolean(IntentParams.LOAD_MORE, false);
       }
-      if (intent.getExtras().containsKey("force_query")) {
-        forceQuery = intent.getExtras().getBoolean("force_query", false);
+      if (intent.getExtras().containsKey(IntentParams.FORCE_QUERY)) {
+        forceQuery = intent.getExtras().getBoolean(IntentParams.FORCE_QUERY, false);
       }
-      if (intent.getExtras().containsKey("act_viewing_message")) {
-        actViewingMessageAtThread = (MessageListElement)intent.getExtras().getParcelable("act_viewing_message");
+      if (intent.getExtras().containsKey(IntentParams.ACT_VIEWING_MESSAGE)) {
+        actViewingMessageAtThread = (MessageListElement)intent.getExtras().getParcelable(IntentParams.ACT_VIEWING_MESSAGE);
+      }
+      if (intent.getExtras().containsKey(IntentParams.QUERY_OFFSET)) {
+        queryOffset = intent.getExtras().getInt(IntentParams.QUERY_OFFSET);
+      }
+      if (intent.getExtras().containsKey(IntentParams.QUERY_LIMIT)) {
+        queryLimit = intent.getExtras().getInt(IntentParams.QUERY_LIMIT);
       }
     }
 
@@ -204,12 +224,13 @@ public class MainService extends Service {
 
             // checking if live connections are still alive, reconnect them if not
             AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, this);
-            if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()) {
+            if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()
+                    || MainActivity.isMainActivityVisible()) {
 //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 
-                LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore);
+                LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore, queryLimit, queryOffset);
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
             }
@@ -368,7 +389,7 @@ public class MainService extends Service {
           if (bundle.get("errorMessage") != null) {
             MainActivity.showErrorMessage(bundle.getInt("result"), bundle.getString("errorMessage"));
           }
-          boolean loadMore = bundle.getBoolean("load_more");
+          boolean loadMore = bundle.getBoolean(IntentParams.LOAD_MORE);
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
             MessageListElement[] newMessages = (MessageListElement[]) bundle.getParcelableArray( "messages");
             MessageListResult.ResultType resultType = MessageListResult.ResultType.valueOf(bundle.getString("message_result_type"));
@@ -495,7 +516,7 @@ public class MainService extends Service {
         } else {
           resultIntent = new Intent(context, MainActivity.class);
         }
-        resultIntent.putExtra(FROM_NOTIFIER, true);
+        resultIntent.putExtra(IntentParams.FROM_NOTIFIER, true);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
@@ -512,7 +533,7 @@ public class MainService extends Service {
 
       Intent intent = new Intent(context, MessageReply.class);
       intent.putExtra("message", (Parcelable)lastUnreadMsg);
-      intent.putExtra(FROM_NOTIFIER, true);
+      intent.putExtra(IntentParams.FROM_NOTIFIER, true);
 //      intent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
       //startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
       PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -629,15 +650,19 @@ public class MainService extends Service {
     private final Account acc;
     private final MessageProvider messageProvider;
     private boolean loadMore = false;
+    private int queryLimit;
+    private int queryOffset;
 
     public LongOperation(Context context, Handler handler, Account acc, MessageProvider messageProvider,
-            boolean loadMore) {
+            boolean loadMore, int queryLimitOverride, int queryOffsetOverride) {
       this.context = context;
       this.handler = handler;
       this.acc = acc;
       this.messageProvider = messageProvider;
       this.context = context;
       this.loadMore = loadMore;
+      this.queryLimit = queryLimitOverride;
+      this.queryOffset = queryOffsetOverride;
     }
 
     @Override
@@ -645,22 +670,28 @@ public class MainService extends Service {
       MessageListResult messageResult = null;
       try {
         if (messageProvider != null) {
-          int currentMessagesToAccount = 0;
+          int offset = 0;
+          int limit = acc.getMessageLimit();
           if (loadMore) {
             if (MainService.messages != null) {
               for (MessageListElement m : MainService.messages) {
                 if (m.getAccount().equals(acc)) {
-                  currentMessagesToAccount++;
+                  offset++;
                 }
               }
             }
           }
           
+          if (queryLimit != -1 && queryOffset != -1) {
+            offset = queryOffset;
+            limit = queryLimit;
+          }
+          
+          
           // the already loaded messages to the specific content type...
           TreeSet<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
           
-          messageResult = messageProvider.getMessageList(currentMessagesToAccount,
-                  acc.getMessageLimit(), loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+          messageResult = messageProvider.getMessageList(offset, limit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
           if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
             // searching for android contacts
             extendPersonObject(messageResult.getMessages());
@@ -749,8 +780,8 @@ public class MainService extends Service {
         bundle.putString("message_result_type", messageResult.getResultType().toString());
         // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
       }
-      bundle.putBoolean("load_more", loadMore);
-      bundle.putInt("result", this.result);
+      bundle.putBoolean(IntentParams.LOAD_MORE, loadMore);
+      bundle.putInt(IntentParams.RESULT, this.result);
       bundle.putString("errorMessage", this.errorMessage);
 
       msg.setData(bundle);

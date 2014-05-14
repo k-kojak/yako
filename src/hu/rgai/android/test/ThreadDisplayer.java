@@ -120,7 +120,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     account = getIntent().getExtras().getParcelable("account");
     mThreadId = getIntent().getExtras().getString("msg_list_element_id");
     
-    if (getIntent().getExtras().containsKey(MainService.FROM_NOTIFIER) && getIntent().getExtras().getBoolean(MainService.FROM_NOTIFIER)) {
+    if (getIntent().getExtras().containsKey(MainService.IntentParams.FROM_NOTIFIER) && getIntent().getExtras().getBoolean(MainService.IntentParams.FROM_NOTIFIER)) {
       fromNotification = true;
     }
     

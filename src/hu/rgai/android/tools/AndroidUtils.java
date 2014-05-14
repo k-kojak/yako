@@ -37,7 +37,7 @@ public class AndroidUtils {
   
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, Context context) {
     if (mp.canBroadcastOnNewMessage() && !mp.isConnectionAlive()) {
-      Log.d("rgai", "yes, connectable account -> " + mp.getAccount());
+//      Log.d("rgai", "yes, connectable account -> " + mp.getAccount());
       ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
       AndroidUtils.<String, Integer, Boolean>startAsyncTask(connector);
     }
