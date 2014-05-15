@@ -37,7 +37,7 @@ public class MainServiceExtraParams implements Parcelable {
   private int mQueryLimit = -1;
   private int mQueryOffset = -1;
   private boolean mLoadMore = false;
-  private String mType = null;
+  private Account mAccount = null;
   private MessageListElement mActViewingMessage = null;
   private boolean mForceQuery = false;
   private int mResult = -1;
@@ -49,7 +49,7 @@ public class MainServiceExtraParams implements Parcelable {
     mQueryLimit = in.readInt();
     mQueryOffset = in.readInt();
     mLoadMore = in.readByte() == 1;
-    mType = in.readString();
+    mAccount = in.readParcelable(Account.class.getClassLoader());
     mActViewingMessage = in.readParcelable(MessageListElement.class.getClassLoader());;
     mForceQuery = in.readByte() == 1;
     mResult = in.readInt();
@@ -64,7 +64,7 @@ public class MainServiceExtraParams implements Parcelable {
     dest.writeInt(mQueryLimit);
     dest.writeInt(mQueryOffset);
     dest.writeByte((byte)(mLoadMore ? 1 : 0));
-    dest.writeString(mType);
+    dest.writeParcelable(mAccount, flags);
     dest.writeParcelable(mActViewingMessage, flags);
     dest.writeByte((byte)(mForceQuery ? 1 : 0));
     dest.writeInt(mResult);
@@ -102,12 +102,12 @@ public class MainServiceExtraParams implements Parcelable {
     this.mLoadMore = mLoadMore;
   }
 
-  public String getType() {
-    return mType;
+  public Account getAccount() {
+    return mAccount;
   }
 
-  public void setType(String mTtype) {
-    this.mType = mTtype;
+  public void setType(Account mTtype) {
+    this.mAccount = mTtype;
   }
 
   public MessageListElement getActViewingMessage() {

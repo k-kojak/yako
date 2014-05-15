@@ -902,7 +902,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setType(account.getAccountType().toString());
+          eParams.setType(account);
           eParams.setForceQuery(true);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(newMessageCount);
@@ -918,7 +918,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setType(account.getAccountType().toString());
+          eParams.setType(account);
           eParams.setForceQuery(true);
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
           

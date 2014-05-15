@@ -209,12 +209,12 @@ public class MainService extends Service {
       } else {
         handler.setActViewingMessageAtThread(extraParams.getActViewingMessage());
         
-        if (extraParams.getType() == null || extraParams.getType().equals(MessageProvider.Type.SMS.toString())) {
+        if (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account)) {
           accounts.add(SmsAccount.account);
         }
         
         for (Account acc : accounts) {
-          if (extraParams.getType() == null || acc.getAccountType().toString().equals(extraParams.getType())) {
+          if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
             MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
 //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 

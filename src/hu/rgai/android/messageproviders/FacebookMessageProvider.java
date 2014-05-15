@@ -242,7 +242,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   Intent service = new Intent(context, MainScheduler.class);
                   service.setAction(Context.ALARM_SERVICE);
                   MainServiceExtraParams eParams = new MainServiceExtraParams();
-                  eParams.setType(MessageProvider.Type.FACEBOOK.toString());
+                  eParams.setType(account);
                   eParams.setForceQuery(true);
                   
                   service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
