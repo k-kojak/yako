@@ -339,9 +339,11 @@ public class MainActivity extends ActionBarActivity {
   private void reloadMessages(boolean forceQuery) {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
+    MainServiceExtraParams eParams = new MainServiceExtraParams();
     if (forceQuery) {
-      intent.putExtra("force_query", true);
+      eParams.setForceQuery(true);
     }
+    intent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
 
@@ -503,6 +505,7 @@ public class MainActivity extends ActionBarActivity {
    * Sets the content of the listview.
    */
   private static void setContent() {
+    Log.d("rgai", "SET MAIN CONTENT");
     if (instance == null) {
       return;
     }
@@ -516,10 +519,16 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = isNetworkAvailable(instance);
     if (isNet || isPhone(instance)) {
       if (!MainService.messages.isEmpty() && adapter != null && isListView) {
+//        Log.d("rgai", "ag1: " + MainService.messages.size());
+//        adapter = new LazyAdapter(instance);
+//        adapter.setListFilter(actSelectedFilter);
         adapter.setListFilter(actSelectedFilter);
         adapter.notifyDataSetChanged();
+//        lv.setAdapter(adapter);
+//        lv.invalidate();
 
       } else if (!MainService.messages.isEmpty() && !isListView) {
+        Log.d("rgai", "ag2");
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
 

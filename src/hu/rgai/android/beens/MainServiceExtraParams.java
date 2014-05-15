@@ -106,7 +106,7 @@ public class MainServiceExtraParams implements Parcelable {
     return mAccount;
   }
 
-  public void setType(Account mTtype) {
+  public void setAccount(Account mTtype) {
     this.mAccount = mTtype;
   }
 
@@ -133,6 +133,10 @@ public class MainServiceExtraParams implements Parcelable {
   public void setResult(int mResult) {
     this.mResult = mResult;
   }
-  
+
+  @Override
+  public String toString() {
+    return "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccount=" + mAccount + ", mActViewingMessage=" + mActViewingMessage + ", mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
+  }
 
 }

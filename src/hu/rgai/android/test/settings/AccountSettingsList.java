@@ -28,21 +28,21 @@ import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.facebook.Session;
-
+import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -170,13 +170,16 @@ public class AccountSettingsList extends ActionBarActivity {
       stillAddingFacebookAccount = false;
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
-          StoreHandler.addAccount(this, (Account) data.getParcelableExtra("new_account"));
+          Account newAccount = (Account) data.getParcelableExtra("new_account");
+          StoreHandler.addAccount(this, newAccount);
+          getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
-          StoreHandler.modifyAccount(this,
-                  oldAccount,
-                  (Account) data.getParcelableExtra("new_account"));
+          Account newAccount = (Account) data.getParcelableExtra("new_account");
           
+          StoreHandler.modifyAccount(this, oldAccount, newAccount);
+          
+          getMessagesToNewAccount(newAccount, this);
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
@@ -193,6 +196,18 @@ public class AccountSettingsList extends ActionBarActivity {
         Log.d("rgai", "TODO: handle exception");
       }
     }
+  }
+  
+  private void getMessagesToNewAccount(Account account, Context context) {
+    Intent service = new Intent(context, MainScheduler.class);
+    service.setAction(Context.ALARM_SERVICE);
+    
+    MainServiceExtraParams eParams = new MainServiceExtraParams();
+    eParams.setAccount(account);
+    eParams.setForceQuery(true);
+    service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+    
+    this.sendBroadcast(service);
   }
   
   private void removeMessagesToAccount(final Account acc) {

@@ -256,7 +256,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         service.setAction(Context.ALARM_SERVICE);
         
         MainServiceExtraParams eParams = new MainServiceExtraParams();
-        eParams.setType(SmsAccount.account);
+        eParams.setAccount(SmsAccount.account);
         eParams.setForceQuery(true);
         service.putExtra(MainServiceExtraParams.ParamStrings.EXTRA_PARAMS, eParams);
         

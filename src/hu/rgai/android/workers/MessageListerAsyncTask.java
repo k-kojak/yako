@@ -146,7 +146,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
     }
     this.result = OK;
     runningTaskStack.put(runSetup, false);
-//    Log.d("rgai", "do in background ENDED: " + acc);
+    Log.d("rgai", "do in background ENDED: " + acc);
     return messageResult;
   }
   

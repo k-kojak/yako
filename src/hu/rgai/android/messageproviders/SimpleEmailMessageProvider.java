@@ -5,12 +5,9 @@ package hu.rgai.android.messageproviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
-import com.sun.mail.imap.protocol.IMAPProtocol;
 import com.sun.mail.smtp.SMTPTransport;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.Attachment;
@@ -26,7 +23,6 @@ import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.settings.InfEmailSettingActivity;
@@ -40,7 +36,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
-import java.net.ProtocolException;
 import java.net.UnknownHostException;
 import java.security.Security;
 import java.security.cert.CertPathValidatorException;
@@ -66,9 +61,6 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
-import javax.mail.event.MessageChangedEvent;
-import javax.mail.event.MessageChangedListener;
-import javax.mail.event.MessageCountAdapter;
 import javax.mail.event.MessageCountEvent;
 import javax.mail.event.MessageCountListener;
 import javax.mail.internet.AddressException;
@@ -87,8 +79,8 @@ import net.htmlparser.jericho.Source;
  */
 public class SimpleEmailMessageProvider implements MessageProvider {
 
-  private AccountFolder accountFolder;
-  private EmailAccount account;
+  private final AccountFolder accountFolder;
+  private final EmailAccount account;
   private String attachmentFolder = "../files/";
   private AttachmentProgressUpdate progressUpdate = null;
   private static HashMap<EmailAccount, Store> storeConnections;
@@ -98,8 +90,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private volatile static Context context = null;
   
   
-//  private volatile static HashMap<EmailAccount, FolderNoop> folderNoops;
-//  private volatile static HashMap<EmailAccount, Boolean> idleStateBlocked;
   private MessageCallback messageListener = null;
   
   
@@ -293,6 +283,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       }
       
       int messageCount = imapFolder.getMessageCount();
+      Log.d("rgai", "messagecount: " + messageCount);
 
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
 //        Log.d("rgai", "NO FRESH MAIL");
@@ -314,7 +305,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   //    Log.d("rgai", "account: " + account);
       Message messages[] = imapFolder.getMessages(start, end);
   //    inbox.get
-
+      Log.d("rgai", "messages: " + messages.length);
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
@@ -902,7 +893,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setType(account);
+          eParams.setAccount(account);
           eParams.setForceQuery(true);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(newMessageCount);
@@ -918,7 +909,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setType(account);
+          eParams.setAccount(account);
           eParams.setForceQuery(true);
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
           
@@ -970,11 +961,18 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       fIdle = idleThreads.get(accountFolder);
     }
     if (queryFolders != null && queryFolders.containsKey(accountFolder)) {
+//      Log.d("rgai", "REMOVING FROM queryfolder");
       queryFolder = queryFolders.get(accountFolder);
+      queryFolders.remove(accountFolder);
     }
     if (storeConnections != null && storeConnections.containsKey(account)) {
+//      Log.d("rgai", "REMOVING FROM storeStack");
       store = storeConnections.get(account);
+      storeConnections.remove(account);
     }
+    
+    validityMap.remove(accountFolder);
+    
     ConnectionDropper dropper = new ConnectionDropper(fIdle, queryFolder, store);
     AndroidUtils.<Void, Void, Void>startAsyncTask(dropper);
   }
@@ -1121,7 +1119,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         try {
           Log.d("rgai", "try closing store");
           store.close();
-          Log.d("rgai", "store store closed");
+          Log.d("rgai", "store closed");
         } catch (MessagingException ex) {
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
