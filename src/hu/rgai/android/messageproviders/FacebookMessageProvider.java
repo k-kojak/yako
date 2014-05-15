@@ -24,7 +24,6 @@ import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.config.Settings;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import java.io.IOException;
 import java.net.ConnectException;

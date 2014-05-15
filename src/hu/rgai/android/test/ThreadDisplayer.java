@@ -223,7 +223,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     
     MainService.actViewingMessage = mle;
-    Log.d("rgai", "MainService.actViewingMessage = " + mle);
+//    Log.d("rgai", "MainService.actViewingMessage = " + mle);
     
     dur = new DataUpdateReceiver(this);
     IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);

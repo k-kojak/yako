@@ -2,11 +2,8 @@ package hu.rgai.android.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import hu.rgai.android.config.Settings;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider.Type;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,8 +12,6 @@ import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

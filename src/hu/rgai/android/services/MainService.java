@@ -43,6 +43,7 @@ import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ProfilePhotoProvider;
+import hu.rgai.android.workers.MessageListerAsyncTask;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -102,6 +103,8 @@ public class MainService extends Service {
   
   public static volatile TreeSet<MessageListElement> messages = null;
   public static volatile MessageListElement mLastNotifiedMessage = null;
+  
+//  private static 
 
   public MainService() {}
 
@@ -223,7 +226,7 @@ public class MainService extends Service {
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 
-                LongOperation myThread = new LongOperation(this, handler, acc, provider, extraParams.isLoadMore(),
+                MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
@@ -634,7 +637,7 @@ public class MainService extends Service {
     }
   }
   
-  private static TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
+  public static TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
     TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
     if (messages != null) {
       for (MessageListElement mle : messages) {
@@ -669,150 +672,6 @@ public class MainService extends Service {
     public MainService getService() {
       return MainService.this;
     }
-  }
-
-  private class LongOperation extends AsyncTask<String, Integer, MessageListResult> {
-
-    private Context context;
-    private int result;
-    private String errorMessage = null;
-    private final Handler handler;
-    private final Account acc;
-    private final MessageProvider messageProvider;
-    private boolean loadMore = false;
-    private int queryLimit;
-    private int queryOffset;
-
-    public LongOperation(Context context, Handler handler, Account acc, MessageProvider messageProvider,
-            boolean loadMore, int queryLimitOverride, int queryOffsetOverride) {
-      this.context = context;
-      this.handler = handler;
-      this.acc = acc;
-      this.messageProvider = messageProvider;
-      this.context = context;
-      this.loadMore = loadMore;
-      this.queryLimit = queryLimitOverride;
-      this.queryOffset = queryOffsetOverride;
-    }
-
-    @Override
-    protected MessageListResult doInBackground(String... params) {
-      Log.d("rgai", "do in background started: " + acc);
-      MessageListResult messageResult = null;
-      try {
-        if (messageProvider != null) {
-          int offset = 0;
-          int limit = acc.getMessageLimit();
-          if (loadMore) {
-            if (MainService.messages != null) {
-              for (MessageListElement m : MainService.messages) {
-                if (m.getAccount().equals(acc)) {
-                  offset++;
-                }
-              }
-            }
-          }
-          
-          if (queryLimit != -1 && queryOffset != -1) {
-            offset = queryOffset;
-            limit = queryLimit;
-          }
-          
-          
-          // the already loaded messages to the specific content type...
-          TreeSet<MessageListElement> loadedMessages = getLoadedMessages(acc, MainService.messages);
-          
-          messageResult = messageProvider.getMessageList(offset, limit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
-          if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
-            // searching for android contacts
-            extendPersonObject(messageResult.getMessages());
-          }
-          
-        }
-
-      } catch (AuthenticationFailedException ex) {
-        ex.printStackTrace();
-        this.result = AUTHENTICATION_FAILED_EXCEPTION;
-        this.errorMessage = acc.getDisplayName();
-        return null;
-      } catch (CertPathValidatorException ex) {
-        ex.printStackTrace();
-        this.result = CERT_PATH_VALIDATOR_EXCEPTION;
-        return null;
-      } catch (SSLHandshakeException ex) {
-        ex.printStackTrace();
-        this.result = SSL_HANDSHAKE_EXCEPTION;
-        return null;
-      } catch (NoSuchProviderException ex) {
-        ex.printStackTrace();
-        this.result = NO_SUCH_PROVIDER_EXCEPTION;
-        return null;
-      } catch (ConnectException ex) {
-        ex.printStackTrace();
-        this.result = CONNECT_EXCEPTION;
-        return null;
-      } catch (UnknownHostException ex) {
-        ex.printStackTrace();
-        this.result = UNKNOWN_HOST_EXCEPTION;
-        return null;
-      } catch (MessagingException ex) {
-        ex.printStackTrace();
-        this.result = MESSAGING_EXCEPTION;
-        return null;
-      } catch (IOException ex) {
-        ex.printStackTrace();
-        this.result = IOEXCEPTION;
-        return null;
-      }
-      this.result = OK;
-      Log.d("rgai", "do in background ENDED: " + acc);
-      return messageResult;
-    }
-    
-    private void extendPersonObject(List<MessageListElement> origi) {
-      Person p;
-      for (MessageListElement mle : origi) {
-        p = Person.searchPersonAndr(context, mle.getFrom());
-        mle.setFrom(p);
-        if (!mle.isUpdateFlags()) {
-          if (mle.getFullMessage() != null && mle.getFullMessage() instanceof FullSimpleMessage) {
-            ((FullSimpleMessage)mle.getFullMessage()).setFrom(p);
-          }
-          
-          if (mle.getRecipientsList() != null) {
-            for (int i = 0; i < mle.getRecipientsList().size(); i++) {
-              p = Person.searchPersonAndr(context, mle.getRecipientsList().get(i));
-              mle.getRecipientsList().set(i, p);
-            }
-          }
-        }
-      }
-    }
-
-    @Override
-    protected void onPostExecute(MessageListResult messageResult) {
-      
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      if (this.result == OK) {
-        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
-        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
-        bundle.putString("message_result_type", messageResult.getResultType().toString());
-        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
-      }
-      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
-      bundle.putInt(ParamStrings.RESULT, this.result);
-      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
-
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-    }
-
-    @Override
-    protected void onPreExecute() {
-      // Log.d(Constants.LOG, "onPreExecute");
-    }
-
   }
 
 }

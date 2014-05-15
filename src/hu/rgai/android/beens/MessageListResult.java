@@ -9,10 +9,10 @@ import java.util.List;
  */
 public class MessageListResult {
   
-  public static enum ResultType {NO_CHANGE, CHANGED, ERROR, FLAG_CHANGE};
+  public static enum ResultType {NO_CHANGE, CHANGED, ERROR, FLAG_CHANGE, CANCELLED};
   
-  private List<MessageListElement> messages;
-  private ResultType resultType;
+  private final List<MessageListElement> messages;
+  private final ResultType resultType;
 
   public MessageListResult(List<MessageListElement> messages, ResultType resultType) {
     this.messages = messages;

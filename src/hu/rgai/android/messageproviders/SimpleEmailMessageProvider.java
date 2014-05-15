@@ -297,10 +297,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
         Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
-          Log.d("rgai", "CHECKING FLAG STATUS: MainA is visible");
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
-          Log.d("rgai", "NOT CHECKING FLAG STATUS: MainA is not visible");
           return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE);
         }
       }
@@ -382,11 +380,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
       }
 
-  //    imapFolder.close(true);
-  //    store.close();
+      imapFolder.close(false);
+      
       return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
-//    } catch (CertPathValidatorException e) {
-//      throw e;
     } catch (AuthenticationFailedException ex) {
       throw ex;
     } catch (SSLHandshakeException ex) {
@@ -402,6 +398,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     } catch (MessagingException ex) {
       throw ex;
     } finally {
+      
 //      setFolderIdleBlocked(account, false);
     }
   }
