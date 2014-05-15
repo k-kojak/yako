@@ -283,7 +283,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
 //      IMAPFolder imapFolder = getFolder(queryFolders, account, "Inbox");
-      Log.d("rgai", "ALWAYS get a new imapFolder here");
+//      Log.d("rgai", "ALWAYS get a new imapFolder here");
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       imapFolder.open(Folder.READ_ONLY);
 
@@ -295,7 +295,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       int messageCount = imapFolder.getMessageCount();
 
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
-        Log.d("rgai", "NO FRESH MAIL");
+//        Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
@@ -445,7 +445,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     String nextUID = folder.getUIDNext() + "";
     
     String newKey = nextUID+"_"+messageCount;
-    Log.d("rgai", "messageLoadKey: " + newKey);
+//    Log.d("rgai", "messageLoadKey: " + newKey);
     
     String storedKey = getValidityString(accountFolder);
     if (newKey.equals(storedKey)) {
@@ -969,12 +969,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     if (isConnectionAlive()) {
       fIdle = idleThreads.get(accountFolder);
     }
-    if (queryFolders.containsKey(accountFolder)) {
+    if (queryFolders != null && queryFolders.containsKey(accountFolder)) {
       queryFolder = queryFolders.get(accountFolder);
     }
-    if (storeConnections.containsKey(account)) {
+    if (storeConnections != null && storeConnections.containsKey(account)) {
       store = storeConnections.get(account);
-      
     }
     ConnectionDropper dropper = new ConnectionDropper(fIdle, queryFolder, store);
     AndroidUtils.<Void, Void, Void>startAsyncTask(dropper);
@@ -1105,6 +1104,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     @Override
     protected Void doInBackground(Void... params) {
+      Log.d("rgai", "DROPPING CONNECTION");
       if (folderIdleThread != null) {
         folderIdleThread.forceStop();
       }

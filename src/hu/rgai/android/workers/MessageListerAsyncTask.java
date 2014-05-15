@@ -74,11 +74,11 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   protected MessageListResult doInBackground(String... params) {
     RunningSetup runSetup = new RunningSetup(acc, queryOffset, queryLimit);
     if (isSetupRunning(runSetup)) {
-      Log.d("rgai", "This setup is already running: " + runSetup);
+//      Log.d("rgai", "This setup is already running: " + runSetup);
       return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
     }
     
-    Log.d("rgai", "do in background started: " + acc);
+//    Log.d("rgai", "do in background started: " + acc);
     MessageListResult messageResult = null;
     try {
       if (messageProvider != null) {
@@ -146,7 +146,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
     }
     this.result = OK;
     runningTaskStack.put(runSetup, false);
-    Log.d("rgai", "do in background ENDED: " + acc);
+//    Log.d("rgai", "do in background ENDED: " + acc);
     return messageResult;
   }
   

@@ -46,7 +46,10 @@ public class AndroidUtils {
   public static void stopReceiversForAccount(Account account, Context context) {
     MessageProvider provider = getMessageProviderInstanceByAccount(account, context);
     if (provider != null && provider.isConnectionAlive()) {
+      Log.d("rgai", "Igen, dropping connection");
       provider.dropConnection();
+    } else {
+      Log.d("rgai", "connection is not alive...thats the problem");
     }
   }
   

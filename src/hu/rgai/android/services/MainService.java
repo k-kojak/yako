@@ -157,7 +157,7 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
-    Log.d("rgai", "Service:onStartCommand");
+//    Log.d("rgai", "Service:onStartCommand");
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
