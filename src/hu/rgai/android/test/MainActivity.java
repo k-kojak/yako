@@ -41,6 +41,8 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.config.Settings;
@@ -310,14 +312,14 @@ public class MainActivity extends ActionBarActivity {
             MainService.setMessageContent(messageId, acc, fm);
           }
           if (data.hasExtra("thread_displayer")) {
-            Intent service = new Intent(this, MainService.class);
-            
-            String accType = data.getStringExtra("account_type");
-            MessageListElement actMsg = (MessageListElement)data.getParcelableExtra("act_view_msg");
-            
-            service.putExtra("type", accType);
-            service.putExtra("act_viewing_message", (Parcelable)actMsg);
-            this.startService(service);
+//            Intent service = new Intent(this, MainScheduler.class);
+//            service.setAction(Context.ALARM_SERVICE);
+//            MainServiceExtraParams eParams = new MainServiceExtraParams();
+//            eParams.setType(data.getStringExtra("account_type"));
+//            eParams.setActViewingMessage((MessageListElement)data.getParcelableExtra("act_view_msg"));
+//            
+//            service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+//            this.sendBroadcast(service);
           }
         }
         break;
@@ -653,6 +655,7 @@ public class MainActivity extends ActionBarActivity {
    *          pressed), false otherwise
    */
   public static void notifyMessageChange(boolean loadMore) {
+    //TODO: we should replace this with broadcast receivers, not like static stuffs...
     hideProgressDialog();
     setContent();
     if (loadMore) {
@@ -666,9 +669,12 @@ public class MainActivity extends ActionBarActivity {
   public static void loadMoreMessage() {
     int coolDown = 5; // sec
     if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + coolDown * 1000 < new Date().getTime()) {
-      Intent service = new Intent(instance, MainService.class);
-      service.putExtra("load_more", true);
-      instance.startService(service);
+      Intent service = new Intent(instance, MainScheduler.class);
+      service.setAction(Context.ALARM_SERVICE);
+      MainServiceExtraParams eParams = new MainServiceExtraParams();
+      eParams.setLoadMore(true);
+      service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+      instance.sendBroadcast(service);
       lastLoadMoreEvent = new Date();
 
       if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {

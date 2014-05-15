@@ -40,6 +40,7 @@ import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 
 import java.util.List;
@@ -171,12 +172,18 @@ public class AccountSettingsList extends ActionBarActivity {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
           StoreHandler.addAccount(this, (Account) data.getParcelableExtra("new_account"));
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
+          Account oldAccount = (Account) data.getParcelableExtra("old_account");
           StoreHandler.modifyAccount(this,
-                  (Account) data.getParcelableExtra("old_account"),
+                  oldAccount,
                   (Account) data.getParcelableExtra("new_account"));
+          
+          AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
+          Account oldAccount = (Account) data.getParcelableExtra("old_account");
           StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
-          removeMessagesToAccount((Account) data.getParcelableExtra("old_account"));
+          removeMessagesToAccount(oldAccount);
+          
+          AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }
@@ -187,7 +194,7 @@ public class AccountSettingsList extends ActionBarActivity {
       }
     }
   }
-
+  
   private void removeMessagesToAccount(final Account acc) {
     MainActivity.removeMessagesToAccount(acc);
     ServiceConnection serviceConnection = new ServiceConnection() {

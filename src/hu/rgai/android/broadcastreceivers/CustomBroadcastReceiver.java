@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.tools.AndroidUtils;
 
 public class CustomBroadcastReceiver extends BroadcastReceiver {
@@ -28,9 +31,12 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
 //          AndroidUtils.connectConnectableMessageProviders(context);
           
           Log.d("rgai", "JUST CONNECTED TO WIFI NETWORK, MAKE A FULL QUERY");
-          Intent service = new Intent(context, MainService.class);
-          service.putExtra(MainService.IntentParams.FORCE_QUERY, true);
-          context.startService(service);
+          Intent service = new Intent(context, MainScheduler.class);
+          service.setAction(Context.ALARM_SERVICE);
+          MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setForceQuery(true);
+          service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+          context.sendBroadcast(service);
         } else {
           Log.d("rgai", "JUST LOST WIFI NETWORK CONNECTION");
         }

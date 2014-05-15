@@ -32,17 +32,19 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailMessageRecipient;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.MessageRecipient;
-import hu.rgai.android.beens.SmsMessageRecipient;
-import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsAccount;
+import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
@@ -111,7 +113,7 @@ public class MessageReply extends ActionBarActivity {
           mSubject.setText(mFullMessage.getSubject());
         }
       }
-      if (getIntent().getExtras().containsKey(MainService.IntentParams.FROM_NOTIFIER)) {
+      if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)) {
         Log.d("rgai", "yes, from notifier");
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);

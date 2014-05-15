@@ -34,11 +34,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
+import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.beens.Person;
+import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
@@ -103,7 +105,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
     AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
 
-    if (getIntent().getExtras().containsKey(MainService.IntentParams.FROM_NOTIFIER) && getIntent().getExtras().getBoolean(MainService.IntentParams.FROM_NOTIFIER)) {
+    if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
+            && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {
       mFromNotification = true;
     }
 

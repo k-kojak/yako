@@ -116,7 +116,7 @@ public class FacebookFriendProvider {
                       fbs.integrate(activity, fbii);
 
                     } else {
-                      Log.d("rgai", "ez a contact id mar bennevan: " + json_obj.getString("uid") + ": " + json_obj.getString("name"));
+//                      Log.d("rgai", "ez a contact id mar bennevan: " + json_obj.getString("uid") + ": " + json_obj.getString("name"));
                     }
 
 //            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);

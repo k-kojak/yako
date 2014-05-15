@@ -14,6 +14,7 @@ import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
@@ -22,6 +23,7 @@ import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -250,10 +252,15 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       // TODO: do not make a full query to the given account/type, query only the
       // affected message element, so select only 1 element instead of all messages of the given account
       if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
-        Intent service = new Intent(context, MainService.class);
-        service.putExtra("type", MessageProvider.Type.SMS.toString());
-        service.putExtra("force_query", true);
-        context.startService(service);
+        Intent service = new Intent(context, MainScheduler.class);
+        service.setAction(Context.ALARM_SERVICE);
+        
+        MainServiceExtraParams eParams = new MainServiceExtraParams();
+        eParams.setType(MessageProvider.Type.SMS.toString());
+        eParams.setForceQuery(true);
+        service.putExtra(MainServiceExtraParams.ParamStrings.EXTRA_PARAMS, eParams);
+        
+        context.sendBroadcast(service);
       }
       
 //      // in case the first attempt was too quick, request the display again a little bit later
@@ -285,6 +292,16 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   public void establishConnection(Context context) {
     // this class is a broadcast receiver too, so the connection is established this way
+  }
+  
+  public boolean canBroadcastOnMessageChange() {
+    return false;
+  }
+
+  /**
+   * We never want to drop this connection.
+   */
+  public void dropConnection() {
   }
 
   private class MessageItem {

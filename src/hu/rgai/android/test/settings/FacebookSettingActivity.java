@@ -176,8 +176,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
       public void onUserInfoFetched(GraphUser user) {
         boolean prevUserState = FacebookSettingActivity.this.user != null;
         FacebookSettingActivity.this.user = user;
-        Log.d("rgai", "ON USER FETCH USER IS -> " + user);
-        Log.d("rgai", "PREV USER STATE -> " + prevUserState);
+//        Log.d("rgai", "ON USER FETCH USER IS -> " + user);
+//        Log.d("rgai", "PREV USER STATE -> " + prevUserState);
         // User previously existed and we pressed logout, so now user is null
         if (user == null && prevUserState == true) {
           deleteAccountSettings(false);
@@ -223,7 +223,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       // Inflate the menu items for use in the action bar
-    Log.d("rgai", "ON CREATE OPTIONS MENU");
+//    Log.d("rgai", "ON CREATE OPTIONS MENU");
     this.menu = menu;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.account_options_facebook_menu, menu);
@@ -232,7 +232,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   @Override
   public boolean onPrepareOptionsMenu (Menu menu) {
-    Log.d("rgai", "ON PREPARE OPTIONS MENU");
+//    Log.d("rgai", "ON PREPARE OPTIONS MENU");
     super.onPrepareOptionsMenu(menu);
     updateLayoutAndOptionsMenu(menu);
     return true;

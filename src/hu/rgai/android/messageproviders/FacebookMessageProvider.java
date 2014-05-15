@@ -17,12 +17,15 @@ import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.HtmlContent;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.services.schedulestarters.MainScheduler;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -237,10 +240,14 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   context.sendBroadcast(res);
                   
                   // always run MainService, so new messages can be stored
-                  Intent service = new Intent(context, MainService.class);
-                  service.putExtra("type", MessageProvider.Type.FACEBOOK.toString());
-                  service.putExtra("force_query", true);
-                  context.startService(service);
+                  Intent service = new Intent(context, MainScheduler.class);
+                  service.setAction(Context.ALARM_SERVICE);
+                  MainServiceExtraParams eParams = new MainServiceExtraParams();
+                  eParams.setType(MessageProvider.Type.FACEBOOK.toString());
+                  eParams.setForceQuery(true);
+                  
+                  service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+                  context.sendBroadcast(service);
 
                 }
               }
@@ -493,10 +500,21 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       initConnection(account, context);
     }
   }
+  
+  public boolean canBroadcastOnMessageChange() {
+    return false;
+  }
 
   @Override
   public String toString() {
     return "FacebookMessageProvider{" + "account=" + account + '}';
+  }
+
+  public void dropConnection() {
+    if (isConnectionAlive()) {
+      xmpp.disconnect();
+      xmpp = null;
+    }
   }
   
 }

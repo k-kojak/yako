@@ -100,6 +100,13 @@ public interface MessageProvider {
    */
   public boolean canBroadcastOnNewMessage();
   
+  /**
+   * Returns true if the provider can send broadcast message on message change, so do not have
+   * to send a full getList request.
+   * 
+   * @return true if can broadcast on message change, false otherwise
+   */
+  public boolean canBroadcastOnMessageChange();
   
   /**
    * If this is a broadcasting message provider, then this functions value must base on the
@@ -118,6 +125,13 @@ public interface MessageProvider {
    * @param context a Context object if needed for broadcast sending
    */
   public void establishConnection(Context context);
+  
+  /**
+   * This function is used to drop any connections if have any.
+   * 
+   * Just leaeve it blank if the provider cannot broadcast messages.
+   */
+  public void dropConnection();
   
   /**
    * Sends a message to the given recipient with the given content.

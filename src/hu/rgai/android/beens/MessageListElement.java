@@ -410,7 +410,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public int compareTo(MessageListElement o) {
-    if (this.equals(o)) {
+    if (this.id.equals(o.getId()) && this.account.equals(o.account)) {
       return 0;
     } else {
       // TODO: THIS IS A SOURCE OF UGLY BUGS!

@@ -26,6 +26,8 @@ import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
+import hu.rgai.android.beens.MainServiceExtraParams;
+import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.Person;
@@ -51,6 +53,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
@@ -59,16 +62,16 @@ import javax.net.ssl.SSLHandshakeException;
 
 public class MainService extends Service {
   
-  public static class IntentParams {
-    public static final String FROM_NOTIFIER = "from_notifier";
-    public static final String QUERY_LIMIT = "query_limit";
-    public static final String QUERY_OFFSET = "query_offset";
-    public static final String LOAD_MORE = "load_more";
-    public static final String TYPE = "type";
-    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
-    public static final String FORCE_QUERY = "force_query";
-    public static final String RESULT = "result";
-  }
+//  public static class IntentParams {
+//    public static final String EXTRA_PARAMS = "extra_params";
+//    public static final String QUERY_LIMIT = "query_limit";
+//    public static final String QUERY_OFFSET = "query_offset";
+//    public static final String LOAD_MORE = "load_more";
+//    public static final String TYPE = "type";
+//    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
+//    public static final String FORCE_QUERY = "force_query";
+//    public static final String RESULT = "result";
+//  }
   
   
   public static boolean RUNNING = false;
@@ -164,35 +167,25 @@ public class MainService extends Service {
     iterationCount++;
     MainActivity.openFbSession(this);
     // Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
-    MessageProvider.Type type = null;
-    MessageListElement actViewingMessageAtThread = null;
+//    MessageProvider.Type type = null;
+//    MessageListElement actViewingMessageAtThread = null;
     // if true, loading new messages at end of the lists, not checking for new
     // ones
-    boolean loadMore = false;
-    boolean forceQuery = false;
+//    boolean loadMore = false;
+//    boolean forceQuery = false;
     
     // we can set the limit and offset explicitly for 1 query if we want!
-    int queryOffset = -1;
-    int queryLimit = -1;
+//    int queryOffset = -1;
+//    int queryLimit = -1;
+    MainServiceExtraParams extraParams = null;
     if (intent != null && intent.getExtras() != null) {
-      if (intent.getExtras().containsKey(IntentParams.TYPE)) {
-        type = MessageProvider.Type.valueOf(intent.getExtras().getString(IntentParams.TYPE));
+      if (intent.getExtras().containsKey(ParamStrings.EXTRA_PARAMS)) {
+        extraParams = intent.getExtras().getParcelable(ParamStrings.EXTRA_PARAMS);
       }
-      if (intent.getExtras().containsKey(IntentParams.LOAD_MORE)) {
-        loadMore = intent.getExtras().getBoolean(IntentParams.LOAD_MORE, false);
-      }
-      if (intent.getExtras().containsKey(IntentParams.FORCE_QUERY)) {
-        forceQuery = intent.getExtras().getBoolean(IntentParams.FORCE_QUERY, false);
-      }
-      if (intent.getExtras().containsKey(IntentParams.ACT_VIEWING_MESSAGE)) {
-        actViewingMessageAtThread = (MessageListElement)intent.getExtras().getParcelable(IntentParams.ACT_VIEWING_MESSAGE);
-      }
-      if (intent.getExtras().containsKey(IntentParams.QUERY_OFFSET)) {
-        queryOffset = intent.getExtras().getInt(IntentParams.QUERY_OFFSET);
-      }
-      if (intent.getExtras().containsKey(IntentParams.QUERY_LIMIT)) {
-        queryLimit = intent.getExtras().getInt(IntentParams.QUERY_LIMIT);
-      }
+    }
+    
+    if (extraParams == null) {
+      extraParams = new MainServiceExtraParams();
     }
 
     
@@ -211,26 +204,27 @@ public class MainService extends Service {
         msg.setData(bundle);
         handler.sendMessage(msg);
       } else {
-        handler.setActViewingMessageAtThread(actViewingMessageAtThread);
+        handler.setActViewingMessageAtThread(extraParams.getActViewingMessage());
         
-        if (type == null || type.equals(MessageProvider.Type.SMS)) {
+        if (extraParams.getType() == null || extraParams.getType().equals(MessageProvider.Type.SMS.toString())) {
           accounts.add(SmsAccount.account);
         }
         
         for (Account acc : accounts) {
-          if (type == null || acc.getAccountType().equals(type)) {
+          if (extraParams.getType() == null || acc.getAccountType().toString().equals(extraParams.getType())) {
             MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
 //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 
             // checking if live connections are still alive, reconnect them if not
             AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, this);
-            if (forceQuery || loadMore || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()
-                    || MainActivity.isMainActivityVisible()) {
+            if (extraParams.isForceQuery() || extraParams.isLoadMore() || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()
+                    || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
 //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 
-                LongOperation myThread = new LongOperation(this, handler, acc, provider, loadMore, queryLimit, queryOffset);
+                LongOperation myThread = new LongOperation(this, handler, acc, provider, extraParams.isLoadMore(),
+                        extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
             }
@@ -389,9 +383,9 @@ public class MainService extends Service {
           if (bundle.get("errorMessage") != null) {
             MainActivity.showErrorMessage(bundle.getInt("result"), bundle.getString("errorMessage"));
           }
-          boolean loadMore = bundle.getBoolean(IntentParams.LOAD_MORE);
+          boolean loadMore = bundle.getBoolean(ParamStrings.LOAD_MORE);
           if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
-            MessageListElement[] newMessages = (MessageListElement[]) bundle.getParcelableArray( "messages");
+            MessageListElement[] newMessages = (MessageListElement[]) bundle.getParcelableArray("messages");
             MessageListResult.ResultType resultType = MessageListResult.ResultType.valueOf(bundle.getString("message_result_type"));
             
             // if NO_CHANGE or ERROR, then just return, we do not have to merge because messages
@@ -420,7 +414,7 @@ public class MainService extends Service {
               }
             }
 
-            this.mergeMessages(newMessages, loadMore);
+            this.mergeMessages(newMessages, loadMore, resultType);
             MessageListElement lastUnreadMsg = null;
 
             Set<Account> accountsToUpdate = new HashSet<Account>();
@@ -516,7 +510,7 @@ public class MainService extends Service {
         } else {
           resultIntent = new Intent(context, MainActivity.class);
         }
-        resultIntent.putExtra(IntentParams.FROM_NOTIFIER, true);
+        resultIntent.putExtra(ParamStrings.FROM_NOTIFIER, true);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
@@ -533,7 +527,7 @@ public class MainService extends Service {
 
       Intent intent = new Intent(context, MessageReply.class);
       intent.putExtra("message", (Parcelable)lastUnreadMsg);
-      intent.putExtra(IntentParams.FROM_NOTIFIER, true);
+      intent.putExtra(ParamStrings.FROM_NOTIFIER, true);
 //      intent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
       //startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
       PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -568,7 +562,7 @@ public class MainService extends Service {
      * @param loadMoreRequest true if result of "load more" action, false otherwise, which
      * means this is a refresh action
      */
-    private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest) {
+    private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest, MessageListResult.ResultType resultType) {
       if (messages == null) {
         initMessages();
       }
@@ -632,6 +626,42 @@ public class MainService extends Service {
           }
         }
       }
+      
+      // checking for deleted mails here
+      if (resultType == MessageListResult.ResultType.CHANGED) {
+        deleteMergeMessages(newMessages);
+      }
+    }
+  }
+  
+  private static TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
+    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
+    if (messages != null) {
+      for (MessageListElement mle : messages) {
+        if (mle.getAccount().equals(account)) {
+          selected.add(mle);
+        }
+      }
+    }
+    return selected;
+  }
+  
+  private synchronized void deleteMergeMessages(MessageListElement[] newMessages) {
+    if (newMessages.length > 0) {
+      TreeSet<MessageListElement> msgs = getLoadedMessages(newMessages[0].getAccount(), messages);
+      SortedSet<MessageListElement> messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
+//      Log.d("rgai", "head set list: " + messagesToRemove);
+      
+      for (int i = 0; i < newMessages.length; i++) {
+        if (messagesToRemove.contains(newMessages[i])) {
+          messagesToRemove.remove(newMessages[i]);
+        }
+      }
+//      Log.d("rgai", "THESE ELEMENTS MUST BE REMOVED FROM MY LIST: " + messagesToRemove);
+      for (MessageListElement mle : messagesToRemove) {
+        messages.remove(mle);
+      }
+      
     }
   }
 
@@ -667,6 +697,7 @@ public class MainService extends Service {
 
     @Override
     protected MessageListResult doInBackground(String... params) {
+      Log.d("rgai", "do in background started: " + acc);
       MessageListResult messageResult = null;
       try {
         if (messageProvider != null) {
@@ -734,21 +765,10 @@ public class MainService extends Service {
         return null;
       }
       this.result = OK;
+      Log.d("rgai", "do in background ENDED: " + acc);
       return messageResult;
     }
     
-    private TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
-      TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
-      if (messages != null) {
-        for (MessageListElement mle : messages) {
-          if (mle.getAccount().equals(account)) {
-            selected.add(mle);
-          }
-        }
-      }
-      return selected;
-    }
-
     private void extendPersonObject(List<MessageListElement> origi) {
       Person p;
       for (MessageListElement mle : origi) {
@@ -780,9 +800,9 @@ public class MainService extends Service {
         bundle.putString("message_result_type", messageResult.getResultType().toString());
         // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
       }
-      bundle.putBoolean(IntentParams.LOAD_MORE, loadMore);
-      bundle.putInt(IntentParams.RESULT, this.result);
-      bundle.putString("errorMessage", this.errorMessage);
+      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
+      bundle.putInt(ParamStrings.RESULT, this.result);
+      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
 
       msg.setData(bundle);
       handler.sendMessage(msg);
