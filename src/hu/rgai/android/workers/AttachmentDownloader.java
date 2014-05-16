@@ -87,6 +87,7 @@ public class AttachmentDownloader implements Runnable {
         });
       }
     } catch (Exception ex) {
+      ex.printStackTrace();
       setProgressBarValue(0, true);
       mHandler.post(new Runnable() {
         public void run() {

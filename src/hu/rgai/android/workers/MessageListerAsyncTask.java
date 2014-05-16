@@ -181,7 +181,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
 
   @Override
   protected void onPostExecute(MessageListResult messageResult) {
-    if (messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
+    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
       return;
     }
     Message msg = handler.obtainMessage();

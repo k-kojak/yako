@@ -309,7 +309,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
-        long uid = imapFolder.getUID(m);
+        long uid;
+        if (supportsUIDforMessages()) {
+          uid = imapFolder.getUID(m);
+        } else {
+          uid = m.getMessageNumber();
+        }
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -745,21 +750,31 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   public byte[] getAttachmentOfMessage(String messageId, String attachmentId) throws NoSuchProviderException, MessagingException, IOException {
-    if (queryFolders == null) {
-      queryFolders = new HashMap<AccountFolder, IMAPFolder>();
+    
+    IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    folder.open(Folder.READ_ONLY);
+    
+    Message ms;
+    if (supportsUIDforMessages()) {
+      ms = folder.getMessageByUID(Long.parseLong(messageId));
+    } else {
+      ms = folder.getMessage(Integer.parseInt(messageId));
     }
-    IMAPFolder folder = getFolder(queryFolders, account, "Inbox");
     
-    if (folder == null) return null;
+    byte[] data = getMessageAttachment(ms, attachmentId);
     
-//    if (!folder.isOpen()) {
-//      folder.open(Folder.READ_WRITE);
-//    }
+    folder.close(false);
     
-    Message ms = folder.getMessage(Integer.parseInt(messageId));
+    return data;
     
-    return getMessageAttachment(ms, attachmentId);
-    
+  }
+  
+  private boolean supportsUIDforMessages() {
+    if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
+      return true;
+    } else {
+      return false;
+    }
   }
   
   private byte[] getMessageAttachment(Message message, String attachmentId) throws IOException, MessagingException {
@@ -853,21 +868,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
     
-    if (queryFolders == null) {
-      queryFolders = new HashMap<AccountFolder, IMAPFolder>();
-    }
-    IMAPFolder folder = getFolder(queryFolders, account, "Inbox");
-    
-    if (folder == null) return;
-    
-//    if (!folder.isOpen()) {
-//      folder.open(Folder.READ_WRITE);
-//    }
+    IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    folder.open(Folder.READ_WRITE);
     
     Message ms = folder.getMessageByUID(Long.parseLong(id));
     if (ms != null) {
       ms.setFlag(Flags.Flag.SEEN, true);
     }
+    folder.close(false);
   }
 
   public boolean canBroadcastOnNewMessage() {
