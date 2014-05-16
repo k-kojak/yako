@@ -101,7 +101,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
 
         // the already loaded messages to the specific content type...
         TreeSet<MessageListElement> loadedMessages = MainService.getLoadedMessages(acc, MainService.messages);
-
+//        Log.d("rgai", "offset, limit: " + offset + ","+limit);
         messageResult = messageProvider.getMessageList(offset, limit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts

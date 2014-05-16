@@ -11,7 +11,6 @@ import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,12 +24,10 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
-import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
@@ -44,10 +41,6 @@ import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.workers.MessageListerAsyncTask;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.security.cert.CertPathValidatorException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -56,10 +49,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.mail.AuthenticationFailedException;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
-import javax.net.ssl.SSLHandshakeException;
 
 public class MainService extends Service {
   
@@ -227,7 +216,7 @@ public class MainService extends Service {
 //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
-
+                Log.d("rgai", "Igen, futtassunk betoltest...");
                 MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
@@ -633,7 +622,7 @@ public class MainService extends Service {
       }
       
       // checking for deleted mails here
-      if (resultType == MessageListResult.ResultType.CHANGED) {
+      if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
         deleteMergeMessages(newMessages);
       }
     }
