@@ -283,7 +283,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       }
       
       int messageCount = imapFolder.getMessageCount();
-      Log.d("rgai", "messagecount: " + messageCount);
+//      Log.d("rgai", "messagecount: " + messageCount);
 
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
 //        Log.d("rgai", "NO FRESH MAIL");
@@ -305,7 +305,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   //    Log.d("rgai", "account: " + account);
       Message messages[] = imapFolder.getMessages(start, end);
   //    inbox.get
-      Log.d("rgai", "messages: " + messages.length);
+//      Log.d("rgai", "messages: " + messages.length);
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];

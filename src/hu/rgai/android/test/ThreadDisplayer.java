@@ -8,8 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -33,11 +31,9 @@ import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
-import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
@@ -45,7 +41,6 @@ import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.ThreadMsgService;
@@ -255,7 +250,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     } else {
       ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
     }
-    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this, (AnalyticsApp)getApplication(), new Handler());
     AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
     text.setText("");
   }
@@ -351,6 +346,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item, account);
       for (FullSimpleMessage m : content.getMessages()) {
         adapter.add(m);
+//        Log.d("rgai", "adding fullSimpleMessage to adapter: " + m);
       }
       lv.setAdapter(adapter);
       los = new LogOnScrollListener();
@@ -367,7 +363,8 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   private void refreshMessageList(int offset) {
 //    Log.d("rgai", "LEKERDEZES");
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account, 0, true);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account,
+            0, true, (AnalyticsApp)getApplication(), new Handler());
     if (offset > 0) {
       myThread.setOffset(offset);
     }

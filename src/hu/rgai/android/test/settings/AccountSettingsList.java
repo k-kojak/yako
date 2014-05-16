@@ -39,6 +39,7 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
@@ -180,13 +181,13 @@ public class AccountSettingsList extends ActionBarActivity {
           StoreHandler.modifyAccount(this, oldAccount, newAccount);
           
           getMessagesToNewAccount(newAccount, this);
-          AndroidUtils.stopReceiversForAccount(oldAccount, this);
+          AndroidUtils.stopReceiversForAccount(oldAccount, this, (AnalyticsApp)getApplication(), new Handler());
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
           removeMessagesToAccount(oldAccount);
           
-          AndroidUtils.stopReceiversForAccount(oldAccount, this);
+          AndroidUtils.stopReceiversForAccount(oldAccount, this, (AnalyticsApp)getApplication(), new Handler());
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }

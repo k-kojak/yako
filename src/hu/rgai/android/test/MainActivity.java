@@ -528,7 +528,7 @@ public class MainActivity extends ActionBarActivity {
 //        lv.invalidate();
 
       } else if (!MainService.messages.isEmpty() && !isListView) {
-        Log.d("rgai", "ag2");
+//        Log.d("rgai", "ag2");
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
 

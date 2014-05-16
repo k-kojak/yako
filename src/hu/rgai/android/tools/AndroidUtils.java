@@ -4,6 +4,7 @@ package hu.rgai.android.tools;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailAccount;
@@ -15,6 +16,7 @@ import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.workers.ActiveConnectionConnector;
 import java.util.List;
 
@@ -43,8 +45,8 @@ public class AndroidUtils {
     }
   }
   
-  public static void stopReceiversForAccount(Account account, Context context) {
-    MessageProvider provider = getMessageProviderInstanceByAccount(account, context);
+  public static void stopReceiversForAccount(Account account, Context context, AnalyticsApp application, Handler generalHandler) {
+    MessageProvider provider = getMessageProviderInstanceByAccount(account, context, application, generalHandler);
     if (provider != null && provider.isConnectionAlive()) {
       Log.d("rgai", "Igen, dropping connection");
       provider.dropConnection();
@@ -53,7 +55,8 @@ public class AndroidUtils {
     }
   }
   
-  public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {
+  public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context,
+          AnalyticsApp application, Handler generalHandler) {
     MessageProvider mp = null;
     if (account instanceof GmailAccount) {
       mp = new SimpleEmailMessageProvider((GmailAccount) account);
@@ -62,7 +65,7 @@ public class AndroidUtils {
     } else if (account instanceof FacebookAccount) {
       mp = new FacebookMessageProvider((FacebookAccount) account);
     } else if (account instanceof SmsAccount) {
-      mp = new SmsMessageProvider(context);
+      mp = new SmsMessageProvider(context, application, generalHandler);
     }
     return mp;
   }

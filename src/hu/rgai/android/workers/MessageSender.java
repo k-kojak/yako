@@ -19,6 +19,7 @@ import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MessageReply;
 import java.io.IOException;
 import java.util.HashSet;
@@ -36,8 +37,10 @@ import javax.mail.NoSuchProviderException;
 public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   private final Context context;
+  private final AnalyticsApp mApplication;
   private final MessageRecipient recipient;
   private final Handler handler;
+  private final Handler mGeneralHandler;
   private final List<Account> accounts;
   private final String content;
   private final String subject;
@@ -46,13 +49,15 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
   private final String result = null;
 
   public MessageSender(MessageRecipient recipient, List<Account> accounts, Handler handler,
-          String subject, String content, Context context) {
+          String subject, String content, Context context, AnalyticsApp application, Handler generalHandler) {
     this.recipient = recipient;
     this.accounts = accounts;
     this.handler = handler;
+    this.mGeneralHandler = generalHandler;
     this.subject = subject;
     this.content = content;
     this.context = context;
+    this.mApplication = application;
     // this.subject = subject;
     // this.recipients = recipients;
   }
@@ -84,7 +89,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
         recipients = new HashSet<MessageRecipient>();
         recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
       } else if (recipient.getType().equals(MessageProvider.Type.SMS)) {
-        mp = new SmsMessageProvider(context);
+        mp = new SmsMessageProvider(context, mApplication, mGeneralHandler);
         recipients = new HashSet<MessageRecipient>();
         recipients.add((MessageRecipient) recipient);
       }

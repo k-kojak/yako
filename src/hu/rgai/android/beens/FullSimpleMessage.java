@@ -161,5 +161,10 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
     // TODO: write attachments
     
   }
+
+  @Override
+  public String toString() {
+    return "FullSimpleMessage{" + "id=" + id + ", subject=" + subject + ", content=" + content + ", date=" + date + ", from=" + from + ", isMe=" + isMe + ", messageType=" + messageType + ", attachments=" + attachments + '}';
+  }
   
 }

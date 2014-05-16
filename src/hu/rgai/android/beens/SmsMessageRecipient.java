@@ -42,4 +42,10 @@ public class SmsMessageRecipient implements MessageRecipient {
   public MessageProvider.Type getType() {
     return MessageProvider.Type.SMS;
   }
+
+  @Override
+  public String toString() {
+    return "SmsMessageRecipient{" + "displayData=" + displayData + ", phoneNum=" + phoneNum + ", displayName=" + displayName + ", imgUri=" + imgUri + ", contactId=" + contactId + '}';
+  }
+  
 }

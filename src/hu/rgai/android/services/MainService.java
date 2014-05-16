@@ -35,6 +35,7 @@ import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
@@ -130,7 +131,7 @@ public class MainService extends Service {
   public void onDestroy() {
     super.onDestroy();
     RUNNING = false;
-    Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
+//    Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
     
   }
 
@@ -146,7 +147,7 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // if (isNetworkAvailable()) {
-    Log.d("rgai", "Service:onStartCommand");
+//    Log.d("rgai", "Service:onStartCommand");
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
@@ -180,7 +181,7 @@ public class MainService extends Service {
       extraParams = new MainServiceExtraParams();
     }
     
-    Log.d("rgai", "Extra params: " + extraParams);
+//    Log.d("rgai", "Extra params: " + extraParams);
 
     
     boolean isNet = isNetworkAvailable();
@@ -206,7 +207,7 @@ public class MainService extends Service {
         
         for (Account acc : accounts) {
           if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
-            MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
+            MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
 //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 
             // checking if live connections are still alive, reconnect them if not
@@ -216,7 +217,7 @@ public class MainService extends Service {
 //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
-                Log.d("rgai", "Igen, futtassunk betoltest...");
+//                Log.d("rgai", "Igen, futtassunk betoltest...");
                 MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);

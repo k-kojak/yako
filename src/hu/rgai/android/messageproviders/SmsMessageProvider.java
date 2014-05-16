@@ -1,14 +1,21 @@
 package hu.rgai.android.messageproviders;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
+import android.widget.Toast;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.FullSimpleMessage;
@@ -24,6 +31,7 @@ import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
+import hu.rgai.android.test.AnalyticsApp;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -43,11 +51,15 @@ import javax.net.ssl.SSLHandshakeException;
 public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
   Context context;
+  AnalyticsApp mApplication;
+  private Handler mHandler;
 
   public SmsMessageProvider(){};
   
-  public SmsMessageProvider(Context myContext) {
+  public SmsMessageProvider(Context myContext, AnalyticsApp application, Handler handler) {
     context = myContext;
+    mApplication = application;
+    mHandler = handler;
   }
 
   public Account getAccount() {
@@ -206,30 +218,50 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content,
-          String subject) throws NoSuchProviderException, MessagingException,
-          IOException {
-    // TODO Auto-generated method stub
+  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject)
+          throws NoSuchProviderException, MessagingException, IOException {
 
     for (MessageRecipient mr : to) {
 
       SmsMessageRecipient smr = (SmsMessageRecipient) mr;
 
-      SmsManager smsman = SmsManager.getDefault();
+      SmsManager smsMan = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
       Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
-      smsman.sendTextMessage(rawPhoneNum, null, content, null, null);
+      try {
+//        if (true) {
+//          throw new NullPointerException("genereted by kojak");
+//        }
+        smsMan.sendTextMessage(rawPhoneNum, null, content, null, null);
+        ContentValues sentSms = new ContentValues();
+        sentSms.put("address", rawPhoneNum);
+        sentSms.put("body", content);
 
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = Uri.parse("content://sms/sent");
+        contentResolver.insert(uri, sentSms);
 
-      ContentValues sentSms = new ContentValues();
-      sentSms.put("address", rawPhoneNum);
-      sentSms.put("body", content);
+      } catch (NullPointerException ex) {
+        Log.d("rgai", "exception:" + ex.toString());
+        Tracker t = mApplication.getTracker();
+        t.send(new HitBuilders.ExceptionBuilder()
+        .setDescription(ex.getMessage() + " | Exception when sending SMS message from thread view to: " + smr + " | rawPhone: " + rawPhoneNum)
+        .setFatal(true)
+        .build());
+        
+        mHandler.post(new Runnable() {
+          public void run() {
+            new AlertDialog.Builder(context)
+                    .setTitle("Sending error")
+                    .setMessage("Sorry, we were unable to send your message due to an unexpected error.\nA report has been sent to the developers.")
+                    .setPositiveButton(android.R.string.yes, null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+          }
+        });
+        
+      }
 
-
-
-      ContentResolver contentResolver = context.getContentResolver();
-      Uri uri = Uri.parse("content://sms/sent");
-      contentResolver.insert(uri, sentSms);
     }
 
   }

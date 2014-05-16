@@ -14,6 +14,7 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.ThreadMsgService;
+import hu.rgai.android.test.AnalyticsApp;
 import hu.rgai.android.test.ThreadDisplayer;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -27,6 +28,8 @@ import javax.mail.NoSuchProviderException;
 public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessage> {
   
     private Context context;
+    private AnalyticsApp mApplication;
+    private Handler mGeneralHandler;
     private Handler handler;
     private Account account;
     private int delay;
@@ -34,13 +37,15 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     private boolean scrollBottomAfterLoad = false;
     
     public ThreadContentGetter(Context context, Handler handler, Account account,
-            int delay, boolean scrollBottomAfterLoad) {
+            int delay, boolean scrollBottomAfterLoad, AnalyticsApp application, Handler generalHandler) {
       this.context = context;
       this.handler = handler;
+      this.mGeneralHandler = generalHandler;
       this.account = account;
       this.context = context;
       this.delay = delay;
       this.scrollBottomAfterLoad = scrollBottomAfterLoad;
+      this.mApplication = application;
     }
     
     public void setOffset(int offset) {
@@ -78,8 +83,8 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           
           ThreadMessageProvider mp = null;
           if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
-        	  constructor = providerClass.getConstructor(Context.class);
-        	  mp = (ThreadMessageProvider) constructor.newInstance(context);        	  
+        	  constructor = providerClass.getConstructor(Context.class, AnalyticsApp.class, Handler.class);
+        	  mp = (ThreadMessageProvider) constructor.newInstance(context, mApplication, mGeneralHandler);
           } else {
         	  constructor = providerClass.getConstructor(accountClass);
 	          mp = (ThreadMessageProvider) constructor.newInstance(account);
@@ -87,16 +92,8 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           }
           // cast result to ThreadMessage, since this is a thread displayer
           threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, 20);
-          Iterator<FullSimpleMessage> iterator = threadMessage.getMessages().iterator();
-          // ONLY SEARCH FOR ANDROID PERSONS HERE IF THERE IS ANY, BUT SKIP THE PARCELABLE CONVERT STUFF
-          while (iterator.hasNext()) {
-            FullSimpleMessage ma = iterator.next();
-//            FullSimpleMessage map = new FullSimpleMessage(ma);
-//            Log.d("rgai", "PERSON BEFORE repl (thread) -> " + ma.getFrom());
-//            map.setFrom(Person.searchPersonAndr(context, ma.getFrom()));
-//            Log.d("rgai", "PERSON AFTER  repl (thread) -> " + map.getFrom());
-//            threadMessage.getMessagesParc().add(map);
-//            iterator.remove();
+          for (FullSimpleMessage fsm : threadMessage.getMessages()) {
+            fsm.setFrom(Person.searchPersonAndr(context, fsm.getFrom()));
           }
         }
 
