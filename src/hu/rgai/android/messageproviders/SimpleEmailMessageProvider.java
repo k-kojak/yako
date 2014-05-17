@@ -7,8 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+import com.sun.mail.iap.ProtocolException;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
+import com.sun.mail.imap.protocol.IMAPProtocol;
 import com.sun.mail.smtp.SMTPTransport;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.Attachment;
@@ -46,6 +48,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -163,7 +167,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     
     if (store == null || !store.isConnected()) {
-//      Log.d("rgai", "CREATING STORE || reconnection store");
+      Log.d("rgai", "CREATING STORE || reconnection store");
       store = getStore();
       storeConnections.put(account, store);
     }
@@ -885,9 +889,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   public boolean isConnectionAlive() {
+    Log.d("rgai", "is connection alive?");
+    Log.d("rgai", "idleThreads: " + idleThreads);
     if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
+      
+      
       FolderIdle fi = idleThreads.get(accountFolder);
-      return fi.isRunning();
+      Log.d("rgai", "not null, contains...isRunning?: " + fi.isRunning());
+      if (fi.isRunning()) {
+//        new Thread(new FolderNoop(fi.mFolder)).start();
+        return true;
+      } else {
+//        fi.forceStop();
+        return false;
+      }
     } else {
       return false;
     }
@@ -1054,19 +1069,28 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     public void run() {
       
-      
       if (mFolder != null) {
+        Timer timer = new Timer();
         try {
           mRunning = true;
           if (!mFolder.isOpen()) {
             mFolder.open(Folder.READ_ONLY);
           }
+          
+          timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              Log.d("rgai", "Timer restarts idle state NOW");
+              FolderIdle.this.restartIdle();
+            }
+          },  1000l * 60 * 15);
           Log.d("rgai", "STARTING IDLE: " + mMessageProvider.toString());
           mFolder.idle();
         } catch (Exception ex) {
           Log.d("rgai", "FolderIdle exception: " + ex.toString());
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
+          timer.cancel();
           Log.d("rgai", "END OF IDLE");
           Log.d("rgai", "RESTARTING IDLE STATE: " + account);
           mRunning = false;
@@ -1082,6 +1106,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     public boolean isRunning() {
       return mRunning;
+    }
+    
+    public void restartIdle() {
+      if (mFolder.isOpen()) {
+        try {
+          mFolder.close(false);
+        } catch (MessagingException ex) {
+          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      }
     }
     
     public void forceStop() {
@@ -1139,37 +1173,35 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
   }
   
-//  private class FolderNoop implements Runnable {
-//
-//    volatile boolean running = false;
-//    IMAPFolder folder;
-//    
-//    public FolderNoop(IMAPFolder folder) {
-//      this.folder = folder;
-//    }
-//    
-//    public void run() {
-//      running = true;
-//      
-//      if (folder != null) { 
-//        try {
-//          if (!folder.isOpen()) {
-//            folder.open(Folder.READ_ONLY);
-//          }
-//          Log.d("rgai", "STARTING IDLE");
-//          folder.idle();
-//          Log.d("rgai", "END OF IDLE");
-//        } catch (Exception ex) {
-//          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//      }
-//      running = false;
-//    }
-//    
-//    public boolean isRunning() {
-//      return running;
-//    }
-//    
-//  }
+  private class FolderNoop implements Runnable {
+
+    IMAPFolder folder;
+    
+    public FolderNoop(IMAPFolder folder) {
+      this.folder = folder;
+    }
+    
+    public void run() {
+      if (folder != null) { 
+        try {
+          Log.d("rgai", "send NOOP");
+          if (!folder.isOpen()) {
+            folder.open(Folder.READ_ONLY);
+          }
+          
+          folder.doCommand(new IMAPFolder.ProtocolCommand() {
+            public Object doCommand(IMAPProtocol imapp) throws ProtocolException {
+              imapp.simpleCommand("NOOP", null);
+              return null;
+            }
+          });
+        } catch (Exception ex) {
+          Log.d("rgai", "Eception when sending noop.");
+          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      }
+    }
+    
+  }
   
 }

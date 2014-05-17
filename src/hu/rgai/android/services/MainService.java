@@ -211,8 +211,9 @@ public class MainService extends Service {
 //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 
             // checking if live connections are still alive, reconnect them if not
-            AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, this);
-            if (extraParams.isForceQuery() || extraParams.isLoadMore() || !provider.isConnectionAlive() || !provider.canBroadcastOnNewMessage()
+            boolean isConnectionAlive = provider.isConnectionAlive();
+            AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
+            if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
                     || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
 //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
