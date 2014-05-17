@@ -1,4 +1,5 @@
-// TODO: if NO FRESH MAIL result comes, but then the amount of initial messages changed, then refresh pressed, then it works incorrect: not loads more message
+// TODO: if NO FRESH MAIL result comes, but then the amount of "initial messages" at setting panel changed,
+// and then refresh pressed, then it works incorrect: not loads more message
 
 package hu.rgai.android.messageproviders;
 
