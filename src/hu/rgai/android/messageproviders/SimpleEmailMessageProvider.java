@@ -1083,7 +1083,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               Log.d("rgai", "Timer restarts idle state NOW");
               FolderIdle.this.restartIdle();
             }
-          },  1000l * 60 * 15);
+          },  1000l * 60 * 20);
           Log.d("rgai", "STARTING IDLE: " + mMessageProvider.toString());
           mFolder.idle();
         } catch (Exception ex) {
@@ -1116,6 +1116,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
+      if (idleFolders.containsKey(accountFolder)) {
+        idleFolders.remove(accountFolder);
+      }
     }
     
     public void forceStop() {
@@ -1127,8 +1130,10 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
+      if (idleFolders.containsKey(accountFolder)) {
+        idleFolders.remove(accountFolder);
+      }
     }
-    
   }
   
   private class ConnectionDropper extends AsyncTask<Void, Void, Void> {
