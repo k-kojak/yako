@@ -22,6 +22,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import com.google.android.gms.analytics.GoogleAnalytics;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -36,6 +37,7 @@ import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
@@ -92,6 +94,7 @@ public class MainService extends Service {
   private final IBinder mBinder = new MyBinder();
   
   public static volatile TreeSet<MessageListElement> messages = null;
+  public static volatile Date last_message_update = new Date();
   public static volatile MessageListElement mLastNotifiedMessage = null;
   
 //  private static 
@@ -100,6 +103,13 @@ public class MainService extends Service {
 
   @Override
   public void onCreate() {
+    if (BuildConfig.DEBUG) {
+      Log.d("rgai", "#TURNING OFF GOOGLE ANALYTICS: WE ARE IN DEVELOPE MODE");
+      GoogleAnalytics googleAnalytics = GoogleAnalytics.getInstance(getApplicationContext());
+      googleAnalytics.setAppOptOut(true);
+    } else {
+      Log.d("rgai", "#DO NOT TURN GOOGLE ANALYTICS OFF: WE ARE IN PRODUCTION MODE");
+    }
     RUNNING = true;
     handler = new MyHandler(this);
 
@@ -134,7 +144,7 @@ public class MainService extends Service {
 //    Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
     
   }
-
+  
   private void updateMessagesPrettyDate() {
     if (messages != null) {
       SimpleDateFormat sdf = new SimpleDateFormat();
@@ -205,6 +215,7 @@ public class MainService extends Service {
           accounts.add(SmsAccount.account);
         }
         
+        boolean wasAnyUpdateCheck = false;
         for (Account acc : accounts) {
           if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
             MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
@@ -219,12 +230,17 @@ public class MainService extends Service {
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 //                Log.d("rgai", "Igen, futtassunk betoltest...");
+                wasAnyUpdateCheck = true;
                 MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
             }
           }
+        }
+        if (wasAnyUpdateCheck) {
+          last_message_update = new Date();
+          MainActivity.notifyMessageChange(false);
         }
 //          Log.d("rgai", " . ");
       }
@@ -265,11 +281,11 @@ public class MainService extends Service {
     }
   }
   
-  public static Set<MessageListElement> getFilteredMessages(Account filterAcc) {
+  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
     if (filterAcc == null) {
       return messages;
     } else {
-      Set<MessageListElement> filterList = new TreeSet<MessageListElement>();
+      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
       for (MessageListElement mlep : messages) {
         if (mlep.getAccount().equals(filterAcc)) {
           filterList.add(mlep);

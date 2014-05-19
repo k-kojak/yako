@@ -30,6 +30,8 @@
   <string name="cancel">Cancel</string>
   <string name="send">Send</string>
   <string name="loading">Loading...</string>
+  <string name="last_updated_string">Last updated: </string>
+  <string name="today">Today</string>
     
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>

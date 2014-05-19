@@ -306,10 +306,10 @@ public class ThreadDisplayer extends ActionBarActivity {
       case android.R.id.home:
         Intent upIntent = NavUtils.getParentActivityIntent(this);
         if (fromNotification) {
-          Log.d("rgai", "NEW STACKBUILDER");
+//          Log.d("rgai", "NEW STACKBUILDER");
             TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
         } else {
-          Log.d("rgai", "NO STACK BUILDER");
+//          Log.d("rgai", "NO STACK BUILDER");
 //          NavUtils.navigateUpTo(this, upIntent);
           finish();
         }
@@ -321,7 +321,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   @Override
   public void finish() {
-    Log.d("rgai", "TD-finish");
+//    Log.d("rgai", "TD-finish");
     Intent resultIntent = new Intent();
     resultIntent.putExtra("thread_displayer", true);
     resultIntent.putExtra("account_type", account.getAccountType().toString());

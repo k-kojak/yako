@@ -49,9 +49,6 @@ public class EmailDisplayerFragment extends Fragment {
   private String mailCharCode = "UTF-8";
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-//  public EmailDisplayerFragment() {
-//  }
-
   public static final EmailDisplayerFragment newInstance() {
     EmailDisplayerFragment edf = new EmailDisplayerFragment();
     
@@ -61,13 +58,10 @@ public class EmailDisplayerFragment extends Fragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d("rgai", "email displayer fragment: ONCREATE");
-   
   }
   
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    Log.d("rgai", "email displayer fragment: ONCREATE VIEW");
     
     EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
     mAccount = eda.getAccount();

@@ -167,7 +167,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     
     if (store == null || !store.isConnected()) {
-      Log.d("rgai", "CREATING STORE || reconnection store");
+//      Log.d("rgai", "CREATING STORE || reconnection store");
       store = getStore();
       storeConnections.put(account, store);
     }
@@ -182,16 +182,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   private synchronized IMAPFolder getFolder(HashMap<AccountFolder, IMAPFolder> folderStore,
           EmailAccount account, String folder, boolean attachListener) throws MessagingException {
-    Log.d("rgai", "getFolder");
+//    Log.d("rgai", "getFolder");
     
     IMAPFolder imapFolder = null;
     if (folderStore.containsKey(accountFolder)) {
       imapFolder = folderStore.get(accountFolder);
-      Log.d("rgai", "FOLDER EXISTS");
+//      Log.d("rgai", "FOLDER EXISTS");
     }
     
     if (imapFolder == null) {
-      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
+//      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
       Store store = getStore(account);
       if (store != null) {
         imapFolder = (IMAPFolder)store.getFolder(folder);
@@ -200,7 +200,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           imapFolder.open(Folder.READ_ONLY);
         }
         if (attachListener && messageListener != null) {
-          Log.d("rgai", "adding event listeners....");
+//          Log.d("rgai", "adding event listeners....");
           imapFolder.addMessageCountListener(new MessageCountListener() {
             public void messagesAdded(MessageCountEvent mce) {
               messageListener.messageAdded(mce.getMessages().length);
@@ -889,13 +889,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   public boolean isConnectionAlive() {
-    Log.d("rgai", "is connection alive?");
-    Log.d("rgai", "idleThreads: " + idleThreads);
+//    Log.d("rgai", "is connection alive?");
+//    Log.d("rgai", "idleThreads: " + idleThreads);
     if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
       
       
       FolderIdle fi = idleThreads.get(accountFolder);
-      Log.d("rgai", "not null, contains...isRunning?: " + fi.isRunning());
+//      Log.d("rgai", "not null, contains...isRunning?: " + fi.isRunning());
       if (fi.isRunning()) {
 //        new Thread(new FolderNoop(fi.mFolder)).start();
         return true;
@@ -912,7 +912,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     if (messageListener == null) {
       messageListener = new MessageCallback() {
         public void messageAdded(int newMessageCount) {
-          Log.d("rgai", "messageAdded");
+//          Log.d("rgai", "messageAdded");
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
@@ -928,7 +928,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
         public void messageRemoved(Message[] messages) {
             
-          Log.d("rgai", "removing message");
+//          Log.d("rgai", "removing message");
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
@@ -1084,20 +1084,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               FolderIdle.this.restartIdle();
             }
           },  1000l * 60 * 20);
-          Log.d("rgai", "STARTING IDLE: " + mMessageProvider.toString());
+//          Log.d("rgai", "STARTING IDLE: " + mMessageProvider.toString());
           mFolder.idle();
         } catch (Exception ex) {
           Log.d("rgai", "FolderIdle exception: " + ex.toString());
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
           timer.cancel();
-          Log.d("rgai", "END OF IDLE");
-          Log.d("rgai", "RESTARTING IDLE STATE: " + account);
+//          Log.d("rgai", "END OF IDLE");
+//          Log.d("rgai", "RESTARTING IDLE STATE: " + account);
           mRunning = false;
           if (!forceStop) {
             mMessageProvider.establishConnection(null);
           } else {
-            Log.d("rgai", "DO NOT RESTART IDLE STATE BECAUSE STOPPED");
+//            Log.d("rgai", "DO NOT RESTART IDLE STATE BECAUSE STOPPED");
           }
         }
       }

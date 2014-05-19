@@ -385,7 +385,10 @@ public class MainActivity extends ActionBarActivity {
     if (!MainService.RUNNING) {
       reloadMessages(true);
     } else {
-      reloadMessages(false);
+      long now = System.currentTimeMillis();
+      if (MainService.last_message_update == null || MainService.last_message_update.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now) {
+        reloadMessages(false);
+      }
     }
     
     // initLastNotificationDates();
@@ -554,6 +557,7 @@ public class MainActivity extends ActionBarActivity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
           public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
+            if (av.getItemAtPosition(itemIndex) == null) return;
             MessageListElement message = (MessageListElement) av.getItemAtPosition(itemIndex);
             Account a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
@@ -782,8 +786,10 @@ public class MainActivity extends ActionBarActivity {
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
-        builder.append(((MessageListElement) (adapter.getItem(actualVisiblePosition))).getId());
-        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+        if (adapter.getItem(actualVisiblePosition) != null) {
+          builder.append(((MessageListElement) (adapter.getItem(actualVisiblePosition))).getId());
+          builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+        }
       }
     } catch (Exception ex) {
       Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");

@@ -38,6 +38,11 @@ public final class Settings {
   
   public static final int NOTIFICATION_NEW_MESSAGE_ID = 1;
   
+  /**
+   * The interval of automatic message refresh in seconds.
+   */
+  public static final int MESSAGE_LOAD_INTERVAL = 180;
+  
   public static final String CONTACT_DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
   
 //  public static final int MESSAGE_LIST_TITLE_LENGTH = 30;
