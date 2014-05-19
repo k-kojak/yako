@@ -104,7 +104,7 @@
         android:layout_alignParentRight="true"
         android:layout_marginBottom="4dip"
         android:layout_marginRight="5dip"
-        android:textSize="11sp"
+        android:textSize="10sp"
       />
     </RelativeLayout>
  
