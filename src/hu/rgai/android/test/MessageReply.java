@@ -7,12 +7,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
@@ -36,7 +35,6 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailMessageRecipient;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
@@ -46,7 +44,6 @@ import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
@@ -58,6 +55,8 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -285,9 +284,9 @@ public class MessageReply extends ActionBarActivity {
     }
   }
 
-  public void setMessageResult(int messageResult) {
-    this.messageResult = messageResult;
-  }
+//  public void setMessageResult(int messageResult) {
+//    this.messageResult = messageResult;
+//  }
 
   public void sendMessage(Account from) {
     if (from == null) {
@@ -311,7 +310,8 @@ public class MessageReply extends ActionBarActivity {
         content += source.getRenderer().toString();
       }
       MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this, (AnalyticsApp)getApplication(), new Handler());
-      AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
+      AndroidUtils.<Integer, String, String>startAsyncTask(rs);
+      finish();
       
     }
 
@@ -454,11 +454,30 @@ public class MessageReply extends ActionBarActivity {
     public void handleMessage(Message msg) {
       Bundle bundle = msg.getData();
       if (bundle != null) {
-        if (bundle.containsKey("result") && bundle.get("result") != null) {
-          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG).show();
-        } else {
-          cont.setMessageResult(MESSAGE_SENT_OK);
-          cont.finish();
+        if (bundle.containsKey("success") && bundle.getBoolean("success") == true) {
+          String recipientName = bundle.getString("to");
+//          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG).show();
+//        } else {
+//          cont.setMessageResult(MESSAGE_SENT_OK);
+//          cont.finish();
+          
+          NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+          
+          NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(cont)
+                  .setSmallIcon(R.drawable.not_ic_action_email)
+                  .setTicker("Message sent")
+                  .setContentTitle("Message sent to:")
+                  .setContentText(recipientName);
+          mBuilder.setAutoCancel(true);
+          mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
+          new Timer().schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
+            }
+          }, 3000);
         }
       }
     }

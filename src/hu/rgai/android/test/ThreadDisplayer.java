@@ -251,7 +251,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
     }
     MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this, (AnalyticsApp)getApplication(), new Handler());
-    AndroidUtils.<Integer, String, Boolean>startAsyncTask(rs);
+    AndroidUtils.<Integer, String, String>startAsyncTask(rs);
     text.setText("");
   }
 

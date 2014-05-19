@@ -37,6 +37,7 @@ public final class Settings {
   public static final String FACEBOOK_ME_IMG_NAME = "me.png";
   
   public static final int NOTIFICATION_NEW_MESSAGE_ID = 1;
+  public static final int NOTIFICATION_SENT_MESSAGE_ID = 2;
   
   /**
    * The interval of automatic message refresh in seconds.

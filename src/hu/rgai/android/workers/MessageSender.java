@@ -34,7 +34,7 @@ import javax.mail.NoSuchProviderException;
  * 
  * @author Tamas Kojedzinszky
  */
-public class MessageSender extends AsyncTask<Integer, String, Boolean> {
+public class MessageSender extends AsyncTask<Integer, String, String> {
 
   private final Context context;
   private final AnalyticsApp mApplication;
@@ -72,7 +72,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
   }
 
   @Override
-  protected Boolean doInBackground(Integer... params) {
+  protected String doInBackground(Integer... params) {
     Account acc = getAccountForType(recipient.getType());
     if ( acc != null && isValidContent() ) {
       MessageProvider mp = null;
@@ -114,7 +114,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
         }
       }
     }
-    return true;
+    return recipient.getDisplayName();
   }
 
   private void loggingSendMessage() {
@@ -152,11 +152,12 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
   }
 
   @Override
-  protected void onPostExecute(Boolean success) {
+  protected void onPostExecute(String recipientName) {
     if (handler != null) {
       Message msg = handler.obtainMessage();
       Bundle bundle = new Bundle();
-      bundle.putBoolean("success", success);
+      bundle.putBoolean("success", true);
+      bundle.putString("to", recipientName);
       msg.setData(bundle);
       handler.sendMessage(msg);
     }
@@ -164,7 +165,7 @@ public class MessageSender extends AsyncTask<Integer, String, Boolean> {
 
   @Override
   protected void onProgressUpdate(String... values) {
-    Toast.makeText(context, "Sending message with " + values[0], Toast.LENGTH_LONG).show();
+    Toast.makeText(context, "Sending message ...", Toast.LENGTH_SHORT).show();
   }
 
 }
