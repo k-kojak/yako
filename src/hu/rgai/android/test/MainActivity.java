@@ -505,7 +505,7 @@ public class MainActivity extends ActionBarActivity {
    * Sets the content of the listview.
    */
   private static void setContent() {
-    Log.d("rgai", "SET MAIN CONTENT");
+//    Log.d("rgai", "SET MAIN CONTENT");
     if (instance == null) {
       return;
     }
