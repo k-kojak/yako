@@ -302,21 +302,23 @@ public class MainActivity extends ActionBarActivity {
     switch (requestCode) {
       case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
         if (resultCode == Activity.RESULT_OK) {
-          if (data.hasExtra("message_data")) {
-            FullMessage fm = data.getParcelableExtra("message_data");
-            String messageId = data.getStringExtra("message_id");
-            Account acc = data.getParcelableExtra("account");
-            MainService.setMessageContent(messageId, acc, fm);
-          }
-          if (data.hasExtra("thread_displayer")) {
-//            Intent service = new Intent(this, MainScheduler.class);
-//            service.setAction(Context.ALARM_SERVICE);
-//            MainServiceExtraParams eParams = new MainServiceExtraParams();
-//            eParams.setType(data.getStringExtra("account_type"));
-//            eParams.setActViewingMessage((MessageListElement)data.getParcelableExtra("act_view_msg"));
-//            
-//            service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
-//            this.sendBroadcast(service);
+          if (data != null) {
+            if (data.hasExtra("message_data")) {
+              FullMessage fm = data.getParcelableExtra("message_data");
+              String messageId = data.getStringExtra("message_id");
+              Account acc = data.getParcelableExtra("account");
+              MainService.setMessageContent(messageId, acc, fm);
+            }
+            if (data.hasExtra("thread_displayer")) {
+  //            Intent service = new Intent(this, MainScheduler.class);
+  //            service.setAction(Context.ALARM_SERVICE);
+  //            MainServiceExtraParams eParams = new MainServiceExtraParams();
+  //            eParams.setType(data.getStringExtra("account_type"));
+  //            eParams.setActViewingMessage((MessageListElement)data.getParcelableExtra("act_view_msg"));
+  //            
+  //            service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+  //            this.sendBroadcast(service);
+            }
           }
         }
         break;

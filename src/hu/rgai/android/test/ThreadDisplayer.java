@@ -322,16 +322,16 @@ public class ThreadDisplayer extends ActionBarActivity {
   @Override
   public void finish() {
 //    Log.d("rgai", "TD-finish");
-    Intent resultIntent = new Intent();
-    resultIntent.putExtra("thread_displayer", true);
-    resultIntent.putExtra("account_type", account.getAccountType().toString());
-    resultIntent.putExtra("act_view_msg", (Parcelable)MainService.actViewingMessage);
+//    Intent resultIntent = new Intent();
+//    resultIntent.putExtra("thread_displayer", true);
+//    resultIntent.putExtra("account_type", account.getAccountType().toString());
+//    resultIntent.putExtra("act_view_msg", (Parcelable)MainService.actViewingMessage);
     
 //    resultIntent.putExtra("message_id", threadId);
 
     // if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
 //    resultIntent.putExtra("account", (Parcelable) account);
-    setResult(Activity.RESULT_OK, resultIntent);
+    setResult(Activity.RESULT_OK);
     super.finish(); 
   }
 
@@ -368,7 +368,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     if (offset > 0) {
       myThread.setOffset(offset);
     }
-    myThread.execute(mThreadId);
+    AndroidUtils.<String, Integer, FullThreadMessage>startAsyncTask(myThread, mThreadId);
   }
   
   private void refreshMessageList() {

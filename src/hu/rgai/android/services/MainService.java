@@ -149,8 +149,6 @@ public class MainService extends Service {
     
     List<Account> accounts = StoreHandler.getAccounts(this);
     
-//    MainActivity.openFbSession(this);
-    
     MainServiceExtraParams extraParams = null;
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey(ParamStrings.EXTRA_PARAMS)) {
@@ -200,6 +198,10 @@ public class MainService extends Service {
 //                Log.d("rgai", "Igen, futtassunk betoltest...");
                 if (extraParams.getAccount() == null) {
                   wasAnyFullUpdateCheck = true;
+                }
+                // TODO: this Definitely should not be here
+                if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+                  MainActivity.openFbSession(this);
                 }
                 MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
