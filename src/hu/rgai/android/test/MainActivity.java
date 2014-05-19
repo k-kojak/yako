@@ -59,6 +59,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This is the main view of the application.
@@ -209,10 +211,50 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
+    Log.d("rgai", "ON OPTIONS MENU CREATED");
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
-    this.mMenu = menu;
+    mMenu = menu;
+    refreshLoadingStateRate();
     return true;
+  }
+  
+  public static void refreshLoadingStateRate() {
+    if (MainService.currentRefreshedAccountCounter == MainService.currentNumOfAccountsToRefresh) {
+      setRefreshActionButtonState(false);
+    } else {
+      setRefreshActionButtonState(true);
+      if (mMenu != null) {
+        MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
+        if (refreshItem != null && refreshItem.getActionView() != null) {
+          ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(MainService.currentRefreshedAccountCounter+"/"+MainService.currentNumOfAccountsToRefresh);
+        }
+      }
+    }
+  }
+  
+  public static void setRefreshActionButtonState(boolean refreshing) {
+    if (mMenu != null) {
+      MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
+      if (refreshItem != null) {
+        if (refreshing) {
+          if (refreshItem.getActionView() == null) {
+            refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
+          } else {
+            // do nothing, since we already displaying the progressbar
+          }
+        } else {
+          refreshItem.setActionView(null);
+        }
+      }
+    }
+    if (loadMoreButton != null) {
+      if (refreshing) {
+        loadMoreButton.setEnabled(false);
+      } else {
+        loadMoreButton.setEnabled(true);
+      }
+    }
   }
 
   @Override
@@ -234,7 +276,6 @@ public class MainActivity extends ActionBarActivity {
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
         // item.setEnabled(false);
 
-        Toast.makeText(this, getString(R.string.refreshing), Toast.LENGTH_SHORT).show();
         reloadMessages(true);
         return true;
       case R.id.system_preferences:
@@ -300,16 +341,16 @@ public class MainActivity extends ActionBarActivity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     switch (requestCode) {
-      case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
-        if (resultCode == Activity.RESULT_OK) {
-          if (data != null) {
-            if (data.hasExtra("message_data")) {
-              FullMessage fm = data.getParcelableExtra("message_data");
-              String messageId = data.getStringExtra("message_id");
-              Account acc = data.getParcelableExtra("account");
-              MainService.setMessageContent(messageId, acc, fm);
-            }
-            if (data.hasExtra("thread_displayer")) {
+//      case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
+//        if (resultCode == Activity.RESULT_OK) {
+//          if (data != null) {
+//            if (data.hasExtra("message_data")) {
+//              FullMessage fm = data.getParcelableExtra("message_data");
+//              String messageId = data.getStringExtra("message_id");
+//              Account acc = data.getParcelableExtra("account");
+//              MainService.setMessageContent(messageId, acc, fm);
+//            }
+//            if (data.hasExtra("thread_displayer")) {
   //            Intent service = new Intent(this, MainScheduler.class);
   //            service.setAction(Context.ALARM_SERVICE);
   //            MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -318,10 +359,10 @@ public class MainActivity extends ActionBarActivity {
   //            
   //            service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
   //            this.sendBroadcast(service);
-            }
-          }
-        }
-        break;
+//            }
+//          }
+//        }
+//        break;
       case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
         if (resultCode == Activity.RESULT_OK) {
           reloadMessages(true);
@@ -336,6 +377,8 @@ public class MainActivity extends ActionBarActivity {
    * Sends a broadcast to the Service to load fresh messages again.
    */
   private void reloadMessages(boolean forceQuery) {
+//    Log.d("rgai", "RELOAD messages");
+    setRefreshActionButtonState(true);
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -347,21 +390,6 @@ public class MainActivity extends ActionBarActivity {
     }
     intent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
-  }
-
-  /**
-   * Removes load more indicator.
-   * The indicator depends on Android version.
-   */
-  private static void removeLoadMoreIndicator() {
-    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-      if (isLoading) {
-        boolean removeResult = lv.removeFooterView(loadIndicator);
-        Log.d("rgai", "REMOVEFOOTER VIEW INDICATOR -> " + removeResult);
-        lv.addFooterView(loadMoreButton);
-        isLoading = false;
-      }
-    }
   }
 
   /**
@@ -548,6 +576,9 @@ public class MainActivity extends ActionBarActivity {
           }
         });
         lv.addFooterView(loadMoreButton);
+        if (MainService.currentRefreshedAccountCounter < MainService.currentNumOfAccountsToRefresh) {
+          loadMoreButton.setEnabled(false);
+        }
 
         LayoutInflater inflater = (LayoutInflater) instance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
@@ -673,9 +704,9 @@ public class MainActivity extends ActionBarActivity {
     //TODO: we should replace this with broadcast receivers, not like static stuffs...
     hideProgressDialog();
     setContent();
-    if (loadMore) {
-      removeLoadMoreIndicator();
-    }
+//    if (loadMore) {
+//      removeLoadMoreIndicator();
+//    }
   }
 
   /**
@@ -692,17 +723,17 @@ public class MainActivity extends ActionBarActivity {
     service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     instance.sendBroadcast(service);
 
-    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-      // getting height of load button
-      LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
-      params.height = loadMoreButton.getHeight();
-      loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
-      lv.removeFooterView(loadMoreButton);
-      lv.addFooterView(loadIndicator);
-      isLoading = true;
-    } else {
-      Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
-    }
+//    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+//      // getting height of load button
+//      LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
+//      params.height = loadMoreButton.getHeight();
+//      loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
+//      lv.removeFooterView(loadMoreButton);
+//      lv.addFooterView(loadIndicator);
+//      isLoading = true;
+//    } else {
+//      Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
+//    }
   }
 
   /**

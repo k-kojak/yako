@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
@@ -43,7 +42,7 @@ import javax.net.ssl.SSLHandshakeException;
 public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageListResult> {
 
   private Context context;
-  private int result;
+  private int result = -1;
   private String errorMessage = null;
   private final Handler handler;
   private final Account acc;
@@ -114,38 +113,37 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
       ex.printStackTrace();
       this.result = AUTHENTICATION_FAILED_EXCEPTION;
       this.errorMessage = acc.getDisplayName();
-      return null;
     } catch (CertPathValidatorException ex) {
       ex.printStackTrace();
       this.result = CERT_PATH_VALIDATOR_EXCEPTION;
-      return null;
     } catch (SSLHandshakeException ex) {
       ex.printStackTrace();
       this.result = SSL_HANDSHAKE_EXCEPTION;
-      return null;
     } catch (NoSuchProviderException ex) {
       ex.printStackTrace();
       this.result = NO_SUCH_PROVIDER_EXCEPTION;
-      return null;
     } catch (ConnectException ex) {
       ex.printStackTrace();
       this.result = CONNECT_EXCEPTION;
-      return null;
     } catch (UnknownHostException ex) {
       ex.printStackTrace();
       this.result = UNKNOWN_HOST_EXCEPTION;
-      return null;
     } catch (MessagingException ex) {
       ex.printStackTrace();
       this.result = MESSAGING_EXCEPTION;
-      return null;
     } catch (IOException ex) {
       ex.printStackTrace();
       this.result = IOEXCEPTION;
-      return null;
+    } finally {
+      runningTaskStack.put(runSetup, false);
     }
-    this.result = OK;
-    runningTaskStack.put(runSetup, false);
+    // if result is UNSET
+    if (this.result == -1) {
+      this.result = OK;
+    }
+    
+//    MainService.currentRefreshedAccountCounter++;
+//    MainActivity.refreshLoadingStateRate();
 //    Log.d("rgai", "do in background ENDED: " + acc);
     return messageResult;
   }
@@ -181,20 +179,21 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
 
   @Override
   protected void onPostExecute(MessageListResult messageResult) {
-    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
-      return;
-    }
-    Message msg = handler.obtainMessage();
     Bundle bundle = new Bundle();
-    if (this.result == OK) {
-      // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
-      bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
-      bundle.putString("message_result_type", messageResult.getResultType().toString());
-      // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
+    Message msg = handler.obtainMessage();
+    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
+      bundle.putInt(ParamStrings.RESULT, MainService.CANCELLED);
+    } else {
+      if (this.result == OK) {
+        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
+        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
+        bundle.putString("message_result_type", messageResult.getResultType().toString());
+        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
+      }
+      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
+      bundle.putInt(ParamStrings.RESULT, this.result);
+      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
     }
-    bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
-    bundle.putInt(ParamStrings.RESULT, this.result);
-    bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
 
     msg.setData(bundle);
     handler.sendMessage(msg);

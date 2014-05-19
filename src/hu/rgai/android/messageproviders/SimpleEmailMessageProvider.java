@@ -278,20 +278,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
 //      IMAPFolder imapFolder = getFolder(queryFolders, account, "Inbox");
-//      Log.d("rgai", "ALWAYS get a new imapFolder here");
+      Log.d("rgai", "ALWAYS get a new imapFolder here");
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       imapFolder.open(Folder.READ_ONLY);
 
       if (imapFolder == null) {
-  //      Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
+        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
       
       int messageCount = imapFolder.getMessageCount();
-//      Log.d("rgai", "messagecount: " + messageCount);
+      Log.d("rgai", "messagecount: " + messageCount);
 
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
-//        Log.d("rgai", "NO FRESH MAIL");
+        Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
@@ -310,7 +310,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   //    Log.d("rgai", "account: " + account);
       Message messages[] = imapFolder.getMessages(start, end);
   //    inbox.get
-//      Log.d("rgai", "messages: " + messages.length);
+      Log.d("rgai", "messages: " + messages.length);
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
@@ -441,7 +441,10 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   private boolean hasNewMail(IMAPFolder folder, TreeSet<MessageListElement> loadedMessages, int messageCount) throws MessagingException {
     
-//    Store s = getStore(account);
+    // if the loaded messages is empty, than yes, we probably have new mails
+    if (loadedMessages.isEmpty()) {
+      return true;
+    }
     
     String nextUID = folder.getUIDNext() + "";
     
@@ -950,7 +953,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     initMessageListener(context);
     if (!isConnectionAlive()) {
-      Log.d("rgai", "Establishing connection: " + account);
+//      Log.d("rgai", "Establishing connection: " + account);
       try {
         if (idleFolders == null) {
           idleFolders = new HashMap<AccountFolder, IMAPFolder>();

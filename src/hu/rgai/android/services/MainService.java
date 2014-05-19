@@ -75,12 +75,15 @@ public class MainService extends Service {
   public static final int NO_INTERNET_ACCESS = 8;
   public static final int NO_ACCOUNT_SET = 9;
   public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
+  public static final int CANCELLED = 11;
 
   private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
   public static volatile TreeSet<MessageListElement> messages = null;
   public static volatile Date last_message_update = new Date();
+  public volatile static int currentRefreshedAccountCounter = 0;
+  public volatile static int currentNumOfAccountsToRefresh = 0;
   public static volatile MessageListElement mLastNotifiedMessage = null;
   
 //  private static 
@@ -182,42 +185,50 @@ public class MainService extends Service {
         }
         
         boolean wasAnyFullUpdateCheck = false;
-        for (Account acc : accounts) {
-          if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
-            MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
-//              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
+        if (currentNumOfAccountsToRefresh == currentRefreshedAccountCounter) {
+        
+          currentNumOfAccountsToRefresh = 0;
+          currentRefreshedAccountCounter = 0;
+          for (Account acc : accounts) {
+            if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
+              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
+  //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 
-            // checking if live connections are still alive, reconnect them if not
-            boolean isConnectionAlive = provider.isConnectionAlive();
-            AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
-            if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
-                    || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
-//                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
-              if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
-//                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
-//                Log.d("rgai", "Igen, futtassunk betoltest...");
-                if (extraParams.getAccount() == null) {
-                  wasAnyFullUpdateCheck = true;
+              // checking if live connections are still alive, reconnect them if not
+              boolean isConnectionAlive = provider.isConnectionAlive();
+              AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
+              if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
+                      || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
+  //                Log.d("rgai", acc.isInternetNeededForLoad() + " | " + isNet);
+                if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
+  //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
+  //                Log.d("rgai", "Igen, futtassunk betoltest...");
+                  if (extraParams.getAccount() == null) {
+                    wasAnyFullUpdateCheck = true;
+                  }
+                  // TODO: this Definitely should not be here
+                  if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+                    MainActivity.openFbSession(this);
+                  }
+                  currentNumOfAccountsToRefresh++;
+                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
+                          extraParams.getQueryLimit(), extraParams.getQueryOffset());
+                  AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
                 }
-                // TODO: this Definitely should not be here
-                if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-                  MainActivity.openFbSession(this);
-                }
-                MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
-                        extraParams.getQueryLimit(), extraParams.getQueryOffset());
-                AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
               }
             }
           }
+          MainActivity.refreshLoadingStateRate();
+          if (wasAnyFullUpdateCheck) {
+            last_message_update = new Date();
+            MainActivity.notifyMessageChange(false);
+          }
+  //          Log.d("rgai", " . ");
+        } else {
+          Log.d("rgai2", "ITT MOST MEGGATOLTUK A TOBBSZORI INDITAST!!!!!!!!!!!!!!!!!!!!!!");
         }
-        if (wasAnyFullUpdateCheck) {
-          last_message_update = new Date();
-          MainActivity.notifyMessageChange(false);
-        }
-//          Log.d("rgai", " . ");
       }
     }
-    
     return Service.START_STICKY;
   }
 
@@ -363,12 +374,16 @@ public class MainService extends Service {
       Bundle bundle = msg.getData();
       int newMessageCount = 0;
       if (bundle != null) {
-        if (bundle.get("result") != null) {
-          if (bundle.get("errorMessage") != null) {
-            MainActivity.showErrorMessage(bundle.getInt("result"), bundle.getString("errorMessage"));
+        if (bundle.get(ParamStrings.RESULT) != null) {
+          Log.d("rgai", "MessageListerAsyncTaskResult: " + bundle.getInt(ParamStrings.RESULT));
+          if (bundle.get(ParamStrings.ERROR_MESSAGE) != null) {
+            MainActivity.showErrorMessage(bundle.getInt(ParamStrings.RESULT), bundle.getString(ParamStrings.ERROR_MESSAGE));
           }
+          Log.d("rgai", "##currentRefreshedAccountCounter++");
+          MainService.currentRefreshedAccountCounter++;
+          MainActivity.refreshLoadingStateRate();
           boolean loadMore = bundle.getBoolean(ParamStrings.LOAD_MORE);
-          if (bundle.getInt("result") == OK && bundle.get("messages") != null) {
+          if (bundle.getInt(ParamStrings.RESULT) == OK && bundle.get("messages") != null) {
             MessageListElement[] newMessages = (MessageListElement[]) bundle.getParcelableArray("messages");
             MessageListResult.ResultType resultType = MessageListResult.ResultType.valueOf(bundle.getString("message_result_type"));
             
