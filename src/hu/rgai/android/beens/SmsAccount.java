@@ -76,5 +76,8 @@ public final class SmsAccount implements Account, Parcelable {
   public boolean isInternetNeededForLoad() {
     return false;
   }
-  
+
+  public boolean isUnique() {
+    return true;
+  }
 }

@@ -90,9 +90,6 @@ public class MainActivity extends ActionBarActivity {
   // a progress dialog to display message load status
   private static ProgressDialog pd = null;
 
-  // a variable to store the last date of "Load more" button press time
-  private static Date lastLoadMoreEvent = null;
-
   // the static listview where messages displayed
   private static ListView lv = null;
 
@@ -342,6 +339,9 @@ public class MainActivity extends ActionBarActivity {
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     if (forceQuery) {
       eParams.setForceQuery(true);
+    }
+    if (actSelectedFilter != null) {
+      eParams.setAccount(actSelectedFilter);
     }
     intent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
@@ -680,29 +680,26 @@ public class MainActivity extends ActionBarActivity {
    * Handles LoadMore button press.
    */
   public static void loadMoreMessage() {
-    int coolDown = 5; // sec
-    if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + coolDown * 1000 < new Date().getTime()) {
-      Intent service = new Intent(instance, MainScheduler.class);
-      service.setAction(Context.ALARM_SERVICE);
-      MainServiceExtraParams eParams = new MainServiceExtraParams();
-      eParams.setLoadMore(true);
-      service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
-      instance.sendBroadcast(service);
-      lastLoadMoreEvent = new Date();
+    Intent service = new Intent(instance, MainScheduler.class);
+    service.setAction(Context.ALARM_SERVICE);
+    MainServiceExtraParams eParams = new MainServiceExtraParams();
+    eParams.setLoadMore(true);
+    if (actSelectedFilter != null) {
+      eParams.setAccount(actSelectedFilter);
+    }
+    service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+    instance.sendBroadcast(service);
 
-      if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-        // getting height of load button
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
-        params.height = loadMoreButton.getHeight();
-        loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
-        lv.removeFooterView(loadMoreButton);
-        lv.addFooterView(loadIndicator);
-        isLoading = true;
-      } else {
-        Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
-      }
+    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+      // getting height of load button
+      LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
+      params.height = loadMoreButton.getHeight();
+      loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
+      lv.removeFooterView(loadMoreButton);
+      lv.addFooterView(loadIndicator);
+      isLoading = true;
     } else {
-      Log.d("rgai", "@@@skipping load button press for " + coolDown + " sec");
+      Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
     }
   }
 

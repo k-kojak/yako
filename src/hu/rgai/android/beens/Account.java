@@ -26,4 +26,12 @@ public interface Account extends Parcelable, Serializable {
   
   public boolean isInternetNeededForLoad();
   
+  /**
+   * True if this kind of account can have only one instance, false otherwise.
+   * 
+   * I.e. SMS and Facebook account is unique now, but email accounts are not.
+   * @return 
+   */
+  public boolean isUnique();
+  
 }

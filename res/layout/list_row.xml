@@ -51,7 +51,7 @@
           android:text=""
           android:textColor="#040404"
           android:typeface="sans"
-          android:textSize="16dip"
+          android:textSize="16sp"
           android:layout_weight="1" />
 
         <TextView
@@ -64,7 +64,7 @@
           android:gravity="right"
           android:text=""
           android:layout_marginRight="5dip"
-          android:textSize="11dip"
+          android:textSize="12sp"
           android:textColor="#10bcc9"
           android:textStyle="bold"
           android:layout_weight="1" />
@@ -76,7 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#343434"
-            android:textSize="12dip"
+            android:textSize="12sp"
             android:typeface="sans"
             android:layout_marginTop="1dip"
             android:layout_toRightOf="@+id/thumbnail"
@@ -89,11 +89,22 @@
         android:layout_width="16dip"
         android:layout_height="16dip"
         android:src="@drawable/ic_attachment"
-        android:layout_alignParentBottom="true"
+        android:layout_below="@id/from"
         android:layout_alignParentRight="true"
         android:layout_marginBottom="4dip"
         android:layout_marginRight="5dip"
         android:visibility="gone"
+      />
+      
+      <TextView 
+        android:id="@+id/account_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="4dip"
+        android:layout_marginRight="5dip"
+        android:textSize="11sp"
       />
     </RelativeLayout>
  

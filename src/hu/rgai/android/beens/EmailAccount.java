@@ -156,4 +156,7 @@ public class EmailAccount implements Account, Parcelable {
     return true;
   }
 
+  public boolean isUnique() {
+    return false;
+  }
 }

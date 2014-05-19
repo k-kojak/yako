@@ -55,21 +55,7 @@ import java.util.TreeSet;
 
 public class MainService extends Service {
   
-//  public static class IntentParams {
-//    public static final String EXTRA_PARAMS = "extra_params";
-//    public static final String QUERY_LIMIT = "query_limit";
-//    public static final String QUERY_OFFSET = "query_offset";
-//    public static final String LOAD_MORE = "load_more";
-//    public static final String TYPE = "type";
-//    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
-//    public static final String FORCE_QUERY = "force_query";
-//    public static final String RESULT = "result";
-//  }
-  
-  
   public static boolean RUNNING = false;
-  private static int iterationCount = 0;
-  //public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
@@ -163,23 +149,8 @@ public class MainService extends Service {
     
     List<Account> accounts = StoreHandler.getAccounts(this);
     
-//    if (iterationCount == 1) {
-//      Debug.startMethodTracing("calc_store_connect_repaired");
-//      Log.d("rgai", "STARTING DEBUG NOW!!!");
-//    }
-    iterationCount++;
-    MainActivity.openFbSession(this);
-    // Log.d("rgai", "CURRENT MAINSERVICE ITERATION: " + iterationCount);
-//    MessageProvider.Type type = null;
-//    MessageListElement actViewingMessageAtThread = null;
-    // if true, loading new messages at end of the lists, not checking for new
-    // ones
-//    boolean loadMore = false;
-//    boolean forceQuery = false;
+//    MainActivity.openFbSession(this);
     
-    // we can set the limit and offset explicitly for 1 query if we want!
-//    int queryOffset = -1;
-//    int queryLimit = -1;
     MainServiceExtraParams extraParams = null;
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey(ParamStrings.EXTRA_PARAMS)) {
@@ -190,9 +161,6 @@ public class MainService extends Service {
     if (extraParams == null) {
       extraParams = new MainServiceExtraParams();
     }
-    
-//    Log.d("rgai", "Extra params: " + extraParams);
-
     
     boolean isNet = isNetworkAvailable();
     if (accounts.isEmpty() && !isPhone()) {
@@ -215,7 +183,7 @@ public class MainService extends Service {
           accounts.add(SmsAccount.account);
         }
         
-        boolean wasAnyUpdateCheck = false;
+        boolean wasAnyFullUpdateCheck = false;
         for (Account acc : accounts) {
           if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
             MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
@@ -230,7 +198,9 @@ public class MainService extends Service {
               if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
 //                  Log.d("rgai", "igen, le kell kerdeznunk: " + provider);
 //                Log.d("rgai", "Igen, futtassunk betoltest...");
-                wasAnyUpdateCheck = true;
+                if (extraParams.getAccount() == null) {
+                  wasAnyFullUpdateCheck = true;
+                }
                 MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                         extraParams.getQueryLimit(), extraParams.getQueryOffset());
                 AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
@@ -238,7 +208,7 @@ public class MainService extends Service {
             }
           }
         }
-        if (wasAnyUpdateCheck) {
+        if (wasAnyFullUpdateCheck) {
           last_message_update = new Date();
           MainActivity.notifyMessageChange(false);
         }

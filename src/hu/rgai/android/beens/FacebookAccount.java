@@ -119,7 +119,9 @@ public class FacebookAccount implements Account, Parcelable {
   public boolean isInternetNeededForLoad() {
     return true;
   }
-  
-  
+
+  public boolean isUnique() {
+    return true;
+  }
   
 }

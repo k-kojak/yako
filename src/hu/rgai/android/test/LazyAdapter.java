@@ -84,6 +84,7 @@ public class LazyAdapter extends BaseAdapter {
         holder.icon = (AsyncImageView) view.findViewById(R.id.list_image);
         holder.msgType = (ImageView) view.findViewById(R.id.list_acc_type);
         holder.attachment = (ImageView) view.findViewById(R.id.attachment);
+        holder.accountName = (TextView) view.findViewById(R.id.account_name);
         view.setTag(holder);
       } else {
         holder = (ViewHolder)view.getTag();
@@ -162,7 +163,6 @@ public class LazyAdapter extends BaseAdapter {
 
 
 
-      Bitmap img;
       if (message.getFrom() != null) {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(long id) {
@@ -189,10 +189,7 @@ public class LazyAdapter extends BaseAdapter {
             return ProfilePhotoProvider.getGroupChatPhoto(c).getBitmap();
           }
         }, 0);
-  //      img = ProfilePhotoProvider.getGroupChatPhoto(activity);
-  //      holder.icon.setImageBitmap(img);
       }
-  //    holder.icon.setImageBitmap(img);
 
 
 
@@ -207,6 +204,16 @@ public class LazyAdapter extends BaseAdapter {
       } else if (message.getAccount().getAccountType().equals(MessageProvider.Type.GMAIL)) {
         holder.msgType.setImageResource(R.drawable.ic_gmail);
       }
+      
+      
+      
+      if (message.getAccount().isUnique()) {
+        holder.accountName.setVisibility(View.GONE);
+      } else {
+        holder.accountName.setVisibility(View.VISIBLE);
+        holder.accountName.setText(message.getAccount().getDisplayName());
+      }
+      
 
       holder.date.setText(message.getPrettyDate());
       return view;
@@ -216,7 +223,7 @@ public class LazyAdapter extends BaseAdapter {
   private View getLastUpdatedRow(View view, ViewGroup parent) {
     view = inflater.inflate(R.layout.main_list_last_mod_row, null);
     
-    String niceText = activity.getResources().getString(R.string.last_updated_string) + " ";
+    String niceText = activity.getResources().getString(R.string.last_full_update) + " ";
     
     Date d = new Date();
     Calendar c = new GregorianCalendar();
@@ -285,6 +292,7 @@ public class LazyAdapter extends BaseAdapter {
     AsyncImageView icon;
     ImageView msgType;
     ImageView attachment;
+    TextView accountName;
   }
   
 }
