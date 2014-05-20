@@ -195,7 +195,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
       Store store = getStore(account);
       if (store != null) {
-        imapFolder = (IMAPFolder)store.getFolder(folder);
+        if (store.isConnected()) {
+          imapFolder = (IMAPFolder)store.getFolder(folder);
+        } else {
+          return null;
+        }
         
         if (imapFolder != null && !imapFolder.isOpen()) {
           imapFolder.open(Folder.READ_ONLY);
