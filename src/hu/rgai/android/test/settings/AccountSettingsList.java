@@ -77,7 +77,7 @@ public class AccountSettingsList extends ActionBarActivity {
 //      stillAddingFacebookAccount = false;
       return;
     }
-    Log.d("rgai", "ON RESUME");
+//    Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
     
     ActionBar actionBar = getSupportActionBar();

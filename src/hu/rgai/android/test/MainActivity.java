@@ -211,7 +211,7 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    Log.d("rgai", "ON OPTIONS MENU CREATED");
+//    Log.d("rgai", "ON OPTIONS MENU CREATED");
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
     mMenu = menu;

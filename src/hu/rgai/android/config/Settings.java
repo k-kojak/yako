@@ -42,7 +42,13 @@ public final class Settings {
   /**
    * The interval of automatic message refresh in seconds.
    */
-  public static final int MESSAGE_LOAD_INTERVAL = 180;
+  public static final int MESSAGE_LOAD_INTERVAL = 60 * 2;
+  
+  /**
+   * If live established connection (where it is supported) exceeds this timelimit in seconds,
+   * the conneciton will be rebuild.
+   */
+  public static final int ESTABLISHED_CONNECTION_TIMEOUT = 60 * 15;
   
   public static final String CONTACT_DISPLAY_NAME = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ? ContactsContract.Data.DISPLAY_NAME_PRIMARY : ContactsContract.Data.DISPLAY_NAME);
   

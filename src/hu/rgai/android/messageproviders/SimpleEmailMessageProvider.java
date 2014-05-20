@@ -26,6 +26,7 @@ import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.settings.InfEmailSettingActivity;
@@ -91,7 +92,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private static HashMap<EmailAccount, Store> storeConnections;
   private static HashMap<AccountFolder, IMAPFolder> queryFolders;
   private static HashMap<AccountFolder, IMAPFolder> idleFolders;
-  private volatile static HashMap<AccountFolder, FolderIdle> idleThreads;
+  private volatile static HashMap<AccountFolder, FolderIdleWithTimestamp> idleThreads;
   private volatile static Context context = null;
   
   
@@ -223,17 +224,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return imapFolder;
   }
   
-//  private synchronized static boolean isFolderIdleBlocked(EmailAccount account) {
-//    return idleStateBlocked != null && idleStateBlocked.containsKey(account) && idleStateBlocked.get(account);
-//  }
-  
-//  private synchronized static void setFolderIdleBlocked(EmailAccount account, boolean blocked) {
-//    if (idleStateBlocked == null) {
-//      idleStateBlocked = new HashMap<EmailAccount, Boolean>();
-//    }
-//    idleStateBlocked.put(account, blocked);
-//  }
-  
   /**
    * Connects to imap, returns a store.
    * 
@@ -277,21 +267,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //      setFolderIdleBlocked(account, true);
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-//      IMAPFolder imapFolder = getFolder(queryFolders, account, "Inbox");
-      Log.d("rgai", "ALWAYS get a new imapFolder here");
+//      Log.d("rgai", "ALWAYS get a new imapFolder here");
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       imapFolder.open(Folder.READ_ONLY);
 
       if (imapFolder == null) {
-        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
+//        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
       
       int messageCount = imapFolder.getMessageCount();
-      Log.d("rgai", "messagecount: " + messageCount);
+//      Log.d("rgai", "messagecount: " + messageCount);
 
       if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
-        Log.d("rgai", "NO FRESH MAIL");
+//        Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
@@ -310,7 +299,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   //    Log.d("rgai", "account: " + account);
       Message messages[] = imapFolder.getMessages(start, end);
   //    inbox.get
-      Log.d("rgai", "messages: " + messages.length);
+//      Log.d("rgai", "messages: " + messages.length);
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
@@ -896,12 +885,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //    Log.d("rgai", "idleThreads: " + idleThreads);
     if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
       
-      
-      FolderIdle fi = idleThreads.get(accountFolder);
+      FolderIdleWithTimestamp fiWts = idleThreads.get(accountFolder);
 //      Log.d("rgai", "not null, contains...isRunning?: " + fi.isRunning());
-      if (fi.isRunning()) {
-//        new Thread(new FolderNoop(fi.mFolder)).start();
-        return true;
+      if (fiWts.folderIdle.isRunning()) {
+        if (fiWts.insertTime + Settings.ESTABLISHED_CONNECTION_TIMEOUT * 1000l < System.currentTimeMillis()) {
+//          Log.d("rgai", "yes alive, but connection timout reached, so we are reconnecting...");
+          return false;
+        } else {
+//          Log.d("rgai", "yes, alive and running");
+          return true;
+        }
       } else {
 //        fi.forceStop();
         return false;
@@ -946,13 +939,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
   }
   
-  
   public synchronized void establishConnection(Context cont) {
     if (context == null) {
       context = cont;
     }
     initMessageListener(context);
     if (!isConnectionAlive()) {
+      // dropping previous connection if any
+      if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
+        FolderIdleWithTimestamp fiWts = idleThreads.get(accountFolder);
+        if (fiWts.folderIdle != null) {
+          fiWts.folderIdle.forceStop();
+        }
+      }
+      
 //      Log.d("rgai", "Establishing connection: " + account);
       try {
         if (idleFolders == null) {
@@ -964,14 +964,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         Thread t = new Thread(fi);
         t.start();
         if (idleThreads == null) {
-          idleThreads = new HashMap<AccountFolder, FolderIdle>();
+          idleThreads = new HashMap<AccountFolder, FolderIdleWithTimestamp>();
         }
-        idleThreads.put(accountFolder, fi);
+        idleThreads.put(accountFolder, new FolderIdleWithTimestamp(fi, System.currentTimeMillis()));
       } catch (MessagingException ex) {
         Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
     } else {
-      Log.d("rgai", "No thanks, my connection is already alive: " + account);
+//      Log.d("rgai", "No thanks, my connection is already alive: " + account);
     }
   }
   
@@ -980,7 +980,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   public void dropConnection() {
-    FolderIdle fIdle = null;
+    FolderIdleWithTimestamp fIdle = null;
     IMAPFolder queryFolder = null;
     Store store = null;
     
@@ -1073,34 +1073,23 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     public void run() {
       
       if (mFolder != null) {
-        Timer timer = new Timer();
         try {
           mRunning = true;
           if (!mFolder.isOpen()) {
             mFolder.open(Folder.READ_ONLY);
           }
           
-          timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-              Log.d("rgai", "Timer restarts idle state NOW");
-              FolderIdle.this.restartIdle();
-            }
-          },  1000l * 60 * 20);
-//          Log.d("rgai", "STARTING IDLE: " + mMessageProvider.toString());
           mFolder.idle();
         } catch (Exception ex) {
           Log.d("rgai", "FolderIdle exception: " + ex.toString());
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
-          timer.cancel();
+//          timer.cancel();
 //          Log.d("rgai", "END OF IDLE");
 //          Log.d("rgai", "RESTARTING IDLE STATE: " + account);
           mRunning = false;
           if (!forceStop) {
             mMessageProvider.establishConnection(null);
-          } else {
-//            Log.d("rgai", "DO NOT RESTART IDLE STATE BECAUSE STOPPED");
           }
         }
       }
@@ -1109,19 +1098,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     public boolean isRunning() {
       return mRunning;
-    }
-    
-    public void restartIdle() {
-      if (mFolder.isOpen()) {
-        try {
-          mFolder.close(false);
-        } catch (MessagingException ex) {
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-        }
-      }
-      if (idleFolders.containsKey(accountFolder)) {
-        idleFolders.remove(accountFolder);
-      }
     }
     
     public void forceStop() {
@@ -1141,21 +1117,21 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   private class ConnectionDropper extends AsyncTask<Void, Void, Void> {
 
-    private FolderIdle folderIdleThread;
-    private IMAPFolder queryFolder;
-    private Store store;
+    private final FolderIdleWithTimestamp folderIdleWithTimestamp;
+    private final IMAPFolder queryFolder;
+    private final Store store;
     
-    public ConnectionDropper(FolderIdle folderIdleThread, IMAPFolder folder, Store store) {
-      this.folderIdleThread = folderIdleThread;
+    public ConnectionDropper(FolderIdleWithTimestamp folderIdleThread, IMAPFolder folder, Store store) {
+      this.folderIdleWithTimestamp = folderIdleThread;
       this.queryFolder = folder;
       this.store = store;
     }
     
     @Override
     protected Void doInBackground(Void... params) {
-      Log.d("rgai", "DROPPING CONNECTION");
-      if (folderIdleThread != null) {
-        folderIdleThread.forceStop();
+//      Log.d("rgai", "DROPPING CONNECTION");
+      if (folderIdleWithTimestamp != null && folderIdleWithTimestamp.folderIdle != null) {
+        folderIdleWithTimestamp.folderIdle.forceStop();
       }
       
       if (queryFolder != null && queryFolder.isOpen()) {
@@ -1168,9 +1144,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       
       if (store != null) {
         try {
-          Log.d("rgai", "try closing store");
+//          Log.d("rgai", "try closing store");
           store.close();
-          Log.d("rgai", "store closed");
+//          Log.d("rgai", "store closed");
         } catch (MessagingException ex) {
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1181,35 +1157,45 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
   }
   
-  private class FolderNoop implements Runnable {
+//  private class FolderNoop implements Runnable {
+//
+//    IMAPFolder folder;
+//    
+//    public FolderNoop(IMAPFolder folder) {
+//      this.folder = folder;
+//    }
+//    
+//    public void run() {
+//      if (folder != null) { 
+//        try {
+//          Log.d("rgai", "send NOOP");
+//          if (!folder.isOpen()) {
+//            folder.open(Folder.READ_ONLY);
+//          }
+//          
+//          folder.doCommand(new IMAPFolder.ProtocolCommand() {
+//            public Object doCommand(IMAPProtocol imapp) throws ProtocolException {
+//              imapp.simpleCommand("NOOP", null);
+//              return null;
+//            }
+//          });
+//        } catch (Exception ex) {
+//          Log.d("rgai", "Eception when sending noop.");
+//          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//      }
+//    }
+//    
+//  }
+  
+  private class FolderIdleWithTimestamp {
+    private FolderIdle folderIdle;
+    private long insertTime;
 
-    IMAPFolder folder;
-    
-    public FolderNoop(IMAPFolder folder) {
-      this.folder = folder;
-    }
-    
-    public void run() {
-      if (folder != null) { 
-        try {
-          Log.d("rgai", "send NOOP");
-          if (!folder.isOpen()) {
-            folder.open(Folder.READ_ONLY);
-          }
-          
-          folder.doCommand(new IMAPFolder.ProtocolCommand() {
-            public Object doCommand(IMAPProtocol imapp) throws ProtocolException {
-              imapp.simpleCommand("NOOP", null);
-              return null;
-            }
-          });
-        } catch (Exception ex) {
-          Log.d("rgai", "Eception when sending noop.");
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-        }
-      }
+    public FolderIdleWithTimestamp(FolderIdle folderIdle, long insertTime) {
+      this.folderIdle = folderIdle;
+      this.insertTime = insertTime;
     }
     
   }
-  
 }
