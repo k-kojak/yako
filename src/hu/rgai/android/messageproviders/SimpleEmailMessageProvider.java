@@ -963,6 +963,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           idleFolders = new HashMap<AccountFolder, IMAPFolder>();
         }
         IMAPFolder folder = getFolder(idleFolders, account, "Inbox", true);
+        if (folder == null) return;
         
         FolderIdle fi = new FolderIdle(folder, this);
         Thread t = new Thread(fi);
