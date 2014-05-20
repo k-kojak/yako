@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -26,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.AbsListView;
+import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -564,6 +566,50 @@ public class MainActivity extends ActionBarActivity {
 //        Log.d("rgai", "ag2");
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
+        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        lv.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+
+          public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
+            Toast.makeText(instance, "item selected...", Toast.LENGTH_SHORT).show();
+          }
+
+          public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+            MenuInflater inflater = mode.getMenuInflater();
+            inflater.inflate(R.menu.main_list_context_menu, menu);
+            return true;
+          }
+
+          public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+            // Here you can perform updates to the CAB due to
+            // an invalidate() request
+            return false;
+          }
+
+          public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+            switch (item.getItemId()) {
+              case R.id.delete:
+                Toast.makeText(instance, "Delete action...", Toast.LENGTH_SHORT).show();
+//                deleteSelectedItems();
+                mode.finish(); // Action picked, so close the CAB
+                return true;
+              case R.id.mark_seen:
+                Toast.makeText(instance, "Mark seen...", Toast.LENGTH_SHORT).show();
+                mode.finish();
+                return true;
+              case R.id.mark_unseen:
+                Toast.makeText(instance, "Mark unseen...", Toast.LENGTH_SHORT).show();
+                mode.finish();
+                return true;
+              default:
+                return false;
+            }
+          }
+
+          public void onDestroyActionMode(android.view.ActionMode mode) {
+            // Here you can make any necessary updates to the activity when
+            // the CAB is removed. By default, selected items are deselected/unchecked.
+          }
+        });
 
         loadMoreButton = new Button(instance);
         loadMoreButton.setText("Load more ...");
