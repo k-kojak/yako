@@ -309,7 +309,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     return getMessage(id, 0, 20);
   }
 
-  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
     // we do nothing here, getMessage sets the status to read anyway
   }
 
@@ -333,6 +333,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
    * We never want to drop this connection.
    */
   public void dropConnection() {
+  }
+
+  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+    
   }
 
   private class MessageItem {

@@ -13,6 +13,7 @@ import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullMessage;
@@ -54,6 +56,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MainService extends Service {
   
@@ -154,14 +161,14 @@ public class MainService extends Service {
     
     List<Account> accounts = StoreHandler.getAccounts(this);
     
-    MainServiceExtraParams extraParams = null;
+    final MainServiceExtraParams extraParams;
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey(ParamStrings.EXTRA_PARAMS)) {
         extraParams = intent.getExtras().getParcelable(ParamStrings.EXTRA_PARAMS);
+      } else {
+        extraParams = new MainServiceExtraParams();
       }
-    }
-    
-    if (extraParams == null) {
+    } else {
       extraParams = new MainServiceExtraParams();
     }
     
@@ -191,7 +198,7 @@ public class MainService extends Service {
         
           currentNumOfAccountsToRefresh = 0;
           currentRefreshedAccountCounter = 0;
-          for (Account acc : accounts) {
+          for (final Account acc : accounts) {
             if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
               MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
   //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
@@ -213,9 +220,25 @@ public class MainService extends Service {
                     MainActivity.openFbSession(this);
                   }
                   currentNumOfAccountsToRefresh++;
-                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
+                  final MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
                           extraParams.getQueryLimit(), extraParams.getQueryOffset());
                   AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
+                  Handler handler = new Handler();
+                  handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                      if (myThread.getStatus() == AsyncTask.Status.RUNNING ) {
+                        myThread.cancelRunningSetup();
+                        myThread.cancel(true);
+                        currentRefreshedAccountCounter++;
+                        MainActivity.refreshLoadingStateRate();
+                        Log.d("rgai", "THREAD CANCELLED");
+                        if (extraParams.isForceQuery() || extraParams.isLoadMore()) {
+                          Toast.makeText(MainService.this, "Connection timeout: " + acc.getDisplayName(), Toast.LENGTH_LONG).show();
+                        }
+                      }
+                    }
+                  }, 10000);
                 }
               }
             }

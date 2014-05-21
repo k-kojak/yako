@@ -482,7 +482,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return getMessage(id, 0, 20);
   }
 
-  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
     // we cannot set facebook messages status to read...
   }
 
@@ -514,6 +514,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       xmpp.disconnect();
       xmpp = null;
     }
+  }
+
+  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+    
   }
   
 }

@@ -104,10 +104,12 @@ public class FacebookAccount implements Account, Parcelable {
   public String getId() {
     return id;
   }
-  
+
   @Override
   public int hashCode() {
-    int hash = 3;
+    int hash = 7;
+    hash = 73 * hash + (this.uniqueName != null ? this.uniqueName.hashCode() : 0);
+    hash = 73 * hash + (this.accountType != null ? this.accountType.hashCode() : 0);
     return hash;
   }
 

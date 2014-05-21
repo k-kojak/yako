@@ -5,12 +5,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.Person;
+import hu.rgai.android.beens.RunningSetup;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
@@ -50,6 +52,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   private boolean loadMore = false;
   private int queryLimit;
   private int queryOffset;
+  private RunningSetup mRunningSetup;
 
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
@@ -64,51 +67,63 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
     this.queryLimit = queryLimitOverride;
     this.queryOffset = queryOffsetOverride;
 
+    int offset = 0;
+    int limit = acc.getMessageLimit();
+    if (loadMore) {
+      if (MainService.messages != null) {
+        for (MessageListElement m : MainService.messages) {
+          if (m.getAccount().equals(acc)) {
+            offset++;
+          }
+        }
+      }
+    }
+
+    if (queryLimit == -1 || queryOffset == -1) {
+      queryOffset = offset;
+      queryLimit = limit;
+    }
+    
+    this.mRunningSetup = new RunningSetup(acc, queryLimit, queryOffset);
+    
     if (runningTaskStack == null) {
       runningTaskStack = new HashMap<RunningSetup, Boolean>();
+    }
+  }
+  
+  public void cancelRunningSetup() {
+    if (runningTaskStack.containsKey(mRunningSetup)) {
+      runningTaskStack.remove(mRunningSetup);
     }
   }
 
   @Override
   protected MessageListResult doInBackground(String... params) {
-    RunningSetup runSetup = new RunningSetup(acc, queryOffset, queryLimit);
-    if (isSetupRunning(runSetup)) {
-//      Log.d("rgai", "This setup is already running: " + runSetup);
-      return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
-    }
+    
+    
     
 //    Log.d("rgai", "do in background started: " + acc);
     MessageListResult messageResult = null;
     try {
       if (messageProvider != null) {
-        int offset = 0;
-        int limit = acc.getMessageLimit();
-        if (loadMore) {
-          if (MainService.messages != null) {
-            for (MessageListElement m : MainService.messages) {
-              if (m.getAccount().equals(acc)) {
-                offset++;
-              }
-            }
-          }
-        }
-
-        if (queryLimit != -1 && queryOffset != -1) {
-          offset = queryOffset;
-          limit = queryLimit;
+        Log.d("rgai", "current runsetup: " + mRunningSetup);
+        if (isSetupRunning(mRunningSetup)) {
+          Log.d("rgai", "SKIP SETUP");
+          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
+        } else {
+          Log.d("rgai", "CONTINUE SETUP");
         }
 
         // the already loaded messages to the specific content type...
         TreeSet<MessageListElement> loadedMessages = MainService.getLoadedMessages(acc, MainService.messages);
 //        Log.d("rgai", "offset, limit: " + offset + ","+limit);
-        messageResult = messageProvider.getMessageList(offset, limit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+        messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());
         }
 
       }
-
     } catch (AuthenticationFailedException ex) {
       ex.printStackTrace();
       this.result = AUTHENTICATION_FAILED_EXCEPTION;
@@ -135,7 +150,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
       ex.printStackTrace();
       this.result = IOEXCEPTION;
     } finally {
-      runningTaskStack.put(runSetup, false);
+      runningTaskStack.put(mRunningSetup, false);
     }
     // if result is UNSET
     if (this.result == -1) {
@@ -204,53 +219,4 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
     // Log.d(Constants.LOG, "onPreExecute");
   }
 
-  private class RunningSetup {
-
-    private final Account mAccount;
-    private final int offset;
-    private final int limit;
-
-    public RunningSetup(Account mAccount, int offset, int limit) {
-      this.mAccount = mAccount;
-      this.offset = offset;
-      this.limit = limit;
-    }
-
-    @Override
-    public int hashCode() {
-      int hash = 7;
-      hash = 11 * hash + (this.mAccount != null ? this.mAccount.hashCode() : 0);
-      hash = 11 * hash + this.offset;
-      hash = 11 * hash + this.limit;
-      return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      final RunningSetup other = (RunningSetup) obj;
-      if (this.mAccount != other.mAccount && (this.mAccount == null || !this.mAccount.equals(other.mAccount))) {
-        return false;
-      }
-      if (this.offset != other.offset) {
-        return false;
-      }
-      if (this.limit != other.limit) {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      return "RunningSetup{" + "mAccount=" + mAccount + ", offset=" + offset + ", limit=" + limit + '}';
-    }
-    
-  }
-  
 }

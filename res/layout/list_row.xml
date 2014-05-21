@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
     android:orientation="horizontal"
-    android:padding="1dip" >
+    android:padding="6dip" >
  
     <RelativeLayout
       android:padding="0dip"

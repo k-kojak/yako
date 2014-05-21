@@ -33,10 +33,10 @@ public class EmailMessageMarker extends AsyncTask<String, Integer, Void> {
       try {
         if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((EmailAccount)account);
-          semp.markMessageAsRead(params[0]);
+          semp.markMessageAsRead(params[0], true);
         } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
           SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider((GmailAccount)account);
-          semp.markMessageAsRead(params[0]);
+          semp.markMessageAsRead(params[0], true);
         }
       } catch (NoSuchProviderException ex) {
         Logger.getLogger(EmailDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);

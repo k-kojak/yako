@@ -12,13 +12,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.view.ActionMode;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,7 +32,6 @@ import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +42,6 @@ import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
@@ -56,13 +55,14 @@ import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.rgai.android.test.settings.SystemPreferences;
+import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.TreeSet;
 
 /**
  * This is the main view of the application.
@@ -75,6 +75,8 @@ public class MainActivity extends ActionBarActivity {
 
   // this variable holds the MainActivity instance if exists
   public static volatile MainActivity instance;
+  
+  public static volatile AnalyticsApp mAnalyticsApp;
 
   // holds the Facebook token
   private static volatile String fbToken = null;
@@ -113,6 +115,8 @@ public class MainActivity extends ActionBarActivity {
   private UncaughtExceptionHandler defaultUEH;
   
   private static Menu mMenu;
+  
+  private static TreeSet<MessageListElement> contextSelectedElements = new TreeSet<MessageListElement>();
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
@@ -143,6 +147,7 @@ public class MainActivity extends ActionBarActivity {
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     instance = this;
+    mAnalyticsApp = (AnalyticsApp)this.getApplication();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
@@ -385,18 +390,24 @@ public class MainActivity extends ActionBarActivity {
     this.sendBroadcast(intent);
   }
 
+  private static void setMessageSeen(MessageListElement message) {
+    setMessageSeen(message, true);
+  }
+  
   /**
    * Sets a message's status to seen.
    * @param message the message to set seen
    */
-  private static void setMessageSeen(MessageListElement message) {
-    for (MessageListElement m : MainService.messages) {
-      if (m.equals(message)) {
-        m.setSeen(true);
-        m.setUnreadCount(0);
-        break;
-      }
-    }
+  private static void setMessageSeen(MessageListElement message, boolean seen) {
+//    for (MessageListElement m : MainService.messages) {
+//      if (m.equals(message)) {
+        message.setSeen(seen);
+        if (seen) {
+          message.setUnreadCount(0);
+        }
+//        break;
+//      }
+//    }
   }
 
   @Override
@@ -557,38 +568,56 @@ public class MainActivity extends ActionBarActivity {
 //        Log.d("rgai", "ag2");
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
+        
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         lv.setMultiChoiceModeListener(new MultiChoiceModeListener() {
 
           public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
-            Toast.makeText(instance, "item selected...", Toast.LENGTH_SHORT).show();
+            if (position != 0) {
+              if (checked) {
+//                Toast.makeText(instance, "item selected...", Toast.LENGTH_SHORT).show();
+                contextSelectedElements.add((MessageListElement)adapter.getItem(position));
+              } else {
+//                Toast.makeText(instance, "item DEselected...", Toast.LENGTH_SHORT).show();
+                contextSelectedElements.remove((MessageListElement)adapter.getItem(position));
+              }
+              if (contextSelectedElements.size() == 1) {
+                mode.getMenu().findItem(R.id.reply).setVisible(true);
+              } else {
+                mode.getMenu().findItem(R.id.reply).setVisible(false);
+              }
+              mode.setTitle(contextSelectedElements.size() + " selected");
+            }
+            
           }
 
-          public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+          public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             MenuInflater inflater = mode.getMenuInflater();
             inflater.inflate(R.menu.main_list_context_menu, menu);
+            contextSelectedElements.clear();
             return true;
           }
 
-          public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+          public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
             // Here you can perform updates to the CAB due to
             // an invalidate() request
             return false;
           }
 
-          public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+          public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             switch (item.getItemId()) {
-              case R.id.delete:
-                Toast.makeText(instance, "Delete action...", Toast.LENGTH_SHORT).show();
-//                deleteSelectedItems();
-                mode.finish(); // Action picked, so close the CAB
+              case R.id.reply:
+//                Toast.makeText(instance, "Reply action...", Toast.LENGTH_SHORT).show();
+                
+                mode.finish();
                 return true;
               case R.id.mark_seen:
-                Toast.makeText(instance, "Mark seen...", Toast.LENGTH_SHORT).show();
+                contextActionMarkMessage(true);
                 mode.finish();
                 return true;
               case R.id.mark_unseen:
-                Toast.makeText(instance, "Mark unseen...", Toast.LENGTH_SHORT).show();
+                contextActionMarkMessage(false);
+                
                 mode.finish();
                 return true;
               default:
@@ -596,7 +625,7 @@ public class MainActivity extends ActionBarActivity {
             }
           }
 
-          public void onDestroyActionMode(android.view.ActionMode mode) {
+          public void onDestroyActionMode(ActionMode mode) {
             // Here you can make any necessary updates to the activity when
             // the CAB is removed. By default, selected items are deselected/unchecked.
           }
@@ -677,6 +706,30 @@ public class MainActivity extends ActionBarActivity {
       text.setGravity(Gravity.CENTER);
       instance.setContentView(text);
     }
+  }
+  
+  private static void contextActionMarkMessage(boolean seen) {
+    for (MessageListElement mle : contextSelectedElements) {
+      setMessageSeen(mle, seen);
+    }
+    adapter.notifyDataSetChanged();
+
+    final MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(contextSelectedElements,
+            instance, mAnalyticsApp, new Handler(), seen);
+    AndroidUtils.<Void, Void, Void>startAsyncTask(messageMarker);
+    
+    Handler handler = new Handler();
+    handler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        if (messageMarker.getStatus() == AsyncTask.Status.RUNNING ) {
+          messageMarker.cancel(true);
+          Log.d("rgai", "THREAD CANCELLED");
+          Toast.makeText(instance, "Timeout while marking messages", Toast.LENGTH_LONG).show();
+        }
+      }
+    }, 4000);
+    
   }
 
   /**

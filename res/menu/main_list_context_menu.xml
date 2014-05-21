@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:messagelogger="http://schemas.android.com/apk/res-auto" >
 
-  <item android:id="@+id/delete"
-          android:icon="@drawable/ic_action_discard"
-          android:title="@string/delete"
+  <item android:id="@+id/reply"
+          android:icon="@drawable/ic_action_reply"
+          android:title="@string/message_reply"
           messagelogger:showAsAction="ifRoom" />
   
   <item android:id="@+id/mark_seen"

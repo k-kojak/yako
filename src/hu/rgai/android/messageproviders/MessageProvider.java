@@ -84,11 +84,24 @@ public interface MessageProvider {
    * Sets the status of a message to seen.
    * 
    * @param id the id of the message
+   * @param seen true if set to seen, false if set to unseen
    * @throws NoSuchProviderException
    * @throws MessagingException
    * @throws IOException 
    */
-  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException;
+  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException;
+  
+  
+  /**
+   * Sets the status of the messages to seen.
+   * 
+   * @param id the ids of the messages to set flag
+   * @param seen true if set to seen, false if set to unseen
+   * @throws NoSuchProviderException
+   * @throws MessagingException
+   * @throws IOException 
+   */
+  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException;
   
   /**
    * Tells that if the message provider sends broadcast to the system when new message arrives.

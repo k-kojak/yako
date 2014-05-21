@@ -43,7 +43,7 @@ public class LazyAdapter extends BaseAdapter {
     // the plus 1 item is because of the "last updated" row
     return MainService.getFilteredMessages(filterAcc).size() + 1;
   }
-
+  
   public Object getItem(int position) {
     if (position == 0) {
       return null;

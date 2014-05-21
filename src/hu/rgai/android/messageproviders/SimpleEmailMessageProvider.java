@@ -153,6 +153,15 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       props.setProperty("mail.store.protocol", "imap");
       props.put("mail.imap.fetchsize", "819200");
     }
+    // TODO: some accounts, like citromail does not times out
+//    props.put("mail.imaps.connectiontimeout", 1000);
+//    props.put("mail.imap.connectiontimeout", 1000);
+//    props.put("mail.imaps.connectionpooltimeout", 1000);
+//    props.put("mail.imap.connectionpooltimeout", 1000);
+//    props.put("mail.imaps.timeout", 1000);
+//    props.put("mail.imap.timeout", 1000);
+    
+//    props.put("mail.smtp.timeout", 5000);
   }
   
   private Store getStore(EmailAccount account) throws MessagingException {
@@ -268,22 +277,22 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           AuthenticationFailedException {
     
     try {
-//      setFolderIdleBlocked(account, true);
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-//      Log.d("rgai", "ALWAYS get a new imapFolder here");
+      Log.d("rgai", "ALWAYS get a new imapFolder here");
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       imapFolder.open(Folder.READ_ONLY);
+      Log.d("rgai", "we have the folder");
 
       if (imapFolder == null) {
-//        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
+        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
       
       int messageCount = imapFolder.getMessageCount();
 //      Log.d("rgai", "messagecount: " + messageCount);
 
-      if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount)) {
+      if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount) && supportsUIDforMessages()) {
 //        Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
@@ -418,7 +427,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
     for (int i = messages.length - 1; i >= 0; i--) {
       Message m = messages[i];
-      long uid = imapFolder.getUID(m);
+      long uid;
+      if (supportsUIDforMessages()) {
+        uid = imapFolder.getUID(m);
+      } else {
+        uid = m.getMessageNumber();
+      }
       
       Flags flags = m.getFlags();
       boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -452,23 +466,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       return true;
     }
     
-    
-    
-//    for (Message m : messages) {
-//      String uid = inbox.getUID(m) + "";
-//      MessageListElement firstLoaded = null;
-//      if (loadedMessages != null && !loadedMessages.isEmpty()) {
-//        firstLoaded = loadedMessages.first();
-//      }
-//      if (firstLoaded != null) {
-////        Log.d("rgai", "FirstLoaded: " + firstLoaded.toString());
-////        Log.d("rgai", "current uid: " + uid);
-//        if (firstLoaded.getId().equals(uid)) {
-//          return false;
-//        }
-//      }
-//    }
-//    return true;
   }
   
   private String getValidityString(AccountFolder accountFolder) {
@@ -866,15 +863,62 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return sb.toString();
   }
 
+  public void markMessagesAsRead(String[] ids, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+    IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    folder.open(Folder.READ_WRITE);
+    
+    Message[] msgs = null;
+    
+    if (supportsUIDforMessages()) {
+    
+      long[] uids = new long[ids.length];
+      int i = 0;
+      for (String s : ids) {
+        try {
+          uids[i++] = Long.parseLong(s);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+      }
+      // TODO: if account not support UID, then use simple id
+      msgs = folder.getMessagesByUID(uids);
+    } else {
+      int[] messageIds = new int[ids.length];
+      int i = 0;
+      for (String s : ids) {
+        try {
+          messageIds[i++] = Integer.parseInt(s);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+      }
+      // TODO: if account not support UID, then use simple id
+      msgs = folder.getMessages(messageIds);
+    }
+    folder.setFlags(msgs, new Flags(Flags.Flag.SEEN), seen);
+//    Message ms = folder.getMessageByUID(Long.parseLong(id));
+//    folder.s
+//    if (ms != null) {
+//      ms.setFlag(Flags.Flag.SEEN, seen);
+//    }
+    folder.close(false);
+  }
+  
   @Override
-  public void markMessageAsRead(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
     
-    Message ms = folder.getMessageByUID(Long.parseLong(id));
+    Message ms = null;
+    if (supportsUIDforMessages()) {
+      ms = folder.getMessageByUID(Long.parseLong(id));
+    } else {
+      ms = folder.getMessage(Integer.parseInt(id));
+    }
+    
     if (ms != null) {
-      ms.setFlag(Flags.Flag.SEEN, true);
+      ms.setFlag(Flags.Flag.SEEN, seen);
     }
     folder.close(false);
   }
@@ -1013,7 +1057,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   public String toString() {
     return "SimpleEmailMessageProvider{" + "account=" + account + '}';
   }
-  
+
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);
   }
