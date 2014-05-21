@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -227,12 +228,10 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
       SmsManager smsMan = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
-      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
+//      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
       try {
-//        if (true) {
-//          throw new NullPointerException("genereted by kojak");
-//        }
-        smsMan.sendTextMessage(rawPhoneNum, null, content, null, null);
+        ArrayList<String> dividedMessages = smsMan.divideMessage(content);
+        smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
         ContentValues sentSms = new ContentValues();
         sentSms.put("address", rawPhoneNum);
         sentSms.put("body", content);
