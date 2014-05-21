@@ -90,7 +90,7 @@ public class MainActivity extends ActionBarActivity {
   private ScreenReceiver screenReceiver;
 
   // a progress dialog to display message load status
-  private static ProgressDialog pd = null;
+  private volatile static ProgressDialog pd = null;
 
   // the static listview where messages displayed
   private static ListView lv = null;
@@ -156,36 +156,28 @@ public class MainActivity extends ActionBarActivity {
 
     
     // disaplying loading dialog, since the mails are not ready, but the user
-    showProgressDialog();
+    toggleProgressDialog(true);
   }
 
   /**
    * Displays a loading progress dialog, which tells the user that messages are
    * loading.
    */
-  private static void showProgressDialog() {
+  private synchronized static void toggleProgressDialog(boolean show) {
 //    instance.setProgressBarIndeterminateVisibility(Boolean.TRUE); 
 //    mMenu.findItem(R.id.refresh_message_list).setVisible(false);
-    pd = new ProgressDialog(instance);
-    pd.setMessage(instance.getString(R.string.loading));
-    pd.setCancelable(false);
-    pd.show();
-  }
-
-  /**
-   * Hides the message loading dialog if is there any.
-   */
-  private static void hideProgressDialog() {
-//    if (instance != null) {
-//      instance.setProgressBarIndeterminateVisibility(Boolean.FALSE); 
-//    }
-//    if (mMenu != null) {
-//      mMenu.findItem(R.id.refresh_message_list).setVisible(true);
-//    }
-    if (pd != null) {
-      pd.dismiss();
+    if (show) {
+      pd = new ProgressDialog(instance);
+      pd.setMessage(instance.getString(R.string.loading));
+      pd.setCancelable(false);
+      pd.show();
+    } else {
+      if (pd != null) {
+        pd.dismiss();
+      }
     }
   }
+
 
   /**
    * Opens Facebook session if exists.
@@ -546,7 +538,7 @@ public class MainActivity extends ActionBarActivity {
       MainService.initMessages();
     }
     if (!MainService.messages.isEmpty()) {
-      hideProgressDialog();
+      toggleProgressDialog(false);
     }
     boolean isListView = instance.findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable(instance);
@@ -702,7 +694,7 @@ public class MainActivity extends ActionBarActivity {
    */
   public static void notifyMessageChange(boolean loadMore) {
     //TODO: we should replace this with broadcast receivers, not like static stuffs...
-    hideProgressDialog();
+    toggleProgressDialog(false);
     setContent();
 //    if (loadMore) {
 //      removeLoadMoreIndicator();
