@@ -133,7 +133,6 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 //    Debug.startMethodTracing("calc_store_connect");
     Tracker t = ((AnalyticsApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
