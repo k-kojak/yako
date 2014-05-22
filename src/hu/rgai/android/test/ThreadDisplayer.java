@@ -60,8 +60,9 @@ public class ThreadDisplayer extends ActionBarActivity {
   private static ProgressDialog pd = null;
   private Handler messageArrivedHandler = null;
   private FullThreadMessage content = null;
-//  private String threadId = "-1";
-  private Account account;
+  private String threadId = "-1";
+  private Account mAccount;
+  private MessageListElement mMessage = null;
   private Person from;
   private ListView lv = null;
   private EditText text = null;
@@ -72,7 +73,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   private DataUpdateReceiver dur = null;
   private LogOnScrollListener los = null;
   private boolean fromNotification = false;
-  private MessageListElement mle = null;
+//  private MessageListElement mle = null;
   private String mThreadId = null;
   private TextWatcher mTextWatcher = null;
   private boolean mTextWatcherAdded = false;
@@ -114,8 +115,9 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     tempMessageIds = new HashSet<String>();
 
-    account = getIntent().getExtras().getParcelable("account");
-    mThreadId = getIntent().getExtras().getString("msg_list_element_id");
+    MessageListElement mle = getIntent().getExtras().getParcelable("message");
+    mAccount = mle.getAccount();
+    mThreadId = mle.getId();
     
     if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
             && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {
@@ -127,7 +129,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     text = (EditText) findViewById(R.id.text);
     
     messageArrivedHandler = new NewMessageHandler(this);
-    adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, account);
+    adapter = new ThreadViewAdapter(getApplicationContext(), R.layout.threadview_list_item, mAccount);
     lv.setAdapter(adapter);
     lv.setOnScrollListener(new LogOnScrollListener());
     
@@ -173,7 +175,7 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   
   private void removeNotificationIfExists() {
-    if (mle.equals(MainService.mLastNotifiedMessage)) {
+    if (mMessage.equals(MainService.mLastNotifiedMessage)) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
       MainService.mLastNotifiedMessage = null;
@@ -184,11 +186,11 @@ public class ThreadDisplayer extends ActionBarActivity {
   protected void onResume() {
     super.onResume();
     
-    mle = MainService.getListElementById(mThreadId, account);
+    mMessage = MainService.getListElementById(mThreadId, mAccount);
 //    Log.d("rgai", "the found message list element: " + mle);
     removeNotificationIfExists();
-    MainService.setMessageSeenAndRead(mle);
-    if (mle.isGroupMessage() && mle.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+    MainService.setMessageSeenAndRead(mMessage);
+    if (mMessage.isGroupMessage() && mMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       unsopportedGroupChat = true;
     } else {
       unsopportedGroupChat = false;
@@ -210,14 +212,14 @@ public class ThreadDisplayer extends ActionBarActivity {
       mTextWatcherAdded = true;
     }
       
-    from = mle.getFrom();
+    from = mMessage.getFrom();
     
-    getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + account.getAccountType().toString());
+    getSupportActionBar().setTitle((from != null ? from.getName() : "") + " | " + mAccount.getAccountType().toString());
 
     
     
     
-    MainService.actViewingMessage = mle;
+    MainService.actViewingMessage = mMessage;
 //    Log.d("rgai", "MainService.actViewingMessage = " + mle);
     
     dur = new DataUpdateReceiver(this);
@@ -227,12 +229,12 @@ public class ThreadDisplayer extends ActionBarActivity {
 
     // init connection...Facebook needs this
     // TODO: ugly code
-    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+    if (mAccount.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
 //      FacebookMessageProvider.initConnection((FacebookAccount) account, this);
     }
 
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
-    displayContent(mle);
+    displayContent(mMessage);
   }
 
   public void sendMessage(View view) {
@@ -243,9 +245,9 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     
     List<Account> accs = new LinkedList<Account>();
-    accs.add(account);
+    accs.add(mAccount);
     MessageRecipient ri = null;
-    if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+    if (mAccount.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       ri = new FacebookMessageRecipient("", from.getId(), from.getName(), null, 1);
     } else {
       ri = new SmsMessageRecipient(from.getId(), from.getId(), from.getName(), null, 1);
@@ -343,7 +345,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       oldItemCount = adapter.getCount();
     }
     if (content != null) {
-      adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item, account);
+      adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item, mAccount);
       for (FullSimpleMessage m : content.getMessages()) {
         adapter.add(m);
 //        Log.d("rgai", "adding fullSimpleMessage to adapter: " + m);
@@ -363,7 +365,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   private void refreshMessageList(int offset) {
 //    Log.d("rgai", "LEKERDEZES");
-    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, account,
+    ThreadContentGetter myThread = new ThreadContentGetter(this, messageArrivedHandler, mAccount,
             0, true, (AnalyticsApp)getApplication(), new Handler());
     if (offset > 0) {
       myThread.setOffset(offset);
@@ -433,7 +435,7 @@ public class ThreadDisplayer extends ActionBarActivity {
         } else {
           content = newMessages;
         }
-        MainService.setMessageContent(mThreadId, account, content);
+        MainService.setMessageContent(mThreadId, mAccount, content);
         displayMessage(scrollToBottom);
         if (pd != null) {
           pd.dismiss();
@@ -484,7 +486,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
-      builder.append(account.getAccountType().name());
+      builder.append(mAccount.getAccountType().name());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       builder.append(MainService.actViewingMessage.getId());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);

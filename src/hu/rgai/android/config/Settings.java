@@ -14,6 +14,7 @@ import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
+import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.settings.FacebookSettingActivity;
@@ -57,6 +58,7 @@ public final class Settings {
   private static Map<String, Class> contactDataTypeToRecipientClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToSettingClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageDisplayer = null;
+  private static Map<MessageProvider.Type, Class> accountTypeToMessageReplyer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
   private static Map<MessageProvider.Type, Class> accountTypeToFullParcMessageClass = null;
@@ -131,6 +133,18 @@ public final class Settings {
       accountTypeToMessageDisplayer.put(MessageProvider.Type.SMS, ThreadDisplayer.class);
     }
     return accountTypeToMessageDisplayer;
+  }
+  
+  public static Map<MessageProvider.Type, Class> getAccountTypeToMessageReplyer() {
+    if (accountTypeToMessageReplyer == null) {
+      accountTypeToMessageReplyer = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      
+      accountTypeToMessageReplyer.put(MessageProvider.Type.EMAIL, MessageReply.class);
+      accountTypeToMessageReplyer.put(MessageProvider.Type.FACEBOOK, ThreadDisplayer.class);
+      accountTypeToMessageReplyer.put(MessageProvider.Type.GMAIL, MessageReply.class);
+      accountTypeToMessageReplyer.put(MessageProvider.Type.SMS, ThreadDisplayer.class);
+    }
+    return accountTypeToMessageReplyer;
   }
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageProvider() {

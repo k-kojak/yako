@@ -50,6 +50,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
@@ -607,8 +608,13 @@ public class MainActivity extends ActionBarActivity {
           public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             switch (item.getItemId()) {
               case R.id.reply:
-//                Toast.makeText(instance, "Reply action...", Toast.LENGTH_SHORT).show();
-                
+                if (contextSelectedElements.size() == 1) {
+                  MessageListElement message = contextSelectedElements.first();
+                  Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
+                  Intent intent = new Intent(instance, classToLoad);
+                  intent.putExtra("message", message);
+                  instance.startActivity(intent);
+                }
                 mode.finish();
                 return true;
               case R.id.mark_seen:
@@ -617,7 +623,6 @@ public class MainActivity extends ActionBarActivity {
                 return true;
               case R.id.mark_unseen:
                 contextActionMarkMessage(false);
-                
                 mode.finish();
                 return true;
               default:
@@ -661,8 +666,7 @@ public class MainActivity extends ActionBarActivity {
             Account a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(instance, classToLoad);
-            intent.putExtra("msg_list_element_id", message.getId());
-            intent.putExtra("account", (Parcelable) a);
+            intent.putExtra("message", message);
 
             boolean changed = MainService.setMessageSeenAndRead(message);
             if (changed) {

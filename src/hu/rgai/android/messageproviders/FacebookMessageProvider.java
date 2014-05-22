@@ -517,7 +517,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
-    
+    // we cannot mark facebook messages on server side
   }
   
 }

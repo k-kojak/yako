@@ -238,7 +238,7 @@ public class MainService extends Service {
                         }
                       }
                     }
-                  }, 10000);
+                  }, 25000);
                 }
               }
             }
@@ -530,8 +530,8 @@ public class MainService extends Service {
           if (newMessageCount == 1) {
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
             resultIntent = new Intent(context, classToLoad);
-            resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
-            resultIntent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
+//            resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
+            resultIntent.putExtra("message", lastUnreadMsg);
             stackBuilder.addParentStack(MainActivity.class);
           } else {
             resultIntent = new Intent(context, MainActivity.class);

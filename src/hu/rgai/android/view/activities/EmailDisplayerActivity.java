@@ -71,7 +71,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
    * The number of pages (wizard steps) to show in this demo.
    */
   private MessageListElement mMessage = null;
-  private Account mAccount = null;
+//  private Account mAccount = null;
+//  private MessageListElement mMessage = null;
   private boolean mFromNotification = false;
   private final String mSubject = null;
   private Person mFrom = null;
@@ -85,7 +86,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
+//    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
     
     Tracker t = ((AnalyticsApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -93,16 +94,17 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     
     setContentView(R.layout.activity_email_displayer);
 
-    mAccount = getIntent().getExtras().getParcelable("account");
-    String mlepId = getIntent().getExtras().getString("msg_list_element_id");
-    mMessage = MainService.getListElementById(mlepId, mAccount);
+    mMessage = getIntent().getExtras().getParcelable("message");
+//    mAccount = 
+    String mlepId = mMessage.getId();
+//    mMessage = MainService.getListElementById(mlepId, mAccount);
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
     mFrom = mMessage.getFrom();
     MainService.setMessageSeenAndRead(mMessage);
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
-    EmailMessageMarker messageMarker = new EmailMessageMarker(mAccount);
+    EmailMessageMarker messageMarker = new EmailMessageMarker(mMessage.getAccount());
     AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
 
     if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
@@ -183,7 +185,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   }
 
   public Account getAccount() {
-    return mAccount;
+    return mMessage.getAccount();
   }
 
   /**

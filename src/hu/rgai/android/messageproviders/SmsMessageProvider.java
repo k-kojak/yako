@@ -206,7 +206,14 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
     }
     
-    // after opening a thread, set all of items to read
+    markMessagesOfThreadToSeen(threadId);
+
+    return ftm;
+  }
+  
+  private void markMessagesOfThreadToSeen(String threadId) {
+    
+    Uri uriSMSURI = Uri.parse("content://sms");
     ContentValues values = new ContentValues();
     values.put("seen", 1);
     context.getContentResolver().update(
@@ -214,8 +221,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
             values,
             "thread_id = ?",
             new String[]{threadId});
-
-    return ftm;
+    
   }
 
   @Override
@@ -309,10 +315,46 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     return getMessage(id, 0, 20);
   }
 
-  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
-    // we do nothing here, getMessage sets the status to read anyway
-  }
+  public void markMessageAsRead(String threadId, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+    if (seen) {
+      markMessagesOfThreadToSeen(threadId);
+    } else {
+      // just setting last sms of the thread to unseen
+      
+      Uri uriSMSURI = Uri.parse("content://sms");
+      Cursor cur = context.getContentResolver().query(uriSMSURI,
+              new String[]{"_id"},
+              "thread_id = ? AND type != 2",
+              new String[]{threadId},
+              "date DESC ");
 
+      if (cur != null) {
+        while (cur.moveToNext()) {
+          
+          String messageId = cur.getString(0);
+          
+          ContentValues values = new ContentValues();
+          values.put("seen", 2);
+          context.getContentResolver().update(
+                  uriSMSURI,
+                  values,
+                  "_id = ?",
+                  new String[]{messageId});
+          
+          break;
+        }
+      }
+      cur.close();
+      
+    }
+  }
+  
+  public void markMessagesAsRead(String[] ids, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+    for (int i = 0; i < ids.length; i++) {
+      markMessageAsRead(ids[i], seen);
+    }
+  }
+  
   public boolean canBroadcastOnNewMessage() {
     return true;
   }
@@ -335,9 +377,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   public void dropConnection() {
   }
 
-  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
-    
-  }
+  
 
   private class MessageItem {
     private String threadId;
