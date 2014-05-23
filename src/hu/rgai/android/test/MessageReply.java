@@ -309,12 +309,11 @@ public class MessageReply extends ActionBarActivity {
         Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
         content += source.getRenderer().toString();
       }
-      MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this, (AnalyticsApp)getApplication(), new Handler());
+      MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this, (YakoApp)getApplication(), new Handler());
       AndroidUtils.<Integer, String, String>startAsyncTask(rs);
       finish();
       
     }
-
   }
 
   private void prepareMessageSending() {

@@ -50,6 +50,8 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.handlers.MessageSeenMarkerHandler;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
@@ -58,12 +60,16 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.rgai.android.test.settings.SystemPreferences;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
+import hu.rgai.android.workers.TimeoutAsyncTask;
+import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
+import javax.mail.MessagingException;
 
 /**
  * This is the main view of the application.
@@ -77,7 +83,7 @@ public class MainActivity extends ActionBarActivity {
   // this variable holds the MainActivity instance if exists
   public static volatile MainActivity instance;
   
-  public static volatile AnalyticsApp mAnalyticsApp;
+  public static volatile YakoApp mYakoApp;
 
   // holds the Facebook token
   private static volatile String fbToken = null;
@@ -141,14 +147,14 @@ public class MainActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 //    Debug.startMethodTracing("calc_store_connect");
-    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
     
     // this loads the last notification dates from file
     MainActivity.initLastNotificationDates(this);
     instance = this;
-    mAnalyticsApp = (AnalyticsApp)this.getApplication();
+    mYakoApp = (YakoApp)this.getApplication();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
@@ -165,7 +171,10 @@ public class MainActivity extends ActionBarActivity {
     // disaplying loading dialog, since the mails are not ready, but the user
     toggleProgressDialog(true);
   }
-
+  
+  public YakoApp getYakoApp() {
+    return mYakoApp;
+  }
   /**
    * Displays a loading progress dialog, which tells the user that messages are
    * loading.
@@ -525,20 +534,24 @@ public class MainActivity extends ActionBarActivity {
    * @param acc
    *          messages connected to this account will be removed
    */
-  public static void removeMessagesToAccount(final Account acc) {
-    Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
-    Iterator<MessageListElement> it = MainService.messages.iterator();
-    while (it.hasNext()) {
-      MessageListElement mle = it.next();
-      if (mle.getAccount().equals(acc)) {
-        it.remove();
-      }
-    }
-    if (adapter != null) {
-      adapter.notifyDataSetChanged();
-    }
-  }
+//  public static void removeMessagesToAccount(final Account acc) {
+//    Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
+//    Iterator<MessageListElement> it = mYakoApp.getMessages().iterator();
+//    while (it.hasNext()) {
+//      MessageListElement mle = it.next();
+//      if (mle.getAccount().equals(acc)) {
+//        it.remove();
+//      }
+//    }
+//    if (adapter != null) {
+//      adapter.notifyDataSetChanged();
+//    }
+//  }
 
+  public void notifyAdapterChange() {
+    adapter.notifyDataSetChanged();
+  }
+  
   /**
    * Sets the content of the listview.
    */
@@ -547,16 +560,13 @@ public class MainActivity extends ActionBarActivity {
     if (instance == null) {
       return;
     }
-    if (MainService.messages == null) {
-      MainService.initMessages();
-    }
-    if (!MainService.messages.isEmpty()) {
+    if (!mYakoApp.getMessages().isEmpty()) {
       toggleProgressDialog(false);
     }
     boolean isListView = instance.findViewById(R.id.list) != null;
     boolean isNet = isNetworkAvailable(instance);
     if (isNet || isPhone(instance)) {
-      if (!MainService.messages.isEmpty() && adapter != null && isListView) {
+      if (!mYakoApp.getMessages().isEmpty() && adapter != null && isListView) {
 //        Log.d("rgai", "ag1: " + MainService.messages.size());
 //        adapter = new LazyAdapter(instance);
 //        adapter.setListFilter(actSelectedFilter);
@@ -565,7 +575,7 @@ public class MainActivity extends ActionBarActivity {
 //        lv.setAdapter(adapter);
 //        lv.invalidate();
 
-      } else if (!MainService.messages.isEmpty() && !isListView) {
+      } else if (!mYakoApp.getMessages().isEmpty() && !isListView) {
 //        Log.d("rgai", "ag2");
         instance.setContentView(R.layout.main);
         lv = (ListView) instance.findViewById(R.id.list);
@@ -668,7 +678,7 @@ public class MainActivity extends ActionBarActivity {
             Intent intent = new Intent(instance, classToLoad);
             intent.putExtra("message", message);
 
-            boolean changed = MainService.setMessageSeenAndRead(message);
+            boolean changed = mYakoApp.setMessageSeenAndReadLocally(message);
             if (changed) {
               setMessageSeen(message);
               adapter.notifyDataSetChanged();
@@ -698,7 +708,7 @@ public class MainActivity extends ActionBarActivity {
             builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
           }
         });
-      } else if (MainService.messages.isEmpty()) {
+      } else if (mYakoApp.getMessages().isEmpty()) {
         TextView text = new TextView(instance);
         text.setText(instance.getString(R.string.empty_list));
         text.setGravity(Gravity.CENTER);
@@ -713,27 +723,31 @@ public class MainActivity extends ActionBarActivity {
   }
   
   private static void contextActionMarkMessage(boolean seen) {
-    for (MessageListElement mle : contextSelectedElements) {
-      setMessageSeen(mle, seen);
-    }
-    adapter.notifyDataSetChanged();
+//    for (MessageListElement mle : contextSelectedElements) {
+//      setMessageSeen(mle, seen);
+//    }
+//    adapter.notifyDataSetChanged();
+    
+    Toast.makeText(instance, "Marking...", Toast.LENGTH_SHORT).show();
 
-    final MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(contextSelectedElements,
-            instance, mAnalyticsApp, new Handler(), seen);
-    AndroidUtils.<Void, Void, Void>startAsyncTask(messageMarker);
+    MessageSeenMarkerHandler handler = new MessageSeenMarkerHandler(instance);
     
-    Handler handler = new Handler();
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        if (messageMarker.getStatus() == AsyncTask.Status.RUNNING ) {
-          messageMarker.cancel(true);
-          Log.d("rgai", "THREAD CANCELLED");
-          Toast.makeText(instance, "Timeout while marking messages", Toast.LENGTH_LONG).show();
-        }
+    HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
+    for (MessageListElement mle : contextSelectedElements) {
+      if (!messagesToAccounts.containsKey(mle.getAccount())) {
+        messagesToAccounts.put(mle.getAccount(), new TreeSet<MessageListElement>());
       }
-    }, 4000);
+      messagesToAccounts.get(mle.getAccount()).add(mle);
+    }
     
+    // TODO: put a thin blue loader bar while marking messages
+    // TODO: block auto update while marking messages
+    for (Map.Entry<Account, TreeSet<MessageListElement>> entry : messagesToAccounts.entrySet()) {
+      MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(entry.getKey(), instance);
+      MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(mp, entry.getValue(), seen, handler);
+      messageMarker.setTimeout(10000);
+      messageMarker.executeTask(null);
+    }
   }
 
   /**
@@ -844,7 +858,7 @@ public class MainActivity extends ActionBarActivity {
     super.onPause();
     is_activity_visible = false;
 
-    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     

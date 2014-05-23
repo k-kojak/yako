@@ -19,7 +19,7 @@ import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
 import java.io.IOException;
 import java.util.HashSet;
@@ -37,7 +37,7 @@ import javax.mail.NoSuchProviderException;
 public class MessageSender extends AsyncTask<Integer, String, String> {
 
   private final Context context;
-  private final AnalyticsApp mApplication;
+  private final YakoApp mApplication;
   private final MessageRecipient recipient;
   private final Handler handler;
   private final Handler mGeneralHandler;
@@ -49,7 +49,7 @@ public class MessageSender extends AsyncTask<Integer, String, String> {
   private final String result = null;
 
   public MessageSender(MessageRecipient recipient, List<Account> accounts, Handler handler,
-          String subject, String content, Context context, AnalyticsApp application, Handler generalHandler) {
+          String subject, String content, Context context, YakoApp application, Handler generalHandler) {
     this.recipient = recipient;
     this.accounts = accounts;
     this.handler = handler;
@@ -89,7 +89,7 @@ public class MessageSender extends AsyncTask<Integer, String, String> {
         recipients = new HashSet<MessageRecipient>();
         recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
       } else if (recipient.getType().equals(MessageProvider.Type.SMS)) {
-        mp = new SmsMessageProvider(context, mApplication, mGeneralHandler);
+        mp = new SmsMessageProvider(context);
         recipients = new HashSet<MessageRecipient>();
         recipients.add((MessageRecipient) recipient);
       }

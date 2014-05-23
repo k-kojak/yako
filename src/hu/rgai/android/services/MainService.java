@@ -40,7 +40,7 @@ import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
@@ -85,11 +85,13 @@ public class MainService extends Service {
   public static final int NO_ACCOUNT_SET = 9;
   public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
   public static final int CANCELLED = 11;
+  
+  private YakoApp mYakoApp;
 
   private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
-  public static volatile TreeSet<MessageListElement> messages = null;
+//  public static volatile TreeSet<MessageListElement> messages = null;
   public static volatile Date last_message_update = new Date();
   public volatile static int currentRefreshedAccountCounter = 0;
   public volatile static int currentNumOfAccountsToRefresh = 0;
@@ -101,6 +103,8 @@ public class MainService extends Service {
 
   @Override
   public void onCreate() {
+    this.mYakoApp = (YakoApp)getApplication();
+    
     if (BuildConfig.DEBUG) {
       Log.d("rgai", "#TURNING OFF GOOGLE ANALYTICS: WE ARE IN DEVELOPE MODE");
       GoogleAnalytics googleAnalytics = GoogleAnalytics.getInstance(getApplicationContext());
@@ -144,9 +148,9 @@ public class MainService extends Service {
   }
   
   private void updateMessagesPrettyDate() {
-    if (messages != null) {
+    if (mYakoApp.getMessages() != null) {
       SimpleDateFormat sdf = new SimpleDateFormat();
-      for (MessageListElement mlep : messages) {
+      for (MessageListElement mlep : mYakoApp.getMessages()) {
         mlep.updatePrettyDateString(sdf);
       }
     }
@@ -200,7 +204,7 @@ public class MainService extends Service {
           currentRefreshedAccountCounter = 0;
           for (final Account acc : accounts) {
             if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
-              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this, (AnalyticsApp)getApplication(), new Handler());
+              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
   //              Log.d("rgai", forceQuery + " | " + loadMore + " | " + provider.isConnectionAlive() + " | " + provider.canBroadcastOnNewMessage());
 
               // checking if live connections are still alive, reconnect them if not
@@ -220,7 +224,7 @@ public class MainService extends Service {
                     MainActivity.openFbSession(this);
                   }
                   currentNumOfAccountsToRefresh++;
-                  final MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, handler, acc, provider, extraParams.isLoadMore(),
+                  final MessageListerAsyncTask myThread = new MessageListerAsyncTask(mYakoApp, handler, acc, provider, extraParams.isLoadMore(),
                           extraParams.getQueryLimit(), extraParams.getQueryOffset());
                   AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
                   Handler handler = new Handler();
@@ -279,29 +283,29 @@ public class MainService extends Service {
   }
 
   // TODO: switch back setMessageComment function
-  public static void setMessageContent(String id, Account account, FullMessage fullMessage) {
-
-    for (MessageListElement mlep : messages) {
-      if (mlep.getId().equals( id) && mlep.getAccount().equals( account)) {
-        mlep.setFullMessage( fullMessage);
-        break;
-      }
-    }
-  }
+//  public static void setMessageContent(String id, Account account, FullMessage fullMessage) {
+//
+//    for (MessageListElement mlep : messages) {
+//      if (mlep.getId().equals( id) && mlep.getAccount().equals( account)) {
+//        mlep.setFullMessage( fullMessage);
+//        break;
+//      }
+//    }
+//  }
   
-  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
-    if (filterAcc == null) {
-      return messages;
-    } else {
-      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
-      for (MessageListElement mlep : messages) {
-        if (mlep.getAccount().equals(filterAcc)) {
-          filterList.add(mlep);
-        }
-      }
-      return filterList;
-    }
-  }
+//  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
+//    if (filterAcc == null) {
+//      return messages;
+//    } else {
+//      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
+//      for (MessageListElement mlep : messages) {
+//        if (mlep.getAccount().equals(filterAcc)) {
+//          filterList.add(mlep);
+//        }
+//      }
+//      return filterList;
+//    }
+//  }
 
   /**
    * Removes messages from message list where the account matches with the
@@ -309,17 +313,17 @@ public class MainService extends Service {
    * 
    * @param account
    */
-  public void removeMessagesToAccount( Account account) {
-    // Log.d("rgai", "removing messages to account -> " + account);
-    Iterator<MessageListElement> it = messages.iterator();
-    while (it.hasNext()) {
-      MessageListElement mle = it.next();
-      if (mle.getAccount().equals(account)) {
-        it.remove();
-      }
-    }
-    Log.d("rgai", "messages removed to account -> " + account);
-  }
+//  public void removeMessagesToAccount(Account account) {
+//    // Log.d("rgai", "removing messages to account -> " + account);
+//    Iterator<MessageListElement> it = mYakoApp.getMessages().iterator();
+//    while (it.hasNext()) {
+//      MessageListElement mle = it.next();
+//      if (mle.getAccount().equals(account)) {
+//        it.remove();
+//      }
+//    }
+//    Log.d("rgai", "messages removed to account -> " + account);
+//  }
 
   /**
    * Sets the seen status to true, and the unreadCount to 0.
@@ -328,60 +332,48 @@ public class MainService extends Service {
    *          the message to set
    * @return
    */
-  public static boolean setMessageSeenAndRead(MessageListElement m) {
-    boolean changed = false;
-    for (MessageListElement mlep : messages) {
-      if (mlep.equals(m) && !mlep.isSeen()) {
-        changed = true;
-        mlep.setSeen(true);
-        mlep.setUnreadCount(0);
-        break;
-      }
-    }
-    return changed;
-  }
+//  public static boolean setMessageSeenAndRead(MessageListElement m) {
+//    boolean changed = false;
+//    for (MessageListElement mlep : mYakoApp.getMessages()) {
+//      if (mlep.equals(m) && !mlep.isSeen()) {
+//        changed = true;
+//        mlep.setSeen(true);
+//        mlep.setUnreadCount(0);
+//        break;
+//      }
+//    }
+//    return changed;
+//  }
 
-  public static void initMessages() {
-    messages = new TreeSet<MessageListElement>();
-  }
+//  public static MessageListElement getListElementById(String id, Account a) {
+//    for (MessageListElement mle : messages) {
+//      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
+//        return mle;
+//      }
+//    }
+//    return null;
+//  }
 
-  public void setAllMessagesToSeen() {
-    for (MessageListElement mle : messages) {
-      mle.setSeen(true);
-    }
-  }
+//  public MessageListElement[] getMessages() {
+//    if (messages != null) {
+//      return messages.toArray(new MessageListElement[0]);
+//    } else {
+//      return null;
+//    }
+//  }
 
-  public static MessageListElement getListElementById(String id, Account a) {
-    // TODO: if we display a notification, and later..much later we open the message from notification bar
-    //then it is possible that messages variable is unitialized..so null..
-    for (MessageListElement mle : messages) {
-      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
-        return mle;
-      }
-    }
-    return null;
-  }
-
-  public MessageListElement[] getMessages() {
-    if (messages != null) {
-      return messages.toArray(new MessageListElement[0]);
-    } else {
-      return null;
-    }
-  }
-
-  public void removeElementsFromList(Account acc) {
-    if (messages != null) {
-      for (MessageListElement mle : messages) {
-        if (mle.getAccount().equals(acc)) {
-          // Log.d("rgai", "removing message list element -> " + mle);
-          messages.remove(mle);
-          removeElementsFromList(acc);
-          break;
-        }
-      }
-    }
-  }
+//  public void removeElementsFromList(Account acc) {
+//    if (messages != null) {
+//      for (MessageListElement mle : messages) {
+//        if (mle.getAccount().equals(acc)) {
+//          // Log.d("rgai", "removing message list element -> " + mle);
+//          messages.remove(mle);
+//          removeElementsFromList(acc);
+//          break;
+//        }
+//      }
+//    }
+//  }
   
   private class MyHandler extends Handler {
 
@@ -443,7 +435,7 @@ public class MainService extends Service {
 
             Set<Account> accountsToUpdate = new HashSet<Account>();
             
-            for (MessageListElement mle : messages) {
+            for (MessageListElement mle : mYakoApp.getMessages()) {
               if (mle.equals(MainService.actViewingMessage) || mle.equals(actViewingMessageAtThread)) {
                 mle.setSeen(true);
                 mle.setUnreadCount(0);
@@ -598,9 +590,6 @@ public class MainService extends Service {
      * means this is a refresh action
      */
     private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest, MessageListResult.ResultType resultType) {
-      if (messages == null) {
-        initMessages();
-      }
       for (MessageListElement newMessage : newMessages) {
         boolean contains = false;
         MessageListElement storedFoundMessage = null;
@@ -609,14 +598,14 @@ public class MainService extends Service {
         // tree search does not return a valid value
         // causes problem at thread type messages like Facebook
         
-        for (MessageListElement storedMessage : messages) {
+        for (MessageListElement storedMessage : mYakoApp.getMessages()) {
           if (storedMessage.equals(newMessage)) {
             contains = true;
             storedFoundMessage = storedMessage;
           }
         }
         if (!contains) {
-          messages.add(newMessage);
+          mYakoApp.getMessages().add(newMessage);
 
           if ((actViewingMessage != null && newMessage.equals(actViewingMessage))
                   || (actViewingMessage == null && MainActivity.isMainActivityVisible())) {
@@ -636,7 +625,7 @@ public class MainService extends Service {
           } else {
 //            Log.d("rgai", "HANDLE AS \"NEW\" MESSAGE -> " + newMessage);
             MessageListElement itemToRemove = null;
-            for (MessageListElement oldMessage : messages) {
+            for (MessageListElement oldMessage : mYakoApp.getMessages()) {
               if (newMessage.equals( oldMessage)) {
                 // first updating person info anyway..
                 oldMessage.setFrom( newMessage.getFrom());
@@ -655,8 +644,8 @@ public class MainService extends Service {
               }
             }
             if (itemToRemove != null) {
-              messages.remove(itemToRemove);
-              messages.add(newMessage);
+              mYakoApp.getMessages().remove(itemToRemove);
+              mYakoApp.getMessages().add(newMessage);
             }
           }
         }
@@ -669,21 +658,21 @@ public class MainService extends Service {
     }
   }
   
-  public static TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
-    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
-    if (messages != null) {
-      for (MessageListElement mle : messages) {
-        if (mle.getAccount().equals(account)) {
-          selected.add(mle);
-        }
-      }
-    }
-    return selected;
-  }
+//  public static TreeSet<MessageListElement> getLoadedMessages(Account account, TreeSet<MessageListElement> messages) {
+//    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
+//    if (messages != null) {
+//      for (MessageListElement mle : messages) {
+//        if (mle.getAccount().equals(account)) {
+//          selected.add(mle);
+//        }
+//      }
+//    }
+//    return selected;
+//  }
   
   private synchronized void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
-      TreeSet<MessageListElement> msgs = getLoadedMessages(newMessages[0].getAccount(), messages);
+      TreeSet<MessageListElement> msgs = mYakoApp.getLoadedMessages(newMessages[0].getAccount());
       SortedSet<MessageListElement> messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
 //      Log.d("rgai", "head set list: " + messagesToRemove);
       
@@ -694,7 +683,7 @@ public class MainService extends Service {
       }
 //      Log.d("rgai", "THESE ELEMENTS MUST BE REMOVED FROM MY LIST: " + messagesToRemove);
       for (MessageListElement mle : messagesToRemove) {
-        messages.remove(mle);
+        mYakoApp.getMessages().remove(mle);
       }
       
     }

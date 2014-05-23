@@ -27,7 +27,6 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 //	private TextView msgBubble;
 	private List<FullSimpleMessage> messages = new ArrayList<FullSimpleMessage>();
 	private LinearLayout wrapper;
-  private Account account = null;
   private Context context;
 
 	@Override
@@ -36,9 +35,8 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 		super.add(object);
 	}
 
-	public ThreadViewAdapter(Context context, int textViewResourceId, Account account) {
+	public ThreadViewAdapter(Context context, int textViewResourceId) {
 		super(context, textViewResourceId);
-    this.account = account;
     this.context = context;
 	}
 

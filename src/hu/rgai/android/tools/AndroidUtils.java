@@ -16,8 +16,9 @@ import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.messageproviders.SmsMessageProvider;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.workers.ActiveConnectionConnector;
+import hu.rgai.android.workers.TimeoutAsyncTask;
 import java.util.List;
 
 /**
@@ -39,14 +40,13 @@ public class AndroidUtils {
   
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {
     if (mp.canBroadcastOnNewMessage() && !isConnectionAlive) {
-//      Log.d("rgai", "yes, connectable account -> " + mp.getAccount());
       ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
-      AndroidUtils.<String, Integer, Boolean>startAsyncTask(connector);
+      connector.executeTask(null);
     }
   }
   
-  public static void stopReceiversForAccount(Account account, Context context, AnalyticsApp application, Handler generalHandler) {
-    MessageProvider provider = getMessageProviderInstanceByAccount(account, context, application, generalHandler);
+  public static void stopReceiversForAccount(Account account, Context context) {
+    MessageProvider provider = getMessageProviderInstanceByAccount(account, context);
     if (provider != null && provider.isConnectionAlive()) {
       Log.d("rgai", "Igen, dropping connection");
       provider.dropConnection();
@@ -55,8 +55,7 @@ public class AndroidUtils {
     }
   }
   
-  public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context,
-          AnalyticsApp application, Handler generalHandler) {
+  public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {
     MessageProvider mp = null;
     if (account instanceof GmailAccount) {
       mp = new SimpleEmailMessageProvider((GmailAccount) account);
@@ -65,12 +64,20 @@ public class AndroidUtils {
     } else if (account instanceof FacebookAccount) {
       mp = new FacebookMessageProvider((FacebookAccount) account);
     } else if (account instanceof SmsAccount) {
-      mp = new SmsMessageProvider(context, application, generalHandler);
+      mp = new SmsMessageProvider(context);
     }
     return mp;
   }
   
   public static<T, U, V> void startAsyncTask(AsyncTask<T, U, V> at, T... args) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
+    } else {
+      at.execute(args);
+    }
+  }
+  
+  public static<T, U, V> void startTimeoutAsyncTask(TimeoutAsyncTask<T, U, V> at, T... args) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
     } else {

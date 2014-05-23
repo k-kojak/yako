@@ -29,19 +29,19 @@ import java.util.GregorianCalendar;
 
 public class LazyAdapter extends BaseAdapter {
 
-  private MainActivity activity;
+  private MainActivity mActivity;
   private static LayoutInflater inflater = null;
   private Account filterAcc = null;
   private final SimpleDateFormat sdf = new SimpleDateFormat();
 
   public LazyAdapter(MainActivity a) {
-    activity = a;
-    inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    mActivity = a;
+    inflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
 
   public int getCount() {
     // the plus 1 item is because of the "last updated" row
-    return MainService.getFilteredMessages(filterAcc).size() + 1;
+    return mActivity.getYakoApp().getFilteredMessages(filterAcc).size() + 1;
   }
   
   public Object getItem(int position) {
@@ -49,7 +49,7 @@ public class LazyAdapter extends BaseAdapter {
       return null;
     } else {
       int i = 0;
-      for (MessageListElement mlep : MainService.getFilteredMessages(filterAcc)) {
+      for (MessageListElement mlep : mActivity.getYakoApp().getFilteredMessages(filterAcc)) {
         if (i == position - 1) {
           return mlep;
         }
@@ -166,7 +166,7 @@ public class LazyAdapter extends BaseAdapter {
       if (message.getFrom() != null) {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(long id) {
-            return ProfilePhotoProvider.getImageToUser(activity, id);
+            return ProfilePhotoProvider.getImageToUser(mActivity, id);
           }
           public boolean isBitmapLoaded(long id) {
             return ProfilePhotoProvider.isImageToUserInCache(id);
@@ -179,7 +179,7 @@ public class LazyAdapter extends BaseAdapter {
       } else {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(long id) {
-            return ProfilePhotoProvider.getGroupChatPhoto(activity);
+            return ProfilePhotoProvider.getGroupChatPhoto(mActivity);
           }
 
           public boolean isBitmapLoaded(long id) {
@@ -223,7 +223,7 @@ public class LazyAdapter extends BaseAdapter {
   private View getLastUpdatedRow(View view, ViewGroup parent) {
     view = inflater.inflate(R.layout.main_list_last_mod_row, null);
     
-    String niceText = activity.getResources().getString(R.string.last_full_update) + " ";
+    String niceText = mActivity.getResources().getString(R.string.last_full_update) + " ";
     
     Date d = new Date();
     Calendar c = new GregorianCalendar();
@@ -242,7 +242,7 @@ public class LazyAdapter extends BaseAdapter {
     if (MainService.last_message_update.before(thisYear)) {
       sdf.applyPattern("yyyy/MM/dd");
     } else if (MainService.last_message_update.after(today)) {
-      niceText += activity.getResources().getString(R.string.today) + ", ";
+      niceText += mActivity.getResources().getString(R.string.today) + ", ";
       sdf.applyPattern("HH:mm");
     } else {
       sdf.applyPattern("MMM d");

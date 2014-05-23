@@ -39,7 +39,7 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
@@ -57,11 +57,13 @@ public class AccountSettingsList extends ActionBarActivity {
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
-  private MainService mainService;
+//  private MainService mainService;
+  private YakoApp mYakoApp = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    this.mYakoApp = (YakoApp)getApplication();
   }
 
   @Override
@@ -181,13 +183,13 @@ public class AccountSettingsList extends ActionBarActivity {
           StoreHandler.modifyAccount(this, oldAccount, newAccount);
           
           getMessagesToNewAccount(newAccount, this);
-          AndroidUtils.stopReceiversForAccount(oldAccount, this, (AnalyticsApp)getApplication(), new Handler());
+          AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
           removeMessagesToAccount(oldAccount);
           
-          AndroidUtils.stopReceiversForAccount(oldAccount, this, (AnalyticsApp)getApplication(), new Handler());
+          AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }
@@ -212,19 +214,25 @@ public class AccountSettingsList extends ActionBarActivity {
   }
   
   private void removeMessagesToAccount(final Account acc) {
-    MainActivity.removeMessagesToAccount(acc);
-    ServiceConnection serviceConnection = new ServiceConnection() {
-      public void onServiceConnected(ComponentName className, IBinder binder) {
-        mainService = ((MainService.MyBinder) binder).getService();
-        mainService.removeMessagesToAccount(acc);
-        unbindService(this);
-      }
-      public void onServiceDisconnected(ComponentName className) {
-        mainService = null;
-        unbindService(this);
-      }
-    };
-    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+    
+    mYakoApp.removeMessagesToAccount(acc);
+    
+    // TODO: notify mainActivity's adapter with broadcast, not with static function call!
+    // but its not even necessary...adapter should notify itself when activity is visible
+    
+//    MainActivity.removeMessagesToAccount(acc);
+//    ServiceConnection serviceConnection = new ServiceConnection() {
+//      public void onServiceConnected(ComponentName className, IBinder binder) {
+//        mainService = ((MainService.MyBinder) binder).getService();
+//        mainService.removeMessagesToAccount(acc);
+//        unbindService(this);
+//      }
+//      public void onServiceDisconnected(ComponentName className) {
+//        mainService = null;
+//        unbindService(this);
+//      }
+//    };
+//    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
   }
 
   private void showAccountTypeChooser() {

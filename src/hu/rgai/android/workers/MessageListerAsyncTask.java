@@ -25,6 +25,7 @@ import static hu.rgai.android.services.MainService.NO_SUCH_PROVIDER_EXCEPTION;
 import static hu.rgai.android.services.MainService.OK;
 import static hu.rgai.android.services.MainService.SSL_HANDSHAKE_EXCEPTION;
 import static hu.rgai.android.services.MainService.UNKNOWN_HOST_EXCEPTION;
+import hu.rgai.android.test.YakoApp;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -43,7 +44,7 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageListResult> {
 
-  private Context context;
+  private final YakoApp mYakoApp;
   private int result = -1;
   private String errorMessage = null;
   private final Handler handler;
@@ -53,16 +54,16 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   private int queryLimit;
   private int queryOffset;
   private RunningSetup mRunningSetup;
+  
 
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
-  public MessageListerAsyncTask(Context context, Handler handler, Account acc, MessageProvider messageProvider,
+  public MessageListerAsyncTask(YakoApp yakoApp, Handler handler, Account acc, MessageProvider messageProvider,
           boolean loadMore, int queryLimitOverride, int queryOffsetOverride) {
-    this.context = context;
+    this.mYakoApp = yakoApp;
     this.handler = handler;
     this.acc = acc;
     this.messageProvider = messageProvider;
-    this.context = context;
     this.loadMore = loadMore;
     this.queryLimit = queryLimitOverride;
     this.queryOffset = queryOffsetOverride;
@@ -70,8 +71,8 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
     int offset = 0;
     int limit = acc.getMessageLimit();
     if (loadMore) {
-      if (MainService.messages != null) {
-        for (MessageListElement m : MainService.messages) {
+      if (mYakoApp.getMessages() != null) {
+        for (MessageListElement m : mYakoApp.getMessages()) {
           if (m.getAccount().equals(acc)) {
             offset++;
           }
@@ -115,7 +116,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
         }
 
         // the already loaded messages to the specific content type...
-        TreeSet<MessageListElement> loadedMessages = MainService.getLoadedMessages(acc, MainService.messages);
+        TreeSet<MessageListElement> loadedMessages = mYakoApp.getLoadedMessages(acc);
 //        Log.d("rgai", "offset, limit: " + offset + ","+limit);
         messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
@@ -175,7 +176,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   private void extendPersonObject(List<MessageListElement> origi) {
     Person p;
     for (MessageListElement mle : origi) {
-      p = Person.searchPersonAndr(context, mle.getFrom());
+      p = Person.searchPersonAndr(mYakoApp, mle.getFrom());
       mle.setFrom(p);
       if (!mle.isUpdateFlags()) {
         if (mle.getFullMessage() != null && mle.getFullMessage() instanceof FullSimpleMessage) {
@@ -184,7 +185,7 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
 
         if (mle.getRecipientsList() != null) {
           for (int i = 0; i < mle.getRecipientsList().size(); i++) {
-            p = Person.searchPersonAndr(context, mle.getRecipientsList().get(i));
+            p = Person.searchPersonAndr(mYakoApp, mle.getRecipientsList().get(i));
             mle.getRecipientsList().set(i, p);
           }
         }

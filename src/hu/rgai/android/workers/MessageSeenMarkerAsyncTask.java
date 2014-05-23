@@ -8,8 +8,9 @@ import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.handlers.MessageSeenMarkerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.tools.AndroidUtils;
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,51 +21,47 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
 
-public class MessageSeenMarkerAsyncTask extends AsyncTask<Void, Void, Void> {
+public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Void> {
 
-  TreeSet<MessageListElement> mMessages = null;
-  Context mContext = null;
-  AnalyticsApp mAnalyticsApp = null;
-  Handler mHandler = null;
-  boolean mSeen;
+  private MessageProvider mProvider = null;
+  private TreeSet<MessageListElement> mMessagesToMark = null;
+  private final boolean mSeen;
+  private MessageSeenMarkerHandler mHandler = null;
   
-  public MessageSeenMarkerAsyncTask(TreeSet<MessageListElement> messages, Context context, AnalyticsApp analyticsApp,
-          Handler handler, boolean seen) {
-    this.mMessages = messages;
-    this.mContext = context;
-    this.mAnalyticsApp = analyticsApp;
-    this.mHandler = handler;
-    this.mSeen = seen;
+  
+  public MessageSeenMarkerAsyncTask(MessageProvider messageProvider, TreeSet<MessageListElement> messagesToMark, boolean seen,
+          MessageSeenMarkerHandler handler) {
+    
+    mProvider = messageProvider;
+    mMessagesToMark = messagesToMark;
+    mSeen = seen;
+    mHandler = handler;
+    
+    setTimeoutHandler(mHandler);
   }
   
   @Override
   protected Void doInBackground(Void... params) {
-    HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
-    for (MessageListElement mle : mMessages) {
-      if (!messagesToAccounts.containsKey(mle.getAccount())) {
-        messagesToAccounts.put(mle.getAccount(), new TreeSet<MessageListElement>());
-      }
-      messagesToAccounts.get(mle.getAccount()).add(mle);
+    
+    String[] ids = new String[mMessagesToMark.size()];
+    int i = 0;
+    for (MessageListElement mle : mMessagesToMark) {
+      ids[i++] = mle.getId();
     }
     
-    for (Map.Entry<Account, TreeSet<MessageListElement>> entry : messagesToAccounts.entrySet()) {
-      MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(entry.getKey(), mContext, mAnalyticsApp, mHandler);
-      String[] ids = new String[entry.getValue().size()];
-      int i = 0;
-      for (MessageListElement mle : entry.getValue()) {
-        ids[i++] = mle.getId();
-      }
-      try {
-        mp.markMessagesAsRead(ids, mSeen);
-//        Log.d("rgai", "Marking message as seen/unseen: " + mSeen);
-      } catch (MessagingException ex) {
-        Toast.makeText(mContext, "Unable to mark message status.", Toast.LENGTH_SHORT).show();
-      } catch (IOException ex) {
-        Toast.makeText(mContext, "Unable to mark message status.", Toast.LENGTH_SHORT).show();
-      }
+    try {
+      mProvider.markMessagesAsRead(ids, mSeen);
+    // TODO: add google analytics exception tracking
+    } catch (Exception ex) {
+      mHandler.toastMessage("Unable to mark message status.");
+      Logger.getLogger(MessageSeenMarkerAsyncTask.class.getName()).log(Level.SEVERE, null, ex);
     }
-    
     return null;
+  }
+
+  @Override
+  protected void onPostExecute(Void result) {
+    mHandler.success(mMessagesToMark, mSeen);
   }
   
   

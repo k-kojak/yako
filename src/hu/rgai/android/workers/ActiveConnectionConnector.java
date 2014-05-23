@@ -2,15 +2,13 @@
 package hu.rgai.android.workers;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 import hu.rgai.android.messageproviders.MessageProvider;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class ActiveConnectionConnector extends AsyncTask<String, Integer, Boolean> {
+public class ActiveConnectionConnector extends TimeoutAsyncTask<String, Integer, Void> {
 
   private MessageProvider messageProvider = null;
   private Context context = null;
@@ -21,10 +19,10 @@ public class ActiveConnectionConnector extends AsyncTask<String, Integer, Boolea
   }
   
   @Override
-  protected Boolean doInBackground(String... arg0) {
+  protected Void doInBackground(String... arg0) {
     messageProvider.establishConnection(context);
     
-    return true;
+    return null;
   }
 
 }

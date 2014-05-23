@@ -31,7 +31,7 @@ import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -49,18 +49,14 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
 
-public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
+public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMessageProvider {
 
   Context context;
-  AnalyticsApp mApplication;
-  private Handler mHandler;
 
   public SmsMessageProvider(){};
   
-  public SmsMessageProvider(Context myContext, AnalyticsApp application, Handler handler) {
+  public SmsMessageProvider(Context myContext) {
     context = myContext;
-    mApplication = application;
-    mHandler = handler;
   }
 
   public Account getAccount() {
@@ -235,7 +231,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       SmsManager smsMan = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
 //      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
-      try {
+      
         ArrayList<String> dividedMessages = smsMan.divideMessage(content);
         smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
         ContentValues sentSms = new ContentValues();
@@ -245,27 +241,6 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         ContentResolver contentResolver = context.getContentResolver();
         Uri uri = Uri.parse("content://sms/sent");
         contentResolver.insert(uri, sentSms);
-
-      } catch (NullPointerException ex) {
-        Log.d("rgai", "exception:" + ex.toString());
-        Tracker t = mApplication.getTracker();
-        t.send(new HitBuilders.ExceptionBuilder()
-        .setDescription(ex.getMessage() + " | Exception when sending SMS message from thread view to: " + smr + " | rawPhone: " + rawPhoneNum)
-        .setFatal(true)
-        .build());
-        
-        mHandler.post(new Runnable() {
-          public void run() {
-            new AlertDialog.Builder(context)
-                    .setTitle("Sending error")
-                    .setMessage("Sorry, we were unable to send your message due to an unexpected error.\nA report has been sent to the developers.")
-                    .setPositiveButton(android.R.string.yes, null)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
-          }
-        });
-        
-      }
 
     }
 

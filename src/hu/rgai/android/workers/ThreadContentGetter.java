@@ -11,10 +11,11 @@ import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.ThreadDisplayer;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -25,27 +26,19 @@ import java.util.logging.Logger;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 
-public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMessage> {
+public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullThreadMessage> {
   
-    private Context context;
-    private AnalyticsApp mApplication;
-    private Handler mGeneralHandler;
-    private Handler handler;
-    private Account account;
-    private int delay;
+    private final Context context;
+    private final ThreadContentGetterHandler mHandler;
+    private final Account account;
     private int offset = 0;
     private boolean scrollBottomAfterLoad = false;
     
-    public ThreadContentGetter(Context context, Handler handler, Account account,
-            int delay, boolean scrollBottomAfterLoad, AnalyticsApp application, Handler generalHandler) {
+    public ThreadContentGetter(Context context, ThreadContentGetterHandler handler, Account account, boolean scrollBottomAfterLoad) {
       this.context = context;
-      this.handler = handler;
-      this.mGeneralHandler = generalHandler;
+      this.mHandler = handler;
       this.account = account;
-      this.context = context;
-      this.delay = delay;
       this.scrollBottomAfterLoad = scrollBottomAfterLoad;
-      this.mApplication = application;
     }
     
     public void setOffset(int offset) {
@@ -54,18 +47,7 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
     
     @Override
     protected FullThreadMessage doInBackground(String... params) {
-//      SharedPreferences sharedPref = getSharedPreferences(getString(R.string.settings_email_file_key), Context.MODE_PRIVATE);
-//      String email = sharedPref.getString(getString(R.string.settings_saved_email), "");
-//      String pass = sharedPref.getString(getString(R.string.settings_saved_pass), "");
-//      String imap = sharedPref.getString(getString(R.string.settings_saved_imap), "");
-//      MailProvider2 em = new MailProvider2(email, pass, imap, Pass.smtp);
-      if (delay > 0) {
-        try {
-          Thread.sleep(delay);
-        } catch (InterruptedException ex) {
-          Logger.getLogger(ThreadContentGetter.class.getName()).log(Level.SEVERE, null, ex);
-        }
-      }
+      
       FullThreadMessage threadMessage = null;
 //      Log.d("rgai", "GETTING MESSAGE CONTENT");
       try {
@@ -83,8 +65,8 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
           
           ThreadMessageProvider mp = null;
           if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
-        	  constructor = providerClass.getConstructor(Context.class, AnalyticsApp.class, Handler.class);
-        	  mp = (ThreadMessageProvider) constructor.newInstance(context, mApplication, mGeneralHandler);
+        	  constructor = providerClass.getConstructor(Context.class);
+        	  mp = (ThreadMessageProvider) constructor.newInstance(context);
           } else {
         	  constructor = providerClass.getConstructor(accountClass);
 	          mp = (ThreadMessageProvider) constructor.newInstance(account);
@@ -116,39 +98,12 @@ public class ThreadContentGetter extends AsyncTask<String, Integer, FullThreadMe
         Logger.getLogger(ThreadDisplayer.class.getName()).log(Level.SEVERE, null, ex);
       }
         
-//      try {
-//        content = em.getMailContent2(params[0]);
-//      } catch (IOException ex) {
-//        Logger.getLogger(MyService.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (MessagingException ex) {
-//        Logger.getLogger(EmailDisplayer.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//
       return threadMessage;
-//      return "";
     }
 
     @Override
     protected void onPostExecute(FullThreadMessage result) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putParcelable("threadMessage", result);
-      bundle.putInt("result", ThreadMsgService.OK);
-      bundle.putBoolean("scroll_to_bottom", scrollBottomAfterLoad);
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-//      Log.d("rgai", "RETURNING MESSAGE CONTENT");
+      mHandler.onComplete(TimeoutAsyncTask.OK, result, scrollBottomAfterLoad);
     }
-
-
-//    @Override
-//    protected void onProgressUpdate(Integer... values) {
-//      Log.d(Constants.LOG, "onProgressUpdate");
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//
-//      bundle.putInt("progress", values[0]);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
+    
   }

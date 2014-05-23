@@ -42,7 +42,7 @@ import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.services.MainService;
-import hu.rgai.android.test.AnalyticsApp;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
@@ -82,13 +82,16 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private NonSwipeableViewPager mPager;
   private PagerAdapter mPagerAdapter;
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
+  
+  private YakoApp mYakoApp = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    mYakoApp = (YakoApp)getApplication();
 //    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
     
-    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
     
@@ -97,10 +100,10 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mMessage = getIntent().getExtras().getParcelable("message");
 //    mAccount = 
     String mlepId = mMessage.getId();
-//    mMessage = MainService.getListElementById(mlepId, mAccount);
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
     mFrom = mMessage.getFrom();
-    MainService.setMessageSeenAndRead(mMessage);
+    
+    mYakoApp.setMessageSeenAndReadLocally(mMessage);
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
@@ -124,7 +127,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
-    Tracker t = ((AnalyticsApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
   }
