@@ -25,7 +25,7 @@ public class YakoApp extends Application {
   
   private Tracker tracker = null;
   
-  private volatile TreeSet<MessageListElement> messages;
+  private volatile static TreeSet<MessageListElement> messages;
 
   public TreeSet<MessageListElement> getMessages() {
     if (messages == null) {

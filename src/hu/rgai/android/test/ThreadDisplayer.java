@@ -1,18 +1,15 @@
 package hu.rgai.android.test;
 
 
-import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
@@ -38,28 +35,23 @@ import hu.rgai.android.beens.FullThreadMessage;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
-import hu.rgai.android.services.ThreadMsgService;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.workers.ThreadContentGetter;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
-  private static ProgressDialog pd = null;
+  private ProgressDialog pd = null;
   private ThreadContentGetterHandler mHandler = null;
 //  private FullThreadMessage mContent = null;
 //  private String threadId = "-1";
@@ -92,16 +84,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     super.onBackPressed();
   }
 
-  private void logActivityEvent(String event) {
-    StringBuilder builder = new StringBuilder();
-    builder.append(event);
-    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(mMessage.getId());
-    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    appendVisibleElementToStringBuilder(builder);
-    Log.d("willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
-  }
 
   @Override
   public void onCreate(Bundle icicle) {
@@ -144,13 +126,10 @@ public class ThreadDisplayer extends ActionBarActivity {
       public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
       @Override
       public void afterTextChanged(Editable s) {
-        // TODO Auto-generated method stub
-//        if (mMessage != null) {
-          Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                  + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-          EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                  + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
-//        }
+        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     };
     
@@ -322,22 +301,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     mYakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
   
-  @Override
-  public void finish() {
-//    Log.d("rgai", "TD-finish");
-//    Intent resultIntent = new Intent();
-//    resultIntent.putExtra("thread_displayer", true);
-//    resultIntent.putExtra("account_type", account.getAccountType().toString());
-//    resultIntent.putExtra("act_view_msg", (Parcelable)MainService.actViewingMessage);
-    
-//    resultIntent.putExtra("message_id", threadId);
-
-    // if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-//    resultIntent.putExtra("account", (Parcelable) account);
-    setResult(Activity.RESULT_OK);
-    super.finish(); 
-  }
-
   public void displayMessage(boolean scrollToBottom) {
     int firstVisiblePos = lv.getFirstVisiblePosition();
     int oldItemCount = 0;
@@ -374,6 +337,27 @@ public class ThreadDisplayer extends ActionBarActivity {
     refreshMessageList(-1);
   }
   
+  private void appendVisibleElementToStringBuilder(StringBuilder builder) {
+    int firstVisiblePosition = lv.getFirstVisiblePosition();
+    int lastVisiblePosition = lv.getLastVisiblePosition();
+
+    for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
+      builder.append((adapter.getItem(actualVisiblePosition)).getId());
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+    }
+  }
+  
+  private void logActivityEvent(String event) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(event);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+    builder.append(mMessage.getId());
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+    appendVisibleElementToStringBuilder(builder);
+    Log.d("willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+  }
+  
   private class MessageSendHandler extends Handler {
     
     private final Context context;
@@ -393,16 +377,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     
   }
-  
-  private void appendVisibleElementToStringBuilder(StringBuilder builder) {
-      int firstVisiblePosition = lv.getFirstVisiblePosition();
-      int lastVisiblePosition = lv.getLastVisiblePosition();
-
-      for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
-        builder.append((adapter.getItem(actualVisiblePosition)).getId());
-        builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      }
-    }
   
   private class DataUpdateReceiver extends BroadcastReceiver {
 
