@@ -103,7 +103,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 
     @Override
     protected void onPostExecute(FullThreadMessage result) {
-      mHandler.onComplete(TimeoutAsyncTask.OK, result, scrollBottomAfterLoad);
+      mHandler.onComplete(true, result, scrollBottomAfterLoad);
     }
     
   }

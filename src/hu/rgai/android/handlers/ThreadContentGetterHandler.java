@@ -17,8 +17,8 @@ public class ThreadContentGetterHandler extends TimeoutHandler {
     this.mMessage = message;
   }
   
-  public void onComplete(int resultCode, FullThreadMessage messageContent, boolean scrollToBottom) {
-    if (resultCode != TimeoutAsyncTask.OK) {
+  public void onComplete(boolean success, FullThreadMessage messageContent, boolean scrollToBottom) {
+    if (!success) {
       Toast.makeText(mThreadDisplayer, "Error while loading content", Toast.LENGTH_LONG).show();
     } else {
       mThreadDisplayer.appendLoadedMessages(messageContent);

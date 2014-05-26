@@ -43,6 +43,7 @@ import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.handlers.MessageSendHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.AndroidUtils;
@@ -70,7 +71,7 @@ public class MessageReply extends ActionBarActivity {
   public static final int MESSAGE_SENT_FAILED = 2;
 
   private int messageResult;
-  private Handler handler = null;
+//  private Handler handler = null;
   // private String content = null;
   private TextView text;
   private ChipsMultiAutoCompleteTextView recipients;
@@ -177,7 +178,7 @@ public class MessageReply extends ActionBarActivity {
               mFullMessage.getContent().getContentType().getMimeName(), "UTF-8", null);
 //      text.setText( "\n\n" + content);
     }
-    handler = new MessageReplyTaskHandler(this);
+//    handler = new MessageReplyTaskHandler(this);
 
     if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
       processImplicitIntent(getIntent());
@@ -294,8 +295,8 @@ public class MessageReply extends ActionBarActivity {
     }
 
     List<MessageRecipient> to = recipients.getRecipients();
-    List<Account> accs = new LinkedList<Account>();
-    accs.add(from);
+//    List<Account> accs = new LinkedList<Account>();
+//    accs.add(from);
     String content = text.getText().toString().trim();
     String subject = null;
     if (mSubject.getVisibility() == View.VISIBLE) {
@@ -309,8 +310,43 @@ public class MessageReply extends ActionBarActivity {
         Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
         content += source.getRenderer().toString();
       }
-      MessageSender rs = new MessageSender(ri, accs, handler, subject, content, this, (YakoApp)getApplication(), new Handler());
-      AndroidUtils.<Integer, String, String>startAsyncTask(rs);
+      MessageSendHandler handler = new MessageSendHandler() {
+        public void success(String name) {
+          displayNotification(true, name);
+        }
+
+        public void fail(String name) {
+          displayNotification(false, name);
+        }
+        
+        private void displayNotification(boolean success, String to) {
+          
+          String ticker = success ? "Message sent" : "Sending failed";
+          String title = success ? "Message sent to" : "Failed to send message to:";
+          
+          NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+          
+          NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MessageReply.this)
+                  .setSmallIcon(R.drawable.not_ic_action_email)
+                  .setTicker(ticker)
+                  .setContentTitle(title)
+                  .setContentText(to);
+          mBuilder.setAutoCancel(true);
+          mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
+          
+          if (success) {
+            new Timer().schedule(new TimerTask() {
+              @Override
+              public void run() {
+                NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
+              }
+            }, 5000);
+          }
+        }
+      };
+      MessageSender rs = new MessageSender(ri, from, handler, subject, content, this, (YakoApp)getApplication(), new Handler());
+      AndroidUtils.<Void, String, Integer>startAsyncTask(rs);
       finish();
       
     }
@@ -441,45 +477,45 @@ public class MessageReply extends ActionBarActivity {
     super.finish();
   }
 
-  private class MessageReplyTaskHandler extends Handler {
-
-    MessageReply cont;
-
-    public MessageReplyTaskHandler(MessageReply cont) {
-      this.cont = cont;
-    }
-
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.containsKey("success") && bundle.getBoolean("success") == true) {
-          String recipientName = bundle.getString("to");
-//          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG).show();
-//        } else {
-//          cont.setMessageResult(MESSAGE_SENT_OK);
-//          cont.finish();
-          
-          NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-          
-          NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(cont)
-                  .setSmallIcon(R.drawable.not_ic_action_email)
-                  .setTicker("Message sent")
-                  .setContentTitle("Message sent to:")
-                  .setContentText(recipientName);
-          mBuilder.setAutoCancel(true);
-          mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
-          new Timer().schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
-            }
-          }, 3000);
-        }
-      }
-    }
-  }
+//  private class MessageReplyTaskHandler extends Handler {
+//
+//    MessageReply cont;
+//
+//    public MessageReplyTaskHandler(MessageReply cont) {
+//      this.cont = cont;
+//    }
+//
+//    @Override
+//    public void handleMessage(Message msg) {
+//      Bundle bundle = msg.getData();
+//      if (bundle != null) {
+//        if (bundle.containsKey("success") && bundle.getBoolean("success") == true) {
+//          String recipientName = bundle.getString("to");
+////          Toast.makeText(cont, bundle.getString("result"), Toast.LENGTH_LONG).show();
+////        } else {
+////          cont.setMessageResult(MESSAGE_SENT_OK);
+////          cont.finish();
+//          
+//          NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//          
+//          NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(cont)
+//                  .setSmallIcon(R.drawable.not_ic_action_email)
+//                  .setTicker("Message sent")
+//                  .setContentTitle("Message sent to:")
+//                  .setContentText(recipientName);
+//          mBuilder.setAutoCancel(true);
+//          mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
+//          new Timer().schedule(new TimerTask() {
+//
+//            @Override
+//            public void run() {
+//              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
+//            }
+//          }, 3000);
+//        }
+//      }
+//    }
+//  }
 
 }

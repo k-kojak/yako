@@ -1,24 +1,7 @@
-/*
- * Copyright 2012 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package hu.rgai.android.view.activities;
 
 import android.app.TaskStackBuilder;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -36,13 +19,10 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.beens.Person;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
@@ -50,36 +30,14 @@ import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
-import hu.rgai.android.workers.EmailMessageMarker;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
 import java.util.Arrays;
 import java.util.TreeSet;
-import net.htmlparser.jericho.Source;
 
-/**
- * Demonstrates a "screen-slide" animation using a {@link ViewPager}. Because
- * {@link ViewPager} automatically plays such an animation when calling
- * {@link ViewPager#setCurrentItem(int)}, there isn't any animation-specific code in this
- * sample.
- *
- * <p>This sample shows a "next" button that advances the user to the next step in a
- * wizard, animating the current screen out (to the left) and the next screen in (from the
- * right). The reverse animation is played when the user presses the "previous"
- * button.</p>
- *
- * @see ScreenSlidePageFragment
- */
 public class EmailDisplayerActivity extends ActionBarActivity {
 
-  /**
-   * The number of pages (wizard steps) to show in this demo.
-   */
   private MessageListElement mMessage = null;
-//  private Account mAccount = null;
-//  private MessageListElement mMessage = null;
   private boolean mFromNotification = false;
-  private final String mSubject = null;
-  private Person mFrom = null;
   private FullSimpleMessage mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
   
@@ -93,7 +51,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mYakoApp = (YakoApp)getApplication();
-//    Log.d("rgai", "EMAIL DISP. ACTIVITY: onCreate: " + getIntent().getExtras().getString("msg_list_element_id"));
     
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -102,28 +59,28 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     setContentView(R.layout.activity_email_displayer);
 
     mMessage = getIntent().getExtras().getParcelable("message");
-//    mAccount = 
-    String mlepId = mMessage.getId();
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
-    mFrom = mMessage.getFrom();
     
     mYakoApp.setMessageSeenAndReadLocally(mMessage);
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
-//    EmailMessageMarker messageMarker = new EmailMessageMarker(mMessage.getAccount());
-//    AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
+    
+    // marking message as read
     MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
             new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})),
             true, null);
     marker.executeTask(new Void[]{});
 
+    
+    // handling if we came from notifier
     if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
             && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {
       mFromNotification = true;
     }
 
+    
     // Instantiate a ViewPager and a PagerAdapter.
     mPager = (NonSwipeableViewPager) findViewById(R.id.pager);
     mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(),
@@ -182,11 +139,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
         }
         return true;
 
-//            case R.id.action_next:
-//                // Advance to the next step in the wizard. If there is no next step, setCurrentItem
-//                // will do nothing.
-//                mPager.setCurrentItem(mPager.getCurrentItem() + 1);
-//                return true;
     }
 
     return super.onOptionsItemSelected(item);

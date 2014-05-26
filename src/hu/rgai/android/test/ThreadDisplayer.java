@@ -211,16 +211,17 @@ public class ThreadDisplayer extends ActionBarActivity {
       return;
     }
     
-    List<Account> accs = new LinkedList<Account>();
-    accs.add(mMessage.getAccount());
+//    List<Account> accs = new LinkedList<Account>();
+//    accs.add(mMessage.getAccount());
     MessageRecipient ri = null;
     if (mMessage.getAccount().getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     } else {
       ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
-    MessageSender rs = new MessageSender(ri, accs, new MessageSendHandler(this), "", text.getText().toString(), this, (YakoApp)getApplication(), new Handler());
-    AndroidUtils.<Integer, String, String>startAsyncTask(rs);
+    // TODO: write a nice handler here!!!
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "", text.getText().toString(), this, (YakoApp)getApplication(), new Handler());
+    AndroidUtils.<Void, String, Integer>startAsyncTask(rs);
     text.setText("");
   }
 
