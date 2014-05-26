@@ -77,6 +77,12 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   private YakoApp mYakoApp = null;
   
+  /**
+   * This variable holds the ID of the actually displayed thread. That's why if
+   * a new message comes from this thread id, we set it immediately to seen.
+   */
+  public static volatile MessageListElement actViewingMessage = null;
+  
   @Override
   public void onBackPressed() {
     Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId());
@@ -142,7 +148,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     super.onResume();
     
     
-    MainService.actViewingMessage = mMessage;
+    actViewingMessage = mMessage;
     removeNotificationIfExists();
     mYakoApp.setMessageSeenAndReadLocally(mMessage);
     
@@ -196,10 +202,10 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   
   private void removeNotificationIfExists() {
-    if (mMessage.equals(MainService.mLastNotifiedMessage)) {
+    if (mMessage.equals(mYakoApp.getmLastNotifiedMessage())) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-      MainService.mLastNotifiedMessage = null;
+      mYakoApp.setLastNotifiedMessage(null);
     }
   }
   
@@ -237,7 +243,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       unregisterReceiver(dur);
     }
     
-    MainService.actViewingMessage = null;
+    actViewingMessage = null;
   }
 
   @Override

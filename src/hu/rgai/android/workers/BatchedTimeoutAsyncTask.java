@@ -18,21 +18,21 @@ public abstract class BatchedTimeoutAsyncTask<Params, Progress, Result> extends 
   
 
   @Override
-  protected void onCancelled() {
+  protected final void onCancelled() {
     executor.taskFinished();
     onBatchedCancelled();
   }
   
 
   @Override
-  protected void onCancelled(Result result) {
+  protected final void onCancelled(Result result) {
     executor.taskFinished();
     onBatchedCancelled(result);
   }
   
 
   @Override
-  protected void onPostExecute(Result result) {
+  protected final void onPostExecute(Result result) {
     executor.taskFinished();
     
     onBatchedPostExecute(result);

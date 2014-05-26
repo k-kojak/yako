@@ -31,6 +31,7 @@ import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
+import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.YakoApp;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -263,7 +264,7 @@ public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMess
       
       // TODO: do not make a full query to the given account/type, query only the
       // affected message element, so select only 1 element instead of all messages of the given account
-      if (MainService.actViewingMessage == null || !MainService.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+      if (ThreadDisplayer.actViewingMessage == null || !ThreadDisplayer.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainScheduler.class);
         service.setAction(Context.ALARM_SERVICE);
         

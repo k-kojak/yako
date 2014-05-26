@@ -42,6 +42,7 @@ import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
@@ -235,14 +236,15 @@ public class MainActivity extends ActionBarActivity {
   }
   
   public static void refreshLoadingStateRate() {
-    if (MainService.currentRefreshedAccountCounter == MainService.currentNumOfAccountsToRefresh) {
+    if (!BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY)) {
       setRefreshActionButtonState(false);
     } else {
       setRefreshActionButtonState(true);
       if (mMenu != null) {
         MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
         if (refreshItem != null && refreshItem.getActionView() != null) {
-          ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(MainService.currentRefreshedAccountCounter+"/"+MainService.currentNumOfAccountsToRefresh);
+          BatchedProcessState ps = BatchedAsyncTaskExecutor.getProgressState(MainService.MESSAGE_LIST_QUERY);
+          ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(ps.getProcessDone()+"/"+ps.getTotalProcess());
         }
       }
     }
@@ -443,7 +445,7 @@ public class MainActivity extends ActionBarActivity {
     }
     
     // initLastNotificationDates();
-    updateLastNotification(instance, null);
+    mYakoApp.updateLastNotification(null);
     setUpAndRegisterScreenReceiver();
 
     setContent();
@@ -504,16 +506,16 @@ public class MainActivity extends ActionBarActivity {
    *          the account to update, or null if update all account's last event
    *          time
    */
-  public static void updateLastNotification(Context context, Account acc) {
-    if (acc != null) {
-      last_notification_dates.put(acc, new Date());
-    } else {
-      for (Account a : last_notification_dates.keySet()) {
-        last_notification_dates.get(a).setTime(new Date().getTime());
-      }
-    }
-    StoreHandler.writeLastNotificationObject(context, last_notification_dates);
-  }
+//  public static void updateLastNotification(Context context, Account acc) {
+//    if (acc != null) {
+//      last_notification_dates.put(acc, new Date());
+//    } else {
+//      for (Account a : last_notification_dates.keySet()) {
+//        last_notification_dates.get(a).setTime(new Date().getTime());
+//      }
+//    }
+//    StoreHandler.writeLastNotificationObject(context, last_notification_dates);
+//  }
 
   /**
    * Returns the last notification of the given account.
@@ -522,18 +524,18 @@ public class MainActivity extends ActionBarActivity {
    *          last notification time will be set to this account
    * @return
    */
-  public static Date getLastNotification(Context context, Account acc) {
-    Date ret = null;
-    if (last_notification_dates == null || acc == null) {
-      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
-    } else {
-      ret = last_notification_dates.get(acc);
-    }
-    if (ret == null) {
-      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
-    }
-    return ret;
-  }
+//  public static Date getLastNotification(Context context, Account acc) {
+//    Date ret = null;
+//    if (last_notification_dates == null || acc == null) {
+//      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
+//    } else {
+//      ret = last_notification_dates.get(acc);
+//    }
+//    if (ret == null) {
+//      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
+//    }
+//    return ret;
+//  }
 
   /**
    * Removes the messages from the displayview to the given account.
@@ -664,7 +666,7 @@ public class MainActivity extends ActionBarActivity {
           }
         });
         lv.addFooterView(loadMoreButton);
-        if (MainService.currentRefreshedAccountCounter < MainService.currentNumOfAccountsToRefresh) {
+        if (BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY)) {
           loadMoreButton.setEnabled(false);
         }
 
@@ -766,47 +768,47 @@ public class MainActivity extends ActionBarActivity {
    * @param message
    *          the content of the error message
    */
-  public static void showErrorMessage(int result, String message) {
-    if (result != MainService.OK) {
-      Log.d("rgai", "ERROR MSG FROM Service -> " + message);
-      String msg = "";
-      switch (result) {
-        case MainService.AUTHENTICATION_FAILED_EXCEPTION:
-          msg = "Authentication failed: " + message;
-          break;
-        case MainService.UNKNOWN_HOST_EXCEPTION:
-          msg = message;
-          break;
-        case MainService.IOEXCEPTION:
-          msg = message;
-          break;
-        case MainService.CONNECT_EXCEPTION:
-          msg = message;
-          break;
-        case MainService.NO_SUCH_PROVIDER_EXCEPTION:
-          msg = message;
-          break;
-        case MainService.MESSAGING_EXCEPTION:
-          msg = message;
-          break;
-        case MainService.SSL_HANDSHAKE_EXCEPTION:
-          msg = message;
-          break;
-        case MainService.NO_INTERNET_ACCESS:
-          msg = message;
-          break;
-        case MainService.NO_ACCOUNT_SET:
-          msg = instance.getString(R.string.no_account_set);
-          break;
-        default:
-          msg = instance.getString(R.string.exception_unknown);
-          break;
-      }
-      if (is_activity_visible && instance != null) {
-        Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
-      }
-    }
-  }
+//  public static void showErrorMessage(int result, String message) {
+//    if (result != MainService.OK) {
+//      Log.d("rgai", "ERROR MSG FROM Service -> " + message);
+//      String msg = "";
+//      switch (result) {
+//        case MainService.AUTHENTICATION_FAILED_EXCEPTION:
+//          msg = "Authentication failed: " + message;
+//          break;
+//        case MainService.UNKNOWN_HOST_EXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.IOEXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.CONNECT_EXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.NO_SUCH_PROVIDER_EXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.MESSAGING_EXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.SSL_HANDSHAKE_EXCEPTION:
+//          msg = message;
+//          break;
+//        case MainService.NO_INTERNET_ACCESS:
+//          msg = message;
+//          break;
+//        case MainService.NO_ACCOUNT_SET:
+//          msg = instance.getString(R.string.no_account_set);
+//          break;
+//        default:
+//          msg = instance.getString(R.string.exception_unknown);
+//          break;
+//      }
+//      if (is_activity_visible && instance != null) {
+//        Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
+//      }
+//    }
+//  }
 
   /**
    * This function is called by the main Service, when a new message arrives.
@@ -870,7 +872,7 @@ public class MainActivity extends ActionBarActivity {
     t.send(new HitBuilders.AppViewBuilder().build());
     
     // refreshing last notification date when closing activity
-    updateLastNotification(instance, null);
+    mYakoApp.updateLastNotification(null);
   }
 
   /**

@@ -2,8 +2,10 @@
 package hu.rgai.android.workers;
 
 import android.util.Log;
+import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class BatchedAsyncTaskExecutor {
@@ -12,21 +14,21 @@ public class BatchedAsyncTaskExecutor {
   private int mTasksDone;
   private final List<BatchedTimeoutAsyncTask> mTasks;
   private final Object[][] mParams;
-  private final String mProgressKey;
+  private final String mProgressId;
   private BatchedAsyncTaskHandler mBatchHandler;
   
-          
-  private volatile static TreeSet<String> runningStack = new TreeSet<String>();
+  private volatile static TreeSet<String> runningStacks = new TreeSet<String>();
+  private volatile static TreeMap<String, BatchedProcessState> runningStacksState = new TreeMap<String, BatchedProcessState>();
   
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
-          String progressKey, BatchedAsyncTaskHandler handler) throws Exception {
+          String progressId, BatchedAsyncTaskHandler handler) throws Exception {
     
     mTasksDone = 0;
     mTasksCount = tasks.size();
     mTasks = tasks;
     mParams = params;
-    mProgressKey = progressKey;
+    mProgressId = progressId;
     mBatchHandler = handler;
     
     if (mParams != null && mTasks.size() != mParams.length) {
@@ -38,8 +40,8 @@ public class BatchedAsyncTaskExecutor {
   }
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
-          String progressKey) throws Exception {
-    this(tasks, params, progressKey, null);
+          String progressId) throws Exception {
+    this(tasks, params, progressId, null);
   }
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params) throws Exception {
@@ -50,10 +52,15 @@ public class BatchedAsyncTaskExecutor {
     this(tasks, null, null, null);
   }
   
+  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, String progressId) throws Exception {
+    this(tasks, null, progressId, null);
+  }
+  
   public boolean execute() {
-    if (mProgressKey == null || !runningStack.contains(mProgressKey)) {
-      if (mProgressKey != null) {
-        runningStack.add(mProgressKey);
+    if (mProgressId == null || !runningStacks.contains(mProgressId)) {
+      if (mProgressId != null) {
+        runningStacks.add(mProgressId);
+        runningStacksState.put(mProgressId, new BatchedProcessState(mTasksCount));
       }
       int i = 0;
       for (BatchedTimeoutAsyncTask task : mTasks) {
@@ -71,13 +78,29 @@ public class BatchedAsyncTaskExecutor {
   
   public synchronized void taskFinished() {
     mTasksDone++;
+    if (mProgressId != null && runningStacksState.containsKey(mProgressId)) {
+      runningStacksState.get(mProgressId).increaseDoneProcesses();
+    }
     if (mTasksDone == mTasksCount) {
-      if (mProgressKey != null) {
-        runningStack.remove(mProgressKey);
+      if (mProgressId != null) {
+        runningStacks.remove(mProgressId);
+        runningStacksState.remove(mProgressId);
       }
       if (mBatchHandler != null) {
-        mBatchHandler.batchedTaskDone(mProgressKey);
+        mBatchHandler.batchedTaskDone(mProgressId);
       }
+    }
+  }
+  
+  public static boolean isProgressRunning(String progressId) {
+    return runningStacks.contains(progressId);
+  }
+  
+  public static BatchedProcessState getProgressState(String progressId) {
+    if (runningStacksState.containsKey(progressId)) {
+      return runningStacksState.get(progressId);
+    } else {
+      return null;
     }
   }
   

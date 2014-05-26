@@ -14,17 +14,10 @@ import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.RunningSetup;
 import hu.rgai.android.config.Settings;
+import hu.rgai.android.handlers.MessageListerHandler;
+import hu.rgai.android.handlers.TimeoutHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
-import static hu.rgai.android.services.MainService.AUTHENTICATION_FAILED_EXCEPTION;
-import static hu.rgai.android.services.MainService.CERT_PATH_VALIDATOR_EXCEPTION;
-import static hu.rgai.android.services.MainService.CONNECT_EXCEPTION;
-import static hu.rgai.android.services.MainService.IOEXCEPTION;
-import static hu.rgai.android.services.MainService.MESSAGING_EXCEPTION;
-import static hu.rgai.android.services.MainService.NO_SUCH_PROVIDER_EXCEPTION;
-import static hu.rgai.android.services.MainService.OK;
-import static hu.rgai.android.services.MainService.SSL_HANDSHAKE_EXCEPTION;
-import static hu.rgai.android.services.MainService.UNKNOWN_HOST_EXCEPTION;
 import hu.rgai.android.test.YakoApp;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -42,31 +35,48 @@ import javax.net.ssl.SSLHandshakeException;
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageListResult> {
+public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Integer, MessageListResult> {
 
+  public static final int OK = 0;
+  public static final int UNKNOWN_HOST_EXCEPTION = 1;
+  public static final int IOEXCEPTION = 2;
+  public static final int CONNECT_EXCEPTION = 3;
+  public static final int NO_SUCH_PROVIDER_EXCEPTION = 4;
+  public static final int MESSAGING_EXCEPTION = 5;
+  public static final int SSL_HANDSHAKE_EXCEPTION = 6;
+  public static final int CERT_PATH_VALIDATOR_EXCEPTION = 7;
+  public static final int NO_INTERNET_ACCESS = 8;
+  public static final int NO_ACCOUNT_SET = 9;
+  public static final int AUTHENTICATION_FAILED_EXCEPTION = 10;
+  public static final int CANCELLED = 11;
+  
+  
+  
   private final YakoApp mYakoApp;
   private int result = -1;
   private String errorMessage = null;
-  private final Handler handler;
   private final Account acc;
   private final MessageProvider messageProvider;
   private boolean loadMore = false;
   private int queryLimit;
   private int queryOffset;
+  private MessageListerHandler mHandler;
   private RunningSetup mRunningSetup;
   
 
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
-  public MessageListerAsyncTask(YakoApp yakoApp, Handler handler, Account acc, MessageProvider messageProvider,
-          boolean loadMore, int queryLimitOverride, int queryOffsetOverride) {
+  public MessageListerAsyncTask(YakoApp yakoApp, Account acc, MessageProvider messageProvider,
+          boolean loadMore, int queryLimitOverride, int queryOffsetOverride, MessageListerHandler handler) {
+    
+    super(handler);
     this.mYakoApp = yakoApp;
-    this.handler = handler;
     this.acc = acc;
     this.messageProvider = messageProvider;
     this.loadMore = loadMore;
     this.queryLimit = queryLimitOverride;
     this.queryOffset = queryOffsetOverride;
+    this.mHandler = handler;
 
     int offset = 0;
     int limit = acc.getMessageLimit();
@@ -193,30 +203,36 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   }
 
   @Override
-  protected void onPostExecute(MessageListResult messageResult) {
-    Bundle bundle = new Bundle();
-    Message msg = handler.obtainMessage();
-    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
-      bundle.putInt(ParamStrings.RESULT, MainService.CANCELLED);
-    } else {
-      if (this.result == OK) {
-        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
-        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
-        bundle.putString("message_result_type", messageResult.getResultType().toString());
-        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
-      }
-      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
-      bundle.putInt(ParamStrings.RESULT, this.result);
-      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
-    }
-
-    msg.setData(bundle);
-    handler.sendMessage(msg);
+  protected void onBatchedCancelled() {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
-  protected void onPreExecute() {
-    // Log.d(Constants.LOG, "onPreExecute");
+  protected void onBatchedCancelled(MessageListResult result) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  protected void onBatchedPostExecute(MessageListResult messageResult) {
+    mHandler.finished(messageResult, loadMore, result, errorMessage);
+//    Bundle bundle = new Bundle();
+//    Message msg = handler.obtainMessage();
+//    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
+//      bundle.putInt(ParamStrings.RESULT, MainService.CANCELLED);
+//    } else {
+//      if (this.result == OK) {
+//        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
+//        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
+//        bundle.putString("message_result_type", messageResult.getResultType().toString());
+//        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
+//      }
+//      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
+//      bundle.putInt(ParamStrings.RESULT, this.result);
+//      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
+//    }
+//
+//    msg.setData(bundle);
+//    handler.sendMessage(msg);
   }
 
 }
