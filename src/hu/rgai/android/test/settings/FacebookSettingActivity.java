@@ -222,8 +222,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-      // Inflate the menu items for use in the action bar
-//    Log.d("rgai", "ON CREATE OPTIONS MENU");
     this.menu = menu;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.account_options_facebook_menu, menu);
@@ -246,7 +244,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
       
       findViewById(R.id.profilePicture).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.display_name).setVisibility(user == null ? View.GONE : View.VISIBLE);
-//      findViewById(R.id.unique_name).setVisibility(user == null && oldAccount == null ? View.GONE : View.VISIBLE);
+      
       findViewById(R.id.password).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.show_pass).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.initial_items_num).setVisibility(user == null ? View.GONE : View.VISIBLE);
@@ -255,7 +253,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
       
       if (user != null && oldAccount == null) {
         ((TextView)findViewById(R.id.display_name)).setText(user.getName());
-//        ((TextView)findViewById(R.id.unique_name)).setText(user.getUsername());
         this.id = user.getId();
       }
     }
@@ -288,8 +285,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
         Toast.makeText(this, "Synchronization is running", Toast.LENGTH_LONG).show();
       } else {
         Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
-        FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this,
-                new IntegrationHandler(FacebookSettingActivity.this));
+        FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this);
         AndroidUtils.<String, String, String>startAsyncTask(integrator, user.getId());
         
       }
@@ -382,7 +378,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
         if (sn.isOpened()) {
           Log.d("rgai", "Closing session and clearing token information");
           sn.closeAndClearTokenInformation();
-//          sn.
         } else {
           Log.d("rgai", "Session was not opened...");
           sn.closeAndClearTokenInformation();
@@ -398,26 +393,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
     finish();
   }
   
-  private class IntegrationHandler extends Handler {
-
-    private Context c;
-
-    public IntegrationHandler(Context c) {
-      this.c = c;
-    }
-
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.get("content") != null) {
-          Toast.makeText(c, "Update complete.", Toast.LENGTH_LONG).show();
-          ErrorLog.dumpLogcat(c, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Updating contact list done");
-        }
-      }
-    }
-  }
-
   public interface ToastHelper {
     public void showToast(String msg);
   }

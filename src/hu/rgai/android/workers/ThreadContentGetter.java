@@ -1,10 +1,6 @@
 package hu.rgai.android.workers;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
@@ -14,13 +10,10 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.messageproviders.ThreadMessageProvider;
-import hu.rgai.android.services.ThreadMsgService;
-import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.ThreadDisplayer;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
@@ -35,6 +28,8 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
     private boolean scrollBottomAfterLoad = false;
     
     public ThreadContentGetter(Context context, ThreadContentGetterHandler handler, Account account, boolean scrollBottomAfterLoad) {
+      super(handler);
+      
       this.context = context;
       this.mHandler = handler;
       this.account = account;
@@ -49,7 +44,6 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
     protected FullThreadMessage doInBackground(String... params) {
       
       FullThreadMessage threadMessage = null;
-//      Log.d("rgai", "GETTING MESSAGE CONTENT");
       try {
         if (account == null) {
           Log.d("rgai", "account is NULL @ threadContentGetter");

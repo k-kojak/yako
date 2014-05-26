@@ -19,13 +19,15 @@ public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Boo
   public MessageSeenMarkerAsyncTask(MessageProvider messageProvider, TreeSet<MessageListElement> messagesToMark, boolean seen,
           MessageSeenMarkerHandler handler) {
     
+    super(handler);
+    
     mProvider = messageProvider;
     mMessagesToMark = messagesToMark;
     mSeen = seen;
     mHandler = handler;
     
-    setTimeoutHandler(mHandler);
   }
+  
   
   @Override
   protected Boolean doInBackground(Void... params) {

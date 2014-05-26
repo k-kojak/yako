@@ -14,6 +14,7 @@ public class ActiveConnectionConnector extends TimeoutAsyncTask<String, Integer,
   private Context context = null;
   
   public ActiveConnectionConnector(MessageProvider messageProvider, Context context) {
+    super(null);
     this.messageProvider = messageProvider;
     this.context = context;
   }

@@ -5,9 +5,9 @@ package hu.rgai.android.handlers;
  *
  * @author Tamas Kojedzinszky
  */
-public interface MessageSendHandler {
+public abstract class MessageSendHandler extends TimeoutHandler {
 
-  public void success(String name);
-  public void fail(String name);
+  public abstract void success(String name);
+  public abstract void fail(String name);
   
 }

@@ -1,10 +1,7 @@
 package hu.rgai.android.workers;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.widget.Toast;
 import hu.rgai.android.beens.EmailMessageRecipient;
 import hu.rgai.android.beens.FacebookMessageRecipient;
@@ -14,7 +11,6 @@ import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.beens.FacebookAccount;
-import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.handlers.MessageSendHandler;
 import hu.rgai.android.messageproviders.FacebookMessageProvider;
 import hu.rgai.android.messageproviders.MessageProvider;
@@ -24,7 +20,6 @@ import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +46,9 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   public MessageSender(MessageRecipient recipient, Account fromAccount, MessageSendHandler handler,
           String subject, String content, Context context, YakoApp application, Handler generalHandler) {
+    
+    super(handler);
+    
     this.recipient = recipient;
     this.fromAccount = fromAccount;
     this.handler = handler;

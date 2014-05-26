@@ -8,10 +8,12 @@ import hu.rgai.android.tools.AndroidUtils;
 
 public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTask<Params, Progress, Result> {
   
-//  public static final int OK = 0;
-  
   private long mTimeout = -1;
   private TimeoutHandler mTimeoutHandler = null;
+
+  public TimeoutAsyncTask(TimeoutHandler handler) {
+    mTimeoutHandler = handler;
+  }
 
   public void setTimeout(long timeout) {
     this.mTimeout = timeout;

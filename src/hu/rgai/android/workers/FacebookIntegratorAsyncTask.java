@@ -23,17 +23,14 @@ import java.util.logging.Logger;
 /**
  * @author Tamas Kojedzinszky
  */
-  public class FacebookIntegratorAsyncTask extends AsyncTask<String, String, String> {
+  public class FacebookIntegratorAsyncTask extends TimeoutAsyncTask<String, String, String> {
 
     public static boolean isRunning = false;
-    private Handler handler;
-//    FacebookAccount account;
     private Activity activity;
 
-    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
+    public FacebookIntegratorAsyncTask(Activity activity) {
+      super(null);
       this.activity = activity;
-      this.handler = handler;
-//      this.account = account;
     }
 
     @Override
@@ -59,7 +56,6 @@ import java.util.logging.Logger;
 
       FacebookFriendProvider fbfp = new FacebookFriendProvider();
       fbfp.insertFriends(activity, new FacebookSettingActivity.ToastHelper() {
-
         public void showToast(String msg) {
           publishProgress(msg);
         }
@@ -71,12 +67,7 @@ import java.util.logging.Logger;
 
     @Override
     protected void onPostExecute(String result) {
-      Message msg = handler.obtainMessage();
-      Bundle bundle = new Bundle();
-      bundle.putString("content", "1");
-      msg.setData(bundle);
-      handler.sendMessage(msg);
-      isRunning = false;
+      Toast.makeText(activity, "Update complete.", Toast.LENGTH_LONG).show();
     }
     
     @Override
