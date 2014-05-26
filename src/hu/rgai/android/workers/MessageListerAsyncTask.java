@@ -102,7 +102,6 @@ public class MessageListerAsyncTask extends AsyncTask<String, Integer, MessageLi
   protected MessageListResult doInBackground(String... params) {
     
     
-    
 //    Log.d("rgai", "do in background started: " + acc);
     MessageListResult messageResult = null;
     try {

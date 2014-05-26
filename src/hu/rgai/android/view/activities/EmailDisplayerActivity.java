@@ -41,6 +41,7 @@ import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
@@ -50,6 +51,9 @@ import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
 import hu.rgai.android.workers.EmailMessageMarker;
+import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
+import java.util.Arrays;
+import java.util.TreeSet;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -107,8 +111,13 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
-    EmailMessageMarker messageMarker = new EmailMessageMarker(mMessage.getAccount());
-    AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
+//    EmailMessageMarker messageMarker = new EmailMessageMarker(mMessage.getAccount());
+//    AndroidUtils.<String, Integer, Void>startAsyncTask(messageMarker, mlepId);
+    MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
+    MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
+            new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})),
+            true, null);
+    marker.executeTask(new Void[]{});
 
     if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
             && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {

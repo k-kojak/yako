@@ -1,9 +1,7 @@
 
 package hu.rgai.android.handlers;
 
-import android.os.Handler;
-
-public class TimeoutHandler extends Handler {
+public class TimeoutHandler {
 
   public void timeout() {}
   
