@@ -45,7 +45,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
 
   public MessageSender(MessageRecipient recipient, Account fromAccount, MessageSendHandler handler,
-          String subject, String content, Context context, YakoApp application, Handler generalHandler) {
+          String subject, String content, Context context) {
     
     super(handler);
     

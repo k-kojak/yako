@@ -227,6 +227,7 @@ public class MainService extends Service {
                   final MessageListerAsyncTask myThread = new MessageListerAsyncTask(mYakoApp, handler, acc, provider, extraParams.isLoadMore(),
                           extraParams.getQueryLimit(), extraParams.getQueryOffset());
                   AndroidUtils.<String, Integer, MessageListResult>startAsyncTask(myThread);
+//                  myThread.e
                   Handler handler = new Handler();
                   handler.postDelayed(new Runnable() {
                     @Override

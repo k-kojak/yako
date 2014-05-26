@@ -31,6 +31,7 @@ import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.settings.InfEmailSettingActivity;
 import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -1164,13 +1165,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
   }
   
-  private class ConnectionDropper extends AsyncTask<Void, Void, Void> {
+  private class ConnectionDropper extends TimeoutAsyncTask<Void, Void, Void> {
 
     private final FolderIdleWithTimestamp folderIdleWithTimestamp;
     private final IMAPFolder queryFolder;
     private final Store store;
     
     public ConnectionDropper(FolderIdleWithTimestamp folderIdleThread, IMAPFolder folder, Store store) {
+      super(null);
       this.folderIdleWithTimestamp = folderIdleThread;
       this.queryFolder = folder;
       this.store = store;

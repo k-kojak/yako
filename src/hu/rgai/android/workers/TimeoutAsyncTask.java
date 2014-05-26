@@ -32,7 +32,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
   /**
    * Params MUST be provided here, because in case its left  empty, the AsyncTask executor
    * would call for .execute(Object[]) instead of .execute(T[]), so thats why we have to
-   * set the parameter explicitely even if its empty.
+   * set the parameter explicitely even if its empty (or null).
    * 
    * @param params the params to execute
    */

@@ -71,7 +71,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
             new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})),
             true, null);
-    marker.executeTask(new Void[]{});
+    marker.executeTask(null);
 
     
     // handling if we came from notifier

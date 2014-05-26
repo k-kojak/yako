@@ -220,8 +220,8 @@ public class ThreadDisplayer extends ActionBarActivity {
       ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
     // TODO: write a nice handler here!!!
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "", text.getText().toString(), this, (YakoApp)getApplication(), new Handler());
-    AndroidUtils.<Void, String, Integer>startAsyncTask(rs);
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "", text.getText().toString(), this);
+    rs.executeTask(null);
     text.setText("");
   }
 

@@ -345,8 +345,8 @@ public class MessageReply extends ActionBarActivity {
           }
         }
       };
-      MessageSender rs = new MessageSender(ri, from, handler, subject, content, this, (YakoApp)getApplication(), new Handler());
-      AndroidUtils.<Void, String, Integer>startAsyncTask(rs);
+      MessageSender rs = new MessageSender(ri, from, handler, subject, content, this);
+      rs.executeTask(null);
       finish();
       
     }
