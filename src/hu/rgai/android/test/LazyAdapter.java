@@ -3,7 +3,6 @@ package hu.rgai.android.test;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +16,7 @@ import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ProfilePhotoProvider;
-import hu.rgai.android.tools.Utils;
 import hu.rgai.android.tools.view.AsyncImageLoadProvider;
 import hu.rgai.android.tools.view.AsyncImageView;
 import java.text.SimpleDateFormat;
@@ -29,7 +26,7 @@ import java.util.GregorianCalendar;
 
 public class LazyAdapter extends BaseAdapter {
 
-  private MainActivity mActivity;
+  private final MainActivity mActivity;
   private static LayoutInflater inflater = null;
   private Account filterAcc = null;
   private final SimpleDateFormat sdf = new SimpleDateFormat();
@@ -256,34 +253,13 @@ public class LazyAdapter extends BaseAdapter {
   
   public static int getSimpleMailIcon(EmailAccount acc) {
     String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
-    if (dom.indexOf(".") != -1) {
+    if (dom.contains(".")) {
       dom = dom.substring(0, dom.indexOf("."));
     }
     
     return Settings.EmailUtils.getResourceIdToEmailDomain(dom);
   }
   
-//  private class ImageLoaderWorker extends AsyncTask<Long, Void, Bitmap> {
-//
-//    private ImageView mImageView = null;
-//    private Context mContext;
-//
-//    public ImageLoaderWorker(ImageView imageView, Context context) {
-//      this.mImageView = imageView;
-//      mContext = context;
-//    }
-//    
-//    @Override
-//    protected Bitmap doInBackground(Long... arg0) {
-//      return ProfilePhotoProvider.getImageToUser(mContext, NO_SELECTION);
-//    }
-//    
-//    @Override
-//    protected void onPostExecute(Bitmap bitmap) {
-//      mImageView.setImageBitmap(bitmap);
-//    }
-//    
-//  }
   
   static class ViewHolder {
     TextView subject;

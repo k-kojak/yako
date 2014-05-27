@@ -27,8 +27,6 @@ import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.android.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.android.workers.MessageListerAsyncTask;
-import static hu.rgai.android.workers.MessageListerAsyncTask.NO_ACCOUNT_SET;
-import static hu.rgai.android.workers.MessageListerAsyncTask.NO_INTERNET_ACCESS;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -40,27 +38,8 @@ public class MainService extends Service {
   
   public static boolean RUNNING = false;
 
-  /**
-   * This variable holds the ID of the actually displayed thread. That's why if
-   * a new message comes from this thread id, we set it immediately to seen.
-   */
-//  public static volatile MessageListElement actViewingMessage = null;
-
-  // flags for email account feedback
-  
-  
-//  private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
-  
-  
-//  public static volatile TreeSet<MessageListElement> messages = null;
-//  public static volatile Date last_message_update = new Date();
-//  public volatile static int currentRefreshedAccountCounter = 0;
-//  public volatile static int currentNumOfAccountsToRefresh = 0;
-//  public static volatile MessageListElement mLastNotifiedMessage = null;
-  
-//  private static 
   
   public static final String MESSAGE_LIST_QUERY_KEY = "message_list_query_key";
   public static final String BATCHED_MESSAGE_LIST_TASK_DONE_INTENT = "batched_message_list_task_done_intent";
@@ -70,10 +49,7 @@ public class MainService extends Service {
   @Override
   public void onCreate() {
     RUNNING = true;
-//    handler = new MyHandler(this);
 
-    // this loads the last notification dates from file
-//    MainActivity.initLastNotificationDates(this);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -82,25 +58,23 @@ public class MainService extends Service {
         EventLogger.INSTANCE.closeLogFile();
       }
     });
-
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
     }
-
     EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.APPLICATION.APPLICATION_START_STR
             + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + EventLogger.INSTANCE.getAppVersion()
             + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);
-    if (!LogUploadScheduler.INSTANCE.isRunning)
+    if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
+    }
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
     RUNNING = false;
-//    Log.d("rgai", "MAIN SERVICE ON DESTROY CALLED!");
     
   }
   
@@ -115,8 +89,7 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    // if (isNetworkAvailable()) {
-    Log.d("rgai", "Service:onStartCommand");
+//    Log.d("rgai", "Service:onStartCommand");
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
@@ -137,10 +110,10 @@ public class MainService extends Service {
     boolean isPhone = YakoApp.isPhone;
     MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
     if (accounts.isEmpty() && !isPhone) {
-      preHandler.finished(null, false, NO_ACCOUNT_SET, null);
+      preHandler.finished(null, false, MessageListerAsyncTask.NO_ACCOUNT_SET, null);
     } else {
       if (!accounts.isEmpty() && !isPhone && !isNet) {
-        preHandler.finished(null, false, NO_INTERNET_ACCESS, null);
+        preHandler.finished(null, false, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
       } else {
         
         if (isPhone && (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account))) {
@@ -186,7 +159,7 @@ public class MainService extends Service {
             BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
               public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
                 if (processState.isDone()) {
-                  Log.d("rgai2", "@@@@@@BATCH DONE");
+//                  Log.d("rgai2", "@@@@@@BATCH DONE");
                 }
                 Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
                 LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
@@ -207,23 +180,13 @@ public class MainService extends Service {
     return Service.START_STICKY;
   }
 
-//  private boolean isPhone() {
-//    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-//    int simState = telMgr.getSimState();
-//    if (simState == TelephonyManager.SIM_STATE_READY) {
-//      return true;
-//    } else {
-//      return false;
-//    }
-//  }
-
   private boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  @Override
+  
   public IBinder onBind(Intent arg0) {
     return mBinder;
   }

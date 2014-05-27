@@ -2,7 +2,6 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
@@ -11,24 +10,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AbsListView.OnScrollListener;
@@ -53,11 +44,9 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.android.handlers.MessageListerHandler;
 import hu.rgai.android.handlers.MessageSeenMarkerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.messageproviders.ThreadMessageProvider;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
@@ -65,22 +54,13 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.rgai.android.test.settings.SystemPreferences;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.workers.BatchedAsyncTaskExecutor;
-import hu.rgai.android.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
-import hu.rgai.android.workers.TestBatchedWorker;
-import hu.rgai.android.workers.TimeoutAsyncTask;
-import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.MessagingException;
 
 /**
  * This is the main view of the application.
@@ -91,18 +71,12 @@ import javax.mail.MessagingException;
  */
 public class MainActivity extends ActionBarActivity {
 
-  // this variable holds the MainActivity instance if exists
-//  public static volatile MainActivity instance;
-  
 
   // holds the Facebook token
   private static volatile String fbToken = null;
 
   // holds the activity visibility state
   private static volatile boolean is_activity_visible = false;
-
-  // stores the last notification state to all different account types
-  private volatile HashMap<Account, Date> last_notification_dates = null;
 
   // this is the adapter for the main view
   private volatile LazyAdapter adapter;
@@ -111,7 +85,7 @@ public class MainActivity extends ActionBarActivity {
   private ScreenReceiver screenReceiver;
 
   // a progress dialog to display message load status
-  private volatile static ProgressDialog pd = null;
+  private volatile ProgressDialog pd = null;
 
   // the static listview where messages displayed
   private ListView lv = null;
@@ -119,24 +93,19 @@ public class MainActivity extends ActionBarActivity {
   // button to load more messages
   private Button loadMoreButton = null;
 
-  // an indicator when more messages are loading
-  private View loadIndicator = null;
-
-  // true if more messages are currently loading
-  private static volatile boolean isLoading = false;
-
   public static Account actSelectedFilter = null;
-
-  private static final String APPLICATION_START_STR = "application:start";
 
   private UncaughtExceptionHandler defaultUEH;
   
-  private static Menu mMenu;
+  private Menu mMenu;
   
-  private static TreeSet<MessageListElement> contextSelectedElements = new TreeSet<MessageListElement>();
+  private TreeSet<MessageListElement> contextSelectedElements = null;
   
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
 
+  
+  
+  private static final String APPLICATION_START_STR = "application:start";
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
@@ -158,14 +127,12 @@ public class MainActivity extends ActionBarActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-//    Debug.startMethodTracing("calc_store_connect");
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
     
-    // this loads the last notification dates from file
-//    initLastNotificationDates();
-//    instance = this;
+    contextSelectedElements = new TreeSet<MessageListElement>();
+    
 
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
@@ -189,8 +156,6 @@ public class MainActivity extends ActionBarActivity {
    * loading.
    */
   private synchronized void toggleProgressDialog(boolean show) {
-//    instance.setProgressBarIndeterminateVisibility(Boolean.TRUE); 
-//    mMenu.findItem(R.id.refresh_message_list).setVisible(false);
     if (show) {
       pd = new ProgressDialog(this);
       pd.setMessage(this.getString(R.string.loading));
@@ -228,7 +193,6 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-//    Log.d("rgai", "ON OPTIONS MENU CREATED");
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
     mMenu = menu;
@@ -283,7 +247,7 @@ public class MainActivity extends ActionBarActivity {
       case R.id.accounts:
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
         intent = new Intent(this, AccountSettingsList.class);
-        startActivityForResult(intent, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
+        startActivity(intent);
         return true;
       case R.id.message_send_new:
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
@@ -292,7 +256,6 @@ public class MainActivity extends ActionBarActivity {
         return true;
       case R.id.refresh_message_list:
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
-        // item.setEnabled(false);
 
         reloadMessages(true);
         return true;
@@ -355,42 +318,6 @@ public class MainActivity extends ActionBarActivity {
     return list;
   }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    switch (requestCode) {
-//      case (Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT):
-//        if (resultCode == Activity.RESULT_OK) {
-//          if (data != null) {
-//            if (data.hasExtra("message_data")) {
-//              FullMessage fm = data.getParcelableExtra("message_data");
-//              String messageId = data.getStringExtra("message_id");
-//              Account acc = data.getParcelableExtra("account");
-//              MainService.setMessageContent(messageId, acc, fm);
-//            }
-//            if (data.hasExtra("thread_displayer")) {
-  //            Intent service = new Intent(this, MainScheduler.class);
-  //            service.setAction(Context.ALARM_SERVICE);
-  //            MainServiceExtraParams eParams = new MainServiceExtraParams();
-  //            eParams.setType(data.getStringExtra("account_type"));
-  //            eParams.setActViewingMessage((MessageListElement)data.getParcelableExtra("act_view_msg"));
-  //            
-  //            service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
-  //            this.sendBroadcast(service);
-//            }
-//          }
-//        }
-//        break;
-      case (Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT):
-        if (resultCode == Activity.RESULT_OK) {
-          reloadMessages(true);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
   /**
    * Sends a broadcast to the Service to load fresh messages again.
    */
@@ -410,33 +337,12 @@ public class MainActivity extends ActionBarActivity {
     this.sendBroadcast(intent);
   }
 
-  private static void setMessageSeen(MessageListElement message) {
-    setMessageSeen(message, true);
-  }
-  
-  /**
-   * Sets a message's status to seen.
-   * @param message the message to set seen
-   */
-  private static void setMessageSeen(MessageListElement message, boolean seen) {
-//    for (MessageListElement m : MainService.messages) {
-//      if (m.equals(message)) {
-        message.setSeen(seen);
-        if (seen) {
-          message.setUnreadCount(0);
-        }
-//        break;
-//      }
-//    }
-  }
 
   @Override
   protected void onResume() {
     super.onResume();
     is_activity_visible = true;
     removeNotificationIfExists();
-    
-    
     refreshLoadingIndicatorState();
     
     
@@ -456,28 +362,20 @@ public class MainActivity extends ActionBarActivity {
       }
     }
     
-    // initLastNotificationDates();
     YakoApp.updateLastNotification(null, this);
     setUpAndRegisterScreenReceiver();
 
     setContent();
-    if (!EventLogger.INSTANCE.isLogFileOpen())
+    if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+    }
     LogUploadScheduler.INSTANCE.setContext(this);
-    if (!LogUploadScheduler.INSTANCE.isRunning)
+    if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
+    }
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
   }
 
-  /**
-   * Initializes the lastNotification map.
-   */
-//  public void initLastNotificationDates() {
-//    last_notification_dates = StoreHandler.readLastNotificationObject(this);
-//    if (last_notification_dates == null) {
-//      last_notification_dates = new HashMap<Account, Date>();
-//    }
-//  }
 
   /**
    * Sets up the screen receiver for logging.
@@ -492,13 +390,13 @@ public class MainActivity extends ActionBarActivity {
     registerReceiver(screenReceiver, screenIntentFilter);
   }
 
+  
   @Override
   protected void onDestroy() {
     super.onDestroy();
     if (screenReceiver != null) {
       unregisterReceiver(screenReceiver);
     }
-//    Debug.stopMethodTracing();
   }
 
   /**
@@ -510,64 +408,6 @@ public class MainActivity extends ActionBarActivity {
     return is_activity_visible;
   }
 
-  /**
-   * Updates the last notification date of the given account. Sets all of the
-   * accounts last notification date to the current date if null given.
-   * 
-   * @param acc
-   *          the account to update, or null if update all account's last event
-   *          time
-   */
-//  public static void updateLastNotification(Context context, Account acc) {
-//    if (acc != null) {
-//      last_notification_dates.put(acc, new Date());
-//    } else {
-//      for (Account a : last_notification_dates.keySet()) {
-//        last_notification_dates.get(a).setTime(new Date().getTime());
-//      }
-//    }
-//    StoreHandler.writeLastNotificationObject(context, last_notification_dates);
-//  }
-
-  /**
-   * Returns the last notification of the given account.
-   * 
-   * @param acc
-   *          last notification time will be set to this account
-   * @return
-   */
-//  public static Date getLastNotification(Context context, Account acc) {
-//    Date ret = null;
-//    if (last_notification_dates == null || acc == null) {
-//      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
-//    } else {
-//      ret = last_notification_dates.get(acc);
-//    }
-//    if (ret == null) {
-//      ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
-//    }
-//    return ret;
-//  }
-
-  /**
-   * Removes the messages from the displayview to the given account.
-   * 
-   * @param acc
-   *          messages connected to this account will be removed
-   */
-//  public static void removeMessagesToAccount(final Account acc) {
-//    Log.d("rgai", "REMOVE MESSAGES FROM MAIN ACTIVITY");
-//    Iterator<MessageListElement> it = mYakoApp.getMessages().iterator();
-//    while (it.hasNext()) {
-//      MessageListElement mle = it.next();
-//      if (mle.getAccount().equals(acc)) {
-//        it.remove();
-//      }
-//    }
-//    if (adapter != null) {
-//      adapter.notifyDataSetChanged();
-//    }
-//  }
 
   public void notifyAdapterChange() {
     adapter.notifyDataSetChanged();
@@ -577,10 +417,6 @@ public class MainActivity extends ActionBarActivity {
    * Sets the content of the listview.
    */
   private void setContent() {
-//    Log.d("rgai", "SET MAIN CONTENT");
-//    if (instance == null) {
-//      return;
-//    }
     if (!YakoApp.getMessages().isEmpty()) {
       toggleProgressDialog(false);
     }
@@ -588,16 +424,9 @@ public class MainActivity extends ActionBarActivity {
     boolean isNet = AndroidUtils.isNetworkAvailable(this);
     if (isNet || YakoApp.isPhone) {
       if (!YakoApp.getMessages().isEmpty() && adapter != null && isListView) {
-//        Log.d("rgai", "ag1: " + MainService.messages.size());
-//        adapter = new LazyAdapter(instance);
-//        adapter.setListFilter(actSelectedFilter);
         adapter.setListFilter(actSelectedFilter);
         adapter.notifyDataSetChanged();
-//        lv.setAdapter(adapter);
-//        lv.invalidate();
-
       } else if (!YakoApp.getMessages().isEmpty() && !isListView) {
-//        Log.d("rgai", "ag2");
         setContentView(R.layout.main);
         lv = (ListView) findViewById(R.id.list);
         
@@ -607,10 +436,8 @@ public class MainActivity extends ActionBarActivity {
           public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
             if (position != 0) {
               if (checked) {
-//                Toast.makeText(instance, "item selected...", Toast.LENGTH_SHORT).show();
                 contextSelectedElements.add((MessageListElement)adapter.getItem(position));
               } else {
-//                Toast.makeText(instance, "item DEselected...", Toast.LENGTH_SHORT).show();
                 contextSelectedElements.remove((MessageListElement)adapter.getItem(position));
               }
               if (contextSelectedElements.size() == 1) {
@@ -620,7 +447,6 @@ public class MainActivity extends ActionBarActivity {
               }
               mode.setTitle(contextSelectedElements.size() + " selected");
             }
-            
           }
 
           public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -631,8 +457,6 @@ public class MainActivity extends ActionBarActivity {
           }
 
           public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            // Here you can perform updates to the CAB due to
-            // an invalidate() request
             return false;
           }
 
@@ -682,9 +506,6 @@ public class MainActivity extends ActionBarActivity {
           loadMoreButton.setEnabled(false);
         }
 
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        loadIndicator = inflater.inflate(R.layout.loading_indicator, null);
-
         adapter = new LazyAdapter(this);
         adapter.setListFilter(actSelectedFilter);
         lv.setAdapter(adapter);
@@ -701,7 +522,8 @@ public class MainActivity extends ActionBarActivity {
 
             boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
             if (changed) {
-              setMessageSeen(message);
+              message.setSeen(true);
+              message.setUnreadCount(0);
               adapter.notifyDataSetChanged();
             }
 
@@ -744,15 +566,9 @@ public class MainActivity extends ActionBarActivity {
   }
   
   private void contextActionMarkMessage(boolean seen) {
-//    for (MessageListElement mle : contextSelectedElements) {
-//      setMessageSeen(mle, seen);
-//    }
-//    adapter.notifyDataSetChanged();
     
     Toast.makeText(this, "Marking...", Toast.LENGTH_SHORT).show();
 
-    MessageSeenMarkerHandler handler = new MessageSeenMarkerHandler(this);
-    
     HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
     for (MessageListElement mle : contextSelectedElements) {
       if (!messagesToAccounts.containsKey(mle.getAccount())) {
@@ -763,6 +579,7 @@ public class MainActivity extends ActionBarActivity {
     
     // TODO: put a thin blue loader bar while marking messages
     // TODO: block auto update while marking messages
+    MessageSeenMarkerHandler handler = new MessageSeenMarkerHandler(this);
     for (Map.Entry<Account, TreeSet<MessageListElement>> entry : messagesToAccounts.entrySet()) {
       MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(entry.getKey(), this);
       MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(mp, entry.getValue(), seen, handler);
@@ -771,76 +588,21 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  /**
-   * Displays an error Toast message if something went wrong at the Service
-   * during retrieving messages.
-   * 
-   * @param result
-   *          the result code of the message query
-   * @param message
-   *          the content of the error message
-   */
-//  public static void showErrorMessage(int result, String message) {
-//    if (result != MainService.OK) {
-//      Log.d("rgai", "ERROR MSG FROM Service -> " + message);
-//      String msg = "";
-//      switch (result) {
-//        case MainService.AUTHENTICATION_FAILED_EXCEPTION:
-//          msg = "Authentication failed: " + message;
-//          break;
-//        case MainService.UNKNOWN_HOST_EXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.IOEXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.CONNECT_EXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.NO_SUCH_PROVIDER_EXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.MESSAGING_EXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.SSL_HANDSHAKE_EXCEPTION:
-//          msg = message;
-//          break;
-//        case MainService.NO_INTERNET_ACCESS:
-//          msg = message;
-//          break;
-//        case MainService.NO_ACCOUNT_SET:
-//          msg = instance.getString(R.string.no_account_set);
-//          break;
-//        default:
-//          msg = instance.getString(R.string.exception_unknown);
-//          break;
-//      }
-//      if (is_activity_visible && instance != null) {
-//        Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
-//      }
-//    }
-//  }
 
   /**
    * This function is called by the main Service, when a new message arrives.
    * 
-   * @param loadMore
-   *          true if notification comes from a loadMore request(Load More was
-   *          pressed), false otherwise
    */
-  private void notifyMessageChange() {
+  private void messegasArrivedToDisplay() {
     toggleProgressDialog(false);
     setContent();
-//    if (loadMore) {
-//      removeLoadMoreIndicator();
-//    }
   }
 
+  
   /**
    * Handles LoadMore button press.
    */
-  public void loadMoreMessage() {
+  private void loadMoreMessage() {
     Intent service = new Intent(this, MainScheduler.class);
     service.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -851,17 +613,6 @@ public class MainActivity extends ActionBarActivity {
     service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
 
-//    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-//      // getting height of load button
-//      LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) loadIndicator.findViewById(R.id.pbHeaderProgress).getLayoutParams();
-//      params.height = loadMoreButton.getHeight();
-//      loadIndicator.findViewById(R.id.pbHeaderProgress).setLayoutParams(params);
-//      lv.removeFooterView(loadMoreButton);
-//      lv.addFooterView(loadIndicator);
-//      isLoading = true;
-//    } else {
-//      Toast.makeText(instance, "Loading more...", Toast.LENGTH_LONG).show();
-//    }
   }
 
   /**
@@ -893,8 +644,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Logs event.
    * 
-   * @param event
-   *          the text of log
+   * @param event the text of log
    */
   private void logActivityEvent(String event) {
     StringBuilder builder = new StringBuilder();
@@ -940,9 +690,8 @@ public class MainActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT)) {
         MainActivity.this.refreshLoadingIndicatorState();
-//        Log.d("rgai2", "RECEIVING BROADCAST NOW!!");
       } else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
-        MainActivity.this.notifyMessageChange();
+        MainActivity.this.messegasArrivedToDisplay();
       }
     }
   }

@@ -8,8 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
@@ -28,7 +26,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
@@ -40,36 +37,24 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
-import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.workers.ThreadContentGetter;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 
 public class ThreadDisplayer extends ActionBarActivity {
 
   private ProgressDialog pd = null;
   private ThreadContentGetterHandler mHandler = null;
-//  private FullThreadMessage mContent = null;
-//  private String threadId = "-1";
-//  private Account mAccount;
   private MessageListElement mMessage = null;
-//  private Person mFrom;
   private ListView lv = null;
   private EditText text = null;
   private ThreadViewAdapter adapter = null;
   private final Date lastLoadMoreEvent = null;
   private boolean firstLoad = true;
-  private DataUpdateReceiver dur = null;
-  private LogOnScrollListener los = null;
+  private DataUpdateReceiver mDataUpdateReceiver = null;
   private boolean fromNotification = false;
-//  private MessageListElement mle = null;
-//  private String mThreadId = null;
   private TextWatcher mTextWatcher = null;
-  private boolean mTextWatcherAdded = false;
 
   private static boolean firstResume = true;
 
@@ -138,7 +123,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     };
     
     text.addTextChangedListener(mTextWatcher);
-
   }
   
   @Override
@@ -165,10 +149,10 @@ public class ThreadDisplayer extends ActionBarActivity {
     }
     
     // register broadcast receiver
-    dur = new DataUpdateReceiver(this);
+    mDataUpdateReceiver = new DataUpdateReceiver(this);
     IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-    registerReceiver(dur, iFilter);
+    registerReceiver(mDataUpdateReceiver, iFilter);
 
     displayContent();
     
@@ -215,8 +199,6 @@ public class ThreadDisplayer extends ActionBarActivity {
       return;
     }
     
-//    List<Account> accs = new LinkedList<Account>();
-//    accs.add(mMessage.getAccount());
     MessageRecipient ri = null;
     if (mMessage.getAccount().getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
@@ -237,8 +219,8 @@ public class ThreadDisplayer extends ActionBarActivity {
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
     
-    if (dur != null) {
-      unregisterReceiver(dur);
+    if (mDataUpdateReceiver != null) {
+      unregisterReceiver(mDataUpdateReceiver);
     }
     
     actViewingMessage = null;
@@ -283,11 +265,8 @@ public class ThreadDisplayer extends ActionBarActivity {
       case android.R.id.home:
         Intent upIntent = NavUtils.getParentActivityIntent(this);
         if (fromNotification) {
-//          Log.d("rgai", "NEW STACKBUILDER");
             TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
         } else {
-//          Log.d("rgai", "NO STACK BUILDER");
-//          NavUtils.navigateUpTo(this, upIntent);
           finish();
         }
         return true;
@@ -309,7 +288,6 @@ public class ThreadDisplayer extends ActionBarActivity {
   public void displayMessage(boolean scrollToBottom) {
     int firstVisiblePos = lv.getFirstVisiblePosition();
     int oldItemCount = 0;
-    // lv.get
     if (adapter != null) {
       oldItemCount = adapter.getCount();
     }
@@ -363,25 +341,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
   
-  private class MessageSendHandler extends Handler {
-    
-    private final Context context;
-    
-    public MessageSendHandler(Context context) {
-      this.context = context;
-    }
-    
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.containsKey("success") && bundle.get("success") != null) {
-          refreshMessageList();
-        }
-      }
-    }
-    
-  }
   
   private class DataUpdateReceiver extends BroadcastReceiver {
 

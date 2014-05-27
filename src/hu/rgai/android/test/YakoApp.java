@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package hu.rgai.android.test;
 
@@ -175,28 +170,6 @@ public class YakoApp extends Application {
   }
   
   
-//  public static MessageListElement getListElementById(String id, Account a) {
-//    for (MessageListElement mle : messages) {
-//      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
-//        return mle;
-//      }
-//    }
-//    return null;
-//  }
-  
-  
-//  public static TreeSet<MessageListElement> getLoadedMessages(Account account) {
-//    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
-//    if (messages != null) {
-//      for (MessageListElement mle : messages) {
-//        if (mle.getAccount().equals(account)) {
-//          selected.add(mle);
-//        }
-//      }
-//    }
-//    return selected;
-//  }
-  
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -222,7 +195,5 @@ public class YakoApp extends Application {
     Log.d("rgai", "isPhone: " + isPhone);
     
   }
- 
-  
   
 }

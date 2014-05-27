@@ -63,49 +63,26 @@ public class MessageListerHandler extends TimeoutHandler {
     }
   }
 
+  
   public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
-//    Bundle bundle = new Bundle();
-//    Message msg = handler.obtainMessage();
-//    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
-//      bundle.putInt(ParamStrings.RESULT, MainService.CANCELLED);
-//    } else {
-//      if (this.result == OK) {
-//        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
-//        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
-//        bundle.putString("message_result_type", messageResult.getResultType().toString());
-//        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
-//      }
-//      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
-//      bundle.putInt(ParamStrings.RESULT, this.result);
-//      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
-//    }
-//
-//    msg.setData(bundle);
-//    handler.sendMessage(msg);
-
     int newMessageCount = 0;
-//      if (bundle != null) {
-//        if (bundle.get(ParamStrings.RESULT) != null) {
-//          Log.d("rgai", "MessageListerAsyncTaskResult: " + bundle.getInt(ParamStrings.RESULT));
     if (errorMessage != null) {
       showErrorMessage(result, errorMessage);
-//            MainActivity.showErrorMessage(bundle.getInt(ParamStrings.RESULT), bundle.getString(ParamStrings.ERROR_MESSAGE));
     }
-//          Log.d("rgai", "##currentRefreshedAccountCounter++");
-//          MainService.currentRefreshedAccountCounter++;
-    // TODO: send broadcast to main activity to refresh loading state rate
-//          MainActivity.refreshLoadingStateRate();
-//          boolean loadMore = bundle.getBoolean(ParamStrings.LOAD_MORE);
     if (result == OK) {
       MessageListElement[] newMessages = messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]);
       MessageListResult.ResultType resultType = messageResult.getResultType();
 
-            // if NO_CHANGE or ERROR, then just return, we do not have to merge because messages
-      // is probably empty anyway...
+      
+      /*
+       * if NO_CHANGE or ERROR, then just return, we do not have to merge because messages
+       * is probably empty anyway...
+       */
       if (resultType.equals(MessageListResult.ResultType.NO_CHANGE) || resultType.equals(MessageListResult.ResultType.ERROR)) {
         return;
       }
 
+      
       /*
        * If new message packet comes from Facebook, and newMessages contains groupMessages,
        * send a broadcast so the group Facebook chat is notified about the new messages.
@@ -132,10 +109,6 @@ public class MessageListerHandler extends TimeoutHandler {
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
       for (MessageListElement mle : YakoApp.getMessages()) {
-//              if (mle.equals(MainService.actViewingMessage) || mle.equals(actViewingMessageAtThread)) {
-//                mle.setSeen(true);
-//                mle.setUnreadCount(0);
-//              }
         Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount());
         if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
           if (lastUnreadMsg == null) {
@@ -213,7 +186,6 @@ public class MessageListerHandler extends TimeoutHandler {
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
-//            resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
           resultIntent.putExtra("message", lastUnreadMsg);
           stackBuilder.addParentStack(MainActivity.class);
         } else {
@@ -228,7 +200,8 @@ public class MessageListerHandler extends TimeoutHandler {
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
                 + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
-      } // if main activity visible: only play sound
+      }
+      // if main activity visible: only play sound
       else {
         if (soundNotification) {
           Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
@@ -245,8 +218,6 @@ public class MessageListerHandler extends TimeoutHandler {
     Intent intent = new Intent(mContext, MessageReply.class);
     intent.putExtra("message", (Parcelable) lastUnreadMsg);
     intent.putExtra(ParamStrings.FROM_NOTIFIER, true);
-//      intent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
-    //startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
 
@@ -263,7 +234,7 @@ public class MessageListerHandler extends TimeoutHandler {
     for (MessageListElement newMessage : newMessages) {
       boolean contains = false;
       MessageListElement storedFoundMessage = null;
-        // .contains not work, because the date of new item != date of old item
+      // .contains not work, because the date of new item != date of old item
       // and
       // tree search does not return a valid value
       // causes problem at thread type messages like Facebook
@@ -284,16 +255,13 @@ public class MessageListerHandler extends TimeoutHandler {
           loggingNewMessageArrived(newMessage, false);
         }
       } else {
-//          Log.d("rgai", "MESSAGE ALREADY IN LIST -> " + newMessage);
         // only update old messages' flags with the new one, and nothing else
         if (newMessage.isUpdateFlags()) {
-//            Log.d("rgai", "JUST UPDATE SEEN INFO!");
           if (storedFoundMessage != null) {
             storedFoundMessage.setSeen(newMessage.isSeen());
             storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
           }
         } else {
-//            Log.d("rgai", "HANDLE AS \"NEW\" MESSAGE -> " + newMessage);
           MessageListElement itemToRemove = null;
           for (MessageListElement oldMessage : YakoApp.getMessages()) {
             if (newMessage.equals(oldMessage)) {
@@ -335,7 +303,6 @@ public class MessageListerHandler extends TimeoutHandler {
       if (!providerSupportsUID) {
         messagesToRemove = new TreeSet<MessageListElement>(new Comparator<MessageListElement>() {
           public int compare(MessageListElement lhs, MessageListElement rhs) {
-            Log.d("rgai", "calling my new fancy compareto...");
             if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) && lhs.getDate().equals(rhs.getDate())) {
               return 0;
             } else {
@@ -349,17 +316,11 @@ public class MessageListerHandler extends TimeoutHandler {
       }
       
       
-      Log.d("rgai", "aktualis lista: ");
-      for (MessageListElement mle : msgs) {
-        Log.d("rgai", mle.toString());
-      }
       for (int i = 0; i < newMessages.length; i++) {
         if (messagesToRemove.contains(newMessages[i])) {
           messagesToRemove.remove(newMessages[i]);
-          Log.d("rgai", "ezt nem kell majd torolni: " + newMessages[i]);
         }
       }
-      Log.d("rgai", "no, amit torolni kell: " + messagesToRemove);
       for (MessageListElement mle : messagesToRemove) {
         YakoApp.getMessages().remove(mle);
       }

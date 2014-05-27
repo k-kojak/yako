@@ -52,8 +52,8 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private boolean loadMore = false;
   private int queryLimit;
   private int queryOffset;
-  private MessageListerHandler mHandler;
-  private RunningSetup mRunningSetup;
+  private final MessageListerHandler mHandler;
+  private final RunningSetup mRunningSetup;
   
 
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
@@ -104,16 +104,12 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   protected MessageListResult doInBackground(String... params) {
     
     
-//    Log.d("rgai", "do in background started: " + acc);
     MessageListResult messageResult = null;
     try {
       if (messageProvider != null) {
-//        Log.d("rgai", "current runsetup: " + mRunningSetup);
         if (isSetupRunning(mRunningSetup)) {
-//          Log.d("rgai", "SKIP SETUP");
           return new MessageListResult(null, MessageListResult.ResultType.CANCELLED, false);
         } else {
-//          Log.d("rgai", "CONTINUE SETUP");
         }
 
         // the already loaded messages to the specific content type...
@@ -194,24 +190,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   @Override
   protected void onBatchedPostExecute(MessageListResult messageResult) {
     mHandler.finished(messageResult, loadMore, result, errorMessage);
-//    Bundle bundle = new Bundle();
-//    Message msg = handler.obtainMessage();
-//    if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CANCELLED)) {
-//      bundle.putInt(ParamStrings.RESULT, MainService.CANCELLED);
-//    } else {
-//      if (this.result == OK) {
-//        // TODO: ideally this should be 1 parcelable, we should not split it here: MessageListResult should be parcelable object
-//        bundle.putParcelableArray("messages", messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]));
-//        bundle.putString("message_result_type", messageResult.getResultType().toString());
-//        // Log.d("rgai", "put messages("+ messages.size() + ") to bundle -> ");
-//      }
-//      bundle.putBoolean(ParamStrings.LOAD_MORE, loadMore);
-//      bundle.putInt(ParamStrings.RESULT, this.result);
-//      bundle.putString(ParamStrings.ERROR_MESSAGE, this.errorMessage);
-//    }
-//
-//    msg.setData(bundle);
-//    handler.sendMessage(msg);
   }
 
 }

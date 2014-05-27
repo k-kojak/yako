@@ -1,12 +1,10 @@
 
 package hu.rgai.android.workers;
 
-import android.util.Log;
 import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class BatchedAsyncTaskExecutor {
   

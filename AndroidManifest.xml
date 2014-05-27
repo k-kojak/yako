@@ -166,12 +166,6 @@
             android:label="@string/service_name" >
         </service>
         
-        <service
-            android:name="hu.rgai.android.services.ThreadMsgService"
-            android:icon="@drawable/ic_launcher"
-            android:label="@string/service_name" >
-        </service>
-
         <receiver android:name="hu.rgai.android.services.schedulestarters.MainScheduler" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -197,12 +191,6 @@
         </receiver>
         
         <receiver android:name="hu.rgai.android.test.ThreadDisplayer$NewMessageReceiver">
-        </receiver>
-        
-        <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgScheduler" >
-        </receiver>
-        
-        <receiver android:name="hu.rgai.android.services.schedulestarters.ThreadMsgServiceStarter" >
         </receiver>
         
     </application>

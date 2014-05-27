@@ -2,18 +2,13 @@ package hu.rgai.android.test.settings;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
-import android.support.v4.app.NavUtils;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.PasswordTransformationMethod;
@@ -36,11 +31,9 @@ import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.errorlog.ErrorLog;
 import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.YakoApp;
-import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
@@ -57,7 +50,6 @@ public class AccountSettingsList extends ActionBarActivity {
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
-//  private MainService mainService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -157,7 +149,6 @@ public class AccountSettingsList extends ActionBarActivity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     
     // Facebook session result
-//    if (requestCode == )
     super.onActivityResult(requestCode, resultCode, data);
     try {
       Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
@@ -185,7 +176,7 @@ public class AccountSettingsList extends ActionBarActivity {
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
-          removeMessagesToAccount(oldAccount);
+          YakoApp.removeMessagesToAccount(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
@@ -211,28 +202,6 @@ public class AccountSettingsList extends ActionBarActivity {
     this.sendBroadcast(service);
   }
   
-  private void removeMessagesToAccount(final Account acc) {
-    
-    YakoApp.removeMessagesToAccount(acc);
-    
-    // TODO: notify mainActivity's adapter with broadcast, not with static function call!
-    // but its not even necessary...adapter should notify itself when activity is visible
-    
-//    MainActivity.removeMessagesToAccount(acc);
-//    ServiceConnection serviceConnection = new ServiceConnection() {
-//      public void onServiceConnected(ComponentName className, IBinder binder) {
-//        mainService = ((MainService.MyBinder) binder).getService();
-//        mainService.removeMessagesToAccount(acc);
-//        unbindService(this);
-//      }
-//      public void onServiceDisconnected(ComponentName className) {
-//        mainService = null;
-//        unbindService(this);
-//      }
-//    };
-//    bindService(new Intent(this, MainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-  }
-
   private void showAccountTypeChooser() {
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -275,52 +244,8 @@ public class AccountSettingsList extends ActionBarActivity {
           default:
             break;
         }
-//        if (classToLoad == FacebookSettingActivity.class) {
-//          Session.openActiveSession(AccountSettingsList.this, true, new Session.StatusCallback() {
-//
-//            public void call(Session sn, SessionState ss, Exception excptn) {
-//              stillAddingFacebookAccount = true;
-//              if (sn.isOpened()) {
-//                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Session is opened after openActiveSession");
-//                Request.newMeRequest(sn, new Request.GraphUserCallback() {
-//                  public void onCompleted(GraphUser gu, Response rspns) {
-//                    if (gu != null) {
-//                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "GraphUser != null, getting friend list");
-//                      Toast.makeText(AccountSettingsList.this, "Updating contacts with facebook ids.", Toast.LENGTH_LONG).show();
-//                      stillAddingFacebookAccount = false;
-//                      FacebookSessionAccountAndr fbsa = new FacebookSessionAccountAndr(10, gu.getName(), gu.getUsername());
-//                      FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(AccountSettingsList.this, new IntegrationHandler(AccountSettingsList.this));
-//                      integrator.execute(fbsa);
-//                      try {
-//                        StoreHandler.addAccount(AccountSettingsList.this, fbsa);
-//                        AccountSettingsList.this.onResume();
-//                      } catch (Exception ex) {
-//                        Logger.getLogger(AccountSettingsList.class.getName()).log(Level.SEVERE, null, ex);
-//                      }
-//                    } else {
-//                      ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
-//                      Log.d("rgai", "GRAPH USER IS NULL");
-//                    }
-//                  }
-//                }).executeAsync();
-//              } else {
-//                ErrorLog.dumpLogcat(AccountSettingsList.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "Session is NOT opened after openActiveSession");
-//  //              Log.d("rgai", sn.toString());
-//  //              Log.d("rgai", ss.toString());
-//  //              
-//  //              Log.d("rgai", "HELLOOOOOOOOOOOOOOOOOOOOOOO IS NOT OPENED");
-//              }
-//            }
-//          });
-//        } else {
-//        if (classToLoad == FacebookSettingFragment.class) {
-//          fbFragment = new FacebookSettingFragment();
-//          getSupportFragmentManager().beginTransaction().add(android.R.id.content, fbFragment).commit();
-//        } else {
-          Intent i = new Intent(AccountSettingsList.this, classToLoad);
-          startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
-//        }
-//        }
+        Intent i = new Intent(AccountSettingsList.this, classToLoad);
+        startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
       }
     });
     Dialog dialog = builder.create();
@@ -364,7 +289,6 @@ public class AccountSettingsList extends ActionBarActivity {
   public static int getSpinnerPosition(SpinnerAdapter adapter, int value) {
     int ind = 0;
     for (int i = 0; i < adapter.getCount(); i++) {
-//      Log.d("rgai", adapter.getItem(i).toString() + " vs " + value);
       if (adapter.getItem(i).toString().equals(value + "")) {
         return i;
       }
@@ -387,69 +311,5 @@ public class AccountSettingsList extends ActionBarActivity {
   private boolean isFacebookAccountAdded() {
     return StoreHandler.isFacebookAccountAdded(this);
   }
-  
-  private class IntegrationHandler extends Handler {
-    
-    private Context c;
-    
-    public IntegrationHandler(Context c) {
-      this.c = c;
-    }
-    
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle bundle = msg.getData();
-      if (bundle != null) {
-        if (bundle.get("content") != null) {
-          Toast.makeText(c, "Update complete.", Toast.LENGTH_LONG).show();
-          ErrorLog.dumpLogcat(c, ErrorLog.Reason.FB_CONTACT_SYNC, 0, null, "Updating contact list done");
-        }
-      }
-    }
-  }
-  
-//  private class FacebookIntegratorAsyncTask extends AsyncTask<FacebookSessionAccount, Integer, String> {
-//
-//    Handler handler;
-////    FacebookAccount account;
-//    private Activity activity;
-//    
-//    public FacebookIntegratorAsyncTask(Activity activity, Handler handler) {
-//      this.activity = activity;
-//      this.handler = handler;
-////      this.account = account;
-//    }
-//    
-//    @Override
-//    protected String doInBackground(FacebookSessionAccount... params) {
-//      String content = null;
-//      
-//      FacebookFriendProvider fbfp = new FacebookFriendProvider();
-//      fbfp.getFacebookFriends(activity);
-//
-//      return content;
-//    }
-//
-//    @Override
-//    protected void onPostExecute(String result) {
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//      bundle.putString("content", "1");
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
-//    }
-//
-//
-////    @Override
-////    protected void onProgressUpdate(Integer... values) {
-////      Log.d(Constants.LOG, "onProgressUpdate");
-////      Message msg = handler.obtainMessage();
-////      Bundle bundle = new Bundle();
-////
-////      bundle.putInt("progress", values[0]);
-////      msg.setData(bundle);
-////      handler.sendMessage(msg);
-////    }
-//  }
   
 }
