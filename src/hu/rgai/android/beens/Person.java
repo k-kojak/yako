@@ -203,7 +203,6 @@ public final class Person implements Parcelable {
           } else {
             pa = new Person(-1, p.getId(), p.getName(), MessageProvider.Type.SMS);
           }
-          // pa = new PersonAndr(-1, p.getName());
         }
         return pa;
       }
@@ -211,9 +210,6 @@ public final class Person implements Parcelable {
   }
 
   private static Person getUserData(Context context, long rawContactId, String userAddrId) {
-//    if (userAddrId.equals("+36306184242")) {
-//      Log.d("rgai", "getting user data to Istvan: " + userAddrId);
-//    }
     Person pa = null;
 
     // selecting name
@@ -277,8 +273,6 @@ public final class Person implements Parcelable {
     String[] selectionArgs = null;
     if (type.equals(MessageProvider.Type.SMS)) {
       return getUidForSms(context, id2);
-//      selection = ContactsContract.Data.RAW_CONTACT_ID + " = ? OR (" + ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.Phone.DATA + " = ? )";
-//      selectionArgs = new String[] { id, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, id2 };
     } else if (type.equals(MessageProvider.Type.EMAIL) || type.equals(MessageProvider.Type.GMAIL)) {
       selection = ContactsContract.Data.MIMETYPE + " = ? " + " AND " + ContactsContract.CommonDataKinds.Email.DATA + " = ? ";
       selectionArgs = new String[] { ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, id };
@@ -320,7 +314,6 @@ public final class Person implements Parcelable {
       }
       cursor.close();
     }
-//    Log.d("rgai", "uid1 : " + contactId);
     
     
     // second query
@@ -328,7 +321,6 @@ public final class Person implements Parcelable {
       String[] contactProjection = new String[] {
         ContactsContract.Data.RAW_CONTACT_ID
       };
-//      Uri contactUri = Uri.withAppendedPath(ContactsContract.Data.CONTENT_URI, contactId+"");
       Cursor contactCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI,
               contactProjection,
               ContactsContract.Data.CONTACT_ID + " = ? ",

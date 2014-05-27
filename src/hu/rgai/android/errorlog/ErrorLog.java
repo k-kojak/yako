@@ -63,7 +63,6 @@ public class ErrorLog {
         mainFilePath = new File(mainFilePath, errorLogPath);
   //      mainFilePath.mkdirs();
       }
-  //    Log.d("rgai", mainFilePath.getAbsolutePath());
 
       if (!mainFilePath.isDirectory()) {
         mainFilePath.mkdirs();

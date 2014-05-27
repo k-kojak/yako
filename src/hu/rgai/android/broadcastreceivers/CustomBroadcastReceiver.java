@@ -25,10 +25,8 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
         ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         if (info != null && info.isConnected()) {
-//          Log.d("rgai", "JUST CONNECTED TO WIFI NETWORK, CONNECTING AVAILABLE PROVIDERS AGAIN");
-//          AndroidUtils.connectConnectableMessageProviders(context);
           
-          Log.d("rgai", "JUST CONNECTED TO WIFI NETWORK, MAKE A FULL QUERY");
+//          Log.d("rgai", "JUST CONNECTED TO WIFI NETWORK, MAKE A FULL QUERY");
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -36,7 +34,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
           context.sendBroadcast(service);
         } else {
-          Log.d("rgai", "JUST LOST WIFI NETWORK CONNECTION");
+//          Log.d("rgai", "JUST LOST WIFI NETWORK CONNECTION");
         }
       }
       

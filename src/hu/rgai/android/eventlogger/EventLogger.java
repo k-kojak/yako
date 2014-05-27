@@ -166,7 +166,7 @@ public enum EventLogger {
   }
 
   private void writeFormatedLogToLogFile(String log) {
-    Log.d("willrgai", log);
+//    Log.d("willrgai", log);
     if (!lockedToUpload) {
       try {
         bufferedWriter.write(StringEscapeUtils.escapeJava(log));

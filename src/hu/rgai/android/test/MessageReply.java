@@ -109,7 +109,7 @@ public class MessageReply extends ActionBarActivity {
         }
       }
       if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)) {
-        Log.d("rgai", "yes, from notifier");
+//        Log.d("rgai", "yes, from notifier");
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
       }

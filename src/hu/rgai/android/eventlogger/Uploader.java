@@ -74,8 +74,8 @@ class Uploader implements Runnable {
     }
 
     if (logToJsonConverter.getDeviceId() == null) {
-      Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
-      Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
+//      Log.d("rgai", "logToJsonConverter: " + logToJsonConverter.toString());
+//      Log.d("rgai", "context: " + context.toString()); // TODO: a context neha itt null!!!!
       logToJsonConverter.setDeviceId(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
     }
     EventLogger.INSTANCE.lockedToUpload = true;
@@ -235,9 +235,9 @@ class Uploader implements Runnable {
     while ((line = br.readLine()) != null) {
       sb.append(line);
     }
-    Log.d("willrgai", "uploadlogs " + sb.toString());
+//    Log.d("willrgai", "uploadlogs " + sb.toString());
     HttpResponse response = getNewHttpClient().execute(httpPost);
-    Log.d("willrgai", response.getStatusLine().toString());
+//    Log.d("willrgai", response.getStatusLine().toString());
     return isUploadSuccessFull(response);
   }
 

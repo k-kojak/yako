@@ -222,7 +222,7 @@ public class StoreHandler {
     
     SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
     editor.putString(context.getString(R.string.settings_fb_access_token_exp_date), df.format(expirationDate));
-    Log.d("rgai", df.format(expirationDate));
+//    Log.d("rgai", df.format(expirationDate));
     
     editor.commit();
   }
@@ -263,7 +263,7 @@ public class StoreHandler {
   }
   
   public static void removeAccount(Context context, Account account) throws Exception {
-    Log.d("rgai", "REMOVING ACCOUNT: " + account);
+//    Log.d("rgai", "REMOVING ACCOUNT: " + account);
     List<Account> accounts = getAccounts(context);
     if (accounts.contains(account)) {
       accounts.remove(account);

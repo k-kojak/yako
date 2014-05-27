@@ -104,7 +104,6 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
   }
   
   public void saveAccountSettings() {
-    Log.d("rgai", "SAVE");
     
     String m = email.getText().toString();
     String p = pass.getText().toString();

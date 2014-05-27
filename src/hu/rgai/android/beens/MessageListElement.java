@@ -24,7 +24,6 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected String title;
   protected String subTitle;
   protected int unreadCount;
-  //TODO: this could be a list
   protected Person from;
   protected List<Person> recipients;
   protected Date date;
@@ -98,29 +97,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     
     if (!stringToClassLoader.containsKey(messageType)) {
       // TODO: display error message
-//      Log.d("rgai", "Unsupported account type -> " + messageType);
-//      System.exit(1);
     } else {
       this.account = (Account)in.readParcelable(stringToClassLoader.get(messageType));
     }
   }
-  
-//  public MessageListElement(MessageListElement mle, Account account) {
-//    this(mle.getId(), mle.isSeen(), mle.getTitle(), mle.getSubTitle(), mle.getUnreadCount(),
-//            mle.getFrom(), mle.getRecipientsList(), mle.getDate(), mle.getMessageType(), mle.isUpdateFlags(),
-//            mle.getFullMessage(), account);
-//    updatePrettyDateString();
-//  }
-  
-//  public MessageListElement(String id, boolean seen, String title, String subTitle,
-//          int unreadCount, Person from, List<Person> recipients, Date date, MessageProvider.Type messageType,
-//          boolean updateFlags, FullMessage fullMessage, Account account) {
-//    this(id, seen, title, subTitle, unreadCount, from, recipients, date, messageType, updateFlags);
-//    convertFullMessageToParc(fullMessage, messageType);
-//    
-//    this.account = account;
-//    updatePrettyDateString();
-//  }
   
   /**
    * Default constructor.
@@ -190,30 +170,6 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 	    }	  
   }
   
-//  private void convertFullMessageToParc(FullMessage fullMessage, Type type) {
-//    if (fullMessage != null) {
-//      Class fullParcMessageClass = Settings.getAccountTypeToFullParcMessageClass().get(type);
-//      Class fullMessageClass = Settings.getAccountTypeToFullMessageClass().get(type);
-//      if (fullParcMessageClass == null) {
-//        throw new RuntimeException("Full message class is null, " + account.getAccountType() + " is not a valid TYPE.");
-//      }
-//      try {
-//        Constructor constructor = fullParcMessageClass.getConstructor(fullMessageClass);
-//        this.fullMessage = (FullMessage) constructor.newInstance(fullMessage);
-//      } catch (NoSuchMethodException ex) {
-//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (InstantiationException ex) {
-//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (IllegalAccessException ex) {
-//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (IllegalArgumentException ex) {
-//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-//      } catch (InvocationTargetException ex) {
-//        Logger.getLogger(MessageListElement.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//    }
-//  }
-          
 
   public static void refreshCurrentDates() {
     Date d = new Date();

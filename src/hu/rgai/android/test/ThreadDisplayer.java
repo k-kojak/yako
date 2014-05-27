@@ -259,7 +259,7 @@ public class ThreadDisplayer extends ActionBarActivity {
             Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
           }
         } else {
-          Log.d("rgai", "@@@skipping load button press for 5 sec");
+//          Log.d("rgai", "@@@skipping load button press for 5 sec");
         }
         return true;
       case android.R.id.home:

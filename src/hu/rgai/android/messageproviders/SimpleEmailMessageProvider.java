@@ -1130,7 +1130,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           
           mFolder.idle();
         } catch (Exception ex) {
-          Log.d("rgai", "FolderIdle exception: " + ex.toString());
+//          Log.d("rgai", "FolderIdle exception: " + ex.toString());
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
 //          timer.cancel();

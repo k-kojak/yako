@@ -46,7 +46,7 @@ public class LocationLogger implements LocationListener {
       isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
       if (!isGPSEnabled && !isNetworkEnabled) {
-        Log.d("willrgai", " no provider is enabled");
+//        Log.d("willrgai", " no provider is enabled");
       } else {
         // First get location from Network Provider
         loggingLocation();

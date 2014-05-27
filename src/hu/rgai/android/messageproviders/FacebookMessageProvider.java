@@ -268,7 +268,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   
   public static void closeConnection() {
     if (xmpp != null) {
-      Log.d("rgai", "Disconnecting XMPP");
+//      Log.d("rgai", "Disconnecting XMPP");
       xmpp.disconnect();
       xmpp = null;
     }

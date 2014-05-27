@@ -91,7 +91,6 @@ public class MessageListerHandler extends TimeoutHandler {
         boolean sendBC = false;
         for (int i = 0; i < newMessages.length; i++) {
           MessageListElement m = newMessages[i];
-//                Log.d("rgai", "m:" + m);
           if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
             sendBC = true;
             break;
