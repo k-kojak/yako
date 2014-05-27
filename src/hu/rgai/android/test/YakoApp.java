@@ -8,6 +8,7 @@ package hu.rgai.android.test;
 
 import android.app.Application;
 import android.content.Context;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
@@ -23,21 +24,23 @@ import java.util.TreeSet;
 
 /**
  *
- * @author k
+ * @author Tamas Kojedzinszky
  */
 public class YakoApp extends Application {
   
   private Tracker tracker = null;
   
   private volatile static TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
-  private volatile static  HashMap<Account, Date> last_notification_dates = new HashMap<Account, Date>();
+  private volatile static  HashMap<Account, Date> lastNotificationDates = new HashMap<Account, Date>();
   public volatile static MessageListElement mLastNotifiedMessage = null;
+  public volatile static boolean isPhone;
+  public static volatile Date lastMessageUpdate = null;
 
-  public TreeSet<MessageListElement> getMessages() {
+  public static TreeSet<MessageListElement> getMessages() {
     return messages;
   }
   
-  public void setMessageContent(MessageListElement message, FullMessage fullMessage) {
+  public static void setMessageContent(MessageListElement message, FullMessage fullMessage) {
     for (MessageListElement m : messages) {
       if (m.equals(message)) {
         m.setFullMessage(fullMessage);
@@ -52,7 +55,7 @@ public class YakoApp extends Application {
    * 
    * @param account
    */
-  public void removeMessagesToAccount(Account account) {
+  public static void removeMessagesToAccount(Account account) {
     Iterator<MessageListElement> it = messages.iterator();
     while (it.hasNext()) {
       MessageListElement mle = it.next();
@@ -62,6 +65,7 @@ public class YakoApp extends Application {
     }
   }
   
+  
   /**
    * Sets the seen status to true, and the unreadCount to 0.
    * 
@@ -69,7 +73,7 @@ public class YakoApp extends Application {
    * @return true if status changed, false otherwise
    * 
    */
-  public boolean setMessageSeenAndReadLocally(MessageListElement m) {
+  public static boolean setMessageSeenAndReadLocally(MessageListElement m) {
     boolean changed = false;
     for (MessageListElement mlep : messages) {
       if (mlep.equals(m) && !mlep.isSeen()) {
@@ -81,26 +85,50 @@ public class YakoApp extends Application {
     }
     return changed;
   }
+
   
-  /**
-   * Updates the last notification date of the given account. Sets all of the
-   * accounts last notification date to the current date if null given.
-   * 
-   * @param acc
-   *          the account to update, or null if update all account's last event
-   *          time
-   */
-  public void updateLastNotification(Account acc) {
-    if (acc != null) {
-      last_notification_dates.put(acc, new Date());
-    } else {
-      for (Account a : last_notification_dates.keySet()) {
-        last_notification_dates.get(a).setTime(new Date().getTime());
+  private static void initLastNotificationDates(Context c) {
+    if (lastNotificationDates == null) {
+      lastNotificationDates = StoreHandler.readLastNotificationObject(c);
+      if (lastNotificationDates == null) {
+        lastNotificationDates = new HashMap<Account, Date>();
       }
     }
-    StoreHandler.writeLastNotificationObject(this, last_notification_dates);
   }
-
+  
+  
+  /**
+   * Updates the last notification date of the given account.
+   * Sets all of the accounts last notification date to the current date if null given.
+   * 
+   * @param acc the account to update, or null if update all account's last event time
+   * @param c
+   */
+  public static void updateLastNotification(Account acc, Context c) {
+    initLastNotificationDates(c);
+    if (acc != null) {
+      lastNotificationDates.put(acc, new Date());
+    } else {
+      for (Account a : lastNotificationDates.keySet()) {
+        lastNotificationDates.get(a).setTime(new Date().getTime());
+      }
+    }
+    StoreHandler.writeLastNotificationObject(c, lastNotificationDates);
+  }
+  
+  
+  private boolean setIsPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    Log.d("rgai", "sim state: " + simState);
+    if (simState != TelephonyManager.SIM_STATE_ABSENT) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  
   /**
    * Returns the last notification of the given account.
    * 
@@ -108,12 +136,12 @@ public class YakoApp extends Application {
    *          last notification time will be set to this account
    * @return
    */
-  public Date getLastNotification(Account acc) {
+  public static Date getLastNotification(Account acc) {
     Date ret = null;
-    if (last_notification_dates == null || acc == null) {
+    if (lastNotificationDates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
     } else {
-      ret = last_notification_dates.get(acc);
+      ret = lastNotificationDates.get(acc);
     }
     if (ret == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
@@ -121,15 +149,18 @@ public class YakoApp extends Application {
     return ret;
   }
   
-  public void setLastNotifiedMessage(MessageListElement lastNotifiedMessage) {
+  
+  public static void setLastNotifiedMessage(MessageListElement lastNotifiedMessage) {
     mLastNotifiedMessage = lastNotifiedMessage;
   }
 
-  public MessageListElement getmLastNotifiedMessage() {
+  
+  public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
   
-  public TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
+  
+  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
     if (filterAcc == null) {
       return messages;
     } else {
@@ -143,26 +174,28 @@ public class YakoApp extends Application {
     }
   }
   
-  public MessageListElement getListElementById(String id, Account a) {
-    for (MessageListElement mle : messages) {
-      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
-        return mle;
-      }
-    }
-    return null;
-  }
   
-  public TreeSet<MessageListElement> getLoadedMessages(Account account) {
-    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
-    if (messages != null) {
-      for (MessageListElement mle : messages) {
-        if (mle.getAccount().equals(account)) {
-          selected.add(mle);
-        }
-      }
-    }
-    return selected;
-  }
+//  public static MessageListElement getListElementById(String id, Account a) {
+//    for (MessageListElement mle : messages) {
+//      if (mle.getId().equals(id) && mle.getAccount().equals(a)) {
+//        return mle;
+//      }
+//    }
+//    return null;
+//  }
+  
+  
+//  public static TreeSet<MessageListElement> getLoadedMessages(Account account) {
+//    TreeSet<MessageListElement> selected = new TreeSet<MessageListElement>();
+//    if (messages != null) {
+//      for (MessageListElement mle : messages) {
+//        if (mle.getAccount().equals(account)) {
+//          selected.add(mle);
+//        }
+//      }
+//    }
+//    return selected;
+//  }
   
   public synchronized Tracker getTracker() {
     if (tracker == null) {
@@ -183,6 +216,11 @@ public class YakoApp extends Application {
     } else {
       Log.d("rgai", "#DO NOT TURN GOOGLE ANALYTICS OFF: WE ARE IN PRODUCTION MODE");
     }
+    
+    // TODO: we may have to update it on network state change!
+    isPhone = setIsPhone();
+    Log.d("rgai", "isPhone: " + isPhone);
+    
   }
  
   

@@ -75,7 +75,6 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-  private YakoApp mYakoApp = null;
   
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
@@ -96,7 +95,6 @@ public class ThreadDisplayer extends ActionBarActivity {
     super.onCreate(icicle);
     
     // setting google analytics
-    this.mYakoApp = (YakoApp)getApplication();
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
@@ -150,7 +148,7 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     actViewingMessage = mMessage;
     removeNotificationIfExists();
-    mYakoApp.setMessageSeenAndReadLocally(mMessage);
+    YakoApp.setMessageSeenAndReadLocally(mMessage);
     
     
     // dealing with group chat issue
@@ -179,7 +177,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   
   public void setMessageContent(FullThreadMessage content) {
     mMessage.setFullMessage(content);
-    mYakoApp.setMessageContent(mMessage, content);
+    YakoApp.setMessageContent(mMessage, content);
   }
   
   public void dismissProgressDialog() {
@@ -202,10 +200,10 @@ public class ThreadDisplayer extends ActionBarActivity {
 
   
   private void removeNotificationIfExists() {
-    if (mMessage.equals(mYakoApp.getmLastNotifiedMessage())) {
+    if (mMessage.equals(YakoApp.getLastNotifiedMessage())) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-      mYakoApp.setLastNotifiedMessage(null);
+      YakoApp.setLastNotifiedMessage(null);
     }
   }
   
@@ -305,7 +303,7 @@ public class ThreadDisplayer extends ActionBarActivity {
       FullThreadMessage tm = (FullThreadMessage)mMessage.getFullMessage();
       tm.getMessages().addAll(fullMessage.getMessages());
     }
-    mYakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
+    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
   
   public void displayMessage(boolean scrollToBottom) {

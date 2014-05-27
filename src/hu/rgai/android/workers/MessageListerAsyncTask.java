@@ -1,23 +1,15 @@
 package hu.rgai.android.workers;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.beens.Person;
 import hu.rgai.android.beens.RunningSetup;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.handlers.MessageListerHandler;
-import hu.rgai.android.handlers.TimeoutHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.test.YakoApp;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -52,7 +44,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   
   
   
-  private final YakoApp mYakoApp;
+  private final Context mContext;
   private int result = -1;
   private String errorMessage = null;
   private final Account acc;
@@ -66,11 +58,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
-  public MessageListerAsyncTask(YakoApp yakoApp, Account acc, MessageProvider messageProvider,
+  public MessageListerAsyncTask(Context context, Account acc, MessageProvider messageProvider,
           boolean loadMore, int queryLimitOverride, int queryOffsetOverride, MessageListerHandler handler) {
     
     super(handler);
-    this.mYakoApp = yakoApp;
+    mContext = context;
     this.acc = acc;
     this.messageProvider = messageProvider;
     this.loadMore = loadMore;
@@ -81,8 +73,8 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     int offset = 0;
     int limit = acc.getMessageLimit();
     if (loadMore) {
-      if (mYakoApp.getMessages() != null) {
-        for (MessageListElement m : mYakoApp.getMessages()) {
+      if (YakoApp.getMessages() != null) {
+        for (MessageListElement m : YakoApp.getMessages()) {
           if (m.getAccount().equals(acc)) {
             offset++;
           }
@@ -116,20 +108,17 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     MessageListResult messageResult = null;
     try {
       if (messageProvider != null) {
-        Log.d("rgai", "current runsetup: " + mRunningSetup);
+//        Log.d("rgai", "current runsetup: " + mRunningSetup);
         if (isSetupRunning(mRunningSetup)) {
-          Log.d("rgai", "SKIP SETUP");
+//          Log.d("rgai", "SKIP SETUP");
           return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
         } else {
-          Log.d("rgai", "CONTINUE SETUP");
+//          Log.d("rgai", "CONTINUE SETUP");
         }
 
         // the already loaded messages to the specific content type...
-        TreeSet<MessageListElement> loadedMessages = mYakoApp.getLoadedMessages(acc);
-//        Log.d("rgai", "offset, limit: " + offset + ","+limit);
-        Log.d("rgai2", "get Message List elott");
+        TreeSet<MessageListElement> loadedMessages = YakoApp.getFilteredMessages(acc);
         messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
-        Log.d("rgai2", "get Message List utan");
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());
@@ -169,9 +158,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       this.result = OK;
     }
     
-//    MainService.currentRefreshedAccountCounter++;
-//    MainActivity.refreshLoadingStateRate();
-//    Log.d("rgai", "do in background ENDED: " + acc);
     return messageResult;
   }
   
@@ -187,7 +173,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private void extendPersonObject(List<MessageListElement> origi) {
     Person p;
     for (MessageListElement mle : origi) {
-      p = Person.searchPersonAndr(mYakoApp, mle.getFrom());
+      p = Person.searchPersonAndr(mContext, mle.getFrom());
       mle.setFrom(p);
       if (!mle.isUpdateFlags()) {
         if (mle.getFullMessage() != null && mle.getFullMessage() instanceof FullSimpleMessage) {
@@ -196,7 +182,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
         if (mle.getRecipientsList() != null) {
           for (int i = 0; i < mle.getRecipientsList().size(); i++) {
-            p = Person.searchPersonAndr(mYakoApp, mle.getRecipientsList().get(i));
+            p = Person.searchPersonAndr(mContext, mle.getRecipientsList().get(i));
             mle.getRecipientsList().set(i, p);
           }
         }

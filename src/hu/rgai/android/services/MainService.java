@@ -8,9 +8,7 @@ import android.net.NetworkInfo;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
-import com.google.android.gms.analytics.GoogleAnalytics;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -23,7 +21,6 @@ import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.android.handlers.MessageListerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.tools.AndroidUtils;
@@ -52,15 +49,13 @@ public class MainService extends Service {
   // flags for email account feedback
   
   
-  private YakoApp mYakoApp;
-
 //  private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
   
   
 //  public static volatile TreeSet<MessageListElement> messages = null;
-  public static volatile Date last_message_update = new Date();
+//  public static volatile Date last_message_update = new Date();
 //  public volatile static int currentRefreshedAccountCounter = 0;
 //  public volatile static int currentNumOfAccountsToRefresh = 0;
 //  public static volatile MessageListElement mLastNotifiedMessage = null;
@@ -68,26 +63,17 @@ public class MainService extends Service {
 //  private static 
   
   public static final String MESSAGE_LIST_QUERY_KEY = "message_list_query_key";
-  public static final String BATCHED_MESSAGE_LIST_TASK_DONE = "batched_message_list_task_done";
+  public static final String BATCHED_MESSAGE_LIST_TASK_DONE_INTENT = "batched_message_list_task_done_intent";
 
   public MainService() {}
 
   @Override
   public void onCreate() {
-    this.mYakoApp = (YakoApp)getApplication();
-    
-    if (BuildConfig.DEBUG) {
-      Log.d("rgai", "#TURNING OFF GOOGLE ANALYTICS: WE ARE IN DEVELOPE MODE");
-      GoogleAnalytics googleAnalytics = GoogleAnalytics.getInstance(getApplicationContext());
-      googleAnalytics.setAppOptOut(true);
-    } else {
-      Log.d("rgai", "#DO NOT TURN GOOGLE ANALYTICS OFF: WE ARE IN PRODUCTION MODE");
-    }
     RUNNING = true;
 //    handler = new MyHandler(this);
 
     // this loads the last notification dates from file
-    MainActivity.initLastNotificationDates(this);
+//    MainActivity.initLastNotificationDates(this);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -119,9 +105,9 @@ public class MainService extends Service {
   }
   
   private void updateMessagesPrettyDate() {
-    if (mYakoApp.getMessages() != null) {
+    if (YakoApp.getMessages() != null) {
       SimpleDateFormat sdf = new SimpleDateFormat();
-      for (MessageListElement mlep : mYakoApp.getMessages()) {
+      for (MessageListElement mlep : YakoApp.getMessages()) {
         mlep.updatePrettyDateString(sdf);
       }
     }
@@ -148,31 +134,22 @@ public class MainService extends Service {
     }
     
     boolean isNet = isNetworkAvailable();
-    boolean isPhone = isPhone();
-    MessageListerHandler preHandler = new MessageListerHandler(mYakoApp, extraParams, null);
+    boolean isPhone = YakoApp.isPhone;
+    MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
     if (accounts.isEmpty() && !isPhone) {
       preHandler.finished(null, false, NO_ACCOUNT_SET, null);
-//      Message msg = handler.obtainMessage();
-//      Bundle bundle = new Bundle();
-//      bundle.putInt("result", NO_ACCOUNT_SET);
-//      msg.setData(bundle);
-//      handler.sendMessage(msg);
     } else {
       if (!accounts.isEmpty() && !isPhone && !isNet) {
         preHandler.finished(null, false, NO_INTERNET_ACCESS, null);
       } else {
-//        handler.setActViewingMessageAtThread(extraParams.getActViewingMessage());
         
         if (isPhone && (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account))) {
           accounts.add(SmsAccount.account);
         }
         
-        
         if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
           List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
           boolean wasAnyFullUpdateCheck = false;
-//          currentNumOfAccountsToRefresh = 0;
-//          currentRefreshedAccountCounter = 0;
           for (Account acc : accounts) {
             
             if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
@@ -194,8 +171,8 @@ public class MainService extends Service {
                     MainActivity.openFbSession(this);
                   }
 
-                  MessageListerHandler th = new MessageListerHandler(mYakoApp, extraParams, acc.getDisplayName());
-                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(mYakoApp, acc,
+                  MessageListerHandler th = new MessageListerHandler(this, extraParams, acc.getDisplayName());
+                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, acc,
                           provider, extraParams.isLoadMore(), extraParams.getQueryLimit(),
                           extraParams.getQueryOffset(), th);
                   myThread.setTimeout(25000);
@@ -208,8 +185,10 @@ public class MainService extends Service {
           try {
             BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
               public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
-                Log.d("rgai2", processState.toString() + ", cancelled: " + cancelled);
-                Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE);
+                if (processState.isDone()) {
+                  Log.d("rgai2", "@@@@@@BATCH DONE");
+                }
+                Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
                 LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
               }
             });
@@ -217,29 +196,26 @@ public class MainService extends Service {
           } catch (Exception ex) {
             Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);
           }
-//          MainActivity.refreshLoadingStateRate();
           if (wasAnyFullUpdateCheck) {
-            last_message_update = new Date();
-            MainActivity.notifyMessageChange(false);
+            YakoApp.lastMessageUpdate = new Date();
           }
-  //          Log.d("rgai", " . ");
         } else {
-          Log.d("rgai2", "ITT MOST MEGGATOLTUK A TOBBSZORI INDITAST!!!!!!!!!!!!!!!!!!!!!!");
+//          Log.d("rgai2", "ITT MOST MEGGATOLTUK A TOBBSZORI INDITAST!!!!!!!!!!!!!!!!!!!!!!");
         }
       }
     }
     return Service.START_STICKY;
   }
 
-  private boolean isPhone() {
-    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-    int simState = telMgr.getSimState();
-    if (simState == TelephonyManager.SIM_STATE_READY) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+//  private boolean isPhone() {
+//    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+//    int simState = telMgr.getSimState();
+//    if (simState == TelephonyManager.SIM_STATE_READY) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
 
   private boolean isNetworkAvailable() {
     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);

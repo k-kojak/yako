@@ -2,7 +2,6 @@
 package hu.rgai.android.tools.view;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import hu.rgai.android.beens.BitmapResult;

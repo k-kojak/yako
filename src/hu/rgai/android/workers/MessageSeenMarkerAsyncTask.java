@@ -1,6 +1,7 @@
 
 package hu.rgai.android.workers;
 
+import android.util.Log;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.handlers.MessageSeenMarkerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
@@ -25,6 +26,7 @@ public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Boo
     mMessagesToMark = messagesToMark;
     mSeen = seen;
     mHandler = handler;
+    Log.d("rgai", "message to mark: " + messagesToMark);
     
   }
   

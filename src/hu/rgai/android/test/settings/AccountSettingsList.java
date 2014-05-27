@@ -58,12 +58,10 @@ public class AccountSettingsList extends ActionBarActivity {
   boolean stillAddingFacebookAccount = false;
   FacebookSettingActivity fbFragment = null;
 //  private MainService mainService;
-  private YakoApp mYakoApp = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    this.mYakoApp = (YakoApp)getApplication();
   }
 
   @Override
@@ -215,7 +213,7 @@ public class AccountSettingsList extends ActionBarActivity {
   
   private void removeMessagesToAccount(final Account acc) {
     
-    mYakoApp.removeMessagesToAccount(acc);
+    YakoApp.removeMessagesToAccount(acc);
     
     // TODO: notify mainActivity's adapter with broadcast, not with static function call!
     // but its not even necessary...adapter should notify itself when activity is visible

@@ -2,6 +2,8 @@
 package hu.rgai.android.tools;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -53,6 +55,18 @@ public class AndroidUtils {
     } else {
       Log.d("rgai", "connection is not alive...thats the problem");
     }
+  }
+  
+  
+  /**
+   * Decides if is network available.
+   * 
+   * @return true if network is available, false otherwise
+   */
+  public static boolean isNetworkAvailable(Context c) {
+    ConnectivityManager connectivityManager = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
   
   public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {

@@ -366,12 +366,10 @@ public class MessageReply extends ActionBarActivity {
 
     List<Account> accs = StoreHandler.getAccounts(this);
 
-    boolean isPhone = MainActivity.isPhone(this);
-
     for (MessageRecipient ri : to) {
       List<Account> selectedAccs = new LinkedList<Account>();
       Iterator<Account> accIt = accs.iterator();
-      if (ri.getType().equals(MessageProvider.Type.SMS) && isPhone) {
+      if (ri.getType().equals(MessageProvider.Type.SMS) && YakoApp.isPhone) {
         selectedAccs.add(SmsAccount.account);
       } else {
         while (accIt.hasNext()) {

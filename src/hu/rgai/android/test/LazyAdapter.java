@@ -41,7 +41,7 @@ public class LazyAdapter extends BaseAdapter {
 
   public int getCount() {
     // the plus 1 item is because of the "last updated" row
-    return mActivity.getYakoApp().getFilteredMessages(filterAcc).size() + 1;
+    return YakoApp.getFilteredMessages(filterAcc).size() + 1;
   }
   
   public Object getItem(int position) {
@@ -49,7 +49,7 @@ public class LazyAdapter extends BaseAdapter {
       return null;
     } else {
       int i = 0;
-      for (MessageListElement mlep : mActivity.getYakoApp().getFilteredMessages(filterAcc)) {
+      for (MessageListElement mlep : YakoApp.getFilteredMessages(filterAcc)) {
         if (i == position - 1) {
           return mlep;
         }
@@ -239,16 +239,16 @@ public class LazyAdapter extends BaseAdapter {
     Date thisYear = c.getTime();
     
     
-    if (MainService.last_message_update.before(thisYear)) {
+    if (YakoApp.lastMessageUpdate.before(thisYear)) {
       sdf.applyPattern("yyyy/MM/dd");
-    } else if (MainService.last_message_update.after(today)) {
+    } else if (YakoApp.lastMessageUpdate.after(today)) {
       niceText += mActivity.getResources().getString(R.string.today) + ", ";
       sdf.applyPattern("HH:mm");
     } else {
       sdf.applyPattern("MMM d");
     }
     
-    niceText += sdf.format(MainService.last_message_update);
+    niceText += sdf.format(YakoApp.lastMessageUpdate);
     
     ((TextView)view.findViewById(R.id.last_update)).setText(niceText);
     return view;

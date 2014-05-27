@@ -2,6 +2,7 @@ package hu.rgai.android.eventlogger;
 
 import hu.rgai.android.test.MainActivity;
 import android.content.Context;
+import hu.rgai.android.tools.AndroidUtils;
 
 public enum LogUploadScheduler {
   INSTANCE;
@@ -71,7 +72,7 @@ class LogUploader implements Runnable {
           e.printStackTrace();
         }
       } else {
-        if ( !MainActivity.isNetworkAvailable(c) ) {
+        if ( !AndroidUtils.isNetworkAvailable(c) ) {
           try {
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch ( InterruptedException e ) {

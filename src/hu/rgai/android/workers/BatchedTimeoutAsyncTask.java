@@ -28,7 +28,7 @@ public abstract class BatchedTimeoutAsyncTask<Params, Progress, Result> extends 
     executor.taskFinished(true);
   }
 
-  
+
   protected abstract void onBatchedPostExecute(Result result);
   
 }

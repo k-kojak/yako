@@ -45,12 +45,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private PagerAdapter mPagerAdapter;
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
   
-  private YakoApp mYakoApp = null;
-
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    mYakoApp = (YakoApp)getApplication();
     
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -61,7 +58,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mMessage = getIntent().getExtras().getParcelable("message");
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
     
-    mYakoApp.setMessageSeenAndReadLocally(mMessage);
+    YakoApp.setMessageSeenAndReadLocally(mMessage);
     
     getSupportActionBar().setTitle(mContent.getSubject());
 
@@ -73,7 +70,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
             true, null);
     marker.executeTask(null);
 
-    
+
     // handling if we came from notifier
     if (getIntent().getExtras().containsKey(ParamStrings.FROM_NOTIFIER)
             && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {

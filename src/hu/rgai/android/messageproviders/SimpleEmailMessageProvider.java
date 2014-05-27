@@ -280,15 +280,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     try {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-      Log.d("rgai", "ALWAYS get a new imapFolder here");
+//      Log.d("rgai", "ALWAYS get a new imapFolder here");
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
-      imapFolder.open(Folder.READ_ONLY);
-      Log.d("rgai", "we have the folder");
-
       if (imapFolder == null) {
-        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
+//        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
+      imapFolder.open(Folder.READ_ONLY);
+//      Log.d("rgai", "we have the folder");
       
       int messageCount = imapFolder.getMessageCount();
 //      Log.d("rgai", "messagecount: " + messageCount);
@@ -1051,7 +1050,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     validityMap.remove(accountFolder);
     
     ConnectionDropper dropper = new ConnectionDropper(fIdle, queryFolder, store);
-    AndroidUtils.<Void, Void, Void>startAsyncTask(dropper);
+    dropper.executeTask(null);
   }
   
   @Override

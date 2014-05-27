@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -24,7 +25,6 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.MessageReply;
@@ -42,12 +42,14 @@ import java.util.TreeSet;
 
 public class MessageListerHandler extends TimeoutHandler {
 
-  private final YakoApp mYakoApp;
+  private final Context mContext;
   private final MainServiceExtraParams mExtraParams;
   private final String mAccountDispName;
+  
+  public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
 
-  public MessageListerHandler(YakoApp yakoApp, MainServiceExtraParams extraParams, String accountDisplayName) {
-    mYakoApp = yakoApp;
+  public MessageListerHandler(Context context, MainServiceExtraParams extraParams, String accountDisplayName) {
+    mContext = context;
     mExtraParams = extraParams;
     mAccountDispName = accountDisplayName;
   }
@@ -55,7 +57,7 @@ public class MessageListerHandler extends TimeoutHandler {
   @Override
   public void timeout() {
     if (mExtraParams.isForceQuery() || mExtraParams.isLoadMore()) {
-      Toast.makeText(mYakoApp, "Connection timeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
+      Toast.makeText(mContext, "Connection timeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
     }
   }
 
@@ -118,7 +120,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
         if (sendBC) {
           Intent i = new Intent(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
-          mYakoApp.sendBroadcast(i);
+          mContext.sendBroadcast(i);
         }
       }
 
@@ -127,12 +129,12 @@ public class MessageListerHandler extends TimeoutHandler {
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      for (MessageListElement mle : mYakoApp.getMessages()) {
+      for (MessageListElement mle : YakoApp.getMessages()) {
 //              if (mle.equals(MainService.actViewingMessage) || mle.equals(actViewingMessageAtThread)) {
 //                mle.setSeen(true);
 //                mle.setUnreadCount(0);
 //              }
-        Date lastNotForAcc = mYakoApp.getLastNotification(mle.getAccount());
+        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount());
         if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
           if (lastUnreadMsg == null) {
             lastUnreadMsg = mle;
@@ -142,23 +144,23 @@ public class MessageListerHandler extends TimeoutHandler {
         }
       }
       for (Account a : accountsToUpdate) {
-        mYakoApp.updateLastNotification(a);
+        YakoApp.updateLastNotification(a, mContext);
       }
-      if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mYakoApp)) {
+      if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
         builNotification(newMessageCount, lastUnreadMsg);
       }
-      // TODO: NOTIFY A DIFFERENT WAY!
-      MainActivity.notifyMessageChange(loadMore);
+      
+      Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
+      LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
     }
-
     
   }
 
   private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
-    mYakoApp.setLastNotifiedMessage(lastUnreadMsg);
-    NotificationManager mNotificationManager = (NotificationManager) mYakoApp.getSystemService(Context.NOTIFICATION_SERVICE);
+    YakoApp.setLastNotifiedMessage(lastUnreadMsg);
+    NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
     if (lastUnreadMsg != null) {
-      boolean soundNotification = StoreHandler.SystemSettings.isNotificationSoundTurnedOn(mYakoApp);
+      boolean soundNotification = StoreHandler.SystemSettings.isNotificationSoundTurnedOn(mContext);
       if (!MainActivity.isMainActivityVisible()) {
         String fromNameText = "?";
         if (lastUnreadMsg.getFrom() != null) {
@@ -177,12 +179,12 @@ public class MessageListerHandler extends TimeoutHandler {
 
         Bitmap largeIcon;
         if (lastUnreadMsg.getFrom() != null) {
-          largeIcon = ProfilePhotoProvider.getImageToUser(mYakoApp, lastUnreadMsg.getFrom().getContactId()).getBitmap();
+          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom().getContactId()).getBitmap();
         } else {
-          largeIcon = BitmapFactory.decodeResource(mYakoApp.getResources(), R.drawable.group_chat);
+          largeIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.group_chat);
         }
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mYakoApp)
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext)
                 .setLargeIcon(largeIcon)
                 .setSmallIcon(R.drawable.not_ic_action_email)
                 .setWhen(lastUnreadMsg.getDate().getTime())
@@ -196,39 +198,39 @@ public class MessageListerHandler extends TimeoutHandler {
         }
 
         if (soundNotification) {
-          Uri soundURI = Uri.parse("android.resource://" + mYakoApp.getPackageName() + "/" + R.raw.alarm);
+          Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
           mBuilder.setSound(soundURI);
         }
 
-        if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mYakoApp)) {
+        if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext)) {
           mBuilder.setVibrate(new long[]{100, 150, 100, 150, 500, 150, 100, 150});
         }
 
         Intent resultIntent;
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mYakoApp);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
-          resultIntent = new Intent(mYakoApp, classToLoad);
+          resultIntent = new Intent(mContext, classToLoad);
 //            resultIntent.putExtra("msg_list_element_id", lastUnreadMsg.getId());
           resultIntent.putExtra("message", lastUnreadMsg);
           stackBuilder.addParentStack(MainActivity.class);
         } else {
-          resultIntent = new Intent(mYakoApp, MainActivity.class);
+          resultIntent = new Intent(mContext, MainActivity.class);
         }
         resultIntent.putExtra(ParamStrings.FROM_NOTIFIER, true);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
         mBuilder.setAutoCancel(true);
-        KeyguardManager km = (KeyguardManager) mYakoApp.getSystemService(Context.KEYGUARD_SERVICE);
+        KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
                 + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
       } // if main activity visible: only play sound
       else {
         if (soundNotification) {
-          Uri soundURI = Uri.parse("android.resource://" + mYakoApp.getPackageName() + "/" + R.raw.alarm);
-          Ringtone r = RingtoneManager.getRingtone(mYakoApp.getApplicationContext(), soundURI);
+          Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
+          Ringtone r = RingtoneManager.getRingtone(mContext.getApplicationContext(), soundURI);
           r.play();
         }
       }
@@ -238,12 +240,12 @@ public class MessageListerHandler extends TimeoutHandler {
   private void notificationButtonHandling(MessageListElement lastUnreadMsg,
           NotificationCompat.Builder mBuilder) {
 
-    Intent intent = new Intent(mYakoApp, MessageReply.class);
+    Intent intent = new Intent(mContext, MessageReply.class);
     intent.putExtra("message", (Parcelable) lastUnreadMsg);
     intent.putExtra(ParamStrings.FROM_NOTIFIER, true);
 //      intent.putExtra("account", (Parcelable) lastUnreadMsg.getAccount());
     //startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
-    PendingIntent pIntent = PendingIntent.getActivity(mYakoApp, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
 
   }
@@ -263,14 +265,14 @@ public class MessageListerHandler extends TimeoutHandler {
       // tree search does not return a valid value
       // causes problem at thread type messages like Facebook
 
-      for (MessageListElement storedMessage : mYakoApp.getMessages()) {
+      for (MessageListElement storedMessage : YakoApp.getMessages()) {
         if (storedMessage.equals(newMessage)) {
           contains = true;
           storedFoundMessage = storedMessage;
         }
       }
       if (!contains) {
-        mYakoApp.getMessages().add(newMessage);
+        YakoApp.getMessages().add(newMessage);
 
         if ((ThreadDisplayer.actViewingMessage != null && newMessage.equals(ThreadDisplayer.actViewingMessage))
                 || (ThreadDisplayer.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
@@ -290,7 +292,7 @@ public class MessageListerHandler extends TimeoutHandler {
         } else {
 //            Log.d("rgai", "HANDLE AS \"NEW\" MESSAGE -> " + newMessage);
           MessageListElement itemToRemove = null;
-          for (MessageListElement oldMessage : mYakoApp.getMessages()) {
+          for (MessageListElement oldMessage : YakoApp.getMessages()) {
             if (newMessage.equals(oldMessage)) {
               // first updating person info anyway..
               oldMessage.setFrom(newMessage.getFrom());
@@ -309,8 +311,8 @@ public class MessageListerHandler extends TimeoutHandler {
             }
           }
           if (itemToRemove != null) {
-            mYakoApp.getMessages().remove(itemToRemove);
-            mYakoApp.getMessages().add(newMessage);
+            YakoApp.getMessages().remove(itemToRemove);
+            YakoApp.getMessages().add(newMessage);
           }
         }
       }
@@ -324,7 +326,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
   private synchronized void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
-      TreeSet<MessageListElement> msgs = mYakoApp.getLoadedMessages(newMessages[0].getAccount());
+      TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
       SortedSet<MessageListElement> messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
 
       for (int i = 0; i < newMessages.length; i++) {
@@ -333,7 +335,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
       }
       for (MessageListElement mle : messagesToRemove) {
-        mYakoApp.getMessages().remove(mle);
+        YakoApp.getMessages().remove(mle);
       }
     }
   }
@@ -374,17 +376,17 @@ public class MessageListerHandler extends TimeoutHandler {
         msg = message;
         break;
       case MessageListerAsyncTask.NO_INTERNET_ACCESS:
-        msg = mYakoApp.getString(R.string.no_internet_access);
+        msg = mContext.getString(R.string.no_internet_access);
         break;
       case MessageListerAsyncTask.NO_ACCOUNT_SET:
-        msg = mYakoApp.getString(R.string.no_account_set);
+        msg = mContext.getString(R.string.no_account_set);
         break;
       default:
-        msg = mYakoApp.getString(R.string.exception_unknown);
+        msg = mContext.getString(R.string.exception_unknown);
         break;
     }
     if (MainActivity.isMainActivityVisible()) {
-      Toast.makeText(mYakoApp, msg, Toast.LENGTH_LONG).show();
+      Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
     }
   }
 

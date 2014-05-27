@@ -205,9 +205,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   private void initConnection(FacebookAccount fba, final Context context) {
-    Log.d("rgai", "initing xmpp connection");
+//    Log.d("rgai", "initing xmpp connection");
     if (xmpp == null || !xmpp.isConnected()) {
-      Log.d("rgai", "try connecting to XMPP");
+//      Log.d("rgai", "try connecting to XMPP");
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
       StrictMode.setThreadPolicy(policy);
 
@@ -224,7 +224,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(fba.getUniqueName(), fba.getPassword());
-        Log.d("rgai", "connected to XMPP");
+//        Log.d("rgai", "connected to XMPP");
 
         xmpp.getChatManager().addChatListener(new ChatManagerListener() {
           @Override

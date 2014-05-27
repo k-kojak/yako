@@ -58,10 +58,10 @@ public class BatchedAsyncTaskExecutor {
   }
   
   public boolean execute() {
-    taskFinished(true, false);
     if (mProgressId == null || !runningStacksState.containsKey(mProgressId) || runningStacksState.get(mProgressId).isDone()) {
       if (mProgressId != null) {
         runningStacksState.put(mProgressId, new BatchedProcessState(mTasksCount));
+        taskFinished(true, false);
       }
       int i = 0;
       for (BatchedTimeoutAsyncTask task : mTasks) {
