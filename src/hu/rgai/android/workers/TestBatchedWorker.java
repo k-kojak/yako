@@ -13,16 +13,6 @@ public class TestBatchedWorker extends BatchedTimeoutAsyncTask<String, Void, Str
   
   
   @Override
-  protected void onBatchedCancelled() {
-    Log.d("rgai2", "cancelled");
-  }
-
-  @Override
-  protected void onBatchedCancelled(String result) {
-    Log.d("rgai2", "cancelled");
-  }
-
-  @Override
   protected void onBatchedPostExecute(String result) {
     Log.d("rgai2", "thread done: " + result);
   }

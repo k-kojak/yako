@@ -15,32 +15,20 @@ public abstract class BatchedTimeoutAsyncTask<Params, Progress, Result> extends 
   public void setExecutor(BatchedAsyncTaskExecutor executor) {
     this.executor = executor;
   }
-  
 
-  @Override
-  protected final void onCancelled() {
-    executor.taskFinished();
-    onBatchedCancelled();
-  }
-  
-
-  @Override
-  protected final void onCancelled(Result result) {
-    executor.taskFinished();
-    onBatchedCancelled(result);
-  }
-  
 
   @Override
   protected final void onPostExecute(Result result) {
-    executor.taskFinished();
-    
+    executor.taskFinished(false);
     onBatchedPostExecute(result);
   }
-  
-  
-  protected abstract void onBatchedCancelled();
-  protected abstract void onBatchedCancelled(Result result);
-  protected abstract void onBatchedPostExecute(Result result);
 
+  @Override
+  public void taskCancelled() {
+    executor.taskFinished(true);
+  }
+
+  
+  protected abstract void onBatchedPostExecute(Result result);
+  
 }

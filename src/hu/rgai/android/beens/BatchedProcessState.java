@@ -23,4 +23,13 @@ public class BatchedProcessState {
     this.mProcessDone++;
   }
   
+  public boolean isDone() {
+    return mProcessDone == mTotalProcess;
+  }
+
+  @Override
+  public String toString() {
+    return "BatchedProcessState{" + "mProcessDone=" + mProcessDone + ", mTotalProcess=" + mTotalProcess + '}';
+  }
+  
 }

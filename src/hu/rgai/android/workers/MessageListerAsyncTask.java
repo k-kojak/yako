@@ -127,7 +127,9 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         // the already loaded messages to the specific content type...
         TreeSet<MessageListElement> loadedMessages = mYakoApp.getLoadedMessages(acc);
 //        Log.d("rgai", "offset, limit: " + offset + ","+limit);
+        Log.d("rgai2", "get Message List elott");
         messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+        Log.d("rgai2", "get Message List utan");
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());
@@ -202,15 +204,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     }
   }
 
-  @Override
-  protected void onBatchedCancelled() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  protected void onBatchedCancelled(MessageListResult result) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
 
   @Override
   protected void onBatchedPostExecute(MessageListResult messageResult) {

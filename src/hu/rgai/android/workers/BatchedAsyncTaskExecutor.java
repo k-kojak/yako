@@ -11,20 +11,17 @@ import java.util.TreeSet;
 public class BatchedAsyncTaskExecutor {
   
   private final int mTasksCount;
-  private int mTasksDone;
   private final List<BatchedTimeoutAsyncTask> mTasks;
   private final Object[][] mParams;
   private final String mProgressId;
   private BatchedAsyncTaskHandler mBatchHandler;
   
-  private volatile static TreeSet<String> runningStacks = new TreeSet<String>();
   private volatile static TreeMap<String, BatchedProcessState> runningStacksState = new TreeMap<String, BatchedProcessState>();
   
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
           String progressId, BatchedAsyncTaskHandler handler) throws Exception {
     
-    mTasksDone = 0;
     mTasksCount = tasks.size();
     mTasks = tasks;
     mParams = params;
@@ -56,10 +53,14 @@ public class BatchedAsyncTaskExecutor {
     this(tasks, null, progressId, null);
   }
   
+  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, String progressId, BatchedAsyncTaskHandler handler) throws Exception {
+    this(tasks, null, progressId, handler);
+  }
+  
   public boolean execute() {
-    if (mProgressId == null || !runningStacks.contains(mProgressId)) {
+    taskFinished(true, false);
+    if (mProgressId == null || !runningStacksState.containsKey(mProgressId) || runningStacksState.get(mProgressId).isDone()) {
       if (mProgressId != null) {
-        runningStacks.add(mProgressId);
         runningStacksState.put(mProgressId, new BatchedProcessState(mTasksCount));
       }
       int i = 0;
@@ -76,24 +77,31 @@ public class BatchedAsyncTaskExecutor {
     }
   }
   
-  public synchronized void taskFinished() {
-    mTasksDone++;
+  /**
+   * 
+   * @param initialCall true if called by onPreExecute, false if called from  onCancelled, onPostExecute
+   */
+  private synchronized void taskFinished(boolean initialCall, boolean cancelled) {
     if (mProgressId != null && runningStacksState.containsKey(mProgressId)) {
-      runningStacksState.get(mProgressId).increaseDoneProcesses();
-    }
-    if (mTasksDone == mTasksCount) {
-      if (mProgressId != null) {
-        runningStacks.remove(mProgressId);
-        runningStacksState.remove(mProgressId);
+      if (!initialCall) {
+        runningStacksState.get(mProgressId).increaseDoneProcesses();
       }
       if (mBatchHandler != null) {
-        mBatchHandler.batchedTaskDone(mProgressId);
+        mBatchHandler.batchedTaskDone(cancelled, mProgressId, runningStacksState.get(mProgressId));
       }
     }
   }
   
+  /**
+   * 
+   * @param cancelled true if task finished with cancellation
+   */
+  public synchronized void taskFinished(boolean cancelled) {
+    taskFinished(false, cancelled);
+  }
+  
   public static boolean isProgressRunning(String progressId) {
-    return runningStacks.contains(progressId);
+    return runningStacksState.containsKey(progressId) && !runningStacksState.get(progressId).isDone();
   }
   
   public static BatchedProcessState getProgressState(String progressId) {

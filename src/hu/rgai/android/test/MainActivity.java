@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -132,6 +134,8 @@ public class MainActivity extends ActionBarActivity {
   private static Menu mMenu;
   
   private static TreeSet<MessageListElement> contextSelectedElements = new TreeSet<MessageListElement>();
+  
+  private MessageLoadedReceiver mMessageLoadedReceiver = null;
 
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
@@ -235,22 +239,23 @@ public class MainActivity extends ActionBarActivity {
     return true;
   }
   
-  public static void refreshLoadingStateRate() {
-    if (!BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY)) {
+  private void refreshLoadingStateRate() {
+    Log.d("rgai", "refreshLoadingStateRate....");
+    if (!BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY_KEY)) {
       setRefreshActionButtonState(false);
     } else {
       setRefreshActionButtonState(true);
       if (mMenu != null) {
         MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
         if (refreshItem != null && refreshItem.getActionView() != null) {
-          BatchedProcessState ps = BatchedAsyncTaskExecutor.getProgressState(MainService.MESSAGE_LIST_QUERY);
+          BatchedProcessState ps = BatchedAsyncTaskExecutor.getProgressState(MainService.MESSAGE_LIST_QUERY_KEY);
           ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(ps.getProcessDone()+"/"+ps.getTotalProcess());
         }
       }
     }
   }
   
-  public static void setRefreshActionButtonState(boolean refreshing) {
+  private void setRefreshActionButtonState(boolean refreshing) {
     if (mMenu != null) {
       MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
       if (refreshItem != null) {
@@ -395,7 +400,7 @@ public class MainActivity extends ActionBarActivity {
    */
   private void reloadMessages(boolean forceQuery) {
 //    Log.d("rgai", "RELOAD messages");
-    setRefreshActionButtonState(true);
+    refreshLoadingStateRate();
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -434,6 +439,13 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
     is_activity_visible = true;
     removeNotificationIfExists();
+    
+    
+    // register broadcast receiver for new message load
+    mMessageLoadedReceiver = new MessageLoadedReceiver();
+    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageLoadedReceiver,
+            new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE));
+    
     
     if (!MainService.RUNNING) {
       reloadMessages(true);
@@ -666,7 +678,7 @@ public class MainActivity extends ActionBarActivity {
           }
         });
         lv.addFooterView(loadMoreButton);
-        if (BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY)) {
+        if (BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY_KEY)) {
           loadMoreButton.setEnabled(false);
         }
 
@@ -866,6 +878,10 @@ public class MainActivity extends ActionBarActivity {
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
     super.onPause();
     is_activity_visible = false;
+    
+    
+    // unregister new message arrived broadcast
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
 
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
@@ -945,6 +961,15 @@ public class MainActivity extends ActionBarActivity {
 
   }
 
+  private class MessageLoadedReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(MainService.BATCHED_MESSAGE_LIST_TASK_DONE)) {
+        MainActivity.this.refreshLoadingStateRate();
+      }
+    }
+  }
+  
   static class LogOnScrollListener implements OnScrollListener {
     final ListView lv;
 

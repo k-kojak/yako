@@ -7,16 +7,19 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
+import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.android.handlers.MessageListerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
@@ -54,7 +57,7 @@ public class MainService extends Service {
 //  private MyHandler handler = null;
   private final IBinder mBinder = new MyBinder();
   
-  public static final String MESSAGE_LIST_QUERY = "message_list_query";
+  
   
 //  public static volatile TreeSet<MessageListElement> messages = null;
   public static volatile Date last_message_update = new Date();
@@ -63,6 +66,9 @@ public class MainService extends Service {
 //  public static volatile MessageListElement mLastNotifiedMessage = null;
   
 //  private static 
+  
+  public static final String MESSAGE_LIST_QUERY_KEY = "message_list_query_key";
+  public static final String BATCHED_MESSAGE_LIST_TASK_DONE = "batched_message_list_task_done";
 
   public MainService() {}
 
@@ -162,7 +168,7 @@ public class MainService extends Service {
         }
         
         
-        if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY)) {
+        if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
           List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
           boolean wasAnyFullUpdateCheck = false;
 //          currentNumOfAccountsToRefresh = 0;
@@ -200,12 +206,18 @@ public class MainService extends Service {
             }
           }
           try {
-            BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks);
+            BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
+              public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
+                Log.d("rgai2", processState.toString() + ", cancelled: " + cancelled);
+                Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE);
+                LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
+              }
+            });
             executor.execute();
           } catch (Exception ex) {
             Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);
           }
-          MainActivity.refreshLoadingStateRate();
+//          MainActivity.refreshLoadingStateRate();
           if (wasAnyFullUpdateCheck) {
             last_message_update = new Date();
             MainActivity.notifyMessageChange(false);
