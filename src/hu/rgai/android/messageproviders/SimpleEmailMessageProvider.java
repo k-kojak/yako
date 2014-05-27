@@ -284,7 +284,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       if (imapFolder == null) {
 //        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
-        return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
+        return new MessageListResult(emails, MessageListResult.ResultType.ERROR, supportsUIDforMessages());
       }
       imapFolder.open(Folder.READ_ONLY);
 //      Log.d("rgai", "we have the folder");
@@ -297,7 +297,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
-          return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE);
+          return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE, supportsUIDforMessages());
         }
       }
 
@@ -385,7 +385,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
       imapFolder.close(false);
       
-      return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
+      return new MessageListResult(emails, MessageListResult.ResultType.CHANGED, supportsUIDforMessages());
     } catch (AuthenticationFailedException ex) {
       throw ex;
     } catch (SSLHandshakeException ex) {
@@ -413,7 +413,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Store store = getStore(account);
     
     if (store == null || !store.isConnected()) {
-      return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
+      return new MessageListResult(emails, MessageListResult.ResultType.ERROR, supportsUIDforMessages());
     }
     
     IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
@@ -443,7 +443,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       }
     }
     
-    return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE);
+    return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE, supportsUIDforMessages());
   }
   
   private boolean hasNewMail(IMAPFolder folder, TreeSet<MessageListElement> loadedMessages, int messageCount) throws MessagingException {

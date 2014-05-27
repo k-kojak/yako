@@ -196,7 +196,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     });
     Request.executeAndWait(request);
-    MessageListResult mlr = new MessageListResult(messages, MessageListResult.ResultType.CHANGED);
+    MessageListResult mlr = new MessageListResult(messages, MessageListResult.ResultType.CHANGED, true);
     return mlr;
   }
   

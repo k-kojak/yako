@@ -13,10 +13,12 @@ public class MessageListResult {
   
   private final List<MessageListElement> messages;
   private final ResultType resultType;
+  private final boolean providerSupportsUID;
 
-  public MessageListResult(List<MessageListElement> messages, ResultType resultType) {
+  public MessageListResult(List<MessageListElement> messages, ResultType resultType, boolean providerSupportsUID) {
     this.messages = messages;
     this.resultType = resultType;
+    this.providerSupportsUID = providerSupportsUID;
   }
 
   public List<MessageListElement> getMessages() {
@@ -25,6 +27,10 @@ public class MessageListResult {
 
   public ResultType getResultType() {
     return resultType;
+  }
+
+  public boolean isProviderSupportsUID() {
+    return providerSupportsUID;
   }
   
 }

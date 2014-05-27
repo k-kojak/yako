@@ -111,7 +111,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 //        Log.d("rgai", "current runsetup: " + mRunningSetup);
         if (isSetupRunning(mRunningSetup)) {
 //          Log.d("rgai", "SKIP SETUP");
-          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
+          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED, false);
         } else {
 //          Log.d("rgai", "CONTINUE SETUP");
         }

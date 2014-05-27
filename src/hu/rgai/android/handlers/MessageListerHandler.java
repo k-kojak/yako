@@ -15,6 +15,7 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -34,6 +35,7 @@ import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.workers.MessageListerAsyncTask;
 import static hu.rgai.android.workers.MessageListerAsyncTask.OK;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -124,7 +126,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
       }
 
-      this.mergeMessages(newMessages, loadMore, resultType);
+      this.mergeMessages(newMessages, loadMore, resultType, messageResult.isProviderSupportsUID());
       MessageListElement lastUnreadMsg = null;
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
@@ -256,7 +258,8 @@ public class MessageListerHandler extends TimeoutHandler {
    * @param loadMoreRequest true if result of "load more" action, false otherwise, which
    * means this is a refresh action
    */
-  private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest, MessageListResult.ResultType resultType) {
+  private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest,
+          MessageListResult.ResultType resultType, boolean providerSupportsUID) {
     for (MessageListElement newMessage : newMessages) {
       boolean contains = false;
       MessageListElement storedFoundMessage = null;
@@ -320,20 +323,43 @@ public class MessageListerHandler extends TimeoutHandler {
 
     // checking for deleted messages here
     if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
-      deleteMergeMessages(newMessages);
+      deleteMergeMessages(newMessages, providerSupportsUID);
     }
   }
 
-  private synchronized void deleteMergeMessages(MessageListElement[] newMessages) {
+  private synchronized void deleteMergeMessages(MessageListElement[] newMessages, boolean providerSupportsUID) {
     if (newMessages.length > 0) {
       TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
-      SortedSet<MessageListElement> messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
-
+      
+      SortedSet<MessageListElement> messagesToRemove;
+      if (!providerSupportsUID) {
+        messagesToRemove = new TreeSet<MessageListElement>(new Comparator<MessageListElement>() {
+          public int compare(MessageListElement lhs, MessageListElement rhs) {
+            Log.d("rgai", "calling my new fancy compareto...");
+            if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) && lhs.getDate().equals(rhs.getDate())) {
+              return 0;
+            } else {
+              return lhs.getDate().compareTo(rhs.getDate());
+            }
+          }
+        });
+        messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length - 1]));
+      } else {
+        messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
+      }
+      
+      
+      Log.d("rgai", "aktualis lista: ");
+      for (MessageListElement mle : msgs) {
+        Log.d("rgai", mle.toString());
+      }
       for (int i = 0; i < newMessages.length; i++) {
         if (messagesToRemove.contains(newMessages[i])) {
           messagesToRemove.remove(newMessages[i]);
+          Log.d("rgai", "ezt nem kell majd torolni: " + newMessages[i]);
         }
       }
+      Log.d("rgai", "no, amit torolni kell: " + messagesToRemove);
       for (MessageListElement mle : messagesToRemove) {
         YakoApp.getMessages().remove(mle);
       }
