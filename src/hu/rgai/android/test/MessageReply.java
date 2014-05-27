@@ -44,17 +44,21 @@ import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.handlers.MessageSendHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
+import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.android.workers.MessageSender;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeSet;
 import net.htmlparser.jericho.Source;
 
 /**
@@ -96,7 +100,14 @@ public class MessageReply extends ActionBarActivity {
     actionBar.setDisplayHomeAsUpEnabled(true);
 
     setContentView(R.layout.message_reply);
+    
+    
     mSubject = (EditText) findViewById(R.id.subject);
+    text = (TextView) findViewById(R.id.message_content);
+    mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
+    mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
+    
+    
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey("message")) {
         mMessage = getIntent().getExtras().getParcelable("message");
@@ -112,11 +123,20 @@ public class MessageReply extends ActionBarActivity {
 //        Log.d("rgai", "yes, from notifier");
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
+        // mMessage shouldn be null here...
+        if (mMessage != null) {
+          YakoApp.setMessageSeenAndReadLocally(mMessage);
+          MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
+          MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
+                  new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})), true, null);
+          marker.executeTask(null);
+        }
+        
       }
     }
-    text = (TextView) findViewById(R.id.message_content);
-    mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
-    mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
+    
+    
+    
 
     text.addTextChangedListener(new TextWatcher() {
 
