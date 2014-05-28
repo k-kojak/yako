@@ -9,7 +9,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Boolean> {
+public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Void, Boolean> {
 
   private MessageProvider mProvider = null;
   private TreeSet<MessageListElement> mMessagesToMark = null;
@@ -26,8 +26,6 @@ public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Boo
     mMessagesToMark = messagesToMark;
     mSeen = seen;
     mHandler = handler;
-    Log.d("rgai", "message to mark: " + messagesToMark);
-    
   }
   
   
@@ -49,8 +47,9 @@ public class MessageSeenMarkerAsyncTask extends TimeoutAsyncTask<Void, Void, Boo
     return true;
   }
 
+
   @Override
-  protected void onPostExecute(Boolean success) {
+  protected void onBatchedPostExecute(Boolean success) {
     if (mHandler != null) {
       if (success) {
         mHandler.success(mMessagesToMark, mSeen);

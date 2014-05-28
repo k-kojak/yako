@@ -6,7 +6,7 @@ import hu.rgai.android.handlers.TimeoutHandler;
 
 public abstract class BatchedTimeoutAsyncTask<Params, Progress, Result> extends TimeoutAsyncTask<Params, Progress, Result> {
 
-  private BatchedAsyncTaskExecutor executor;
+  private BatchedAsyncTaskExecutor executor = null;
   
   public BatchedTimeoutAsyncTask(TimeoutHandler handler) {
     super(handler);
@@ -19,13 +19,17 @@ public abstract class BatchedTimeoutAsyncTask<Params, Progress, Result> extends 
 
   @Override
   protected final void onPostExecute(Result result) {
-    executor.taskFinished(false);
+    if (executor != null) {
+      executor.taskFinished(false);
+    }
     onBatchedPostExecute(result);
   }
 
   @Override
   public void taskCancelled() {
-    executor.taskFinished(true);
+    if (executor != null) {
+      executor.taskFinished(true);
+    }
   }
 
 

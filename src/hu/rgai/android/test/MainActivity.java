@@ -26,6 +26,7 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.AccessToken;
@@ -44,6 +45,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.eventlogger.LogUploadScheduler;
 import hu.rgai.android.eventlogger.ScreenReceiver;
+import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.android.handlers.MessageListerHandler;
 import hu.rgai.android.handlers.MessageSeenMarkerHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
@@ -54,13 +56,17 @@ import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.rgai.android.test.settings.SystemPreferences;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.workers.BatchedAsyncTaskExecutor;
+import hu.rgai.android.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This is the main view of the application.
@@ -102,6 +108,10 @@ public class MainActivity extends ActionBarActivity {
   private TreeSet<MessageListElement> contextSelectedElements = null;
   
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
+  
+  private ProgressBar mTopProgressBar;
+  
+  private static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
 
   
   
@@ -429,6 +439,7 @@ public class MainActivity extends ActionBarActivity {
       } else if (!YakoApp.getMessages().isEmpty() && !isListView) {
         setContentView(R.layout.main);
         lv = (ListView) findViewById(R.id.list);
+        mTopProgressBar = (ProgressBar) findViewById(R.id.progressbar);
         
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         lv.setMultiChoiceModeListener(new MultiChoiceModeListener() {
@@ -567,8 +578,6 @@ public class MainActivity extends ActionBarActivity {
   
   private void contextActionMarkMessage(boolean seen) {
     
-    Toast.makeText(this, "Marking...", Toast.LENGTH_SHORT).show();
-
     HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
     for (MessageListElement mle : contextSelectedElements) {
       if (!messagesToAccounts.containsKey(mle.getAccount())) {
@@ -577,14 +586,28 @@ public class MainActivity extends ActionBarActivity {
       messagesToAccounts.get(mle.getAccount()).add(mle);
     }
     
-    // TODO: put a thin blue loader bar while marking messages
     // TODO: block auto update while marking messages
+    
     MessageSeenMarkerHandler handler = new MessageSeenMarkerHandler(this);
+    List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
     for (Map.Entry<Account, TreeSet<MessageListElement>> entry : messagesToAccounts.entrySet()) {
       MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(entry.getKey(), this);
       MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(mp, entry.getValue(), seen, handler);
       messageMarker.setTimeout(10000);
-      messageMarker.executeTask(null);
+      tasks.add(messageMarker);
+    }
+    mTopProgressBar.setVisibility(View.VISIBLE);
+    try {
+      BatchedAsyncTaskExecutor batchedMarker = new BatchedAsyncTaskExecutor(tasks, BATCHED_MESSAGE_MARKER_KEY, new BatchedAsyncTaskHandler() {
+        public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
+          if (processState.isDone()) {
+            mTopProgressBar.setVisibility(View.GONE);
+          }
+        }
+      });
+      batchedMarker.execute();
+    } catch (Exception ex) {
+      Logger.getLogger(MainActivity.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
 
@@ -688,9 +711,12 @@ public class MainActivity extends ActionBarActivity {
   private class MessageLoadedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+      // this one is responsible for GUI loading indicator update
       if (intent.getAction().equals(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT)) {
         MainActivity.this.refreshLoadingIndicatorState();
-      } else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
+      }
+      // this one is responsible for list/data updates
+      else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
         MainActivity.this.messegasArrivedToDisplay();
       }
     }

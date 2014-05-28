@@ -10,9 +10,8 @@
     style="@android:style/Widget.ProgressBar.Large"
     android:layout_width="fill_parent"
     android:layout_height="50px"
-    android:gravity="center"
-
->
+    android:gravity="center">
+  
 </ProgressBar>
 
 </LinearLayout>
