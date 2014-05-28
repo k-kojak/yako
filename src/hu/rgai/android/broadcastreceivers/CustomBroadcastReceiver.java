@@ -7,8 +7,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 import hu.rgai.android.beens.MainServiceExtraParams;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
+import hu.rgai.android.tools.ParamStrings;
 
 public class CustomBroadcastReceiver extends BroadcastReceiver {
 

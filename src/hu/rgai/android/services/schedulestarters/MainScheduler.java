@@ -5,9 +5,9 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
+import hu.rgai.android.tools.ParamStrings;
 import java.util.Calendar;
 
 

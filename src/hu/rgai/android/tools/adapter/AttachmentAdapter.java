@@ -11,29 +11,25 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import hu.rgai.android.beens.Attachment;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.Attachment;
 import hu.rgai.android.beens.EmailAccount;
-import hu.rgai.android.store.StoreHandler;
+import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.test.R;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.tools.Utils;
 import hu.rgai.android.workers.AttachmentDownloader;
-import java.io.IOException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
 
 public class AttachmentAdapter extends BaseAdapter {
 
 //  private MainActivity activity;
   private static LayoutInflater inflater = null;
 //  private AccountAndr filterAcc = null;
-  private Context mContext;
-  private List<Attachment> mAttachments;
-  private EmailAccount mAccount;
-  private String mMessageId;
+  private final Context mContext;
+  private final List<Attachment> mAttachments;
+  private final EmailAccount mAccount;
+  private final String mMessageId;
   
 
   public AttachmentAdapter(Context context, List<Attachment> attachments, Account account, String messageId) {

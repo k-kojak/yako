@@ -47,7 +47,7 @@ public class EmailAttachmentFragment extends Fragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     mView = inflater.inflate(R.layout.attachment_displayer, container, false);
     mListView = (ListView) mView.findViewById(R.id.list);
-    convertAttachments();
+//    convertAttachments();
     checkAttachments();
     mListAdapter = new AttachmentAdapter(this.getActivity(),
             ((FullSimpleMessage)mMessage.getFullMessage()).getAttachments(),
@@ -67,7 +67,7 @@ public class EmailAttachmentFragment extends Fragment {
       if (f.exists()) {
         a.setSize(f.length());
         a.setProgress(100);
-      } else {
+      } else if (a.getAttachmentDownloader() != null && !a.getAttachmentDownloader().isRunning()) {
         a.setProgress(0);
         a.setInProgress(false);
       }

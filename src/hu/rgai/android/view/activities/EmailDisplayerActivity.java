@@ -19,7 +19,6 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.messageproviders.MessageProvider;
@@ -27,11 +26,13 @@ import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.view.NonSwipeableViewPager;
 import hu.rgai.android.view.fragments.EmailAttachmentFragment;
 import hu.rgai.android.view.fragments.EmailDisplayerFragment;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.TreeSet;
 
 public class EmailDisplayerActivity extends ActionBarActivity {
@@ -55,7 +56,10 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     
     setContentView(R.layout.activity_email_displayer);
 
-    mMessage = getIntent().getExtras().getParcelable("message");
+    String msgId = getIntent().getExtras().getString(ParamStrings.MESSAGE_ID);
+    Account acc = getIntent().getExtras().getParcelable(ParamStrings.MESSAGE_ACCOUNT);
+    Date date = new Date(getIntent().getExtras().getLong(ParamStrings.MESSAGE_DATE));
+    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc, date);
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
     
     YakoApp.setMessageSeenAndReadLocally(mMessage);
@@ -112,9 +116,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReply.class);
-//        Source source = new Source(mContent.getContent().getContent());
-        intent.putExtra("message", (Parcelable)mMessage);
-//        intent.putExtra("account", (Parcelable) mAccount);
+        intent.putExtra(ParamStrings.MESSAGE_ID, mMessage.getId());
+        intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
+        intent.putExtra(ParamStrings.MESSAGE_DATE, mMessage.getDate().getTime());
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:

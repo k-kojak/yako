@@ -26,10 +26,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
 import hu.rgai.android.beens.FullThreadMessage;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.SmsMessageRecipient;
@@ -37,6 +37,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
 import hu.rgai.android.workers.ThreadContentGetter;
@@ -90,7 +91,10 @@ public class ThreadDisplayer extends ActionBarActivity {
             && getIntent().getExtras().getBoolean(ParamStrings.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    mMessage = getIntent().getExtras().getParcelable("message");
+    String msgId = getIntent().getExtras().getString(ParamStrings.MESSAGE_ID);
+    Account acc = getIntent().getExtras().getParcelable(ParamStrings.MESSAGE_ACCOUNT);
+    Date date = new Date(getIntent().getExtras().getLong(ParamStrings.MESSAGE_DATE));
+    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc, date);
     
     
     // setting action bar

@@ -108,6 +108,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public MessageListElement() {
   }
   
+  public MessageListElement(String id, Account account, Date date) {
+    this(id, false, null, null, 0, null, null, date, account, account.getAccountType(), false);
+  }
+  
   /**
    * Constructor for a message element in a list.
    * 
@@ -341,15 +345,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     
     final MessageListElement other = (MessageListElement) obj;
     
-    if (!this.id.equals(other.id)) {
-      return false;
-    }
-    
-    if ((this.account == null) ? (other.account != null) : !this.account.equals(other.account)) {
-      return false;
-    }
-
-    return true;
+    return compareTo(other) == 0;
   }
 
   @Override

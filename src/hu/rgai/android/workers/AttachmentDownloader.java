@@ -7,7 +7,6 @@ package hu.rgai.android.workers;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,13 +15,7 @@ import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.Utils;
-import hu.rgai.android.tools.adapter.AttachmentAdapter;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
 
 /**
  *
@@ -37,6 +30,7 @@ public class AttachmentDownloader implements Runnable {
   private volatile WeakReference<ProgressBar> mProgressBar;
   private final Context mContext;
   private WeakReference<TextView> mFileSize;
+  private volatile boolean running = false;
   
   public AttachmentDownloader(Attachment attachment, Handler handler, EmailAccount account,
           String messageId, ProgressBar progressBar, TextView fileSize, Context context) {
@@ -58,6 +52,7 @@ public class AttachmentDownloader implements Runnable {
   }
   
   public void run() {
+    running = true;
     mAttachment.setInProgress(true);
     mProgressBar.get().setIndeterminate(true);
     SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider(mAccount);
@@ -96,6 +91,11 @@ public class AttachmentDownloader implements Runnable {
       });
       
     }
+    running = false;
+  }
+  
+  public boolean isRunning() {
+    return running;
   }
   
   private void setProgressBarValue(int value, boolean reset) {

@@ -35,6 +35,18 @@ public class YakoApp extends Application {
     return messages;
   }
   
+  public static MessageListElement getMessageById_Account_Date(String id, Account acc, Date date) {
+    MessageListElement compareElement = new MessageListElement(id, acc, date);
+    if (messages.contains(compareElement)) {
+      for (MessageListElement mle : messages) {
+        if (mle.equals(compareElement)) {
+          return mle;
+        }
+      }
+    }
+    return null;
+  }
+  
   public static void setMessageContent(MessageListElement message, FullMessage fullMessage) {
     for (MessageListElement m : messages) {
       if (m.equals(message)) {

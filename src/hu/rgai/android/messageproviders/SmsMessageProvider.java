@@ -23,6 +23,7 @@ import hu.rgai.android.beens.SmsMessageRecipient;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.test.ThreadDisplayer;
+import hu.rgai.android.tools.ParamStrings;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -261,7 +262,7 @@ public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMess
         MainServiceExtraParams eParams = new MainServiceExtraParams();
         eParams.setAccount(SmsAccount.account);
         eParams.setForceQuery(true);
-        service.putExtra(MainServiceExtraParams.ParamStrings.EXTRA_PARAMS, eParams);
+        service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
         
         context.sendBroadcast(service);
       }

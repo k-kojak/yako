@@ -33,7 +33,6 @@ import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailMessageRecipient;
 import hu.rgai.android.beens.FacebookMessageRecipient;
 import hu.rgai.android.beens.FullSimpleMessage;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageRecipient;
 import hu.rgai.android.beens.Person;
@@ -45,6 +44,7 @@ import hu.rgai.android.handlers.MessageSendHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.adapter.ContactListAdapter;
 import hu.rgai.android.tools.view.ChipsMultiAutoCompleteTextView;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
@@ -53,6 +53,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -109,8 +110,11 @@ public class MessageReply extends ActionBarActivity {
     
     
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey("message")) {
-        mMessage = getIntent().getExtras().getParcelable("message");
+      if (getIntent().getExtras().containsKey(ParamStrings.MESSAGE_ID)) {
+        String msgId = getIntent().getExtras().getString(ParamStrings.MESSAGE_ID);
+        Account acc = getIntent().getExtras().getParcelable(ParamStrings.MESSAGE_ACCOUNT);
+        Date date = new Date(getIntent().getExtras().getLong(ParamStrings.MESSAGE_DATE));
+        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc, date);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }

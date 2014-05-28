@@ -15,11 +15,9 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.MainServiceExtraParams;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.MessageListResult;
 import hu.rgai.android.config.Settings;
@@ -32,6 +30,7 @@ import hu.rgai.android.test.MessageReply;
 import hu.rgai.android.test.R;
 import hu.rgai.android.test.ThreadDisplayer;
 import hu.rgai.android.test.YakoApp;
+import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.ProfilePhotoProvider;
 import hu.rgai.android.workers.MessageListerAsyncTask;
 import static hu.rgai.android.workers.MessageListerAsyncTask.OK;
@@ -185,7 +184,9 @@ public class MessageListerHandler extends TimeoutHandler {
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
-          resultIntent.putExtra("message", lastUnreadMsg);
+          resultIntent.putExtra(ParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
+          resultIntent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
+          resultIntent.putExtra(ParamStrings.MESSAGE_DATE, lastUnreadMsg.getDate().getTime());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
@@ -215,7 +216,9 @@ public class MessageListerHandler extends TimeoutHandler {
           NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReply.class);
-    intent.putExtra("message", (Parcelable) lastUnreadMsg);
+    intent.putExtra(ParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
+    intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+    intent.putExtra(ParamStrings.MESSAGE_DATE, lastUnreadMsg.getDate().getTime());
     intent.putExtra(ParamStrings.FROM_NOTIFIER, true);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);

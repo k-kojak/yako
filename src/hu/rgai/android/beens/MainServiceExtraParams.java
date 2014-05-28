@@ -20,18 +20,18 @@ public class MainServiceExtraParams implements Parcelable {
     }
   };
   
-  public static class ParamStrings {
-    public static final String EXTRA_PARAMS = "extra_params";
-    public static final String FROM_NOTIFIER = "from_notifier";
-    public static final String QUERY_LIMIT = "query_limit";
-    public static final String QUERY_OFFSET = "query_offset";
-    public static final String LOAD_MORE = "load_more";
-    public static final String TYPE = "type";
-    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
-    public static final String FORCE_QUERY = "force_query";
-    public static final String RESULT = "result";
-    public static final String ERROR_MESSAGE = "error_message";
-  }
+//  public static class ParamStrings {
+//    public static final String EXTRA_PARAMS = "extra_params";
+//    public static final String FROM_NOTIFIER = "from_notifier";
+//    public static final String QUERY_LIMIT = "query_limit";
+//    public static final String QUERY_OFFSET = "query_offset";
+//    public static final String LOAD_MORE = "load_more";
+//    public static final String TYPE = "type";
+//    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
+//    public static final String FORCE_QUERY = "force_query";
+//    public static final String RESULT = "result";
+//    public static final String ERROR_MESSAGE = "error_message";
+//  }
   
   private boolean mFromNotifier = false;
   private int mQueryLimit = -1;

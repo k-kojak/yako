@@ -5,6 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.android.messageproviders.MessageProvider;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -43,8 +44,8 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
     this.isMe = in.readByte() == 1;
     this.messageType = MessageProvider.Type.valueOf(in.readString());
     
-    //TODO: read attachments
-    this.attachments = null;
+    attachments = new LinkedList<Attachment>();
+    in.readList(attachments, Attachment.class.getClassLoader());
   }
   
   /**
@@ -158,7 +159,7 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
     out.writeParcelable(from, flags);
     out.writeByte(isMe ? (byte)1 : (byte)0);
     out.writeString(messageType.toString());
-    // TODO: write attachments
+    out.writeList(attachments);
     
   }
 

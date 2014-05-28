@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -28,7 +29,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
@@ -38,7 +38,6 @@ import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.beens.MainServiceExtraParams;
-import hu.rgai.android.beens.MainServiceExtraParams.ParamStrings;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.beens.SmsAccount;
 import hu.rgai.android.config.Settings;
@@ -55,6 +54,7 @@ import hu.rgai.android.store.StoreHandler;
 import hu.rgai.android.test.settings.AccountSettingsList;
 import hu.rgai.android.test.settings.SystemPreferences;
 import hu.rgai.android.tools.AndroidUtils;
+import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.android.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
@@ -478,7 +478,9 @@ public class MainActivity extends ActionBarActivity {
                   MessageListElement message = contextSelectedElements.first();
                   Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
                   Intent intent = new Intent(MainActivity.this, classToLoad);
-                  intent.putExtra("message", message);
+                  intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
+                  intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+                  intent.putExtra(ParamStrings.MESSAGE_DATE, message.getDate().getTime());
                   MainActivity.this.startActivity(intent);
                 }
                 mode.finish();
@@ -529,7 +531,9 @@ public class MainActivity extends ActionBarActivity {
             Account a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(MainActivity.this, classToLoad);
-            intent.putExtra("message", message);
+            intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
+            intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+            intent.putExtra(ParamStrings.MESSAGE_DATE, message.getDate().getTime());
 
             boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
             if (changed) {
@@ -635,8 +639,8 @@ public class MainActivity extends ActionBarActivity {
     }
     service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
-
   }
+
 
   /**
    * Removes the notification from statusbar if exists.
