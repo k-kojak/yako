@@ -29,9 +29,9 @@ public class BatchedAsyncTaskExecutor {
     if (mParams != null && mTasks.size() != mParams.length) {
       throw new Exception("Parameter length mismatch exception: tasks vs params: " + mTasks.size() + " vs " + mParams.length);
     }
-    for (BatchedTimeoutAsyncTask task : tasks) {
-      task.setExecutor(this);
-    }
+//    for (BatchedTimeoutAsyncTask task : tasks) {
+//      task.setExecutor(this);
+//    }
   }
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
@@ -56,6 +56,9 @@ public class BatchedAsyncTaskExecutor {
   }
   
   public boolean execute() {
+    for (BatchedTimeoutAsyncTask task : mTasks) {
+      task.setExecutor(this);
+    }
     if (mProgressId == null || !runningStacksState.containsKey(mProgressId) || runningStacksState.get(mProgressId).isDone()) {
       if (mProgressId != null) {
         runningStacksState.put(mProgressId, new BatchedProcessState(mTasksCount));
