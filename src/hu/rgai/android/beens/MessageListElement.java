@@ -108,8 +108,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public MessageListElement() {
   }
   
-  public MessageListElement(String id, Account account, Date date) {
-    this(id, false, null, null, 0, null, null, date, account, account.getAccountType(), false);
+  public MessageListElement(String id, Account account) {
+    this(id, false, null, null, 0, null, null, null, account, account.getAccountType(), false);
   }
   
   /**
@@ -332,9 +332,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     }
     
   }
-  
+
   @Override
   public boolean equals(Object obj) {
+    
     if (obj == null) {
       return false;
     }
@@ -345,9 +346,17 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     
     final MessageListElement other = (MessageListElement) obj;
     
-    return compareTo(other) == 0;
+    if ((this.id == null) ? (other.id != null) : !this.id.equals(other.id)) {
+      return false;
+    }
+    
+    if (this.account != other.account && (this.account == null || !this.account.equals(other.account))) {
+      return false;
+    }
+    
+    return true;
   }
-
+  
   @Override
   public int hashCode() {
     int hash = 7;

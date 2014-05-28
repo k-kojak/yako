@@ -113,8 +113,7 @@ public class MessageReply extends ActionBarActivity {
       if (getIntent().getExtras().containsKey(ParamStrings.MESSAGE_ID)) {
         String msgId = getIntent().getExtras().getString(ParamStrings.MESSAGE_ID);
         Account acc = getIntent().getExtras().getParcelable(ParamStrings.MESSAGE_ACCOUNT);
-        Date date = new Date(getIntent().getExtras().getLong(ParamStrings.MESSAGE_DATE));
-        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc, date);
+        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }

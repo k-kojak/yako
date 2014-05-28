@@ -480,7 +480,6 @@ public class MainActivity extends ActionBarActivity {
                   Intent intent = new Intent(MainActivity.this, classToLoad);
                   intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
                   intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
-                  intent.putExtra(ParamStrings.MESSAGE_DATE, message.getDate().getTime());
                   MainActivity.this.startActivity(intent);
                 }
                 mode.finish();
@@ -533,7 +532,6 @@ public class MainActivity extends ActionBarActivity {
             Intent intent = new Intent(MainActivity.this, classToLoad);
             intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
             intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
-            intent.putExtra(ParamStrings.MESSAGE_DATE, message.getDate().getTime());
 
             boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
             if (changed) {

@@ -20,7 +20,7 @@ public class ParamStrings {
   // this 3 data is required for find a messageListElement
   public static final String MESSAGE_ID = "message_id";
   public static final String MESSAGE_ACCOUNT = "message_account";
-  public static final String MESSAGE_DATE = "message_date";
+//  public static final String MESSAGE_DATE = "message_date";
   
   
 }

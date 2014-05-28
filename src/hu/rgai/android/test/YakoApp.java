@@ -35,13 +35,11 @@ public class YakoApp extends Application {
     return messages;
   }
   
-  public static MessageListElement getMessageById_Account_Date(String id, Account acc, Date date) {
-    MessageListElement compareElement = new MessageListElement(id, acc, date);
-    if (messages.contains(compareElement)) {
-      for (MessageListElement mle : messages) {
-        if (mle.equals(compareElement)) {
-          return mle;
-        }
+  public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
+    MessageListElement compareElement = new MessageListElement(id, acc);
+    for (MessageListElement mle : messages) {
+      if (mle.equals(compareElement)) {
+        return mle;
       }
     }
     return null;
@@ -127,7 +125,6 @@ public class YakoApp extends Application {
   private boolean setIsPhone() {
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
-    Log.d("rgai", "sim state: " + simState);
     if (simState != TelephonyManager.SIM_STATE_ABSENT) {
       return true;
     } else {
@@ -204,7 +201,6 @@ public class YakoApp extends Application {
     
     // TODO: we may have to update it on network state change!
     isPhone = setIsPhone();
-    Log.d("rgai", "isPhone: " + isPhone);
     
   }
   

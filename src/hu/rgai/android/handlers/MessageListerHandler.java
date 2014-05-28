@@ -186,7 +186,6 @@ public class MessageListerHandler extends TimeoutHandler {
           resultIntent = new Intent(mContext, classToLoad);
           resultIntent.putExtra(ParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
           resultIntent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
-          resultIntent.putExtra(ParamStrings.MESSAGE_DATE, lastUnreadMsg.getDate().getTime());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
@@ -218,7 +217,6 @@ public class MessageListerHandler extends TimeoutHandler {
     Intent intent = new Intent(mContext, MessageReply.class);
     intent.putExtra(ParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
     intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
-    intent.putExtra(ParamStrings.MESSAGE_DATE, lastUnreadMsg.getDate().getTime());
     intent.putExtra(ParamStrings.FROM_NOTIFIER, true);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
