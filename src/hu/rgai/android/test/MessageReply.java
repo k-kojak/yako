@@ -373,13 +373,13 @@ public class MessageReply extends ActionBarActivity {
       return;
     }
 
-    List<Account> accs = StoreHandler.getAccounts(this);
+    TreeSet<Account> accs = YakoApp.getAccounts(this);
 
     for (MessageRecipient ri : to) {
       List<Account> selectedAccs = new LinkedList<Account>();
       Iterator<Account> accIt = accs.iterator();
       if (ri.getType().equals(MessageProvider.Type.SMS) && YakoApp.isPhone) {
-        selectedAccs.add(SmsAccount.account);
+//        selectedAccs.add(SmsAccount.account);
       } else {
         while (accIt.hasNext()) {
           Account actAcc = accIt.next();
@@ -387,7 +387,9 @@ public class MessageReply extends ActionBarActivity {
                   && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
                   || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
                   || ri.getType().equals(actAcc.getAccountType())) {
-            selectedAccs.add(actAcc);
+            if (!selectedAccs.contains(actAcc)) {
+              selectedAccs.add(actAcc);
+            }
           }
         }
       }

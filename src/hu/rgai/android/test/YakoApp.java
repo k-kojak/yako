@@ -8,12 +8,15 @@ import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
+import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.store.StoreHandler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
 
 
@@ -29,11 +32,37 @@ public class YakoApp extends Application {
   private volatile static  HashMap<Account, Date> lastNotificationDates = new HashMap<Account, Date>();
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static boolean isPhone;
-  public static volatile Date lastMessageUpdate = null;
+  public static volatile Date lastMessageUpdate = new Date();
+  private volatile static TreeSet<Account> accounts;
 
   public static TreeSet<MessageListElement> getMessages() {
     return messages;
   }
+  
+  public static TreeSet<Account> getAccounts(Context context) {
+    if (accounts == null) {
+      loadAccountsFromStore(context);
+    }
+    return accounts;
+  }
+  
+  private static void loadAccountsFromStore(Context context) {
+    accounts = StoreHandler.getAccounts(context);
+  }
+  
+  public static void setAccounts(TreeSet<Account> newAccs) {
+    accounts = newAccs;
+  }
+  
+  public static boolean isFacebookAccountAdded(Context context) {
+    for (Account a : getAccounts(context)) {
+      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   
   public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
     MessageListElement compareElement = new MessageListElement(id, acc);
@@ -136,8 +165,7 @@ public class YakoApp extends Application {
   /**
    * Returns the last notification of the given account.
    * 
-   * @param acc
-   *          last notification time will be set to this account
+   * @param acc last notification time will be set to this account
    * @return
    */
   public static Date getLastNotification(Account acc) {

@@ -14,7 +14,7 @@ import hu.rgai.android.messageproviders.MessageProvider;
  *
  * @author Tamas Kojedzinszky
  */
-public class EmailAccount implements Account, Parcelable {
+public class EmailAccount extends Account {
 
   protected static final int default_imap_port = 993;
   protected static final int default_smtp_port = 455;
@@ -142,12 +142,10 @@ public class EmailAccount implements Account, Parcelable {
     return ssl;
   }
 
-  @Override
   public MessageProvider.Type getAccountType() {
     return accountType;
   }
 
-  @Override
   public String getDisplayName() {
     return email;
   }
@@ -159,4 +157,5 @@ public class EmailAccount implements Account, Parcelable {
   public boolean isUnique() {
     return false;
   }
+
 }

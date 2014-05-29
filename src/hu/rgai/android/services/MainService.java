@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -92,7 +93,7 @@ public class MainService extends Service {
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
-    List<Account> accounts = StoreHandler.getAccounts(this);
+    TreeSet<Account> accounts = YakoApp.getAccounts(this);
     
     final MainServiceExtraParams extraParams;
     if (intent != null && intent.getExtras() != null) {
@@ -115,9 +116,9 @@ public class MainService extends Service {
         preHandler.finished(null, false, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
       } else {
         
-        if (isPhone && (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account))) {
-          accounts.add(SmsAccount.account);
-        }
+//        if (isPhone && (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account))) {
+//          accounts.add(SmsAccount.account);
+//        }
         
         if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
           List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
@@ -131,8 +132,11 @@ public class MainService extends Service {
               // checking if live connections are still alive, reconnect them if not
               boolean isConnectionAlive = provider.isConnectionAlive();
               AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
-              if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
+              
+              if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive
+                      || !provider.canBroadcastOnNewMessage()
                       || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
+                
                 if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
                   if (extraParams.getAccount() == null) {
                     wasAnyFullUpdateCheck = true;

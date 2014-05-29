@@ -159,6 +159,10 @@ public class MainActivity extends ActionBarActivity {
     
     // disaplying loading dialog, since the mails are not ready, but the user
     toggleProgressDialog(true);
+    
+    
+    // load saved filter account
+    actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
   }
   
   /**
@@ -282,21 +286,22 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void showListFilter() {
-    final List<Account> allAccount = getAllAccounts();
+    final TreeSet<Account> allAccount = YakoApp.getAccounts(this);
     final CharSequence[] items = new CharSequence[allAccount.size() + 1];
     int selectedIndex = 0;
     items[0] = "All";
-    for (int i = 0; i < allAccount.size(); i++) {
-      String dn = allAccount.get(i).getDisplayName();
+    int i = 0;
+    for (Account acc : allAccount) {
+      String dn = acc.getDisplayName();
       if (dn == null) {
-        items[i + 1] = allAccount.get(i).getAccountType().toString();
+        items[i + 1] = acc.getAccountType().toString();
       } else {
-        items[i + 1] = dn + " (" + allAccount.get(i).getAccountType().toString() + ")";
+        items[i + 1] = dn + " (" + acc.getAccountType().toString() + ")";
       }
-
-      if (allAccount.get(i).equals(actSelectedFilter)) {
+      if (acc.equals(actSelectedFilter)) {
         selectedIndex = i + 1;
       }
+      i++;
     }
 
     // Creating and Building the Dialog
@@ -309,9 +314,19 @@ public class MainActivity extends ActionBarActivity {
           actSelectedFilter = null;
         } else {
           if (allAccount.size() >= item) {
-            actSelectedFilter = allAccount.get(item - 1);
+            int k = 0;
+            for (Account a : allAccount) {
+              if (k < item - 1) {
+                k++;
+                continue;
+              }
+              actSelectedFilter = a;
+              break;
+            }
           }
         }
+        Log.d("rgai2", "act selected filter: " + actSelectedFilter);
+        StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
         dialog.dismiss();
         setContent();
       }
@@ -319,15 +334,7 @@ public class MainActivity extends ActionBarActivity {
     builder.create().show();
   }
 
-  private List<Account> getAllAccounts() {
-    List<Account> list = StoreHandler.getAccounts(this);
-    if (YakoApp.isPhone) {
-      list.add(SmsAccount.account);
-    }
-
-    return list;
-  }
-
+  
   /**
    * Sends a broadcast to the Service to load fresh messages again.
    */

@@ -13,7 +13,7 @@ import hu.rgai.android.messageproviders.MessageProvider;
  *
  * @author Tamas Kojedzinszky
  */
-public class FacebookAccount implements Account, Parcelable {
+public class FacebookAccount extends Account {
   private String displayName;
   private String uniqueName;
   private String id;

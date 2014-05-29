@@ -9,13 +9,15 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
-import hu.rgai.android.config.Settings;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.beens.GmailAccount;
+import hu.rgai.android.beens.SmsAccount;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.test.R;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.settings.SystemPreferences;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,7 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,6 +48,7 @@ public class StoreHandler {
   private static Bitmap fbImgMe = null;
   private static final String DATE_FORMAT = "EEE MMM dd kk:mm:ss z yyyy";
   private static final String LAST_NOTIFICATION_DATES_FILENAME = "yako_lastNotDatesFile";
+  private static final String SELECTED_FILTER_ACCOUNT = "selected_filter_account";
   
   public static class SystemSettings {
     
@@ -66,17 +69,48 @@ public class StoreHandler {
       Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_VIBRATION, true);
       return not;
     }
-    
   }
   
+  
+  public static void saveSelectedFilterAccount(Context context, Account acc) {
+    writeObject(context, acc, SELECTED_FILTER_ACCOUNT);
+  }
+  
+  
+  public static Account getSelectedFilterAccount(Context context) {
+    Object o = readObject(context, SELECTED_FILTER_ACCOUNT);
+    if (o != null) {
+      return (Account)o;
+    } else {
+      return null;
+    }
+  }
+  
+  
   public static void writeLastNotificationObject(Context context, HashMap<Account, Date> map) {
-    if (map != null) {
+    writeObject(context, map, LAST_NOTIFICATION_DATES_FILENAME);
+  }
+  
+  
+  public static HashMap<Account, Date> readLastNotificationObject(Context context) {
+    Object o = readObject(context, LAST_NOTIFICATION_DATES_FILENAME);
+    if (o != null) {
+      return (HashMap<Account, Date>)o;
+    } else {
+      return null;
+    }
+  }
+  
+  
+  private static void writeObject(Context context, Object object, String file) {
+    // override object
+    if (object != null) {
       FileOutputStream fos = null;
       ObjectOutputStream oos = null;
       try {
-        fos = context.openFileOutput(LAST_NOTIFICATION_DATES_FILENAME, Context.MODE_PRIVATE);
+        fos = context.openFileOutput(file, Context.MODE_PRIVATE);
         oos = new ObjectOutputStream(fos);
-        oos.writeObject(map);
+        oos.writeObject(object);
         oos.flush();
       } catch (FileNotFoundException ex) {
         Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -91,17 +125,24 @@ public class StoreHandler {
         }
       }
     }
+    // if object is null, delete it
+    else {
+      if (context.getFileStreamPath(file).exists()) {
+        context.getFileStreamPath(file).delete();
+      }
+    }
   }
   
-  public static HashMap<Account, Date> readLastNotificationObject(Context context) {
-    HashMap<Account, Date> lastNotDates = null;
+  
+  private static Object readObject(Context context, String file) {
+    Object o = null;
     ObjectInputStream ois = null;
     FileInputStream fis = null;
-    if (context.getFileStreamPath(LAST_NOTIFICATION_DATES_FILENAME).exists()) {
+    if (context.getFileStreamPath(file).exists()) {
       try {
-        fis = context.openFileInput(LAST_NOTIFICATION_DATES_FILENAME);
+        fis = context.openFileInput(file);
         ois = new ObjectInputStream(fis);
-        lastNotDates = (HashMap<Account, Date>)ois.readObject();
+        o = ois.readObject();
         ois.close();
         fis.close();
       } catch (FileNotFoundException ex) {
@@ -121,13 +162,11 @@ public class StoreHandler {
           Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
-//      Log.d("rgai", "READ LAST NOT DATES: " + lastNotDates.toString());
     }
-    return lastNotDates;
+    return o;
   }
   
-  
-  
+ 
   public static void saveUserFbImage(Context context, Bitmap bitmap) {
     if (bitmap != null) {
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -136,6 +175,7 @@ public class StoreHandler {
       saveByteArray(context, byteArray, Settings.FACEBOOK_ME_IMG_FOLDER, Settings.FACEBOOK_ME_IMG_NAME);
     }
   }
+  
   
   public static Bitmap getUserFbImage(Context context) {
     if (fbImgMe == null) {
@@ -147,6 +187,7 @@ public class StoreHandler {
     
     return fbImgMe;
   }
+  
   
   private static byte[] getByteArray(Context context, String file) {
     byte[] data = null;
@@ -166,6 +207,7 @@ public class StoreHandler {
     
     return data;
   }
+  
   
   public static boolean saveByteArrayToDownloadFolder(Context context, byte[] data, String fileName) {
     return saveByteArray(context, data, null, fileName);
@@ -206,6 +248,7 @@ public class StoreHandler {
     return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS); 
   }
   
+  
   public static boolean isExternalStorageWritable() {
     String state = Environment.getExternalStorageState();
     if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -227,6 +270,7 @@ public class StoreHandler {
     editor.commit();
   }
   
+  
   public static void clearFacebookAccessToken(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = prefs.edit();
@@ -235,11 +279,13 @@ public class StoreHandler {
     editor.commit();
   }
   
+  
   public static String getFacebookAccessToken(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     String token = prefs.getString(context.getString(R.string.settings_fb_access_token), null);
     return token;
   }
+  
   
   public static Date getFacebookAccessTokenExpirationDate(Context context) {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
@@ -253,8 +299,9 @@ public class StoreHandler {
     return token;
   }
   
+  
   public static void modifyAccount(Context context, Account oldAccount, Account newAccount) throws Exception {
-    List<Account> accounts = getAccounts(context);
+    TreeSet<Account> accounts = getAccounts(context);
     if (accounts.contains(oldAccount)) {
       accounts.remove(oldAccount);
       accounts.add(newAccount);
@@ -262,9 +309,10 @@ public class StoreHandler {
     }
   }
   
+  
   public static void removeAccount(Context context, Account account) throws Exception {
 //    Log.d("rgai", "REMOVING ACCOUNT: " + account);
-    List<Account> accounts = getAccounts(context);
+    TreeSet<Account> accounts = getAccounts(context);
     if (accounts.contains(account)) {
       accounts.remove(account);
       saveAccounts(accounts, context);
@@ -272,42 +320,28 @@ public class StoreHandler {
   }
   
   public static void addAccount(Context context, Account account) throws Exception {
-    List<Account> accounts = getAccounts(context);
+    TreeSet<Account> accounts = getAccounts(context);
     if (!accounts.contains(account)) {
       accounts.add(account);
       saveAccounts(accounts, context);
     }
   }
   
-  public static boolean isFacebookAccountAdded(Context context) {
-    List<Account> accounts = getAccounts(context);
-    
-    for (Account a : accounts) {
-      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-        return true;
-      }
-    }
-    return false;
-  }
   
-  public static FacebookAccount getFacebookAccount(Context context) {
-    List<Account> accounts = getAccounts(context);
-    
-    for (Account a : accounts) {
-      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-        return (FacebookAccount)a;
-      }
-    }
-    return null;
-  }
-  
-  public static void saveAccounts(List<Account> accounts, Context context) throws Exception {
+  public static void saveAccounts(TreeSet<Account> accounts, Context context) throws Exception {
+    Log.d("rgai", "save accounts at store: " + accounts);
     removeAccountSettings(context);
     int i = 0;
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = prefs.edit();
-    editor.putInt(context.getString(R.string.settings_accounts_size), accounts.size());
-    for(Account a : accounts) {
+    int sms = 0;
+    for (Account a : accounts) {
+      // skip saving SMS account
+      if (a.getAccountType().equals(MessageProvider.Type.SMS)) {
+        sms = 1;
+        continue;
+      }
+      
       if (a.getAccountType() == MessageProvider.Type.GMAIL) {
         GmailAccount ga = (GmailAccount) a;
         editor.putString(context.getString(R.string.settings_accounts_item_type) + "_" + i, context.getString(R.string.account_name_gmail));
@@ -339,8 +373,13 @@ public class StoreHandler {
       }
       i++;
     }
+    editor.putInt(context.getString(R.string.settings_accounts_size), accounts.size() - sms);
     editor.commit();
+    
+    // reload accounts at application
+    YakoApp.setAccounts(accounts);
   }
+  
   
   private static void removeAccountSettings(Context context) throws Exception {
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
@@ -378,8 +417,9 @@ public class StoreHandler {
     editor.commit();
   }
   
-  public static List<Account> getAccounts(Context context) {
-    List<Account> accounts = new LinkedList<Account>();
+   
+  public static TreeSet<Account> getAccounts(Context context) {
+    TreeSet<Account> accounts = new TreeSet<Account>();
     SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
     int amount = prefs.getInt(context.getString(R.string.settings_accounts_size), -1);
     for (int i = 0; i < amount; i++) {
@@ -408,6 +448,9 @@ public class StoreHandler {
       } else {
         Toast.makeText(context, "Unsupported account type: " + type, Toast.LENGTH_LONG);
       }
+    }
+    if (YakoApp.isPhone) {
+      accounts.add(SmsAccount.account);
     }
     return accounts;
   }

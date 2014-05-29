@@ -5,7 +5,7 @@ import android.os.Parcelable;
 import hu.rgai.android.messageproviders.MessageProvider;
 
 // TODO: this class should be a singletone
-public final class SmsAccount implements Account, Parcelable {
+public final class SmsAccount extends Account {
   
   public static final SmsAccount account = new SmsAccount();
   
@@ -27,31 +27,25 @@ public final class SmsAccount implements Account, Parcelable {
 
 	@Override
 	public String getDisplayName() {
-		// TODO Auto-generated method stub
 		return "SMS";
 	}
 
 	@Override
 	public MessageProvider.Type getAccountType() {
-		// TODO Auto-generated method stub
 		return MessageProvider.Type.SMS;
 	}
 
 	@Override
 	public int describeContents() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public int getMessageLimit() {
-		// TODO Auto-generated method stub
 		return 10;
 	}
   
@@ -79,5 +73,10 @@ public final class SmsAccount implements Account, Parcelable {
 
   public boolean isUnique() {
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "SMS account";
   }
 }

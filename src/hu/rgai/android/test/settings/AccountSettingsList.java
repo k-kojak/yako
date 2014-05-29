@@ -26,14 +26,16 @@ import hu.rgai.android.beens.EmailAccount;
 import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
+import hu.rgai.android.messageproviders.MessageProvider;
 import hu.rgai.android.services.schedulestarters.MainScheduler;
 import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.test.R;
+import hu.rgai.android.test.YakoApp;
 import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.adapter.AccountListAdapter;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,9 +73,9 @@ public class AccountSettingsList extends ActionBarActivity {
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
-    List<Account> accounts = null;
+    TreeSet<Account> accounts = null;
     try {
-      accounts = StoreHandler.getAccounts(this);
+      accounts = YakoApp.getAccounts(this);
       Log.d("rgai", accounts.toString());
     } catch (Exception ex) {
       // TODO: handle exception
@@ -91,6 +93,8 @@ public class AccountSettingsList extends ActionBarActivity {
         public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
           Account account = (Account) av.getItemAtPosition(itemIndex);
+          
+          if (account.getAccountType().equals(MessageProvider.Type.SMS)) return;
 
           Class classToLoad = Settings.getAccountTypeToSettingClass().get(account.getAccountType());
           if (classToLoad == null) {
@@ -204,7 +208,7 @@ public class AccountSettingsList extends ActionBarActivity {
     builder.setTitle("Choose account type");
 
     String[] items;
-    fbAdded = isFacebookAccountAdded();
+    fbAdded = YakoApp.isFacebookAccountAdded(this);
     if (fbAdded) {
       items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_infemail),
         getString(R.string.account_name_simplemail)};
@@ -304,8 +308,4 @@ public class AccountSettingsList extends ActionBarActivity {
     return ind;
   }
 
-  private boolean isFacebookAccountAdded() {
-    return StoreHandler.isFacebookAccountAdded(this);
-  }
-  
 }

@@ -1,22 +1,24 @@
+//TODO: comparator az account list-nek es legyen treeset-ben
+//ALL-ra kattintva a filter list-ben toltsuk be ujra az uzeneteket
+
 
 package hu.rgai.android.tools.adapter;
 
 import android.content.Context;
-import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import hu.rgai.android.config.Settings;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.EmailAccount;
+import hu.rgai.android.config.Settings;
 import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeSet;
 
 /**
  *
@@ -24,13 +26,11 @@ import java.util.Map;
  */
 public class AccountListAdapter extends BaseAdapter {
 
-//  private Context context;
-  private List<Account> accounts;
+  private final List<Account> accounts;
   private static LayoutInflater inflater = null;
   
-  public AccountListAdapter(Context context, List<Account> accounts ) {
-//    this.context = context;
-    this.accounts = accounts;
+  public AccountListAdapter(Context context, TreeSet<Account> accounts ) {
+    this.accounts = new LinkedList<Account>(accounts);
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
   
