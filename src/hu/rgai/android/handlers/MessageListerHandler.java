@@ -107,6 +107,10 @@ public class MessageListerHandler extends TimeoutHandler {
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
       for (MessageListElement mle : YakoApp.getMessages()) {
+        if (mle.equals(ThreadDisplayer.actViewingMessage)) {
+          mle.setSeen(true);
+          mle.setUnreadCount(0);
+        }
         Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount());
         if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
           if (lastUnreadMsg == null) {
