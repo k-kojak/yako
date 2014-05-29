@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -37,6 +39,7 @@ import hu.rgai.android.config.Settings;
 import hu.rgai.android.eventlogger.EventLogger;
 import hu.rgai.android.handlers.ThreadContentGetterHandler;
 import hu.rgai.android.messageproviders.MessageProvider;
+import hu.rgai.android.tools.AndroidUtils;
 import hu.rgai.android.tools.ParamStrings;
 import hu.rgai.android.tools.adapter.ThreadViewAdapter;
 import hu.rgai.android.workers.MessageSender;
@@ -60,6 +63,8 @@ public class ThreadDisplayer extends ActionBarActivity {
   private static boolean firstResume = true;
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
+  
+  private ConnectivityListener mWifiListener = null;
 
   
   /**
@@ -136,6 +141,15 @@ public class ThreadDisplayer extends ActionBarActivity {
     actViewingMessage = mMessage;
     removeNotificationIfExists();
     YakoApp.setMessageSeenAndReadLocally(mMessage);
+        
+    
+    // register wifi connection receiver if this acount depends on network, so after
+    // wifi reconnect we can download messages immediately
+    if (mMessage.getAccount().isInternetNeededForLoad()) {
+      mWifiListener = new ConnectivityListener();
+      IntentFilter iFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+      registerReceiver(mWifiListener, iFilter);
+    }
     
     
     // dealing with group chat issue
@@ -225,6 +239,9 @@ public class ThreadDisplayer extends ActionBarActivity {
     
     if (mDataUpdateReceiver != null) {
       unregisterReceiver(mDataUpdateReceiver);
+    }
+    if (mWifiListener != null) {
+      unregisterReceiver(mWifiListener);
     }
     
     actViewingMessage = null;
@@ -343,6 +360,21 @@ public class ThreadDisplayer extends ActionBarActivity {
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+  }
+  
+  private class ConnectivityListener extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+        ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        if (info != null && info.isConnected()) {
+          ThreadDisplayer.this.refreshMessageList();
+        }
+      }
+    }
+    
   }
   
   
