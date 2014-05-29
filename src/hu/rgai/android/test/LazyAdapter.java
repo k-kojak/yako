@@ -236,16 +236,23 @@ public class LazyAdapter extends BaseAdapter {
     Date thisYear = c.getTime();
     
     
-    if (YakoApp.lastMessageUpdate.before(thisYear)) {
+    
+    if (YakoApp.lastFullMessageUpdate == null) {
+      
+    } else if (YakoApp.lastFullMessageUpdate.before(thisYear)) {
       sdf.applyPattern("yyyy/MM/dd");
-    } else if (YakoApp.lastMessageUpdate.after(today)) {
+    } else if (YakoApp.lastFullMessageUpdate.after(today)) {
       niceText += mActivity.getResources().getString(R.string.today) + ", ";
       sdf.applyPattern("HH:mm");
     } else {
       sdf.applyPattern("MMM d");
     }
     
-    niceText += sdf.format(YakoApp.lastMessageUpdate);
+    if (YakoApp.lastFullMessageUpdate == null) {
+      niceText += "Never";
+    } else {
+      niceText += sdf.format(YakoApp.lastFullMessageUpdate);
+    }
     
     ((TextView)view.findViewById(R.id.last_update)).setText(niceText);
     return view;

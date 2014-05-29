@@ -44,7 +44,8 @@ public class EmailAccount extends Account {
   }
 
   public EmailAccount(Parcel in) {
-    this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(), in.readInt(), in.readByte() == 1, in.readInt());
+    this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(),
+            in.readInt(), in.readByte() == 1, in.readInt());
   }
 
   public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl, int messageLimit) {

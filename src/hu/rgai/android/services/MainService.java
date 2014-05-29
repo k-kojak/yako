@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.BatchedProcessState;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -173,7 +174,7 @@ public class MainService extends Service {
             Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);
           }
           if (wasAnyFullUpdateCheck) {
-            YakoApp.lastMessageUpdate = new Date();
+            YakoApp.lastFullMessageUpdate = new Date();
           }
         } else {
 //          Log.d("rgai2", "ITT MOST MEGGATOLTUK A TOBBSZORI INDITAST!!!!!!!!!!!!!!!!!!!!!!");

@@ -32,8 +32,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,6 +92,7 @@ public class StoreHandler {
   
   public static HashMap<Account, Date> readLastNotificationObject(Context context) {
     Object o = readObject(context, LAST_NOTIFICATION_DATES_FILENAME);
+//    Log.d("rgai2", "READED OBJECT: " + o);
     if (o != null) {
       return (HashMap<Account, Date>)o;
     } else {
@@ -104,11 +103,12 @@ public class StoreHandler {
   
   private static void writeObject(Context context, Object object, String file) {
     // override object
+    File destFile = new File(context.getCacheDir(), file);
     if (object != null) {
       FileOutputStream fos = null;
       ObjectOutputStream oos = null;
       try {
-        fos = context.openFileOutput(file, Context.MODE_PRIVATE);
+        fos = new FileOutputStream(destFile);
         oos = new ObjectOutputStream(fos);
         oos.writeObject(object);
         oos.flush();
@@ -127,8 +127,8 @@ public class StoreHandler {
     }
     // if object is null, delete it
     else {
-      if (context.getFileStreamPath(file).exists()) {
-        context.getFileStreamPath(file).delete();
+      if (destFile.exists()) {
+        destFile.delete();
       }
     }
   }
@@ -138,9 +138,12 @@ public class StoreHandler {
     Object o = null;
     ObjectInputStream ois = null;
     FileInputStream fis = null;
-    if (context.getFileStreamPath(file).exists()) {
+    File destinationFile = new File(context.getCacheDir(), file);
+//    Log.d("rgai2", "cache file exists: " + destinationFile.exists());
+    if (destinationFile.exists()) {
+      
       try {
-        fis = context.openFileInput(file);
+        fis = new FileInputStream(destinationFile);
         ois = new ObjectInputStream(fis);
         o = ois.readObject();
         ois.close();
@@ -327,7 +330,7 @@ public class StoreHandler {
     }
   }
   
-  
+
   public static void saveAccounts(TreeSet<Account> accounts, Context context) throws Exception {
     Log.d("rgai", "save accounts at store: " + accounts);
     removeAccountSettings(context);
@@ -349,7 +352,6 @@ public class StoreHandler {
         editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, ga.getPassword());
         editor.putString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, ga.getImapAddress());
         editor.putString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, ga.getSmtpAddress());
-//        editor.putBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, ga.isSsl());
         editor.putInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, ga.getMessageLimit());
       } else if (a.getAccountType() == MessageProvider.Type.FACEBOOK) {
         FacebookAccount fa = (FacebookAccount) a;
@@ -393,7 +395,6 @@ public class StoreHandler {
         editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_imap) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_smtp) + "_" + i);
-//        editor.remove(context.getString(R.string.settings_accounts_item_ssl) + "_" + i);
         editor.remove(context.getString(R.string.settings_accounts_item_amount) + "_" + i);
       } else if (type.equals(context.getString(R.string.account_name_facebook))) {
         editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
@@ -427,7 +428,6 @@ public class StoreHandler {
       if (type.equals(context.getString(R.string.account_name_gmail))) {
         String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
         String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
-//        boolean ssl = prefs.getBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, true);
         int num = prefs.getInt(context.getString(R.string.settings_accounts_item_amount) + "_" + i, 5);
         accounts.add(new GmailAccount(email, pass, num));
       } else if (type.equals(context.getString(R.string.account_name_facebook))) {

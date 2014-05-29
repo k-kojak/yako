@@ -143,7 +143,7 @@ public class MainActivity extends ActionBarActivity {
     
     contextSelectedElements = new TreeSet<MessageListElement>();
     
-
+    
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openLogFile("logFile.txt", false);
@@ -329,6 +329,7 @@ public class MainActivity extends ActionBarActivity {
         StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
         dialog.dismiss();
         setContent();
+        reloadMessages(false);
       }
     });
     builder.create().show();
@@ -344,8 +345,8 @@ public class MainActivity extends ActionBarActivity {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
-    if (forceQuery) {
-      eParams.setForceQuery(true);
+    if (!forceQuery) {
+      eParams.setForceQuery(false);
     }
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
@@ -374,7 +375,7 @@ public class MainActivity extends ActionBarActivity {
       reloadMessages(true);
     } else {
       long now = System.currentTimeMillis();
-      if (YakoApp.lastMessageUpdate == null || YakoApp.lastMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now) {
+      if (YakoApp.lastFullMessageUpdate == null || YakoApp.lastFullMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now) {
         reloadMessages(false);
       }
     }
@@ -639,6 +640,7 @@ public class MainActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setLoadMore(true);
+    eParams.setForceQuery(false);
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }

@@ -955,7 +955,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setAccount(account);
-          eParams.setForceQuery(true);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(newMessageCount);
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
@@ -971,7 +970,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setAccount(account);
-          eParams.setForceQuery(true);
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
           
           context.sendBroadcast(service);

@@ -45,5 +45,11 @@ public abstract class Account implements Parcelable, Serializable, Comparable<Ac
       }
     }
   }
+
+  @Override
+  public int hashCode() {
+    int hash = 3;
+    return hash;
+  }
   
 }

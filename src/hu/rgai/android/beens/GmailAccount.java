@@ -34,6 +34,7 @@ public class GmailAccount extends EmailAccount {
     this.accountType = MessageProvider.Type.GMAIL;
   }
   
+  @Override
   public int describeContents() {
     return 0;
   }

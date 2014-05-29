@@ -15,6 +15,7 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.beens.Account;
 import hu.rgai.android.beens.MainServiceExtraParams;
@@ -111,7 +112,7 @@ public class MessageListerHandler extends TimeoutHandler {
           mle.setSeen(true);
           mle.setUnreadCount(0);
         }
-        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount());
+        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
         if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
           if (lastUnreadMsg == null) {
             lastUnreadMsg = mle;

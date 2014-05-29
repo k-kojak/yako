@@ -8,7 +8,6 @@ import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.FacebookAccount;
 import hu.rgai.android.beens.FullMessage;
 import hu.rgai.android.beens.MessageListElement;
 import hu.rgai.android.messageproviders.MessageProvider;
@@ -16,7 +15,6 @@ import hu.rgai.android.store.StoreHandler;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.TreeSet;
 
 
@@ -29,10 +27,10 @@ public class YakoApp extends Application {
   private Tracker tracker = null;
   
   private volatile static TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
-  private volatile static  HashMap<Account, Date> lastNotificationDates = new HashMap<Account, Date>();
+  private volatile static  HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
-  public volatile static boolean isPhone;
-  public static volatile Date lastMessageUpdate = new Date();
+  public volatile static Boolean isPhone = null;
+  public static volatile Date lastFullMessageUpdate = null;
   private volatile static TreeSet<Account> accounts;
 
   public static TreeSet<MessageListElement> getMessages() {
@@ -128,6 +126,7 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
+//    Log.d("rgai2", "read in last notification dates: " + lastNotificationDates);
   }
   
   
@@ -138,7 +137,7 @@ public class YakoApp extends Application {
    * @param acc the account to update, or null if update all account's last event time
    * @param c
    */
-  public static void updateLastNotification(Account acc, Context c) {
+  public synchronized static void updateLastNotification(Account acc, Context c) {
     initLastNotificationDates(c);
     if (acc != null) {
       lastNotificationDates.put(acc, new Date());
@@ -151,16 +150,6 @@ public class YakoApp extends Application {
   }
   
   
-  private boolean setIsPhone() {
-    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-    int simState = telMgr.getSimState();
-    if (simState != TelephonyManager.SIM_STATE_ABSENT) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-  
   
   /**
    * Returns the last notification of the given account.
@@ -168,7 +157,8 @@ public class YakoApp extends Application {
    * @param acc last notification time will be set to this account
    * @return
    */
-  public static Date getLastNotification(Account acc) {
+  public static Date getLastNotification(Account acc, Context c) {
+    initLastNotificationDates(c);
     Date ret = null;
     if (lastNotificationDates == null || acc == null) {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
@@ -179,6 +169,17 @@ public class YakoApp extends Application {
       ret = new Date(new Date().getTime() - 86400L * 365 * 1000);
     }
     return ret;
+  }
+  
+
+  private boolean setIsPhone() {
+    TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    int simState = telMgr.getSimState();
+    if (simState != TelephonyManager.SIM_STATE_ABSENT) {
+      return true;
+    } else {
+      return false;
+    }
   }
   
   

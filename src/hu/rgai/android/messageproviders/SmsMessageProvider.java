@@ -261,7 +261,6 @@ public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMess
         
         MainServiceExtraParams eParams = new MainServiceExtraParams();
         eParams.setAccount(SmsAccount.account);
-        eParams.setForceQuery(true);
         service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
         
         context.sendBroadcast(service);

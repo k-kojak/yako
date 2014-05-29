@@ -39,7 +39,7 @@ public class MainServiceExtraParams implements Parcelable {
   private boolean mLoadMore = false;
   private Account mAccount = null;
   private MessageListElement mActViewingMessage = null;
-  private boolean mForceQuery = false;
+  private boolean mForceQuery = true;
   private int mResult = -1;
   
   public MainServiceExtraParams() {}
