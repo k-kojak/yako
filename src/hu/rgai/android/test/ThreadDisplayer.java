@@ -176,6 +176,7 @@ public class ThreadDisplayer extends ActionBarActivity {
   public void displayContent() {
     if (mMessage.getFullMessage() != null) {
       displayMessage(true);
+      refreshMessageList();
     } else {
       pd = new ProgressDialog(this);
       pd.setMessage(getString(R.string.loading));
