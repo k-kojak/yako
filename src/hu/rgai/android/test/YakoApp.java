@@ -198,9 +198,11 @@ public class YakoApp extends Application {
       return messages;
     } else {
       TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
-      for (MessageListElement mlep : messages) {
-        if (mlep.getAccount().equals(filterAcc)) {
-          filterList.add(mlep);
+      synchronized (messages) {
+        for (MessageListElement mlep : messages) {
+          if (mlep.getAccount().equals(filterAcc)) {
+            filterList.add(mlep);
+          }
         }
       }
       return filterList;

@@ -36,6 +36,7 @@ public class LazyAdapter extends BaseAdapter {
     inflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
 
+  // TODO: this should be a copy of the original array
   public int getCount() {
     // the plus 1 item is because of the "last updated" row
     return YakoApp.getFilteredMessages(filterAcc).size() + 1;

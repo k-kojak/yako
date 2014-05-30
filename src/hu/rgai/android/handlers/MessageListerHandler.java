@@ -236,71 +236,76 @@ public class MessageListerHandler extends TimeoutHandler {
    */
   private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest,
           MessageListResult.ResultType resultType, boolean providerSupportsUID) {
-    for (MessageListElement newMessage : newMessages) {
-      boolean contains = false;
-      MessageListElement storedFoundMessage = null;
-      // .contains not work, because the date of new item != date of old item
-      // and
-      // tree search does not return a valid value
-      // causes problem at thread type messages like Facebook
+    // TODO: optimize message merge
+    synchronized (YakoApp.getMessages()) {
+      for (MessageListElement newMessage : newMessages) {
+        boolean contains = false;
+        MessageListElement storedFoundMessage = null;
+        // .contains not work, because the date of new item != date of old item
+        // and
+        // tree search does not return a valid value
+        // causes problem at thread type messages like Facebook
 
-      for (MessageListElement storedMessage : YakoApp.getMessages()) {
-        if (storedMessage.equals(newMessage)) {
-          contains = true;
-          storedFoundMessage = storedMessage;
+        for (MessageListElement storedMessage : YakoApp.getMessages()) {
+          if (storedMessage.equals(newMessage)) {
+            contains = true;
+            storedFoundMessage = storedMessage;
+          }
         }
-      }
-      if (!contains) {
-        YakoApp.getMessages().add(newMessage);
+        if (!contains) {
+          YakoApp.getMessages().add(newMessage);
 
-        if ((ThreadDisplayer.actViewingMessage != null && newMessage.equals(ThreadDisplayer.actViewingMessage))
-                || (ThreadDisplayer.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
-          loggingNewMessageArrived(newMessage, true);
-        } else {
-          loggingNewMessageArrived(newMessage, false);
-        }
-      } else {
-        // only update old messages' flags with the new one, and nothing else
-        if (newMessage.isUpdateFlags()) {
-          if (storedFoundMessage != null) {
-            storedFoundMessage.setSeen(newMessage.isSeen());
-            storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
+          if ((ThreadDisplayer.actViewingMessage != null && newMessage.equals(ThreadDisplayer.actViewingMessage))
+                  || (ThreadDisplayer.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
+            loggingNewMessageArrived(newMessage, true);
+          } else {
+            loggingNewMessageArrived(newMessage, false);
           }
         } else {
-          MessageListElement itemToRemove = null;
-          for (MessageListElement oldMessage : YakoApp.getMessages()) {
-            if (newMessage.equals(oldMessage)) {
-              // first updating person info anyway..
-              oldMessage.setFrom(newMessage.getFrom());
+          // only update old messages' flags with the new one, and nothing else
+          if (newMessage.isUpdateFlags()) {
+            if (storedFoundMessage != null) {
+              storedFoundMessage.setSeen(newMessage.isSeen());
+              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
+            }
+          } else {
+            MessageListElement itemToRemove = null;
+            for (MessageListElement oldMessage : YakoApp.getMessages()) {
+              if (newMessage.equals(oldMessage)) {
+                // first updating person info anyway..
+                oldMessage.setFrom(newMessage.getFrom());
 
-              /*
-               * "Marking" FB message seen here. Do not change info of the item,
-               * if the date is the same, so the queried data will not override
-               * the displayed object. Facebook does not mark messages as seen
-               * when opening them, so we have to handle it at client side. OR
-               * if we check the message at FB, then turn it seen at the app
-               */
-              if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
-                itemToRemove = oldMessage;
-                break;
+                /*
+                 * "Marking" FB message seen here. Do not change info of the item,
+                 * if the date is the same, so the queried data will not override
+                 * the displayed object. Facebook does not mark messages as seen
+                 * when opening them, so we have to handle it at client side. OR
+                 * if we check the message at FB, then turn it seen at the app
+                 */
+                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+                  itemToRemove = oldMessage;
+                  break;
+                }
               }
             }
-          }
-          if (itemToRemove != null) {
-            YakoApp.getMessages().remove(itemToRemove);
-            YakoApp.getMessages().add(newMessage);
+            if (itemToRemove != null) {
+              YakoApp.getMessages().remove(itemToRemove);
+              YakoApp.getMessages().add(newMessage);
+            }
           }
         }
       }
+      
+      // checking for deleted messages here
+      if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
+        deleteMergeMessages(newMessages, providerSupportsUID);
+      }
+      
     }
-
-    // checking for deleted messages here
-    if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
-      deleteMergeMessages(newMessages, providerSupportsUID);
-    }
+    
   }
 
-  private synchronized void deleteMergeMessages(MessageListElement[] newMessages, boolean providerSupportsUID) {
+  private void deleteMergeMessages(MessageListElement[] newMessages, boolean providerSupportsUID) {
     if (newMessages.length > 0) {
       TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
       

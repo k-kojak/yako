@@ -130,10 +130,6 @@ public class MainService extends Service {
         preHandler.finished(null, false, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
       } else {
         
-//        if (isPhone && (extraParams.getAccount() == null || extraParams.getAccount().equals(SmsAccount.account))) {
-//          accounts.add(SmsAccount.account);
-//        }
-        
         if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
           List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
           boolean wasAnyFullUpdateCheck = false;
