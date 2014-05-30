@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import hu.rgai.android.beens.MainServiceExtraParams;
 import hu.rgai.android.config.Settings;
 import hu.rgai.android.services.MainService;
 import hu.rgai.android.tools.ParamStrings;
@@ -19,7 +21,13 @@ public class MainScheduler extends BroadcastReceiver {
     if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals(Context.ALARM_SERVICE)) {
       AlarmManager service = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       
+      
       Intent repeatIntent = new Intent(context, MainService.class);
+      Bundle bundle = new Bundle();
+      MainServiceExtraParams eParams = new MainServiceExtraParams();
+      bundle.putParcelable(ParamStrings.EXTRA_PARAMS, eParams);
+      repeatIntent.putExtra(ParamStrings.EXTRA_PARAMS, bundle);
+//      repeatIntent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
       PendingIntent pending = PendingIntent.getService(context, 0, repeatIntent, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar cal = Calendar.getInstance();
       cal.add(Calendar.SECOND, Settings.MESSAGE_LOAD_INTERVAL);

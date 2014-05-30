@@ -77,6 +77,8 @@ import java.util.logging.Logger;
  */
 public class MainActivity extends ActionBarActivity {
 
+  
+  public static final int PREFERENCES_REQUEST_CODE = 1;
 
   // holds the Facebook token
   private static volatile String fbToken = null;
@@ -275,7 +277,7 @@ public class MainActivity extends ActionBarActivity {
         return true;
       case R.id.system_preferences:
         Intent i = new Intent(this, SystemPreferences.class);
-        startActivity(i);
+        startActivityForResult(i, PREFERENCES_REQUEST_CODE);
         return true;
       case R.id.filter_list:
         showListFilter();
@@ -345,8 +347,8 @@ public class MainActivity extends ActionBarActivity {
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
-    if (!forceQuery) {
-      eParams.setForceQuery(false);
+    if (forceQuery) {
+      eParams.setForceQuery(true);
     }
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
@@ -640,7 +642,6 @@ public class MainActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setLoadMore(true);
-    eParams.setForceQuery(false);
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }

@@ -20,26 +20,12 @@ public class MainServiceExtraParams implements Parcelable {
     }
   };
   
-//  public static class ParamStrings {
-//    public static final String EXTRA_PARAMS = "extra_params";
-//    public static final String FROM_NOTIFIER = "from_notifier";
-//    public static final String QUERY_LIMIT = "query_limit";
-//    public static final String QUERY_OFFSET = "query_offset";
-//    public static final String LOAD_MORE = "load_more";
-//    public static final String TYPE = "type";
-//    public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
-//    public static final String FORCE_QUERY = "force_query";
-//    public static final String RESULT = "result";
-//    public static final String ERROR_MESSAGE = "error_message";
-//  }
-  
   private boolean mFromNotifier = false;
   private int mQueryLimit = -1;
   private int mQueryOffset = -1;
   private boolean mLoadMore = false;
   private Account mAccount = null;
-  private MessageListElement mActViewingMessage = null;
-  private boolean mForceQuery = true;
+  private boolean mForceQuery = false;
   private int mResult = -1;
   
   public MainServiceExtraParams() {}
@@ -50,7 +36,6 @@ public class MainServiceExtraParams implements Parcelable {
     mQueryOffset = in.readInt();
     mLoadMore = in.readByte() == 1;
     mAccount = in.readParcelable(Account.class.getClassLoader());
-    mActViewingMessage = in.readParcelable(MessageListElement.class.getClassLoader());;
     mForceQuery = in.readByte() == 1;
     mResult = in.readInt();
   }
@@ -65,7 +50,6 @@ public class MainServiceExtraParams implements Parcelable {
     dest.writeInt(mQueryOffset);
     dest.writeByte((byte)(mLoadMore ? 1 : 0));
     dest.writeParcelable(mAccount, flags);
-    dest.writeParcelable(mActViewingMessage, flags);
     dest.writeByte((byte)(mForceQuery ? 1 : 0));
     dest.writeInt(mResult);
   }
@@ -110,14 +94,6 @@ public class MainServiceExtraParams implements Parcelable {
     this.mAccount = mTtype;
   }
 
-  public MessageListElement getActViewingMessage() {
-    return mActViewingMessage;
-  }
-
-  public void setActViewingMessage(MessageListElement mActViewingMessage) {
-    this.mActViewingMessage = mActViewingMessage;
-  }
-
   public boolean isForceQuery() {
     return mForceQuery;
   }
@@ -136,7 +112,7 @@ public class MainServiceExtraParams implements Parcelable {
 
   @Override
   public String toString() {
-    return "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccount=" + mAccount + ", mActViewingMessage=" + mActViewingMessage + ", mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
+    return "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccount=" + mAccount + ", mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
   }
 
 }

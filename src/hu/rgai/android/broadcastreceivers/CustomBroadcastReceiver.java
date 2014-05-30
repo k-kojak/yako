@@ -30,6 +30,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setForceQuery(true);
           service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
           context.sendBroadcast(service);
         } else {

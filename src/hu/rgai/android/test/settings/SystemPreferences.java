@@ -3,6 +3,7 @@ package hu.rgai.android.test.settings;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 
 /**
@@ -20,5 +21,13 @@ public class SystemPreferences extends PreferenceActivity {
     super.onCreate(savedInstanceState); //To change body of generated methods, choose Tools | Templates.
     addPreferencesFromResource(R.xml.preferences);
   }
+
+  @Override
+  public void finish() {
+    setResult(MainActivity.PREFERENCES_REQUEST_CODE);
+    super.finish();
+  }
+  
+  
   
 }

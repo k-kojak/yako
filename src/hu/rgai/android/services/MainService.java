@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -90,22 +91,34 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-//    Log.d("rgai", "Service:onStartCommand");
     MessageListElement.refreshCurrentDates();
     updateMessagesPrettyDate();
     
     TreeSet<Account> accounts = YakoApp.getAccounts(this);
     
     final MainServiceExtraParams extraParams;
+    
+    // if true that means android system restarted the mainservice without sending any parameter
+    // in this case we have to make a full query
+    boolean startedByAndroid = true;
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey(ParamStrings.EXTRA_PARAMS)) {
-        extraParams = intent.getExtras().getParcelable(ParamStrings.EXTRA_PARAMS);
+        // alarm manager cannot send extra params via intent.putextra, we have
+        // to use bundles, so if the request comes from there, we have a bundle
+        // if not, we have the data directly in the intent
+        if (intent.getExtras().get(ParamStrings.EXTRA_PARAMS) instanceof Bundle) {
+          extraParams = intent.getExtras().getBundle(ParamStrings.EXTRA_PARAMS).getParcelable(ParamStrings.EXTRA_PARAMS);
+        } else {
+          extraParams = intent.getExtras().getParcelable(ParamStrings.EXTRA_PARAMS);
+        }
+        startedByAndroid = false;
       } else {
         extraParams = new MainServiceExtraParams();
       }
     } else {
       extraParams = new MainServiceExtraParams();
     }
+    Log.d("rgai2", "mainservice startedby droid: " + startedByAndroid);
     
     boolean isNet = isNetworkAvailable();
     boolean isPhone = YakoApp.isPhone;
@@ -134,9 +147,9 @@ public class MainService extends Service {
               boolean isConnectionAlive = provider.isConnectionAlive();
               AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
               
-              if (extraParams.isForceQuery() || extraParams.isLoadMore() || !isConnectionAlive
-                      || !provider.canBroadcastOnNewMessage()
-                      || (MainActivity.isMainActivityVisible() && !provider.canBroadcastOnMessageChange())) {
+              if (startedByAndroid || extraParams.isForceQuery() || extraParams.isLoadMore()
+                      || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
+                      || MainActivity.isMainActivityVisible()) {
                 
                 if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
                   if (extraParams.getAccount() == null) {
@@ -147,7 +160,7 @@ public class MainService extends Service {
                   if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
                     MainActivity.openFbSession(this);
                   }
-
+                  
                   MessageListerHandler th = new MessageListerHandler(this, extraParams, acc.getDisplayName());
                   MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, acc,
                           provider, extraParams.isLoadMore(), extraParams.getQueryLimit(),
