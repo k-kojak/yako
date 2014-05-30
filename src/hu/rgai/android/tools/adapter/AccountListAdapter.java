@@ -64,6 +64,8 @@ public class AccountListAdapter extends BaseAdapter {
       icon.setImageResource(R.drawable.fb);
     } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
       icon.setImageResource(R.drawable.gmail_icon);
+    } else if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
+      icon.setImageResource(R.drawable.ic_sms3);
     } else if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
       EmailAccount eacc = (EmailAccount)account;
       String dom = eacc.getEmail().substring(eacc.getEmail().indexOf("@") + 1);
