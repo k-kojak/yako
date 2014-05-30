@@ -55,26 +55,23 @@ public class EmailDisplayerFragment extends Fragment {
     return edf;
   }
   
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
-  
+
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    
+    mView = inflater.inflate(R.layout.email_displayer, container, false);
+    mWebView = (WebView) mView.findViewById(R.id.email_content);
+    mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
+    
     
     EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
     mAccount = eda.getAccount();
     mMessage = eda.getMessage();
-    
-    mView = inflater.inflate(R.layout.email_displayer, container, false);
-   
-    mWebView = (WebView) mView.findViewById(R.id.email_content);
-    mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
-    
     mFrom = (Person) mMessage.getFrom();
     mContent = (FullSimpleMessage) mMessage.getFullMessage();
     displayMessage();
+    
+    
     
     mWebViewClient = new WebViewClient() {
       @Override
