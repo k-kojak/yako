@@ -2,6 +2,9 @@
 //TODO: display message when attempting to add freemail account: Freemail has no IMAP support
 package hu.rgai.android.test;
 
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.view.activities.MessageReplyActivity;
+import hu.rgai.yako.adapters.MainListAdapter;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
@@ -35,29 +38,29 @@ import com.facebook.Session;
 import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.android.beens.Account;
-import hu.rgai.android.beens.BatchedProcessState;
-import hu.rgai.android.beens.MainServiceExtraParams;
-import hu.rgai.android.beens.MessageListElement;
-import hu.rgai.android.beens.SmsAccount;
-import hu.rgai.android.config.Settings;
-import hu.rgai.android.eventlogger.EventLogger;
-import hu.rgai.android.eventlogger.LogUploadScheduler;
-import hu.rgai.android.eventlogger.ScreenReceiver;
-import hu.rgai.android.handlers.BatchedAsyncTaskHandler;
-import hu.rgai.android.handlers.MessageListerHandler;
-import hu.rgai.android.handlers.MessageSeenMarkerHandler;
-import hu.rgai.android.messageproviders.MessageProvider;
-import hu.rgai.android.services.MainService;
-import hu.rgai.android.services.schedulestarters.MainScheduler;
-import hu.rgai.android.store.StoreHandler;
-import hu.rgai.android.test.settings.AccountSettingsList;
-import hu.rgai.android.test.settings.SystemPreferences;
-import hu.rgai.android.tools.AndroidUtils;
-import hu.rgai.android.tools.ParamStrings;
-import hu.rgai.android.workers.BatchedAsyncTaskExecutor;
-import hu.rgai.android.workers.BatchedTimeoutAsyncTask;
-import hu.rgai.android.workers.MessageSeenMarkerAsyncTask;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.BatchedProcessState;
+import hu.rgai.yako.beens.MainServiceExtraParams;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.SmsAccount;
+import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.LogUploadScheduler;
+import hu.rgai.yako.eventlogger.ScreenReceiver;
+import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
+import hu.rgai.yako.handlers.MessageListerHandler;
+import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
+import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.services.MainService;
+import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.store.StoreHandler;
+import hu.rgai.yako.view.activities.AccountSettingsListActivity;
+import hu.rgai.yako.view.activities.SystemPreferences;
+import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
+import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
+import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.HashMap;
@@ -87,7 +90,7 @@ public class MainActivity extends ActionBarActivity {
   private static volatile boolean is_activity_visible = false;
 
   // this is the adapter for the main view
-  private volatile LazyAdapter adapter;
+  private volatile MainListAdapter adapter;
 
   // receiver for logging screen status
   private ScreenReceiver screenReceiver;
@@ -262,12 +265,12 @@ public class MainActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.accounts:
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
-        intent = new Intent(this, AccountSettingsList.class);
+        intent = new Intent(this, AccountSettingsListActivity.class);
         startActivity(intent);
         return true;
       case R.id.message_send_new:
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
-        intent = new Intent(this, MessageReply.class);
+        intent = new Intent(this, MessageReplyActivity.class);
         startActivity(intent);
         return true;
       case R.id.refresh_message_list:
@@ -353,7 +356,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    intent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+    intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
 
@@ -488,8 +491,8 @@ public class MainActivity extends ActionBarActivity {
                   MessageListElement message = contextSelectedElements.first();
                   Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
                   Intent intent = new Intent(MainActivity.this, classToLoad);
-                  intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
-                  intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+                  intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
+                  intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
                   MainActivity.this.startActivity(intent);
                 }
                 mode.finish();
@@ -528,7 +531,7 @@ public class MainActivity extends ActionBarActivity {
           loadMoreButton.setEnabled(false);
         }
 
-        adapter = new LazyAdapter(this);
+        adapter = new MainListAdapter(this);
         adapter.setListFilter(actSelectedFilter);
         lv.setAdapter(adapter);
         lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
@@ -540,8 +543,8 @@ public class MainActivity extends ActionBarActivity {
             Account a = message.getAccount();
             Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
             Intent intent = new Intent(MainActivity.this, classToLoad);
-            intent.putExtra(ParamStrings.MESSAGE_ID, message.getId());
-            intent.putExtra(ParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+            intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
+            intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
 
             boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
             if (changed) {
@@ -645,7 +648,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    service.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
+    service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
   }
 
@@ -691,7 +694,7 @@ public class MainActivity extends ActionBarActivity {
   }
 
   
-  private void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, LazyAdapter adapter) {
+  private void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, MainListAdapter adapter) {
     if (lv == null || adapter == null) {
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       return;
@@ -737,9 +740,9 @@ public class MainActivity extends ActionBarActivity {
   class LogOnScrollListener implements OnScrollListener {
     final ListView lv;
 
-    final LazyAdapter adapter;
+    final MainListAdapter adapter;
 
-    public LogOnScrollListener(ListView lv, LazyAdapter adapter) {
+    public LogOnScrollListener(ListView lv, MainListAdapter adapter) {
       this.lv = lv;
       this.adapter = adapter;
     }

@@ -12,7 +12,7 @@
       android:layout_width="49dip"
       android:layout_height="49dip" >
       
-      <hu.rgai.android.tools.view.AsyncImageView
+      <hu.rgai.yako.view.extensions.AsyncImageView
         android:id="@+id/list_image"
         android:layout_width="46dip"
         android:layout_height="46dip"

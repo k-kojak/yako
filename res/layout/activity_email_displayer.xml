@@ -14,7 +14,7 @@
   limitations under the License.
   -->
 
-<hu.rgai.android.tools.view.NonSwipeableViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+<hu.rgai.yako.view.extensions.NonSwipeableViewPager xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/pager"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
