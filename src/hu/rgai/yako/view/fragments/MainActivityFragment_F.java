@@ -387,7 +387,7 @@ public class MainActivityFragment_F extends Fragment {
 //    super.onResume();
 //    is_activity_visible = true;
 //    removeNotificationIfExists();
-//    refreshLoadingIndicatorState();
+//    refreshLoadingIndicatorrefreshLoadingIndiState();
 //    
 //    
 //    // register broadcast receiver for new message load

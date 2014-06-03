@@ -30,10 +30,11 @@ public final class Person implements Parcelable {
   protected String id;
   protected String name;
   protected MessageProvider.Type type;
+  private long contactId;
   
   private static Map<String, Person> storedPerson = null;
 
-  private long contactId;
+  
   private Map<MessageProvider.Type, Set<String>> idMap = null;
 
   public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {

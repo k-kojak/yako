@@ -166,6 +166,8 @@ public class MainActivity extends ActionBarActivity {
         reloadMessages(false);
       }
     }
+    
+    refreshLoadingIndicatorState();
   }
   
   @Override
