@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.FacebookAccount;
@@ -18,10 +19,10 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
 import hu.rgai.yako.store.StoreHandler;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.workers.ActiveConnectionConnector;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  *
@@ -39,6 +40,17 @@ public class AndroidUtils {
 //      checkAndConnectMessageProviderIfConnectable(mp, context);
 //    }
 //  }
+  
+  public static int getIndexOfAccount(TreeSet<Account> accounts, Account account) {
+    int index = 0;
+    for (Account a : accounts) {
+      if (a.equals(account)) {
+        return index;
+      }
+      index++;
+    }
+    return -1;
+  }
   
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {
     if (mp.canBroadcastOnNewMessage() && !isConnectionAlive) {

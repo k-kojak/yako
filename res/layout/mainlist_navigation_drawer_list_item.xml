@@ -1,0 +1,45 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/mainlist_navigation_drawer_list_item_background"
+    android:orientation="horizontal"
+    android:padding="5dip" >
+ 
+    <LinearLayout android:id="@+id/img_wrap"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="3dip"
+        android:layout_alignParentLeft="true"
+        android:layout_marginRight="5dip">
+ 
+        <ImageView
+            android:id="@+id/img"
+            android:layout_width="16dip"
+            android:layout_height="16dip"
+            android:src="@drawable/gmail_icon"/>
+ 
+    </LinearLayout>
+ 
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/img_wrap"
+        android:layout_toRightOf="@+id/img_wrap"
+        android:textColor="@color/mainlist_navigation_drawer_list_item_color"
+        android:typeface="sans"
+        android:textSize="16sp" />
+ 
+    <TextView
+        android:id="@+id/type"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/name"
+        android:textColor="@color/mainlist_navigation_drawer_list_item_color"
+        android:textSize="11sp"
+        android:typeface="sans"
+        android:layout_marginTop="1dip"
+        android:layout_toRightOf="@+id/img_wrap" />
+ 
+</RelativeLayout>
+    

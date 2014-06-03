@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import hu.rgai.android.test.MainActivity;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.yako.beens.EmailAccount;
@@ -16,7 +17,6 @@ import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
@@ -29,20 +29,20 @@ import java.util.GregorianCalendar;
 
 public class MainListAdapter extends BaseAdapter {
 
-  private final MainActivity mActivity;
+  private final Context mContext;
   private static LayoutInflater inflater = null;
-  private Account filterAcc = null;
+//  private Account filterAcc = null;
   private final SimpleDateFormat sdf = new SimpleDateFormat();
 
-  public MainListAdapter(MainActivity a) {
-    mActivity = a;
-    inflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+  public MainListAdapter(Context a) {
+    mContext = a;
+    inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
 
   // TODO: this should be a copy of the original array
   public int getCount() {
     // the plus 1 item is because of the "last updated" row
-    return YakoApp.getFilteredMessages(filterAcc).size() + 1;
+    return YakoApp.getFilteredMessages(MainActivity.actSelectedFilter).size() + 1;
   }
   
   public Object getItem(int position) {
@@ -50,7 +50,7 @@ public class MainListAdapter extends BaseAdapter {
       return null;
     } else {
       int i = 0;
-      for (MessageListElement mlep : YakoApp.getFilteredMessages(filterAcc)) {
+      for (MessageListElement mlep : YakoApp.getFilteredMessages(MainActivity.actSelectedFilter)) {
         if (i == position - 1) {
           return mlep;
         }
@@ -64,9 +64,9 @@ public class MainListAdapter extends BaseAdapter {
     return position;
   }
 
-  public void setListFilter(Account filterAccount) {
-    this.filterAcc = filterAccount;
-  }
+//  public void setListFilter(Account filterAccount) {
+//    this.filterAcc = filterAccount;
+//  }
   
   public View getView(int position, View view, ViewGroup parent) {
     
@@ -167,7 +167,7 @@ public class MainListAdapter extends BaseAdapter {
       if (message.getFrom() != null) {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(long id) {
-            return ProfilePhotoProvider.getImageToUser(mActivity, id);
+            return ProfilePhotoProvider.getImageToUser(mContext, id);
           }
           public boolean isBitmapLoaded(long id) {
             return ProfilePhotoProvider.isImageToUserInCache(id);
@@ -180,7 +180,7 @@ public class MainListAdapter extends BaseAdapter {
       } else {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(long id) {
-            return ProfilePhotoProvider.getGroupChatPhoto(mActivity);
+            return ProfilePhotoProvider.getGroupChatPhoto(mContext);
           }
 
           public boolean isBitmapLoaded(long id) {
@@ -222,9 +222,9 @@ public class MainListAdapter extends BaseAdapter {
   }
   
   private View getLastUpdatedRow(View view, ViewGroup parent) {
-    view = inflater.inflate(R.layout.main_list_last_mod_row, null);
+    view = inflater.inflate(R.layout.main_list_last_mod_row, parent, false);
     
-    String niceText = mActivity.getResources().getString(R.string.last_full_update) + " ";
+    String niceText = mContext.getResources().getString(R.string.last_full_update) + " ";
     
     Date d = new Date();
     Calendar c = new GregorianCalendar();
@@ -246,7 +246,7 @@ public class MainListAdapter extends BaseAdapter {
     } else if (YakoApp.lastFullMessageUpdate.before(thisYear)) {
       sdf.applyPattern("yyyy/MM/dd");
     } else if (YakoApp.lastFullMessageUpdate.after(today)) {
-      niceText += mActivity.getResources().getString(R.string.today) + ", ";
+      niceText += mContext.getResources().getString(R.string.today) + ", ";
       sdf.applyPattern("HH:mm");
     } else {
       sdf.applyPattern("MMM d");

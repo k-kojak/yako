@@ -3,31 +3,31 @@ package hu.rgai.yako.handlers;
 
 import android.widget.Toast;
 import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.android.test.MainActivity;
+import hu.rgai.yako.view.fragments.MainActivityFragment;
 import java.util.TreeSet;
 
 public class MessageSeenMarkerHandler extends TimeoutHandler {
 
-  public MainActivity mActivity;
+  public MainActivityFragment mFragment;
 
-  public MessageSeenMarkerHandler(MainActivity mActivity) {
-    this.mActivity = mActivity;
+  public MessageSeenMarkerHandler(MainActivityFragment mFragment) {
+    this.mFragment = mFragment;
   }
   
   @Override
   public void timeout() {
-    Toast.makeText(mActivity, "Timeout while marking messages", Toast.LENGTH_LONG).show();
+    Toast.makeText(mFragment.getActivity(), "Timeout while marking messages", Toast.LENGTH_LONG).show();
   }
   
   public void toastMessage(String s) {
-    Toast.makeText(mActivity, s, Toast.LENGTH_LONG).show();
+    Toast.makeText(mFragment.getActivity(), s, Toast.LENGTH_LONG).show();
   }
   
   public void success(TreeSet<MessageListElement> messagesToMark, boolean seen) {
     for (MessageListElement mle : messagesToMark) {
       mle.setSeen(seen);
     }
-    mActivity.notifyAdapterChange();
+    mFragment.notifyAdapterChange();
   }
 
 }

@@ -1,6 +1,5 @@
 package hu.rgai.yako.eventlogger;
 
-import hu.rgai.android.test.MainActivity;
 import android.content.Context;
 import hu.rgai.yako.tools.AndroidUtils;
 
