@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -16,7 +15,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.DrawerLayout.DrawerListener;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Gravity;
@@ -123,24 +121,14 @@ public class MainActivity extends ActionBarActivity {
 
     
     actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
-//    TreeSet<Account> accounts = YakoApp.getAccounts(this);
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-//    mFragment = loadFragment();
     setContent(YakoApp.hasMessages() ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
-    // the 0th element is "all account"
-//    int indexOfAccount = 0;
-//    if (actSelectedFilter != null) {
-//      // +1 needed because 0th element in adapter is "all account"
-//      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter) + 1;
-//    }
-    
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-//    mDrawerList.setItemChecked(indexOfAccount, true);
 
     
 
@@ -266,7 +254,6 @@ public class MainActivity extends ActionBarActivity {
     
 // refreshing last notification date when closing activity
     YakoApp.updateLastNotification(null, this);
-    Log.d("rgai", "on mainactivity pause");
     super.onPause();
   }
 
@@ -317,11 +304,6 @@ public class MainActivity extends ActionBarActivity {
           }
           ft.commit();
           fragmentManager.executePendingTransactions();
-//          fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-//          fragmentManager.
-          Log.d("rgai", "fragmentManager.getFragments: " + fragmentManager.getFragments());
-          Log.d("rgai", "fragmentManager.backstack entry count: " + fragmentManager.getBackStackEntryCount());
-//          fragmentManager.getFragments().clear();
         }
         mEmptyListText.setVisibility(View.VISIBLE);
         mFragment = null;
@@ -389,8 +371,6 @@ public class MainActivity extends ActionBarActivity {
         makeTransaction = true;
       }
       
-      Log.d("rgai", "loading fragment?? -> " + makeTransaction);
-      
       if (makeTransaction) {
         fragment = MainActivityFragment.getInstance();
         fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
@@ -399,7 +379,6 @@ public class MainActivity extends ActionBarActivity {
         fragment = (MainActivityFragment) fragmentManager.getFragments().get(0);
       }
       
-//      mDrawerLayout.closeDrawer(mDrawerList);
       return fragment;
   }
 
@@ -536,7 +515,6 @@ public class MainActivity extends ActionBarActivity {
   private void messegasArrivedToDisplay() {
     setContent(true);
     toggleProgressDialog(false);
-    Log.d("rgai", "mFragment object: " + mFragment);
     mFragment.notifyAdapterChange();
   }
 

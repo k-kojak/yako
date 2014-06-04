@@ -65,7 +65,6 @@ public class MainActivityFragment extends Fragment {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    Log.d("rgai", "fragment: oncreate!");
     contextSelectedElements = new TreeSet<MessageListElement>();
     
     
@@ -433,11 +432,9 @@ public class MainActivityFragment extends Fragment {
   }
   
   public void notifyAdapterChange() {
-    Log.d("rgai", "adapter count: " + lv.getFooterViewsCount());
     mAdapter.notifyDataSetChanged();
     if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
       loadMoreButton.setVisibility(View.VISIBLE);
-      Log.d("rgai", "adding footer view...");
       loadMoreButtonVisible = true;
     }
   }
