@@ -180,10 +180,14 @@ public class MainActivity extends ActionBarActivity {
       // the saved selected account is not available anymore...
       if (indexOfAccount == -1) {
         actSelectedFilter = null;
-        indexOfAccount++;
       }
+      indexOfAccount++;
     }
     mDrawerList.setItemChecked(indexOfAccount, true);
+    
+    
+    // notify the adapter if any change happened
+    mFragment.notifyAdapterChange();
     
     
     // register broadcast receiver for new message load
