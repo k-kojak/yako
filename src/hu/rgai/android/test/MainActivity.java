@@ -9,18 +9,22 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.DrawerLayout.DrawerListener;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.facebook.AccessToken;
@@ -69,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
   private Menu mMenu;
   private ScreenReceiver screenReceiver;
+  private TextView mEmptyListText = null;
   
   
 
@@ -105,6 +110,13 @@ public class MainActivity extends ActionBarActivity {
     
     
     setContentView(R.layout.mainlist_navigation_drawer);
+    
+    mEmptyListText = new TextView(this);
+    mEmptyListText.setText(this.getString(R.string.empty_list));
+    mEmptyListText.setGravity(Gravity.CENTER);
+    mEmptyListText.setVisibility(View.GONE);
+    ((FrameLayout)findViewById(R.id.content_frame)).addView(mEmptyListText);
+    
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
 
@@ -114,7 +126,8 @@ public class MainActivity extends ActionBarActivity {
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    mFragment = loadFragment(true);
+//    mFragment = loadFragment();
+    setContent(YakoApp.hasMessages() ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
@@ -156,7 +169,6 @@ public class MainActivity extends ActionBarActivity {
       @Override
       public void onDrawerSlide(View arg0, float slideOffset) {
         super.onDrawerSlide(arg0, slideOffset);
-        Log.d("rgai", "slideoffset: " + slideOffset);
         if (!mDrawerIsVisible && slideOffset > 0.0) {
           showHideMenuBarIcons(true);
         } else if (mDrawerIsVisible && slideOffset == 0.0) {
@@ -171,7 +183,7 @@ public class MainActivity extends ActionBarActivity {
           invalidateOptionsMenu();
         } else {
           mDrawerIsVisible = false;
-          getSupportActionBar().setTitle("");
+          setTitleByFilter();
           invalidateOptionsMenu();
         }
       }
@@ -179,16 +191,20 @@ public class MainActivity extends ActionBarActivity {
 
     mDrawerLayout.setDrawerListener(mDrawerToggle);
     
-    if (!YakoApp.hasMessages()) {
-      toggleProgressDialog(true);
-    }
   }
-
   
+ 
   @Override
   protected void onResume() {
     super.onResume();
     is_activity_visible = true;
+    
+//    if (!YakoApp.hasMessages()) {
+//      toggleProgressDialog(true);
+//    } else {
+//      toggleProgressDialog(false);
+//    }
+            
     
     // setting filter adapter onResume, because it might change at settings panel
     TreeSet<Account> accounts = YakoApp.getAccounts(this);
@@ -207,14 +223,21 @@ public class MainActivity extends ActionBarActivity {
     mDrawerList.setItemChecked(indexOfAccount, true);
     
     
+    // setting title
+    setTitleByFilter();
+    
+    
     // notify the adapter if any change happened
-    mFragment.notifyAdapterChange();
+    if (mFragment != null) {
+      mFragment.notifyAdapterChange();
+    }
     
     
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
     filter.addAction(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
+    filter.addAction(MainService.NO_TASK_AVAILABLE_TO_PROCESS);
     LocalBroadcastManager.getInstance(this).registerReceiver(mMessageLoadedReceiver, filter);
     
     
@@ -269,6 +292,48 @@ public class MainActivity extends ActionBarActivity {
   }
   
   
+  private void setTitleByFilter() {
+    if (actSelectedFilter == null) {
+      getSupportActionBar().setTitle("");
+    } else {
+      getSupportActionBar().setTitle("Filter on");
+    }
+  }
+  
+  
+  private void setContent(Boolean hasData) {
+    // null means we dont know yet: called on onCreate
+    if (hasData == null) {
+      toggleProgressDialog(true);
+    } else {
+      toggleProgressDialog(false);
+      if (hasData) {
+        mEmptyListText.setVisibility(View.GONE);
+        mFragment = loadFragment();
+      } else {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
+          FragmentTransaction ft = fragmentManager.beginTransaction();
+          for (Fragment f : fragmentManager.getFragments()) {
+            if (f != null) {
+              ft.remove(f);
+            }
+          }
+          ft.commit();
+          fragmentManager.executePendingTransactions();
+//          fragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+//          fragmentManager.
+          Log.d("rgai", "fragmentManager.getFragments: " + fragmentManager.getFragments());
+          Log.d("rgai", "fragmentManager.backstack entry count: " + fragmentManager.getBackStackEntryCount());
+//          fragmentManager.getFragments().clear();
+        }
+        mEmptyListText.setVisibility(View.VISIBLE);
+        mFragment = null;
+      }
+    }
+  }
+  
+  
   public void loadMoreMessage() {
     Intent service = new Intent(this, MainScheduler.class);
     service.setAction(Context.ALARM_SERVICE);
@@ -296,7 +361,7 @@ public class MainActivity extends ActionBarActivity {
     if (show) {
       if (pd == null) {
         pd = new ProgressDialog(this);
-        pd.setCancelable(false);
+        pd.setCancelable(true);
       }
       pd.show();
       pd.setContentView(R.layout.progress_dialog);
@@ -307,37 +372,29 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  private MainActivityFragment loadFragment(boolean onCreateView) {
+  private MainActivityFragment loadFragment() {
     
     MainActivityFragment fragment = null;
     
       FragmentManager fragmentManager = getSupportFragmentManager();
       boolean makeTransaction = false;
-      if (onCreateView && fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
+      if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
         makeTransaction = false;
-      } else if (onCreateView && fragmentManager.getFragments() == null) {
+      } else {
         makeTransaction = true;
-      } else if (!onCreateView && fragmentManager.getFragments() == null) {
-        makeTransaction = true;
-      } else if (!onCreateView && fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
-        makeTransaction = false;
       }
       
       Log.d("rgai", "loading fragment?? -> " + makeTransaction);
       
       if (makeTransaction) {
-//        Constructor constructor = fragmentClass.getConstructor();
-//        FoodListFragment flf = (FoodListFragment) constructor.newInstance();
-////        flf.setTitle(title);
-//        mAttachedFragment = (Fragment) flf;
         fragment = MainActivityFragment.getInstance();
         fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+        fragmentManager.executePendingTransactions();
       } else {
         fragment = (MainActivityFragment) fragmentManager.getFragments().get(0);
       }
       
-//      mDrawerList.setItemChecked(position, true);
-      mDrawerLayout.closeDrawer(mDrawerList);
+//      mDrawerLayout.closeDrawer(mDrawerList);
       return fragment;
   }
 
@@ -441,7 +498,9 @@ public class MainActivity extends ActionBarActivity {
         }
       }
     }
-    mFragment.loadStateChanged(refreshInProgress);
+    if (mFragment != null) {
+      mFragment.loadStateChanged(refreshInProgress);
+    }
   }
 
   
@@ -470,6 +529,7 @@ public class MainActivity extends ActionBarActivity {
   
   
   private void messegasArrivedToDisplay() {
+    setContent(true);
     toggleProgressDialog(false);
     Log.d("rgai", "mFragment object: " + mFragment);
     mFragment.notifyAdapterChange();
@@ -506,8 +566,11 @@ public class MainActivity extends ActionBarActivity {
       }
       // this one is responsible for list/data updates
       else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
-        Log.d("rgai", "mainactivity.this: " + MainActivity.this);
         MainActivity.this.messegasArrivedToDisplay();
+      }
+      // if no task available to do at service
+      else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
+        MainActivity.this.setContent(YakoApp.hasMessages());
       }
     }
   }
@@ -526,7 +589,12 @@ public class MainActivity extends ActionBarActivity {
       actSelectedFilter = (Account)parent.getItemAtPosition(position);
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
       mFragment.notifyAdapterChange();
-      reloadMessages(false);
+      
+      // run query for selected filter only if list is empty OR selected all accounts
+      if (actSelectedFilter == null
+              || actSelectedFilter != null && YakoApp.getFilteredMessages(actSelectedFilter).isEmpty()) {
+        reloadMessages(false);
+      }
     }
   }
   
@@ -563,8 +631,6 @@ public class MainActivity extends ActionBarActivity {
   }
   
 
-  
-  // logging stuff
   
   private void setUpAndRegisterScreenReceiver() {
     if (screenReceiver == null) {

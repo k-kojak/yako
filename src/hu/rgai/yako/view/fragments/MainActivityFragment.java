@@ -65,6 +65,7 @@ public class MainActivityFragment extends Fragment {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    Log.d("rgai", "fragment: oncreate!");
     contextSelectedElements = new TreeSet<MessageListElement>();
     
     

@@ -45,6 +45,7 @@ public class MainService extends Service {
   
   public static final String MESSAGE_LIST_QUERY_KEY = "message_list_query_key";
   public static final String BATCHED_MESSAGE_LIST_TASK_DONE_INTENT = "batched_message_list_task_done_intent";
+  public static final String NO_TASK_AVAILABLE_TO_PROCESS = "no_task_available_to_process";
 
   public MainService() {}
 
@@ -169,16 +170,23 @@ public class MainService extends Service {
             }
           }
           try {
-            BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
-              public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
-                if (processState.isDone()) {
-//                  Log.d("rgai2", "@@@@@@BATCH DONE");
+            // this means there is no available task to process
+            if (tasks.isEmpty()) {
+              Log.d("rgai", "tasks is empty");
+              Intent i = new Intent(NO_TASK_AVAILABLE_TO_PROCESS);
+              LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
+            } else {
+              BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
+                public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
+                  if (processState.isDone()) {
+  //                  Log.d("rgai2", "@@@@@@BATCH DONE");
+                  }
+                  Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
+                  LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
                 }
-                Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
-                LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
-              }
-            });
-            executor.execute();
+              });
+              executor.execute();
+            }
           } catch (Exception ex) {
             Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);
           }

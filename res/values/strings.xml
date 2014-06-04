@@ -79,7 +79,7 @@
   <string name="exception_ssl_handshake">SSL Handshake exception.</string>
   <string name="exception_cert_path_validator">Certification path validator exception.</string>
   <string name="no_internet_access">Not connected to internet.</string>
-  <string name="empty_list">There are no messages.</string>
+  <string name="empty_list">No messages to display.</string>
   <string name="no_account_set">No logon info provided. Go to settings.</string>
   <string name="unsupported_encoding">Unsopported encoding exception.</string>
   <string name="unsupported_charset">Unsopported charset exception.</string>
