@@ -1,5 +1,6 @@
 package hu.rgai.android.test;
 
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -198,13 +199,8 @@ public class MainActivity extends ActionBarActivity {
   protected void onResume() {
     super.onResume();
     is_activity_visible = true;
+    removeNotificationIfExists();
     
-//    if (!YakoApp.hasMessages()) {
-//      toggleProgressDialog(true);
-//    } else {
-//      toggleProgressDialog(false);
-//    }
-            
     
     // setting filter adapter onResume, because it might change at settings panel
     TreeSet<Account> accounts = YakoApp.getAccounts(this);
@@ -354,6 +350,15 @@ public class MainActivity extends ActionBarActivity {
    */
   public static boolean isMainActivityVisible() {
     return is_activity_visible;
+  }
+  
+  
+  /**
+   * Removes the notification from statusbar if exists.
+   */
+  private void removeNotificationIfExists() {
+    NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
   }
   
   
