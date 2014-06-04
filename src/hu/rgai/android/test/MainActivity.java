@@ -139,20 +139,41 @@ public class MainActivity extends ActionBarActivity {
             R.string.mainlist_open_drawer, /* "open drawer" description for accessibility */
             R.string.mainlist_close_drawer /* "close drawer" description for accessibility */) {
               
+      float mPreviousOffset = 0f;
+              
       @Override
       public void onDrawerClosed(View view) {
         super.onDrawerClosed(view);
-        mDrawerIsVisible = false;
-        getSupportActionBar().setTitle("");
-        invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        showHideMenuBarIcons(false);
       }
 
       @Override
       public void onDrawerOpened(View drawerView) {
         super.onDrawerOpened(drawerView);
-        mDrawerIsVisible = true;
-        getSupportActionBar().setTitle(getString(R.string.filter_list));
-        invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        showHideMenuBarIcons(true);
+      }
+      
+      @Override
+      public void onDrawerSlide(View arg0, float slideOffset) {
+        super.onDrawerSlide(arg0, slideOffset);
+        Log.d("rgai", "slideoffset: " + slideOffset);
+        if (!mDrawerIsVisible && slideOffset > 0.0) {
+          showHideMenuBarIcons(true);
+        } else if (mDrawerIsVisible && slideOffset == 0.0) {
+          showHideMenuBarIcons(false);
+        }
+      }
+      
+      private void showHideMenuBarIcons(boolean hide) {
+        if (hide) {
+          mDrawerIsVisible = true;
+          getSupportActionBar().setTitle(getString(R.string.filter_list));
+          invalidateOptionsMenu();
+        } else {
+          mDrawerIsVisible = false;
+          getSupportActionBar().setTitle("");
+          invalidateOptionsMenu();
+        }
       }
     };
 
