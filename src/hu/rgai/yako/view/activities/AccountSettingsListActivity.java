@@ -113,6 +113,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     }
   }
   
+  
   private boolean isInfMail(Account acc) {
     if (acc instanceof EmailAccount) {
       EmailAccount ea = (EmailAccount)acc;
@@ -122,6 +123,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     }
     return false;
   }
+  
   
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {

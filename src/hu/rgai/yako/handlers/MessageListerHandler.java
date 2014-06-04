@@ -110,6 +110,8 @@ public class MessageListerHandler extends TimeoutHandler {
       // itt mindig vegig iteral az osszes elemen, az osszes provider lekerdezesekor, ezert 5x is puttyog ha van 1 olvasatlan uzenet
       // ES az utolso figyelmeztetes hangja regire van allitva: azaz frissen inditottuk az alkalmazast
       // CSAK azokra az accountokra kellene nezni a feltetelt amit eppen lekerdeztunk
+      
+      // csak akkor szivatodik itt meg a rendszer, ha a JOVOBOL kapunk uzenetet....!!!!!!!!!!!!
       for (MessageListElement mle : YakoApp.getMessages()) {
         if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
           mle.setSeen(true);

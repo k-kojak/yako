@@ -38,6 +38,8 @@ import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.LogUploadScheduler;
+import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
@@ -66,6 +68,7 @@ public class MainActivity extends ActionBarActivity {
   private ProgressDialog pd = null;
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
   private Menu mMenu;
+  private ScreenReceiver screenReceiver;
   
   
 
@@ -74,10 +77,32 @@ public class MainActivity extends ActionBarActivity {
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
   public static final int PREFERENCES_REQUEST_CODE = 1;
+  
+  
+  
 
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
+    
+    Tracker t = ((YakoApp)getApplication()).getTracker();
+    t.setScreenName(this.getClass().getName());
+    t.send(new HitBuilders.AppViewBuilder().build());
+    
+    
+    // LOGGING
+    setUpAndRegisterScreenReceiver();
+    if (!EventLogger.INSTANCE.isLogFileOpen()) {
+      EventLogger.INSTANCE.setContext(this);
+      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+    }
+    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
+    LogUploadScheduler.INSTANCE.setContext(this);
+    if (!LogUploadScheduler.INSTANCE.isRunning) {
+      LogUploadScheduler.INSTANCE.startRepeatingTask();
+    }
+    
+    
     
     setContentView(R.layout.mainlist_navigation_drawer);
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -85,30 +110,23 @@ public class MainActivity extends ActionBarActivity {
 
     
     actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
-    TreeSet<Account> accounts = YakoApp.getAccounts(this);
+//    TreeSet<Account> accounts = YakoApp.getAccounts(this);
     
-    
-    mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
-    
-    
-
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     mFragment = loadFragment(true);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
-    mDrawerList.setAdapter(mDrawerFilterAdapter);
-    
     
     // the 0th element is "all account"
-    int indexOfAccount = 0;
-    if (actSelectedFilter != null) {
-      // +1 needed because 0th element in adapter is "all account"
-      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter) + 1;
-    }
+//    int indexOfAccount = 0;
+//    if (actSelectedFilter != null) {
+//      // +1 needed because 0th element in adapter is "all account"
+//      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter) + 1;
+//    }
     
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-    mDrawerList.setItemChecked(indexOfAccount, true);
+//    mDrawerList.setItemChecked(indexOfAccount, true);
 
     
 
@@ -140,15 +158,33 @@ public class MainActivity extends ActionBarActivity {
 
     mDrawerLayout.setDrawerListener(mDrawerToggle);
     
-    toggleProgressDialog(true);
-    
-//    loadFragment(true);
+    if (!YakoApp.hasMessages()) {
+      toggleProgressDialog(true);
+    }
   }
 
+  
   @Override
   protected void onResume() {
     super.onResume();
     is_activity_visible = true;
+    
+    // setting filter adapter onResume, because it might change at settings panel
+    TreeSet<Account> accounts = YakoApp.getAccounts(this);
+    mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
+    mDrawerList.setAdapter(mDrawerFilterAdapter);
+    int indexOfAccount = 0;
+    if (actSelectedFilter != null) {
+      // +1 needed because 0th element in adapter is "all account"
+      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
+      // the saved selected account is not available anymore...
+      if (indexOfAccount == -1) {
+        actSelectedFilter = null;
+        indexOfAccount++;
+      }
+    }
+    mDrawerList.setItemChecked(indexOfAccount, true);
+    
     
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
@@ -166,6 +202,8 @@ public class MainActivity extends ActionBarActivity {
         reloadMessages(false);
       }
     }
+    
+    YakoApp.updateLastNotification(null, this);
     
     refreshLoadingIndicatorState();
   }
@@ -187,6 +225,17 @@ public class MainActivity extends ActionBarActivity {
     Log.d("rgai", "on mainactivity pause");
     super.onPause();
   }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    // logging
+    if (screenReceiver != null) {
+      unregisterReceiver(screenReceiver);
+    }
+  }
+  
+  
   
   @Override
   public void onBackPressed() {
@@ -224,7 +273,7 @@ public class MainActivity extends ActionBarActivity {
         pd = new ProgressDialog(this);
         pd.setCancelable(false);
       }
-//      pd.show();
+      pd.show();
       pd.setContentView(R.layout.progress_dialog);
     } else {
       if (pd != null) {
@@ -487,5 +536,30 @@ public class MainActivity extends ActionBarActivity {
     }
 
   }
+  
+
+  
+  // logging stuff
+  
+  private void setUpAndRegisterScreenReceiver() {
+    if (screenReceiver == null) {
+      screenReceiver = new ScreenReceiver();
+    }
+
+    IntentFilter screenIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+    screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON);
+    registerReceiver(screenReceiver, screenIntentFilter);
+  }
+  
+  private static final String APPLICATION_START_STR = "application:start";
+  private Thread.UncaughtExceptionHandler defaultUEH;
+  private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
+    @Override
+    public void uncaughtException(Thread thread, Throwable ex) {
+      EventLogger.INSTANCE.writeToLogFile("uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
+      // re-throw critical exception further to the os (important)
+      defaultUEH.uncaughtException(thread, ex);
+    }
+  };
   
 }

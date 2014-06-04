@@ -39,6 +39,10 @@ public class YakoApp extends Application {
     return messages;
   }
   
+  public static boolean hasMessages() {
+    return messages != null && !messages.isEmpty();
+  }
+  
   public static TreeSet<Account> getAccounts(Context context) {
     if (accounts == null) {
       loadAccountsFromStore(context);
