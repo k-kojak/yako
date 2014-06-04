@@ -194,10 +194,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       displayMessage(true);
       refreshMessageList();
     } else {
-      pd = new ProgressDialog(this);
-      pd.setMessage(getString(R.string.loading));
-      pd.setCancelable(true);
+      if (pd == null) {
+        pd = new ProgressDialog(this);
+        pd.setCancelable(true);
+      }
       pd.show();
+      pd.setContentView(R.layout.progress_dialog);
       refreshMessageList();
     }
   }

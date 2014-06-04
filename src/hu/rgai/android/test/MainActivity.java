@@ -230,7 +230,8 @@ public class MainActivity extends ActionBarActivity {
       reloadMessages(true);
     } else {
       long now = System.currentTimeMillis();
-      if (YakoApp.lastFullMessageUpdate == null || YakoApp.lastFullMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now) {
+      if (actSelectedFilter == null
+              && (YakoApp.lastFullMessageUpdate == null || YakoApp.lastFullMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now)) {
         reloadMessages(false);
       }
     }
