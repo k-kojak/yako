@@ -10,22 +10,23 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.test.MainActivity;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.AsyncImageLoadProvider;
 import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
-import hu.rgai.yako.beens.AsyncImageLoadProvider;
 import hu.rgai.yako.view.extensions.AsyncImageView;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TreeSet;
 
 public class MainListAdapter extends BaseAdapter {
 
@@ -42,7 +43,8 @@ public class MainListAdapter extends BaseAdapter {
   // TODO: this should be a copy of the original array
   public int getCount() {
     // the plus 1 item is because of the "last updated" row
-    return YakoApp.getFilteredMessages(MainActivity.actSelectedFilter).size() + 1;
+    int messagesSize = YakoApp.getFilteredMessages(MainActivity.actSelectedFilter).size();
+    return messagesSize == 0 ? 0 : messagesSize + 1;
   }
   
   public Object getItem(int position) {

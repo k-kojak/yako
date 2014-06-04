@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -56,6 +55,7 @@ public class MainActivityFragment extends Fragment {
   private TreeSet<MessageListElement> contextSelectedElements = null;
   private MainActivity mMainActivity = null;
   private Button loadMoreButton = null;
+  private boolean loadMoreButtonVisible = false;
   private ProgressBar mTopProgressBar;
 
   public static MainActivityFragment getInstance() {
@@ -65,7 +65,6 @@ public class MainActivityFragment extends Fragment {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    Log.d("rgai", "fragment: on create view");
     contextSelectedElements = new TreeSet<MessageListElement>();
     
     
@@ -137,6 +136,7 @@ public class MainActivityFragment extends Fragment {
     });
 
     loadMoreButton = new Button(mMainActivity);
+    loadMoreButton.setVisibility(View.GONE);
     loadMoreButton.setText("Load more ...");
     loadMoreButton.getBackground().setAlpha(0);
     loadMoreButton.setOnClickListener(new View.OnClickListener() {
@@ -432,8 +432,13 @@ public class MainActivityFragment extends Fragment {
   }
   
   public void notifyAdapterChange() {
-    Log.d("rgai", "Fragment.this: " + this);
+    Log.d("rgai", "adapter count: " + lv.getFooterViewsCount());
     mAdapter.notifyDataSetChanged();
+    if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
+      loadMoreButton.setVisibility(View.VISIBLE);
+      Log.d("rgai", "adding footer view...");
+      loadMoreButtonVisible = true;
+    }
   }
 
 }
