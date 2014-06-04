@@ -572,7 +572,9 @@ public class MainActivity extends ActionBarActivity {
       mDrawerLayout.closeDrawer(mDrawerList);
       actSelectedFilter = (Account)parent.getItemAtPosition(position);
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
-      mFragment.notifyAdapterChange();
+      if (mFragment != null) {
+        mFragment.notifyAdapterChange();
+      }
       
       // run query for selected filter only if list is empty OR selected all accounts
       if (actSelectedFilter == null

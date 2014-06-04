@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 public class MainService extends Service {
   
   public static boolean RUNNING = false;
-
+  private static final LinkedList<MainServiceExtraParams> asyncTaskQueue = new LinkedList<MainServiceExtraParams>();
   private final IBinder mBinder = new MyBinder();
   
   
@@ -119,7 +119,6 @@ public class MainService extends Service {
     } else {
       extraParams = new MainServiceExtraParams();
     }
-    Log.d("rgai2", "mainservice startedby droid: " + startedByAndroid);
     
     boolean isNet = isNetworkAvailable();
     boolean isPhone = YakoApp.isPhone;
@@ -172,14 +171,19 @@ public class MainService extends Service {
           try {
             // this means there is no available task to process
             if (tasks.isEmpty()) {
-              Log.d("rgai", "tasks is empty");
               Intent i = new Intent(NO_TASK_AVAILABLE_TO_PROCESS);
               LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
             } else {
               BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
                 public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
                   if (processState.isDone()) {
-  //                  Log.d("rgai2", "@@@@@@BATCH DONE");
+                    // if we have tasks in queue, then execute the next one
+                    if (!asyncTaskQueue.isEmpty()) {
+                      MainServiceExtraParams next = asyncTaskQueue.pollFirst();
+                      Intent intent = new Intent(MainService.this, MainService.class);
+                      intent.putExtra(IntentParamStrings.EXTRA_PARAMS, next);
+                      MainService.this.startService(intent);
+                    }
                   }
                   Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
                   LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
@@ -194,7 +198,7 @@ public class MainService extends Service {
             YakoApp.lastFullMessageUpdate = new Date();
           }
         } else {
-//          Log.d("rgai2", "ITT MOST MEGGATOLTUK A TOBBSZORI INDITAST!!!!!!!!!!!!!!!!!!!!!!");
+          asyncTaskQueue.add(extraParams);
         }
       }
     }
