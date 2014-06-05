@@ -1,10 +1,12 @@
 package hu.rgai.yako.view.activities;
 
 
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -44,6 +46,7 @@ import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.adapters.ThreadViewAdapter;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
@@ -101,7 +104,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
     Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
     mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
-    
+    if (mMessage == null) {
+      finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
+      return;
+    }
     
     // setting action bar
     ActionBar actionBar = getSupportActionBar();
@@ -138,7 +144,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    
+    if (mMessage == null) return;
     
     actViewingMessage = mMessage;
     removeNotificationIfExists();
@@ -178,6 +184,18 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
   }
   
+  private void finish(int code) {
+    ((YakoApp)getApplication()).sendAnalyticsError(code);
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        finish();
+      }
+    });
+    builder.setTitle("Error");
+    builder.setMessage("Connection error, please try later.\n(Error " + code + ")").show();
+  }
+  
   public void setMessageContent(FullThreadMessage content) {
     mMessage.setFullMessage(content);
     YakoApp.setMessageContent(mMessage, content);
@@ -206,7 +224,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
   
   private void removeNotificationIfExists() {
-    if (mMessage.equals(YakoApp.getLastNotifiedMessage())) {
+    if (mMessage != null && mMessage.equals(YakoApp.getLastNotifiedMessage())) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       mNotificationManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
       YakoApp.setLastNotifiedMessage(null);
@@ -356,6 +374,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   }
   
   private void logActivityEvent(String event) {
+    if (mMessage == null) return;
     StringBuilder builder = new StringBuilder();
     builder.append(event);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);

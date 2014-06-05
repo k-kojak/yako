@@ -6,6 +6,7 @@ import android.content.Context;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
@@ -222,6 +223,14 @@ public class YakoApp extends Application {
       tracker = analytics.newTracker(R.xml.analytics);
     }
     return tracker;
+  }
+  
+  public void sendAnalyticsError(int code) {
+     Tracker t = getTracker();
+     t.send(new HitBuilders.ExceptionBuilder()
+             .setDescription("Custom, own catched error. Error code: " + code)
+             .setFatal(false)
+             .build());
   }
 
   @Override

@@ -1,6 +1,8 @@
 package hu.rgai.yako.view.activities;
 
+import android.app.AlertDialog;
 import android.app.TaskStackBuilder;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -15,15 +17,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.android.test.R;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
@@ -58,6 +62,10 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
     Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
     mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+    if (mMessage == null) {
+      finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
+      return;
+    }
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
     
     YakoApp.setMessageSeenAndReadLocally(mMessage);
@@ -89,6 +97,20 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mPager.setOnPageChangeListener(mPageChangeListener);
   }
 
+  
+  private void finish(int code) {
+    ((YakoApp)getApplication()).sendAnalyticsError(code);
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        finish();
+      }
+    });
+    builder.setTitle("Error");
+    builder.setMessage("Connection error, please try later.\n(Error " + code + ")").show();
+  }
+
+  
   @Override
   protected void onPause() {
     super.onPause(); //To change body of generated methods, choose Tools | Templates.
@@ -100,6 +122,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
+    if (mMessage == null) return true;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.email_message_options_menu, menu);
 
