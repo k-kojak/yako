@@ -13,6 +13,14 @@
         messagelogger:showAsAction="ifRoom"
         />
   
+    <item android:id="@+id/add_email_contact"
+        android:icon="@drawable/ic_action_add_person"
+        android:title="@string/add_contact"
+        messagelogger:showAsAction="ifRoom"
+        />
+  
+  
+  
   <!--<item android:id="@+id/forward"
   android:icon="@drawable/ic_action_forward"  
       android:title="@string/message_forward"

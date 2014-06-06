@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:messagelogger="http://schemas.android.com/apk/res-auto">
+    
+   <item android:id="@+id/add_thread_contact"
+      android:icon="@drawable/ic_action_add_person"
+      android:title="@string/add_contact"
+      messagelogger:showAsAction="ifRoom"
+     	  />
+        
   <item android:id="@+id/load_more"
       android:icon="@drawable/ic_action_load_more"
       android:title="@string/load_more"

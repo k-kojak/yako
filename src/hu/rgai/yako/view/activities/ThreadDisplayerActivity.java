@@ -49,6 +49,8 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
+
+import java.util.ArrayList;
 import java.util.Date;
 
 public class ThreadDisplayerActivity extends ActionBarActivity {
@@ -273,6 +275,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.thread_message_options_menu, menu);
+    
+    if(mMessage.getFrom().getContactId() != -1 || mMessage.getMessageType()==MessageProvider.Type.FACEBOOK){
+    	menu.findItem(R.id.add_thread_contact).setVisible(false);
+    }
+    
     return true;
   }
 
@@ -313,6 +320,17 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
           finish();
         }
         return true;
+        
+      case R.id.add_thread_contact:
+
+    	  ArrayList<String> contactDatas = new ArrayList<String>();    	  
+    	  contactDatas.add(mMessage.getFrom().getId());
+    	      	  
+    	  AndroidUtils.addToContact(mMessage.getMessageType(), this,contactDatas);
+
+          return true;  
+          
+        
       default:
         return super.onOptionsItemSelected(item);
     }

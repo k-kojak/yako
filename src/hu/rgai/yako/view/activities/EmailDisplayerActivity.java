@@ -34,8 +34,11 @@ import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
 import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.TreeSet;
 
 public class EmailDisplayerActivity extends ActionBarActivity {
@@ -129,6 +132,11 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     if (mContent.getAttachments() == null || mContent.getAttachments().isEmpty()) {
       menu.findItem(R.id.attachments).setVisible(false);
     }
+    
+    if(mMessage.getFrom().getContactId() != -1){
+    	menu.findItem(R.id.add_email_contact).setVisible(false);
+    }
+    
     return true;
   }
 
@@ -159,9 +167,24 @@ public class EmailDisplayerActivity extends ActionBarActivity {
           mPager.setCurrentItem(1);
         }
         return true;
+        
+      case R.id.add_email_contact:
+
+    	  ArrayList<String> contactDatas = new ArrayList<String>();    	  
+    	  contactDatas.add(mMessage.getFrom().getId());
+    	      	  
+    	  AndroidUtils.addToContact(mMessage.getMessageType(), this,contactDatas);
+
+          return true;  
 
     }
-
+    
+    ////
+    
+    mMessage.getMessageType().toString();
+    
+    ////
+    
     return super.onOptionsItemSelected(item);
   }
 
