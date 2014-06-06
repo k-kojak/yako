@@ -32,12 +32,12 @@ import javax.mail.NoSuchProviderException;
  */
 public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
-  private final Context context;
-  private final MessageRecipient recipient;
-  private final MessageSendHandler handler;
-  private final Account fromAccount;
-  private final String content;
-  private final String subject;
+  private final Context mContext;
+  private final MessageRecipient mRecipient;
+  private final MessageSendHandler mHandler;
+  private final Account mFromAccount;
+  private final String mContent;
+  private final String mSubject;
   // private String recipients;
   
   private static final int SUCCESS = 0;
@@ -49,18 +49,18 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     
     super(handler);
     
-    this.recipient = recipient;
-    this.fromAccount = fromAccount;
-    this.handler = handler;
-    this.subject = subject;
-    this.content = content;
-    this.context = context;
+    this.mRecipient = recipient;
+    this.mFromAccount = fromAccount;
+    this.mHandler = handler;
+    this.mSubject = subject;
+    this.mContent = content;
+    this.mContext = context;
   }
 
   private boolean isValidContent() {
-    if ( recipient.getType().equals( MessageProvider.Type.FACEBOOK)
-        || recipient.getType().equals( MessageProvider.Type.SMS) ) {
-      if ( content.length() == 0 )
+    if ( mRecipient.getType().equals( MessageProvider.Type.FACEBOOK)
+        || mRecipient.getType().equals( MessageProvider.Type.SMS) ) {
+      if ( mContent.length() == 0 )
         return false;
     }
     return true;
@@ -68,26 +68,26 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   @Override
   protected Integer doInBackground(Void... params) {
-    if ( fromAccount != null && isValidContent() ) {
+    if ( mFromAccount != null && isValidContent() ) {
       MessageProvider mp = null;
       Set<MessageRecipient> recipients = null;
-      if (recipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
-        mp = new FacebookMessageProvider((FacebookAccount) fromAccount);
+      if (mRecipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
+        mp = new FacebookMessageProvider((FacebookAccount) mFromAccount);
         recipients = new HashSet<MessageRecipient>();
-        recipients.add(new FacebookMessageRecipient(recipient.getData()));
-      } else if (recipient.getType().equals(MessageProvider.Type.EMAIL) || recipient.getType().equals(MessageProvider.Type.GMAIL)) {
-        publishProgress(fromAccount.getDisplayName());
-        mp = new SimpleEmailMessageProvider((EmailAccount) fromAccount);
+        recipients.add(new FacebookMessageRecipient(mRecipient.getData()));
+      } else if (mRecipient.getType().equals(MessageProvider.Type.EMAIL) || mRecipient.getType().equals(MessageProvider.Type.GMAIL)) {
+        publishProgress(mFromAccount.getDisplayName());
+        mp = new SimpleEmailMessageProvider((EmailAccount) mFromAccount);
         recipients = new HashSet<MessageRecipient>();
-        recipients.add(new EmailMessageRecipient(recipient.getDisplayName(), recipient.getData()));
-      } else if (recipient.getType().equals(MessageProvider.Type.SMS)) {
-        mp = new SmsMessageProvider(context);
+        recipients.add(new EmailMessageRecipient(mRecipient.getDisplayName(), mRecipient.getData()));
+      } else if (mRecipient.getType().equals(MessageProvider.Type.SMS)) {
+        mp = new SmsMessageProvider(mContext);
         recipients = new HashSet<MessageRecipient>();
-        recipients.add((MessageRecipient) recipient);
+        recipients.add((MessageRecipient) mRecipient);
       }
       if (mp != null && recipients != null) {
         try {
-          mp.sendMessage(recipients, content, subject);
+          mp.sendMessage(recipients, mContent, mSubject);
         } catch (NoSuchProviderException ex) {
           Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
           return FAIL;
@@ -108,30 +108,30 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     StringBuilder builder = new StringBuilder();
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SENDMESSAGE_STR);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(recipient.getType());
+    builder.append(mRecipient.getType());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(content);
+    builder.append(mContent);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(recipient.getContactId());
+    builder.append(mRecipient.getContactId());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(RSAENCODING.INSTANCE.encodingString(recipient.getData()));
+    builder.append(RSAENCODING.INSTANCE.encodingString(mRecipient.getData()));
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
 
   @Override
   protected void onPostExecute(Integer resultCode) {
-    if (handler != null) {
+    if (mHandler != null) {
       if (resultCode == SUCCESS) {
-        handler.success(recipient.getDisplayName());
+        mHandler.success(mRecipient.getDisplayName());
       } else {
-        handler.fail(recipient.getDisplayName());
+        mHandler.fail(mRecipient.getDisplayName());
       }
     }
   }
 
   @Override
   protected void onProgressUpdate(String... values) {
-    Toast.makeText(context, "Sending message ...", Toast.LENGTH_SHORT).show();
+    Toast.makeText(mContext, "Sending message ...", Toast.LENGTH_SHORT).show();
   }
 
 }

@@ -47,6 +47,7 @@ import hu.rgai.yako.adapters.ThreadViewAdapter;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.config.ErrorCodes;
+import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
@@ -246,7 +247,18 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
     // TODO: write a nice handler here!!!
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "", text.getText().toString(), this);
+    MessageSendHandler handler = new MessageSendHandler() {
+      @Override
+      public void success(String name) {
+        refreshMessageList();
+      }
+
+      @Override
+      public void fail(String name) {
+        Toast.makeText(ThreadDisplayerActivity.this, "Failed to send message", Toast.LENGTH_LONG).show();
+      }
+    };
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handler, "", text.getText().toString(), this);
     rs.executeTask(null);
     text.setText("");
   }
