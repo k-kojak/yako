@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-To change this template, choose Tools | Templates
-and open the template in the editor.
--->
-
-
 
   <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -42,27 +36,42 @@ and open the template in the editor.
         android:singleLine="true"
         android:inputType="text" />
       
-      <EditText
-        android:id="@+id/message_content"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:hint="Content"
-        android:background="#ffffff"
-        android:minLines="5"
-        android:inputType="textCapSentences|textMultiLine" />
+        <TableRow android:id="@+id/table_row"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content" >
+          
+          <EditText android:id="@+id/message_content"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Content"
+                    android:background="#ffffff"
+                    android:minLines="5"
+                    android:inputType="textCapSentences|textMultiLine"
+                    android:layout_weight="20" />
+
+          <TextView android:id="@+id/char_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|bottom"
+                    android:layout_weight="1"
+                    android:minWidth="50dip"
+                    android:layout_marginBottom="1dip"
+                    android:layout_marginLeft="1dip" />
+          
+        </TableRow>
 
       <CheckBox android:id="@+id/quote_origi"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/quote_original_message"
-        android:onClick="onQuoteClicked"
-        android:checked="true" />
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/quote_original_message"
+                android:onClick="onQuoteClicked"
+                android:checked="true" />
       
-      <WebView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/quoted_message"
-            android:layout_width="fill_parent" 
-            android:layout_height="fill_parent"
-            android:scrollbarStyle="outsideOverlay" /> 
+      <WebView  xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/quoted_message"
+                android:layout_width="fill_parent" 
+                android:layout_height="fill_parent"
+                android:scrollbarStyle="outsideOverlay" /> 
       
     </LinearLayout>
   </ScrollView>

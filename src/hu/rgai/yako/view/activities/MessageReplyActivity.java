@@ -12,6 +12,7 @@ import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,6 +30,9 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.adapters.ContactListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailMessageRecipient;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
@@ -45,15 +49,13 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
-import hu.rgai.yako.adapters.ContactListAdapter;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -75,7 +77,8 @@ public class MessageReplyActivity extends ActionBarActivity {
   public static final int MESSAGE_SENT_FAILED = 2;
 
   private int messageResult;
-  private TextView text;
+  private TextView mContent;
+  private TextView mCharCount;
   private ChipsMultiAutoCompleteTextView recipients;
   private Account mAccount;
   private WebView mQuotedMessage = null;
@@ -83,6 +86,7 @@ public class MessageReplyActivity extends ActionBarActivity {
   private EditText mSubject = null;
   private MessageListElement mMessage = null;
   private FullSimpleMessage mFullMessage = null;
+  private boolean isCharCountVisible = false;
 
   @Override
   public void onBackPressed() {
@@ -106,7 +110,8 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
     mSubject = (EditText) findViewById(R.id.subject);
-    text = (TextView) findViewById(R.id.message_content);
+    mCharCount = (TextView) findViewById(R.id.char_count);
+    mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
     
@@ -125,7 +130,6 @@ public class MessageReplyActivity extends ActionBarActivity {
         }
       }
       if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)) {
-//        Log.d("rgai", "yes, from notifier");
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
         // mMessage shouldn be null here...
@@ -143,7 +147,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
 
-    text.addTextChangedListener(new TextWatcher() {
+    mContent.addTextChangedListener(new TextWatcher() {
 
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -157,6 +161,9 @@ public class MessageReplyActivity extends ActionBarActivity {
 
       @Override
       public void afterTextChanged(Editable s) {
+        if (isCharCountVisible) {
+          mCharCount.setText(getCharCountString(mContent.getText().toString()));
+        }
         // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
@@ -168,6 +175,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     recipients.addOnChipChangeListener(new ChipsMultiAutoCompleteTextView.OnChipChangeListener() {
       public void onChipListChange() {
         showHideSubjectField();
+        showHideCharacterCountField();
       }
     });
 
@@ -184,6 +192,7 @@ public class MessageReplyActivity extends ActionBarActivity {
       mQuoteCheckbox.setVisibility(View.GONE);
     }
     showHideSubjectField();
+    showHideCharacterCountField();
 
     Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
     ContactListAdapter adapter = new ContactListAdapter(this, c);
@@ -199,7 +208,6 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
       processImplicitIntent(getIntent());
     }
-
   }
 
   private void showHideSubjectField() {
@@ -215,11 +223,35 @@ public class MessageReplyActivity extends ActionBarActivity {
     } else {
       collapse(mSubject);
     }
-    
   }
-
+  
+  
+  private void showHideCharacterCountField() {
+    boolean hasSmsRecipient = false;
+    for (MessageRecipient ri : recipients.getRecipients()) {
+      if (ri.getType().equals(MessageProvider.Type.SMS)) {
+        hasSmsRecipient = true;
+        break;
+      }
+    }
+    if (hasSmsRecipient) {
+      isCharCountVisible = true;
+      expand(mCharCount);
+      mCharCount.setText(getCharCountString(mContent.getText().toString()));
+    } else {
+      isCharCountVisible = false;
+      collapse(mCharCount);
+    }
+  }
+  
+  private String getCharCountString(String text) {
+    SmsManager smsMan = SmsManager.getDefault();
+    ArrayList<String> dividedMessages = smsMan.divideMessage(text);
+    int size = dividedMessages.size();
+    return text.length() + "/" + size;
+  }
+  
   public void onQuoteClicked(View view) {
-    Log.d("rgai", "CLICKED");
     int visibility;
     if (mQuoteCheckbox.isChecked()) {
       visibility = View.VISIBLE;
@@ -308,7 +340,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
 
     List<MessageRecipient> to = recipients.getRecipients();
-    String content = text.getText().toString().trim();
+    String content = mContent.getText().toString().trim();
     String subject = null;
     if (mSubject.getVisibility() == View.VISIBLE) {
       subject = mSubject.getText().toString();
@@ -370,7 +402,7 @@ public class MessageReplyActivity extends ActionBarActivity {
       return;
     }
 
-    if (text.getText().toString().trim().length() == 0) {
+    if (mContent.getText().toString().trim().length() == 0) {
       Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
       return;
     }
@@ -408,7 +440,7 @@ public class MessageReplyActivity extends ActionBarActivity {
 
   }
 
-  private static void expand(final View v) {
+  private void expand(final View v) {
     if (v.getVisibility() == View.VISIBLE) return;
     v.measure(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
     final int targtetHeight = v.getMeasuredHeight();
@@ -435,7 +467,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     v.startAnimation(a);
   }
 
-  private static void collapse(final View v) {
+  private void collapse(final View v) {
     if (v.getVisibility() == View.GONE) return;
     final int initialHeight = v.getMeasuredHeight();
 
