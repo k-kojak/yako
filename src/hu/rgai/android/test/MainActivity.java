@@ -239,13 +239,15 @@ public class MainActivity extends ActionBarActivity {
     YakoApp.updateLastNotification(null, this);
     
     refreshLoadingIndicatorState();
+    
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
   }
   
   @Override
   protected void onPause() {
     
     is_activity_visible = false;
-    
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
     
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
     
@@ -596,11 +598,11 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
-
-//      if (actSelectedFilter == null)
-//        builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
-//      else
-//        builder.append(actSelectedFilter.getDisplayName());
+      if (actSelectedFilter == null) {
+        builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
+      } else {
+        builder.append(actSelectedFilter.getDisplayName());
+      }
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
@@ -616,7 +618,16 @@ public class MainActivity extends ActionBarActivity {
 
   }
   
-
+  private void logActivityEvent(String event) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(event);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+    if (mFragment != null) {
+      appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
+    }
+    Log.d("willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+  }
   
   private void setUpAndRegisterScreenReceiver() {
     if (screenReceiver == null) {
