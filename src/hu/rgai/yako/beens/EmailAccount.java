@@ -159,4 +159,9 @@ public class EmailAccount extends Account {
     return false;
   }
 
+  @Override
+  public boolean isThreadAccount() {
+    return false;
+  }
+
 }

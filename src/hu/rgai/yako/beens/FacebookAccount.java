@@ -125,5 +125,10 @@ public class FacebookAccount extends Account {
   public boolean isUnique() {
     return true;
   }
+
+  @Override
+  public boolean isThreadAccount() {
+    return true;
+  }
   
 }

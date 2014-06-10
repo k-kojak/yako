@@ -79,4 +79,9 @@ public final class SmsAccount extends Account {
   public String toString() {
     return "SMS account";
   }
+
+  @Override
+  public boolean isThreadAccount() {
+    return true;
+  }
 }

@@ -25,6 +25,8 @@ public abstract class Account implements Parcelable, Serializable, Comparable<Ac
   
   public abstract boolean isInternetNeededForLoad();
   
+  public abstract boolean isThreadAccount();
+  
   /**
    * True if this kind of account can have only one instance, false otherwise.
    * 
