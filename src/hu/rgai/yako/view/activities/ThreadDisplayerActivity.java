@@ -1,5 +1,27 @@
 package hu.rgai.yako.view.activities;
 
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.adapters.ThreadViewAdapter;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.FacebookMessageRecipient;
+import hu.rgai.yako.beens.FullSimpleMessage;
+import hu.rgai.yako.beens.FullThreadMessage;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.config.ErrorCodes;
+import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.handlers.ThreadContentGetterHandler;
+import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.workers.MessageSender;
+import hu.rgai.yako.workers.ThreadContentGetter;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -27,31 +49,11 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.QuickContactBadge;
 import android.widget.Toast;
+
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.FacebookMessageRecipient;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.FullThreadMessage;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.beens.MessageRecipient;
-import hu.rgai.yako.beens.SmsMessageRecipient;
-import hu.rgai.yako.config.Settings;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.handlers.ThreadContentGetterHandler;
-import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
-import hu.rgai.yako.adapters.ThreadViewAdapter;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.config.ErrorCodes;
-import hu.rgai.yako.workers.MessageSender;
-import hu.rgai.yako.workers.ThreadContentGetter;
-
-import java.util.ArrayList;
-import java.util.Date;
 
 public class ThreadDisplayerActivity extends ActionBarActivity {
 
@@ -70,102 +72,119 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private static boolean firstResume = true;
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
-  
+
   private ConnectivityListener mWifiListener = null;
 
-  
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
    * a new message comes from this thread id, we set it immediately to seen.
    */
   public static volatile MessageListElement actViewingMessage = null;
-  
+
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId());
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId(), true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR
+        + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId());
+    EventLogger.INSTANCE.writeToLogFile(
+        EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR
+            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId(),
+        true);
     super.onBackPressed();
   }
-
 
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    
+
     // setting google analytics
-    Tracker t = ((YakoApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
-    
-    
+
     // setting variables
     if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)
-            && getIntent().getExtras().getBoolean(IntentParamStrings.FROM_NOTIFIER)) {
+        && getIntent().getExtras().getBoolean(IntentParamStrings.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
+    String msgId = getIntent().getExtras().getString(
+        IntentParamStrings.MESSAGE_ID);
+    Account acc = getIntent().getExtras().getParcelable(
+        IntentParamStrings.MESSAGE_ACCOUNT);
     mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
-    
+
     // setting action bar
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
-    getSupportActionBar().setTitle((mMessage.getFrom() != null ? mMessage.getFrom().getName() : "") + " | " + mMessage.getAccount().getAccountType().toString());
-    
-    
-    
+    getSupportActionBar().setTitle(
+        (mMessage.getFrom() != null ? mMessage.getFrom().getName() : "")
+            + " | " + mMessage.getAccount().getAccountType().toString());
+
     // initing GUI variables
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     lv.setOnScrollListener(new LogOnScrollListener());
     text = (EditText) findViewById(R.id.text);
     mHandler = new ThreadContentGetterHandler(this, mMessage);
-    
-    
+
     mTextWatcher = new TextWatcher() {
       @Override
-      public void onTextChanged(CharSequence s, int start, int before, int count) {}
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
       @Override
-      public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+      public void beforeTextChanged(CharSequence s, int start, int count,
+          int after) {
+      }
+
       @Override
       public void afterTextChanged(Editable s) {
-        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
-                + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
+        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId()
+            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile(
+            EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId()
+                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(),
+            true);
       }
     };
-    
+
     text.addTextChangedListener(mTextWatcher);
   }
-  
+
   @Override
   protected void onResume() {
     super.onResume();
-    if (mMessage == null) return;
-    
+    if (mMessage == null)
+      return;
+
     actViewingMessage = mMessage;
     removeNotificationIfExists();
     YakoApp.setMessageSeenAndReadLocally(mMessage);
-        
-    
-    // register wifi connection receiver if this acount depends on network, so after
+
+    // register wifi connection receiver if this acount depends on network, so
+    // after
     // wifi reconnect we can download messages immediately
     if (mMessage.getAccount().isInternetNeededForLoad()) {
       mWifiListener = new ConnectivityListener();
-      IntentFilter iFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+      IntentFilter iFilter = new IntentFilter(
+          ConnectivityManager.CONNECTIVITY_ACTION);
       registerReceiver(mWifiListener, iFilter);
     }
-    
-    
+
     // dealing with group chat issue
-    if (mMessage.isGroupMessage() && mMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
+    if (mMessage.isGroupMessage()
+        && mMessage.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
       if (firstResume) {
-        Toast.makeText(this, "Sorry, but group message sending is not available (because of Facebook).", Toast.LENGTH_LONG).show();
+        Toast
+            .makeText(
+                this,
+                "Sorry, but group message sending is not available (because of Facebook).",
+                Toast.LENGTH_LONG).show();
         firstResume = false;
       }
       text.setVisibility(View.GONE);
@@ -174,41 +193,44 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       text.setVisibility(View.VISIBLE);
       findViewById(R.id.sendButton).setVisibility(View.VISIBLE);
     }
-    
+
     // register broadcast receiver
     mDataUpdateReceiver = new DataUpdateReceiver(this);
-    IntentFilter iFilter = new IntentFilter(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
+    IntentFilter iFilter = new IntentFilter(
+        Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
     registerReceiver(mDataUpdateReceiver, iFilter);
 
     displayContent();
-    
+
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
   }
-  
+
   private void finish(int code) {
-    ((YakoApp)getApplication()).sendAnalyticsError(code);
+    ((YakoApp) getApplication()).sendAnalyticsError(code);
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+      @Override
       public void onClick(DialogInterface dialog, int which) {
         finish();
       }
     });
     builder.setTitle("Error");
-    builder.setMessage("Connection error, please try later.\n(Error " + code + ")").show();
+    builder.setMessage(
+        "Connection error, please try later.\n(Error " + code + ")").show();
   }
-  
+
   public void setMessageContent(FullThreadMessage content) {
     mMessage.setFullMessage(content);
     YakoApp.setMessageContent(mMessage, content);
   }
-  
+
   public void dismissProgressDialog() {
     if (pd != null) {
       pd.dismiss();
     }
   }
-  
+
   public void displayContent() {
     if (mMessage.getFullMessage() != null) {
       displayMessage(true);
@@ -224,7 +246,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
   }
 
-  
   private void removeNotificationIfExists() {
     if (mMessage != null && mMessage.equals(YakoApp.getLastNotifiedMessage())) {
       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -232,7 +253,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       YakoApp.setLastNotifiedMessage(null);
     }
   }
-  
 
   public void sendMessage(View view) {
     String t = text.getText().toString().trim();
@@ -240,34 +260,38 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       Toast.makeText(this, "Empty message", Toast.LENGTH_SHORT).show();
       return;
     }
-    
+
     MessageRecipient ri = null;
-    if (mMessage.getAccount().getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-      ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
+    if (mMessage.getAccount().getAccountType()
+        .equals(MessageProvider.Type.FACEBOOK)) {
+      ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(),
+          mMessage.getFrom().getName(), null, 1);
     } else {
-      ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
+      ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage
+          .getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
     // TODO: write a nice handler here!!!
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "", text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), null, "",
+        text.getText().toString(), this);
     rs.executeTask(null);
     text.setText("");
   }
 
   @Override
   protected void onPause() {
-    Tracker t = ((YakoApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
-    
+
     if (mDataUpdateReceiver != null) {
       unregisterReceiver(mDataUpdateReceiver);
     }
     if (mWifiListener != null) {
       unregisterReceiver(mWifiListener);
     }
-    
+
     actViewingMessage = null;
   }
 
@@ -275,11 +299,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.thread_message_options_menu, menu);
-    
-    if(mMessage.getFrom().getContactId() != -1 || mMessage.getMessageType()==MessageProvider.Type.FACEBOOK){
-    	menu.findItem(R.id.add_thread_contact).setVisible(false);
+
+    if (mMessage.getFrom().getContactId() != -1
+        || mMessage.getMessageType() == MessageProvider.Type.FACEBOOK) {
+      menu.findItem(R.id.add_thread_contact).setVisible(false);
     }
-    
+
     return true;
   }
 
@@ -287,13 +312,14 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     switch (requestCode) {
-      case (MESSAGE_REPLY_REQ_CODE):
-        if (resultCode == MessageReplyActivity.MESSAGE_SENT_OK) {
-          Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
-        } else if (resultCode == MessageReplyActivity.MESSAGE_SENT_FAILED) {
-          Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG).show();
-        }
-        break;
+    case (MESSAGE_REPLY_REQ_CODE):
+      if (resultCode == MessageReplyActivity.MESSAGE_SENT_OK) {
+        Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
+      } else if (resultCode == MessageReplyActivity.MESSAGE_SENT_FAILED) {
+        Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG)
+            .show();
+      }
+      break;
     }
   }
 
@@ -301,38 +327,44 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle item selection
     switch (item.getItemId()) {
-      case R.id.load_more:
-        if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
-          if (mMessage.getFullMessage() != null) {
-            FullThreadMessage threadMessage = (FullThreadMessage)mMessage.getFullMessage();
-            refreshMessageList(threadMessage.getMessages().size());
-            Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
-          }
-        } else {
-//          Log.d("rgai", "@@@skipping load button press for 5 sec");
+    case R.id.load_more:
+      if (lastLoadMoreEvent == null
+          || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
+        if (mMessage.getFullMessage() != null) {
+          FullThreadMessage threadMessage = (FullThreadMessage) mMessage
+              .getFullMessage();
+          refreshMessageList(threadMessage.getMessages().size());
+          Toast.makeText(this, getString(R.string.loading_more_elements),
+              Toast.LENGTH_LONG).show();
         }
-        return true;
-      case android.R.id.home:
-        Intent upIntent = NavUtils.getParentActivityIntent(this);
-        if (fromNotification) {
-            TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent).startActivities();
-        } else {
-          finish();
-        }
-        return true;
-        
-      case R.id.add_thread_contact:
+      } else {
+        // Log.d("rgai", "@@@skipping load button press for 5 sec");
+      }
+      return true;
+    case android.R.id.home:
+      Intent upIntent = NavUtils.getParentActivityIntent(this);
+      if (fromNotification) {
+        TaskStackBuilder.create(this).addNextIntentWithParentStack(upIntent)
+            .startActivities();
+      } else {
+        finish();
+      }
+      return true;
 
-    	  ArrayList<String> contactDatas = new ArrayList<String>();    	  
-    	  contactDatas.add(mMessage.getFrom().getId());
-    	      	  
-    	  AndroidUtils.addToContact(mMessage.getMessageType(), this,contactDatas);
+    case R.id.add_thread_contact:
 
-          return true;  
-          
-        
-      default:
-        return super.onOptionsItemSelected(item);
+      ArrayList<String> contactDatas = new ArrayList<String>();
+      contactDatas.add(mMessage.getFrom().getId());
+
+      QuickContactBadge badgeSmall = AndroidUtils.addToContact(
+          mMessage.getMessageType(), this, contactDatas);
+
+      badgeSmall.onClick(item.getActionView());
+
+      return true;
+
+    default:
+      return super.onOptionsItemSelected(item);
     }
   }
 
@@ -340,12 +372,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     if (mMessage.getFullMessage() == null) {
       mMessage.setFullMessage(fullMessage);
     } else {
-      FullThreadMessage tm = (FullThreadMessage)mMessage.getFullMessage();
+      FullThreadMessage tm = (FullThreadMessage) mMessage.getFullMessage();
       tm.getMessages().addAll(fullMessage.getMessages());
     }
     YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
-  
+
   public void displayMessage(boolean scrollToBottom) {
     int firstVisiblePos = lv.getFirstVisiblePosition();
     int oldItemCount = 0;
@@ -353,8 +385,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       oldItemCount = adapter.getCount();
     }
     if (mMessage.getFullMessage() != null) {
-      FullThreadMessage threadMessage = (FullThreadMessage)mMessage.getFullMessage();
-      adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
+      FullThreadMessage threadMessage = (FullThreadMessage) mMessage
+          .getFullMessage();
+      adapter = new ThreadViewAdapter(this.getApplicationContext(),
+          R.layout.threadview_list_item);
       for (FullSimpleMessage m : threadMessage.getMessages()) {
         adapter.add(m);
       }
@@ -368,19 +402,20 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       }
     }
   }
-  
+
   private void refreshMessageList(int offset) {
-    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), true);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler,
+        mMessage.getAccount(), true);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
-    myThread.executeTask(new String[]{mMessage.getId()});
+    myThread.executeTask(new String[] { mMessage.getId() });
   }
-  
+
   private void refreshMessageList() {
     refreshMessageList(-1);
   }
-  
+
   private void appendVisibleElementToStringBuilder(StringBuilder builder) {
     int firstVisiblePosition = lv.getFirstVisiblePosition();
     int lastVisiblePosition = lv.getLastVisiblePosition();
@@ -390,9 +425,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     }
   }
-  
+
   private void logActivityEvent(String event) {
-    if (mMessage == null) return;
+    if (mMessage == null)
+      return;
     StringBuilder builder = new StringBuilder();
     builder.append(event);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
@@ -402,26 +438,26 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
   }
-  
+
   private class ConnectivityListener extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-        ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) context
+            .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         if (info != null && info.isConnected()) {
           ThreadDisplayerActivity.this.refreshMessageList();
         }
       }
     }
-    
+
   }
-  
-  
+
   private class DataUpdateReceiver extends BroadcastReceiver {
 
-    private ThreadDisplayerActivity activity;
+    private final ThreadDisplayerActivity activity;
 
     public DataUpdateReceiver(ThreadDisplayerActivity activity) {
       this.activity = activity;
@@ -430,8 +466,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction() != null) {
-        if (intent.getAction().equals(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE)
-                || intent.getAction().equals(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
+        if (intent.getAction().equals(
+            Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE)
+            || intent.getAction().equals(
+                Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
           activity.refreshMessageList();
         }
       }
@@ -441,7 +479,9 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   class LogOnScrollListener implements OnScrollListener {
 
     @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {}
+    public void onScroll(AbsListView view, int firstVisibleItem,
+        int visibleItemCount, int totalItemCount) {
+    }
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -463,6 +503,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       Log.d("willrgai", builder.toString());
       EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
     }
-    
+
   }
 }
