@@ -1,5 +1,7 @@
 package hu.rgai.yako.view.fragments;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -18,16 +20,19 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
+import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
+import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
@@ -35,6 +40,7 @@ import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
+import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -85,8 +91,21 @@ public class MainActivityFragment extends Fragment {
           }
           if (contextSelectedElements.size() == 1) {
             mode.getMenu().findItem(R.id.reply).setVisible(true);
+            Account acc = contextSelectedElements.first().getAccount();
+            MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
+            if (mp.isMessageDeletable()) {
+              mode.getMenu().findItem(R.id.discard).setVisible(true);
+              if (acc.isThreadAccount()) {
+                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
+              } else {
+                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
+              }
+            } else {
+              mode.getMenu().findItem(R.id.discard).setVisible(false);
+            }
           } else {
             mode.getMenu().findItem(R.id.reply).setVisible(false);
+            mode.getMenu().findItem(R.id.discard).setVisible(false);
           }
           mode.setTitle(contextSelectedElements.size() + " selected");
         }
@@ -114,6 +133,10 @@ public class MainActivityFragment extends Fragment {
               intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
               mMainActivity.startActivity(intent);
             }
+            mode.finish();
+            return true;
+          case R.id.discard:
+            contextActionDeleteMessage();
             mode.finish();
             return true;
           case R.id.mark_seen:
@@ -201,11 +224,50 @@ public class MainActivityFragment extends Fragment {
   }
     
     
-  @Override
-  public void onResume() {
-    super.onResume(); //To change body of generated methods, choose Tools | Templates.
-  }
+  private void contextActionDeleteMessage() {
+    
+    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        
+        MessageListElement mle = contextSelectedElements.first();
+        Account acc = mle.getAccount();
+        MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
 
+        MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
+          @Override
+          public void onMainListDelete(MessageListElement messageToDelete) {
+            synchronized (YakoApp.getMessages()) {
+              YakoApp.getMessages().remove(messageToDelete);
+            }
+            notifyAdapterChange();
+          }
+
+          @Override
+          public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {}
+
+          @Override
+          public void onComplete() {
+            mTopProgressBar.setVisibility(View.GONE);
+          }
+          
+        };
+        MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
+                mle.getId(), handler, acc.isThreadAccount(), true);
+        messageMarker.setTimeout(10000);
+        messageMarker.executeTask(null);
+
+        mTopProgressBar.setVisibility(View.VISIBLE);
+        
+      }
+    });
+    builder.setNegativeButton("No", null);
+    builder.setTitle("Delete message");
+    builder.setMessage("Delete selected message?").show();
+    
+  }
+  
+  
   private void contextActionMarkMessage(boolean seen) {
     
     HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();

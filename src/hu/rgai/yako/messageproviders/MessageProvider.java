@@ -139,12 +139,27 @@ public interface MessageProvider {
    */
   public void establishConnection(Context context);
   
+  
   /**
    * This function is used to drop any connections if have any.
    * 
    * Just leaeve it blank if the provider cannot broadcast messages.
    */
   public void dropConnection();
+  
+  
+  /**
+   * If true that means this message provider is able to delete messages.
+   * @return true if can delete message, false otherwise
+   */
+  public boolean isMessageDeletable();
+  
+  
+  /**
+   * Deletes a single message item.
+   * @param id the id of the message to delete
+   */
+  public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException;
   
   /**
    * Sends a message to the given recipient with the given content.

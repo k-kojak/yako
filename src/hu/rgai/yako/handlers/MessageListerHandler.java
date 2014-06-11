@@ -257,6 +257,7 @@ public class MessageListerHandler extends TimeoutHandler {
             storedFoundMessage = storedMessage;
           }
         }
+        Log.d("rgai3", "contains : " + newMessage + " - " + contains);
         if (!contains) {
           YakoApp.getMessages().add(newMessage);
 
@@ -267,27 +268,36 @@ public class MessageListerHandler extends TimeoutHandler {
             loggingNewMessageArrived(newMessage, false);
           }
         } else {
+          
           // only update old messages' flags with the new one, and nothing else
           if (newMessage.isUpdateFlags()) {
+            Log.d("rgai3", "update flags..");
             if (storedFoundMessage != null) {
               storedFoundMessage.setSeen(newMessage.isSeen());
               storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
             }
           } else {
+            Log.d("rgai3", "NOT update flags..");
             MessageListElement itemToRemove = null;
             for (MessageListElement oldMessage : YakoApp.getMessages()) {
               if (newMessage.equals(oldMessage)) {
+                Log.d("rgai3", "IGEN, equals..");
                 // first updating person info anyway..
                 oldMessage.setFrom(newMessage.getFrom());
 
-                /*
+                /**
                  * "Marking" FB message seen here. Do not change info of the item,
                  * if the date is the same, so the queried data will not override
                  * the displayed object. Facebook does not mark messages as seen
                  * when opening them, so we have to handle it at client side. OR
                  * if we check the message at FB, then turn it seen at the app
+                 * 
+                 * plus if newmessage is BEFORE the oldMessage's date, thats ok, because
+                 * if you delete the last element, then the "new element" is older than the
+                 * old one
                  */
-                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()
+                        || newMessage.getDate().before(oldMessage.getDate())) {
                   itemToRemove = oldMessage;
                   break;
                 }

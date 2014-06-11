@@ -276,6 +276,32 @@ public class MainActivity extends ActionBarActivity {
     EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
+
+  
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT) {
+      if (data != null && data.hasExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION)) {
+        boolean refreshNeeded = data.getBooleanExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, false);
+        if (refreshNeeded) {
+          Log.d("rgai", "REFRESH NEEDED!!!!!");
+          Account a = data.getParcelableExtra(Settings.Intents.ACCOUNT);
+          Intent intent = new Intent(this, MainScheduler.class);
+          intent.setAction(Context.ALARM_SERVICE);
+          MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setForceQuery(true);
+          eParams.setAccount(a);
+          eParams.setQueryOffset(0);
+          eParams.setQueryLimit(YakoApp.getFilteredMessages(a).size());
+          intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          this.sendBroadcast(intent);
+        } else {
+          Log.d("rgai", "refresh not .... needed!!!!!");
+        }
+      }
+    }
+  }
   
   
   private void setTitleByFilter() {

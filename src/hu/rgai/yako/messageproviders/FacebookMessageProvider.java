@@ -519,5 +519,17 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
     // we cannot mark facebook messages on server side
   }
+
+  public boolean isMessageDeletable() {
+    return false;
+  }
+  
+  public void deleteThread(String id) {
+    // we cannot delete facebook messages through API
+  }
+
+  public void deleteMessage(String id) {
+    // we cannot delete facebook messages through API
+  }
   
 }

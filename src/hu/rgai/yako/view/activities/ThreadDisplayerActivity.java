@@ -14,6 +14,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.ActionBar;
@@ -22,6 +23,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -30,6 +33,7 @@ import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -49,17 +53,21 @@ import hu.rgai.yako.beens.SmsMessageRecipient;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
 
 public class ThreadDisplayerActivity extends ActionBarActivity {
 
+  public static final int MESSAGE_REPLY_REQ_CODE = 1;
+  
   private ProgressDialog pd = null;
   private ThreadContentGetterHandler mHandler = null;
   private MessageListElement mMessage = null;
@@ -75,9 +83,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
   private static boolean firstResume = true;
 
-  public static final int MESSAGE_REPLY_REQ_CODE = 1;
+  
   
   private ConnectivityListener mWifiListener = null;
+  private boolean thereWasMessageDeletion = false;
 
   
   /**
@@ -130,6 +139,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     lv.setOnScrollListener(new LogOnScrollListener());
+    MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
+    if (mp.isMessageDeletable()) {
+      registerForContextMenu(lv);
+    }
+    
     mText = (EditText) findViewById(R.id.text);
     mHandler = new ThreadContentGetterHandler(this, mMessage);
     mCharCount = (TextView)findViewById(R.id.char_count);
@@ -156,8 +170,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
         public void onGlobalLayout() {
           Resources r = getResources();
           int buttonInPx = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, findViewById(R.id.sendButton).getHeight(), r.getDisplayMetrics());
-          Log.d("rgai", "buttonHeight: " + buttonInPx);
-          Log.d("rgai", "charCount height: " + mCharCount.getHeight());
           mText.setMinHeight(buttonInPx + mCharCount.getHeight());
 
           ViewTreeObserver obs = mText.getViewTreeObserver();
@@ -193,22 +205,73 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   }
   
   @Override
+  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+    super.onCreateContextMenu(menu, v, menuInfo);
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.threadview_context_menu, menu);
+  }
+  
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+    switch (item.getItemId()) {
+        case R.id.discard:
+          AlertDialog.Builder builder = new AlertDialog.Builder(this);
+          builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+              thereWasMessageDeletion = true;
+              FullSimpleMessage simpleMessage = adapter.getItem(info.position);
+              
+              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), ThreadDisplayerActivity.this);
+              MessageDeleteHandler handler = new MessageDeleteHandler(ThreadDisplayerActivity.this) {
+                @Override
+                public void onMainListDelete(MessageListElement messageToDelete) {}
+
+                @Override
+                public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {
+                  synchronized (YakoApp.getMessages()) {
+                    ((FullThreadMessage)messageToDelete.getFullMessage()).getMessages().remove(simpleMessage);
+                  }
+                  for (int i = 0; i < adapter.getCount(); i++) {
+                    if (adapter.getItem(i).equals(simpleMessage)) {
+                      adapter.removeItem(i);
+                    }
+                  }
+                  adapter.notifyDataSetChanged();
+                  if (adapter.getCount() == 0) {
+                    synchronized (YakoApp.getMessages()) {
+                      YakoApp.getMessages().remove(messageToDelete);
+                    }
+                    finish();
+                  }
+                }
+
+                @Override
+                public void onComplete() {}
+              };
+              MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage,
+                      simpleMessage, simpleMessage.getId(), handler, false, false);
+              messageMarker.setTimeout(10000);
+              messageMarker.executeTask(null);
+            }
+          });
+          builder.setNegativeButton("No", null);
+          builder.setTitle("Delete message");
+          builder.setMessage("Delete selected message?").show();
+          
+          return true;
+        default:
+            return super.onContextItemSelected(item);
+    }
+  }
+  
+  @Override
   protected void onResume() {
     super.onResume();
+    thereWasMessageDeletion = false;
     if (mMessage == null) return;
     
     
-    // setting height here
-//    if (mMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
-//      Resources r = getResources();
-//      Log.d("rgai", "buttonHeight: " + findViewById(R.id.sendButton).getHeight());
-//      int buttonInPx = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, findViewById(R.id.sendButton).getHeight(), r.getDisplayMetrics());
-//      Log.d("rgai", "buttonHeightInPx: " + buttonInPx);
-//      Log.d("rgai", "charCount height: " + mCharCount.getHeight());
-//      mText.setMinHeight(buttonInPx + mCharCount.getHeight());
-//    }
-      
-      
     actViewingMessage = mMessage;
     removeNotificationIfExists();
     YakoApp.setMessageSeenAndReadLocally(mMessage);
@@ -258,6 +321,19 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     builder.setTitle("Error");
     builder.setMessage("Connection error, please try later.\n(Error " + code + ")").show();
   }
+  
+  
+  @Override
+  public void finish() {
+    Intent resultIntent = new Intent();
+    resultIntent.putExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, thereWasMessageDeletion);
+    if (thereWasMessageDeletion) {
+      resultIntent.putExtra(Settings.Intents.ACCOUNT, (Parcelable)mMessage.getAccount());
+    }
+    setResult(RESULT_OK, resultIntent);
+    super.finish();
+  }
+  
   
   public void setMessageContent(FullThreadMessage content) {
     mMessage.setFullMessage(content);

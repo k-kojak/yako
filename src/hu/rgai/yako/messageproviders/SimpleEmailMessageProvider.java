@@ -5,6 +5,7 @@ package hu.rgai.yako.messageproviders;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -1049,6 +1050,27 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public String toString() {
     return "SimpleEmailMessageProvider{" + "account=" + account + '}';
+  }
+
+  public boolean isMessageDeletable() {
+    return true;
+  }
+
+  public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+    IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    folder.open(Folder.READ_WRITE);
+    
+    Message ms = null;
+    if (supportsUIDforMessages()) {
+      ms = folder.getMessageByUID(Long.parseLong(id));
+    } else {
+      ms = folder.getMessage(Integer.parseInt(id));
+    }
+    
+    if (ms != null) {
+      ms.setFlag(Flags.Flag.DELETED, true);
+    }
+    folder.close(true);
   }
 
   public interface AttachmentProgressUpdate {

@@ -12,7 +12,7 @@ import java.util.TreeSet;
  */
 public class FullThreadMessage implements FullMessage {
   
-  private Set<FullSimpleMessage> messages = null;
+  private TreeSet<FullSimpleMessage> messages = null;
 
   public static final Parcelable.Creator<FullThreadMessage> CREATOR = new Parcelable.Creator<FullThreadMessage>() {
     public FullThreadMessage createFromParcel(Parcel in) {
@@ -39,7 +39,7 @@ public class FullThreadMessage implements FullMessage {
     messages = new TreeSet<FullSimpleMessage>();
   }
   
-  public FullThreadMessage(Set<FullSimpleMessage> messages) {
+  public FullThreadMessage(TreeSet<FullSimpleMessage> messages) {
     this.messages = messages;
   }
   
@@ -62,6 +62,11 @@ public class FullThreadMessage implements FullMessage {
       pMessages[i++] = (FullSimpleMessage)ma;
     }
     out.writeParcelableArray(pMessages, flags);
+  }
+
+  @Override
+  public String toString() {
+    return "FullThreadMessage{" + "messages=" + messages + '}';
   }
   
 }
