@@ -6,9 +6,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
+import android.telephony.SmsManager;
 import android.util.Log;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.FacebookAccount;
@@ -18,10 +17,9 @@ import hu.rgai.yako.messageproviders.FacebookMessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
-import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.workers.ActiveConnectionConnector;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 /**
@@ -31,15 +29,12 @@ import java.util.TreeSet;
 public class AndroidUtils {
 
   
-//  public static void connectConnectableMessageProviders(Context context) {
-//    List<Account> accounts = StoreHandler.getAccounts(context);
-//    
-//    for (Account a : accounts) {
-//      Log.d("rgai", "try connecting account -> " + a);
-//      MessageProvider mp = getMessageProviderInstanceByAccount(a, context);
-//      checkAndConnectMessageProviderIfConnectable(mp, context);
-//    }
-//  }
+  public static String getCharCountStringForSMS(String text) {
+    SmsManager smsMan = SmsManager.getDefault();
+    ArrayList<String> dividedMessages = smsMan.divideMessage(text);
+    int size = dividedMessages.size();
+    return text.length() + "/" + size;
+  }
   
   public static int getIndexOfAccount(TreeSet<Account> accounts, Account account) {
     int index = 0;

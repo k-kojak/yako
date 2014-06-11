@@ -165,7 +165,7 @@ public class MessageReplyActivity extends ActionBarActivity {
       @Override
       public void afterTextChanged(Editable s) {
         if (isCharCountVisible) {
-          mCharCount.setText(getCharCountString(mContent.getText().toString()));
+          mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
         }
         // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
@@ -240,18 +240,11 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (hasSmsRecipient) {
       isCharCountVisible = true;
       expand(mCharCount);
-      mCharCount.setText(getCharCountString(mContent.getText().toString()));
+      mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
     } else {
       isCharCountVisible = false;
       collapse(mCharCount);
     }
-  }
-  
-  private String getCharCountString(String text) {
-    SmsManager smsMan = SmsManager.getDefault();
-    ArrayList<String> dividedMessages = smsMan.divideMessage(text);
-    int size = dividedMessages.size();
-    return text.length() + "/" + size;
   }
   
   public void onQuoteClicked(View view) {

@@ -53,8 +53,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|bottom"
+                    android:textSize="12sp"
                     android:layout_weight="1"
-                    android:minWidth="50dip"
+                    android:minWidth="40dip"
                     android:layout_marginBottom="1dip"
                     android:layout_marginLeft="1dip" />
           

@@ -9,8 +9,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -19,17 +21,24 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.adapters.ThreadViewAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -37,17 +46,14 @@ import hu.rgai.yako.beens.FullThreadMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
-import hu.rgai.yako.adapters.ThreadViewAdapter;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.config.ErrorCodes;
-import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
@@ -58,13 +64,14 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private ThreadContentGetterHandler mHandler = null;
   private MessageListElement mMessage = null;
   private ListView lv = null;
-  private EditText text = null;
+  private EditText mText = null;
   private ThreadViewAdapter adapter = null;
   private final Date lastLoadMoreEvent = null;
   private boolean firstLoad = true;
   private DataUpdateReceiver mDataUpdateReceiver = null;
   private boolean fromNotification = false;
   private TextWatcher mTextWatcher = null;
+  private TextView mCharCount = null;
 
   private static boolean firstResume = true;
 
@@ -117,12 +124,55 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     
     
+    
+    
     // initing GUI variables
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     lv.setOnScrollListener(new LogOnScrollListener());
-    text = (EditText) findViewById(R.id.text);
+    mText = (EditText) findViewById(R.id.text);
     mHandler = new ThreadContentGetterHandler(this, mMessage);
+    mCharCount = (TextView)findViewById(R.id.char_count);
+    
+    
+    // dealing with character counter
+    if (mMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+      mText.addTextChangedListener(new TextWatcher() {
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+        public void afterTextChanged(Editable s) {
+          if (mCharCount.getVisibility() == View.VISIBLE) {
+            mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mText.getText().toString()));
+          }
+        }
+      });
+      // triggering onTextChange
+      mText.setText("");
+      
+      ViewTreeObserver vto = mText.getViewTreeObserver();
+      vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+        @Override
+        public void onGlobalLayout() {
+          Resources r = getResources();
+          int buttonInPx = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, findViewById(R.id.sendButton).getHeight(), r.getDisplayMetrics());
+          Log.d("rgai", "buttonHeight: " + buttonInPx);
+          Log.d("rgai", "charCount height: " + mCharCount.getHeight());
+          mText.setMinHeight(buttonInPx + mCharCount.getHeight());
+
+          ViewTreeObserver obs = mText.getViewTreeObserver();
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+              obs.removeOnGlobalLayoutListener(this);
+          } else {
+              obs.removeGlobalOnLayoutListener(this);
+          }
+        }
+      });
+
+    } else {
+      mCharCount.setVisibility(View.GONE);
+    }
     
     
     mTextWatcher = new TextWatcher() {
@@ -139,7 +189,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       }
     };
     
-    text.addTextChangedListener(mTextWatcher);
+    mText.addTextChangedListener(mTextWatcher);
   }
   
   @Override
@@ -147,6 +197,18 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     super.onResume();
     if (mMessage == null) return;
     
+    
+    // setting height here
+//    if (mMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+//      Resources r = getResources();
+//      Log.d("rgai", "buttonHeight: " + findViewById(R.id.sendButton).getHeight());
+//      int buttonInPx = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, findViewById(R.id.sendButton).getHeight(), r.getDisplayMetrics());
+//      Log.d("rgai", "buttonHeightInPx: " + buttonInPx);
+//      Log.d("rgai", "charCount height: " + mCharCount.getHeight());
+//      mText.setMinHeight(buttonInPx + mCharCount.getHeight());
+//    }
+      
+      
     actViewingMessage = mMessage;
     removeNotificationIfExists();
     YakoApp.setMessageSeenAndReadLocally(mMessage);
@@ -167,10 +229,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
         Toast.makeText(this, "Sorry, but group message sending is not available (because of Facebook).", Toast.LENGTH_LONG).show();
         firstResume = false;
       }
-      text.setVisibility(View.GONE);
+      mText.setVisibility(View.GONE);
       findViewById(R.id.sendButton).setVisibility(View.GONE);
     } else {
-      text.setVisibility(View.VISIBLE);
+      mText.setVisibility(View.VISIBLE);
       findViewById(R.id.sendButton).setVisibility(View.VISIBLE);
     }
     
@@ -234,7 +296,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   
 
   public void sendMessage(View view) {
-    String t = text.getText().toString().trim();
+    String t = mText.getText().toString().trim();
     if (t.length() == 0) {
       Toast.makeText(this, "Empty message", Toast.LENGTH_SHORT).show();
       return;
@@ -258,9 +320,9 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
         Toast.makeText(ThreadDisplayerActivity.this, "Failed to send message", Toast.LENGTH_LONG).show();
       }
     };
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handler, "", text.getText().toString(), this);
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handler, "", mText.getText().toString(), this);
     rs.executeTask(null);
-    text.setText("");
+    mText.setText("");
   }
 
   @Override
