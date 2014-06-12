@@ -178,7 +178,7 @@ public interface MessageProvider {
     
     public static boolean isMessageLoaded(TreeSet<MessageListElement> messages, MessageListElement message) {
       for (MessageListElement mle : messages) {
-        if (mle.getId().equals(message.getId()) && mle.getAccount().equals(message.getAccount())) {
+        if (mle.getDate().equals(message.getDate()) && mle.getAccount().equals(message.getAccount())) {
           return true;
         }
       }

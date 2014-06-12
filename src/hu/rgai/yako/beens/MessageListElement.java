@@ -366,13 +366,26 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public int compareTo(MessageListElement o) {
-    if (this.id.equals(o.getId()) && this.account.equals(o.account)) {
-      return 0;
+    if (!this.account.equals(o.account)) {
+      return -1 * this.date.compareTo(o.date);
     } else {
+      if (!this.date.equals(o.date)) {
+        return -1 * this.date.compareTo(o.date);
+      } else {
+//        if (!this.id.equals(o.getId())) {
+//          return -1 * this.id.compareTo(o.id);
+//        } else {
+          return 0;
+//        }
+      }
+    }
+//    if (this.id.equals(o.getId()) && this.account.equals(o.account)) {
+//      return 0;
+//    } else {
       // TODO: THIS IS A SOURCE OF UGLY BUGS!
       // FIXME
-      return -1 * this.date.compareTo(o.date);
-    }
+      
+//    }
   }
   
 }

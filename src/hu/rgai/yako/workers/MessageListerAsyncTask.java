@@ -108,7 +108,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     try {
       if (messageProvider != null) {
         if (isSetupRunning(mRunningSetup)) {
-          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED, false);
+          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
         } else {
         }
 

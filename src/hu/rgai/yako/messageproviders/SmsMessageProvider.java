@@ -151,7 +151,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
       cur.close();
     }
-    return new MessageListResult(messages, MessageListResult.ResultType.CHANGED, true);
+    return new MessageListResult(messages, MessageListResult.ResultType.CHANGED);
     
   }
 

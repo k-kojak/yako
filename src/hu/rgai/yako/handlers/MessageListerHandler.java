@@ -102,7 +102,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
       }
 
-      this.mergeMessages(newMessages, loadMore, resultType, messageResult.isProviderSupportsUID());
+      this.mergeMessages(newMessages, loadMore, resultType);
       MessageListElement lastUnreadMsg = null;
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
@@ -240,7 +240,7 @@ public class MessageListerHandler extends TimeoutHandler {
    * means this is a refresh action
    */
   private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest,
-          MessageListResult.ResultType resultType, boolean providerSupportsUID) {
+          MessageListResult.ResultType resultType) {
     // TODO: optimize message merge
     synchronized (YakoApp.getMessages()) {
       for (MessageListElement newMessage : newMessages) {
@@ -313,32 +313,32 @@ public class MessageListerHandler extends TimeoutHandler {
       
       // checking for deleted messages here
       if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
-        deleteMergeMessages(newMessages, providerSupportsUID);
+        deleteMergeMessages(newMessages);
       }
       
     }
     
   }
 
-  private void deleteMergeMessages(MessageListElement[] newMessages, boolean providerSupportsUID) {
+  private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
       TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
       
       SortedSet<MessageListElement> messagesToRemove;
-      if (!providerSupportsUID) {
-        messagesToRemove = new TreeSet<MessageListElement>(new Comparator<MessageListElement>() {
-          public int compare(MessageListElement lhs, MessageListElement rhs) {
-            if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) && lhs.getDate().equals(rhs.getDate())) {
-              return 0;
-            } else {
-              return lhs.getDate().compareTo(rhs.getDate());
-            }
-          }
-        });
-        messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length - 1]));
-      } else {
+//      if (!providerSupportsUID) {
+//        messagesToRemove = new TreeSet<MessageListElement>(new Comparator<MessageListElement>() {
+//          public int compare(MessageListElement lhs, MessageListElement rhs) {
+//            if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) && lhs.getDate().equals(rhs.getDate())) {
+//              return 0;
+//            } else {
+//              return lhs.getDate().compareTo(rhs.getDate());
+//            }
+//          }
+//        });
+//        messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length - 1]));
+//      } else {
         messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
-      }
+//      }
       
       
       for (int i = 0; i < newMessages.length; i++) {
