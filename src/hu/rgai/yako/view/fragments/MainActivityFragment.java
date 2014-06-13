@@ -4,9 +4,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,7 +20,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -63,6 +62,14 @@ public class MainActivityFragment extends Fragment {
   private Button loadMoreButton = null;
   private boolean loadMoreButtonVisible = false;
   private ProgressBar mTopProgressBar;
+  
+  private Handler mContextBarTimerHandler = null;
+  private final Runnable mContextBarTimerCallback = new Runnable() {
+    public void run() {
+      hideContextualActionbar();
+    }
+  };
+  private ActionMode mActionMode = null;
 
   public static MainActivityFragment getInstance() {
     
@@ -72,6 +79,7 @@ public class MainActivityFragment extends Fragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     contextSelectedElements = new TreeSet<MessageListElement>();
+    mContextBarTimerHandler = new Handler();
     
     
     mRootView = inflater.inflate(R.layout.main, container, false);
@@ -83,31 +91,38 @@ public class MainActivityFragment extends Fragment {
     mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
     mListView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
       public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
+        MainActivityFragment.this.mActionMode = mode;
+        
         if (position != 0) {
           if (checked) {
             contextSelectedElements.add((MessageListElement)mAdapter.getItem(position));
           } else {
             contextSelectedElements.remove((MessageListElement)mAdapter.getItem(position));
           }
-          if (contextSelectedElements.size() == 1) {
-            mode.getMenu().findItem(R.id.reply).setVisible(true);
-            Account acc = contextSelectedElements.first().getAccount();
-            MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
-            if (mp.isMessageDeletable()) {
-              mode.getMenu().findItem(R.id.discard).setVisible(true);
-              if (acc.isThreadAccount()) {
-                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
+          if (contextSelectedElements.size() > 0) {
+            startContextualActionbarTimer();
+            mode.setTitle(contextSelectedElements.size() + " selected");
+            if (contextSelectedElements.size() == 1) {
+              mode.getMenu().findItem(R.id.reply).setVisible(true);
+              Account acc = contextSelectedElements.first().getAccount();
+              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
+              if (mp.isMessageDeletable()) {
+                mode.getMenu().findItem(R.id.discard).setVisible(true);
+                if (acc.isThreadAccount()) {
+                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
+                } else {
+                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
+                }
               } else {
-                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
+                mode.getMenu().findItem(R.id.discard).setVisible(false);
               }
             } else {
+              mode.getMenu().findItem(R.id.reply).setVisible(false);
               mode.getMenu().findItem(R.id.discard).setVisible(false);
             }
           } else {
-            mode.getMenu().findItem(R.id.reply).setVisible(false);
-            mode.getMenu().findItem(R.id.discard).setVisible(false);
+            mode.finish();
           }
-          mode.setTitle(contextSelectedElements.size() + " selected");
         }
       }
 
@@ -133,19 +148,19 @@ public class MainActivityFragment extends Fragment {
               intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
               mMainActivity.startActivity(intent);
             }
-            mode.finish();
+            hideContextualActionbar();
             return true;
           case R.id.discard:
             contextActionDeleteMessage();
-            mode.finish();
+            hideContextualActionbar();
             return true;
           case R.id.mark_seen:
             contextActionMarkMessage(true);
-            mode.finish();
+            hideContextualActionbar();
             return true;
           case R.id.mark_unseen:
             contextActionMarkMessage(false);
-            mode.finish();
+            hideContextualActionbar();
             return true;
           default:
             return false;
@@ -153,8 +168,7 @@ public class MainActivityFragment extends Fragment {
       }
 
       public void onDestroyActionMode(ActionMode mode) {
-        // Here you can make any necessary updates to the activity when
-        // the CAB is removed. By default, selected items are deselected/unchecked.
+        cancelContextualActionbarTimer();
       }
     });
 
@@ -222,7 +236,33 @@ public class MainActivityFragment extends Fragment {
     });
     return mRootView;
   }
-    
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    hideContextualActionbar();
+  }
+  
+  
+  private void cancelContextualActionbarTimer() {
+    if (mContextBarTimerHandler != null && mContextBarTimerCallback != null) {
+      mContextBarTimerHandler.removeCallbacks(mContextBarTimerCallback);
+    }
+  }
+  
+  private void startContextualActionbarTimer() {
+    cancelContextualActionbarTimer();
+    mContextBarTimerHandler.postDelayed(mContextBarTimerCallback, 10000);
+  }
+
+  
+  public void hideContextualActionbar() {
+    if (mActionMode != null) {
+      mActionMode.finish();
+      contextSelectedElements.clear();
+    }
+  }
+  
     
   private void contextActionDeleteMessage() {
     
@@ -327,6 +367,9 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
+      if (!contextSelectedElements.isEmpty()) {
+        startContextualActionbarTimer();
+      }
       // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
@@ -362,6 +405,13 @@ public class MainActivityFragment extends Fragment {
       loadMoreButton.setVisibility(View.VISIBLE);
       loadMoreButtonVisible = true;
     }
+
+    if (!contextSelectedElements.isEmpty()) {
+      for (int i = 1; i < mAdapter.getCount(); i++) {
+        mListView.setItemChecked(i, contextSelectedElements.contains((MessageListElement)mAdapter.getItem(i)));
+      }
+    }
+    
   }
 
 }

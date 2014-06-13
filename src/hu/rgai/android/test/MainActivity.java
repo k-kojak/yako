@@ -297,7 +297,7 @@ public class MainActivity extends ActionBarActivity {
           intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
-          Log.d("rgai", "refresh not .... needed!!!!!");
+//          Log.d("rgai", "refresh not .... needed!!!!!");
         }
       }
     }
@@ -601,6 +601,7 @@ public class MainActivity extends ActionBarActivity {
       actSelectedFilter = (Account)parent.getItemAtPosition(position);
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
       if (mFragment != null) {
+        mFragment.hideContextualActionbar();
         mFragment.notifyAdapterChange();
       }
       
