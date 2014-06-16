@@ -300,8 +300,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.thread_message_options_menu, menu);
 
-    if (mMessage.getFrom().getContactId() != -1
-        || mMessage.getMessageType() == MessageProvider.Type.FACEBOOK) {
+    if (mMessage.getFrom().getContactId() != -1) {
+
       menu.findItem(R.id.add_thread_contact).setVisible(false);
     }
 
@@ -354,12 +354,24 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     case R.id.add_thread_contact:
 
       ArrayList<String> contactDatas = new ArrayList<String>();
-      contactDatas.add(mMessage.getFrom().getId());
 
-      QuickContactBadge badgeSmall = AndroidUtils.addToContact(
-          mMessage.getMessageType(), this, contactDatas);
+      if (mMessage.getMessageType() == MessageProvider.Type.FACEBOOK) {
 
-      badgeSmall.onClick(item.getActionView());
+        contactDatas.add(mMessage.getFrom().getName());
+        contactDatas.add(mMessage.getFrom().getId());
+
+        AndroidUtils.addToFacebookContact(this, contactDatas);
+
+      } else if (mMessage.getMessageType() == MessageProvider.Type.SMS) {
+
+        contactDatas.add(mMessage.getFrom().getId());
+
+        QuickContactBadge badgeSmall = AndroidUtils.addToContact(
+            mMessage.getMessageType(), this, contactDatas);
+
+        badgeSmall.onClick(item.getActionView());
+
+      }
 
       return true;
 

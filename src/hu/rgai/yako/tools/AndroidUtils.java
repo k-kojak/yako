@@ -16,12 +16,15 @@ import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.Intents.Insert;
 import android.util.Log;
 import android.widget.QuickContactBadge;
 
@@ -52,8 +55,7 @@ public class AndroidUtils {
     return -1;
   }
 
-  public static void checkAndConnectMessageProviderIfConnectable(
-      MessageProvider mp, boolean isConnectionAlive, Context context) {
+  public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {
     if (mp.canBroadcastOnNewMessage() && !isConnectionAlive) {
       ActiveConnectionConnector connector = new ActiveConnectionConnector(mp,
           context);
@@ -84,8 +86,7 @@ public class AndroidUtils {
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 
-  public static MessageProvider getMessageProviderInstanceByAccount(
-      Account account, Context context) {
+  public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {
     MessageProvider mp = null;
     if (account instanceof GmailAccount) {
       mp = new SimpleEmailMessageProvider((GmailAccount) account);
@@ -107,8 +108,7 @@ public class AndroidUtils {
     }
   }
 
-  public static <T, U, V> void startTimeoutAsyncTask(
-      TimeoutAsyncTask<T, U, V> at, T... args) {
+  public static <T, U, V> void startTimeoutAsyncTask(TimeoutAsyncTask<T, U, V> at, T... args) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
     } else {
@@ -116,8 +116,7 @@ public class AndroidUtils {
     }
   }
 
-  public static QuickContactBadge addToContact(Type type, Context mContext,
-      ArrayList<String> contactDatas) {
+  public static QuickContactBadge addToContact(Type type, Context mContext, ArrayList<String> contactDatas) {
 
     /**
      * ArrayList elements:
@@ -128,29 +127,57 @@ public class AndroidUtils {
      * 
      * for Gmail 1.E-mail
      * 
+     * 
      * etc.
      */
 
-    QuickContactBadge badgeSmall = new QuickContactBadge(mContext);
+    QuickContactBadge contactBadge = new QuickContactBadge(mContext);
 
     if (MessageProvider.Type.SMS == type) {
 
-      badgeSmall.assignContactFromPhone(contactDatas.get(0), true);
+      contactBadge.assignContactFromPhone(contactDatas.get(0), true);
 
     } else if (MessageProvider.Type.GMAIL == type) {
 
-      badgeSmall.assignContactFromEmail(contactDatas.get(0), true);
+      contactBadge.assignContactFromEmail(contactDatas.get(0), true);
 
     } else if (MessageProvider.Type.EMAIL == type) {
 
-      badgeSmall.assignContactFromEmail(contactDatas.get(0), true);
+      contactBadge.assignContactFromEmail(contactDatas.get(0), true);
 
     }
 
-    badgeSmall.setMode(ContactsContract.QuickContact.MODE_MEDIUM);
+    contactBadge.setMode(ContactsContract.QuickContact.MODE_MEDIUM);
 
-    return badgeSmall;
+    return contactBadge;
 
+  }
+
+  public static void addToFacebookContact(Context mContext, ArrayList<String> contactDatas) {
+
+    /**
+     * ArrayList elements:
+     * 
+     * 1. Name 2. Userid
+     */
+
+    Intent i = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+    i.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+
+    ArrayList<ContentValues> data = new ArrayList<ContentValues>();
+    ContentValues row1 = new ContentValues();
+    row1.put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
+    row1.put(ContactsContract.Data.DATA1, "facebook name");
+    row1.put(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER);
+    row1.put(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM);
+    row1.put(ContactsContract.Data.DATA6, "Facebook");
+    row1.put(ContactsContract.Data.DATA10, contactDatas.get(1));
+    data.add(row1);
+
+    i.putExtra(Insert.NAME, contactDatas.get(0));
+    i.putParcelableArrayListExtra(ContactsContract.Intents.Insert.DATA, data);
+
+    mContext.startActivity(i);
   }
 
 }
