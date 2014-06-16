@@ -32,7 +32,6 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
 
   private EditText email;
   private EditText pass;
-  private Spinner messageAmount;
   private GmailAccount oldAccount = null;
 
   @Override
@@ -44,13 +43,6 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     
-    messageAmount = (Spinner)findViewById(R.id.initial_emails_num);
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-            R.array.initial_emails_num,
-            android.R.layout.simple_spinner_item);
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-    messageAmount.setAdapter(adapter);
     
     email = (EditText)findViewById(R.id.email_address);
     email.addTextChangedListener(this);
@@ -61,7 +53,6 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
       oldAccount = (GmailAccount)b.getParcelable("account");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
-      messageAmount.setSelection(AccountSettingsListActivity.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
   }
   
@@ -107,8 +98,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     
     String m = email.getText().toString();
     String p = pass.getText().toString();
-    int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    GmailAccount newAccount = new GmailAccount(m, p, messageLimit);
+    GmailAccount newAccount = new GmailAccount(m, p);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);

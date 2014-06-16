@@ -28,7 +28,6 @@ public class EmailAccount extends Account {
   protected int smtpPort;
   protected boolean ssl;
   protected MessageProvider.Type accountType;
-  protected int messageLimit;
 
   public static final Parcelable.Creator<EmailAccount> CREATOR = new Parcelable.Creator<EmailAccount>() {
     public EmailAccount createFromParcel(Parcel in) {
@@ -45,14 +44,14 @@ public class EmailAccount extends Account {
 
   public EmailAccount(Parcel in) {
     this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(),
-            in.readInt(), in.readByte() == 1, in.readInt());
+            in.readInt(), in.readByte() == 1);
   }
 
-  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl, int messageLimit) {
-    this(email, password, imapAddress, smtpAddress, default_imap_port, default_smtp_port, ssl, messageLimit);
+  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl) {
+    this(email, password, imapAddress, smtpAddress, default_imap_port, default_smtp_port, ssl);
   }
 
-  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, int imapPort, int smtpPort, boolean ssl, int messageLimit) {
+  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, int imapPort, int smtpPort, boolean ssl) {
     this.email = email;
     this.password = password;
     this.imapAddress = imapAddress;
@@ -61,11 +60,6 @@ public class EmailAccount extends Account {
     this.smtpPort = smtpPort;
     this.ssl = ssl;
     this.accountType = MessageProvider.Type.EMAIL;
-    this.messageLimit = messageLimit;
-  }
-
-  public int getMessageLimit() {
-    return messageLimit;
   }
 
   public int describeContents() {
@@ -80,7 +74,6 @@ public class EmailAccount extends Account {
     out.writeInt(this.imapPort);
     out.writeInt(this.smtpPort);
     out.writeByte(this.ssl == true ? (byte) 1 : 0);
-    out.writeInt(messageLimit);
   }
 
   @Override

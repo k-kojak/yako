@@ -63,7 +63,6 @@
   <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
   <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
   <string name="settings_accounts_item_ssl">hu.rgai.android.settings.accounts.item.ssl</string>
-  <string name="settings_accounts_item_amount">hu.rgai.android.settings.accounts.item.amount</string>
     
     
   <string name="settings_email_file_key">hu.rgai.android.settings.file.email</string>
@@ -93,18 +92,9 @@
   <string name="label_smtp_address">SMTP address</string>
   <string name="label_security_type">Security type</string>
   <string name="label_password">Password</string>
-  <string name="label_initial_email_num">Initial amount of emails to load</string>
-  <string name="label_initial_msg_num">Initial amount of messages to load</string>
   <string name="quote_original_message">Quote original message</string>
   <string name="no_recipient_selected">No recipient selected</string>
   <string name="empty_message">Empty message</string>
-  <string-array name="initial_emails_num">
-    <item>5</item>
-    <item>10</item>
-    <item>15</item>
-    <item>20</item>
-    <item>30</item>
-  </string-array>
   <string-array name="security_types">
     <item>None</item>
     <item>SSL</item>

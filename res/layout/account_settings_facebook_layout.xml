@@ -64,19 +64,6 @@
         android:text="@string/show_password"
         android:onClick="onCheckboxClicked" />
 
-      <TextView
-        android:id="@+id/initial_items_num_label"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/label_initial_msg_num"
-        android:paddingTop="3dip"
-      />
-
-      <Spinner
-        android:id="@+id/initial_items_num"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
-
       <Button android:text="Sync contact list now"
             android:id="@+id/sync_fb_contact_list" 
             android:textSize="14dp"

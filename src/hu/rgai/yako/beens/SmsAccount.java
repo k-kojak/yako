@@ -44,11 +44,6 @@ public final class SmsAccount extends Account {
 	public void writeToParcel(Parcel dest, int flags) {
 	}
 
-	@Override
-	public int getMessageLimit() {
-		return 10;
-	}
-  
   // There are only 1 account to SMS (to SIM card), so yes, 2 SMS accounts are always the same
   @Override
   public boolean equals(Object obj) {

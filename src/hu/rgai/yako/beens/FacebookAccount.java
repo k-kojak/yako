@@ -19,7 +19,6 @@ public class FacebookAccount extends Account {
   private String id;
   private String password;
   private MessageProvider.Type accountType;
-  private int messageLimit;
 
   public static final Parcelable.Creator<FacebookAccount> CREATOR = new Parcelable.Creator<FacebookAccount>() {
     public FacebookAccount createFromParcel(Parcel in) {
@@ -35,33 +34,29 @@ public class FacebookAccount extends Account {
   
   
   public FacebookAccount(Parcel in) {
-    this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt());
+    this(in.readString(), in.readString(), in.readString(), in.readString());
   }
   
-  public FacebookAccount(String displayName, String uniqueName, String id, String password, int messageLimit) {
+  public FacebookAccount(String displayName, String uniqueName, String id, String password) {
     this.displayName = displayName;
     this.uniqueName = uniqueName;
     this.id = id;
     this.password = password;
-    this.messageLimit = messageLimit;
     
     this.accountType = MessageProvider.Type.FACEBOOK;
   }
 
-  public int getMessageLimit() {
-    return messageLimit;
-  }
-
+  
   public int describeContents() {
     return 0;
   }
 
+  
   public void writeToParcel(Parcel out, int flags) {
     out.writeString(displayName);
     out.writeString(uniqueName);
     out.writeString(id);
     out.writeString(password);
-    out.writeInt(messageLimit);
   }
 
   @Override

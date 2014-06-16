@@ -71,7 +71,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     this.mHandler = handler;
 
     int offset = 0;
-    int limit = acc.getMessageLimit();
+    int limit = Settings.MESSAGE_QUERY_LIMIT;
     if (loadMore) {
       if (YakoApp.getMessages() != null) {
         for (MessageListElement m : YakoApp.getMessages()) {

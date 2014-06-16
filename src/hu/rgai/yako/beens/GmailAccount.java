@@ -26,11 +26,11 @@ public class GmailAccount extends EmailAccount {
   };
   
   public GmailAccount(Parcel in) {
-    this(in.readString(), in.readString(), in.readInt());
+    this(in.readString(), in.readString());
   }
   
-  public GmailAccount(String email, String password, int messageLimit) {
-    super(email, password, "imap.gmail.com", "smtp.gmail.com", default_imap_port, default_smtp_port, true, messageLimit);
+  public GmailAccount(String email, String password) {
+    super(email, password, "imap.gmail.com", "smtp.gmail.com", default_imap_port, default_smtp_port, true);
     this.accountType = MessageProvider.Type.GMAIL;
   }
   
@@ -43,7 +43,6 @@ public class GmailAccount extends EmailAccount {
   public void writeToParcel(Parcel out, int flags) {
     out.writeString(email);
     out.writeString(password);
-    out.writeInt(messageLimit);
   }
   
   @Override

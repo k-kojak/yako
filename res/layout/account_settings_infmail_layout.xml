@@ -52,16 +52,6 @@
         android:text="@string/show_password"
         android:onClick="onCheckboxClicked" />
       
-      <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/label_initial_email_num"
-        android:paddingTop="3dip"
-      />
-      <Spinner
-        android:id="@+id/initial_emails_num"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
     </LinearLayout>
   </ScrollView>
   

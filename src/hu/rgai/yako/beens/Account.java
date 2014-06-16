@@ -18,8 +18,6 @@ public abstract class Account implements Parcelable, Serializable, Comparable<Ac
   @Override
   public abstract boolean equals(Object account);
   
-  public abstract int getMessageLimit();
-  
   @Override
   public abstract String toString();
   

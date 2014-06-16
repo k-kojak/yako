@@ -46,6 +46,11 @@ public final class Settings {
   public static final int MESSAGE_LOAD_INTERVAL = 60 * 2;
   
   /**
+   * Amount of messages to download for each account per query.
+   */
+  public static final int MESSAGE_QUERY_LIMIT = 10;
+  
+  /**
    * If live established connection (where it is supported) exceeds this timelimit in seconds,
    * the conneciton will be rebuild.
    */
