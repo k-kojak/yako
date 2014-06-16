@@ -44,12 +44,12 @@ import javax.net.ssl.SSLHandshakeException;
 
 public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
-  Context context;
+  Context mContext;
 
   public SmsMessageProvider(){};
   
   public SmsMessageProvider(Context myContext) {
-    context = myContext;
+    mContext = myContext;
   }
 
   public Account getAccount() {
@@ -73,7 +73,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     int foundThreads = 0;
     
     Uri uriSMSURI = Uri.parse("content://sms");
-    Cursor cur = context.getContentResolver().query(uriSMSURI,
+    Cursor cur = mContext.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "body", "date", "seen", "person", "address", "type"},
             null,
             null,
@@ -164,7 +164,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     String[] selectionArgs = new String[]{threadId};
 
     Uri uriSMSURI = Uri.parse("content://sms");
-    Cursor cur = context.getContentResolver().query(uriSMSURI,
+    Cursor cur = mContext.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "_id", "subject", "body", "date", "person", "address", "type"},
             selection, selectionArgs, "_id DESC LIMIT "+offset+","+limit);
 
@@ -205,7 +205,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     Uri uriSMSURI = Uri.parse("content://sms");
     ContentValues values = new ContentValues();
     values.put("seen", 1);
-    context.getContentResolver().update(
+    mContext.getContentResolver().update(
             uriSMSURI,
             values,
             "thread_id = ?",
@@ -214,7 +214,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject)
+  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject)
           throws NoSuchProviderException, MessagingException, IOException {
 
     for (MessageRecipient mr : to) {
@@ -225,18 +225,17 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
 //      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
       
-        ArrayList<String> dividedMessages = smsMan.divideMessage(content);
-        smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
-        ContentValues sentSms = new ContentValues();
-        sentSms.put("address", rawPhoneNum);
-        sentSms.put("body", content);
+      ArrayList<String> dividedMessages = smsMan.divideMessage(content);
+      smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
+      ContentValues sentSms = new ContentValues();
+      sentSms.put("address", rawPhoneNum);
+      sentSms.put("body", content);
 
-        ContentResolver contentResolver = context.getContentResolver();
-        Uri uri = Uri.parse("content://sms/sent");
-        contentResolver.insert(uri, sentSms);
+      ContentResolver contentResolver = mContext.getContentResolver();
+      Uri uri = Uri.parse("content://sms/sent");
+      contentResolver.insert(uri, sentSms);
 
     }
-
   }
 
   @Override
@@ -290,7 +289,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       // just setting last sms of the thread to unseen
       
       Uri uriSMSURI = Uri.parse("content://sms");
-      Cursor cur = context.getContentResolver().query(uriSMSURI,
+      Cursor cur = mContext.getContentResolver().query(uriSMSURI,
               new String[]{"_id"},
               "thread_id = ? AND type != 2",
               new String[]{threadId},
@@ -303,7 +302,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           
           ContentValues values = new ContentValues();
           values.put("seen", 2);
-          context.getContentResolver().update(
+          mContext.getContentResolver().update(
                   uriSMSURI,
                   values,
                   "_id = ?",
@@ -351,7 +350,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   
   public void deleteThread(String id) {
     Uri uriSMSURI = Uri.parse("content://sms");
-    int deleted = context.getContentResolver().delete(uriSMSURI,
+    int deleted = mContext.getContentResolver().delete(uriSMSURI,
             "thread_id = ?",
             new String[]{id});
     Log.d("rgai", "delete count: " + deleted);
@@ -359,7 +358,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   public void deleteMessage(String id) {
     Uri uriSMSURI = Uri.parse("content://sms");
-    context.getContentResolver().delete(uriSMSURI,
+    mContext.getContentResolver().delete(uriSMSURI,
             "_id = ?",
             new String[]{id});
   }

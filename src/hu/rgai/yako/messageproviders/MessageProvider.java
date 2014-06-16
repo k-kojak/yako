@@ -158,21 +158,21 @@ public interface MessageProvider {
   /**
    * Deletes a single message item.
    * @param id the id of the message to delete
+   * @throws javax.mail.NoSuchProviderException
+   * @throws javax.mail.MessagingException
+   * @throws java.io.IOException
    */
   public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException;
   
   /**
    * Sends a message to the given recipient with the given content.
    * 
+   * @param context a context
    * @param to set of recipients
    * @param content the content of the message
    * @param subject subject of the message (optional)
-   * @throws NoSuchProviderException
-   * @throws MessagingException
-   * @throws IOException 
    */
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject)
-          throws NoSuchProviderException, MessagingException, IOException;
+  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject);
   
   public static class Helper {
     

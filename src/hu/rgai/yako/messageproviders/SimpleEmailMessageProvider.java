@@ -806,7 +806,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject) throws
+  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject) throws
           NoSuchProviderException, MessagingException, IOException, AddressException {
     
     Properties props = System.getProperties();

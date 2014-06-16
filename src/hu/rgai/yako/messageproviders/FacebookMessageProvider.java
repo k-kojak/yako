@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
@@ -23,8 +24,11 @@ import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.handlers.MessageSendHandler;
+import hu.rgai.yako.intents.MessageSentIntent;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.workers.MessageSender;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -367,8 +371,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject) throws
-          NoSuchProviderException, MessagingException, IOException {
+  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject) {
 
     ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
 
@@ -377,7 +380,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     config.setRosterLoadedAtLogin(true);
     config.setSendPresence(false);
 
-     if (xmpp == null || !xmpp.isConnected()) {
+    boolean success = true;
+    
+    if (xmpp == null || !xmpp.isConnected()) {
        // TODO: show notification if connection was unsuccessful and message was not sent!
       try {
         xmpp.connect();
@@ -386,27 +391,38 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       } catch (XMPPException e) {
         xmpp.disconnect();
         e.printStackTrace();
-        return;
+        success = false;
       } catch (Exception e) {
         e.printStackTrace();
-        return;
+        success = false;
       }
     }
 
-    for (MessageRecipient mr : to) {
-      FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
+    if (success) {
+      for (MessageRecipient mr : to) {
+        if (!success) {
+          break;
+        }
+        FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
 
-      String toStr = fmr.getId() + "@chat.facebook.com";
-//      Log.d("rgai", "SENDING MESSAGE TO: " + toStr);
-      Chat chat = xmpp.getChatManager().createChat(toStr, null);
-
-      try {
-        chat.sendMessage(content);
-      } catch (XMPPException e) {
-        e.printStackTrace();
+        String toStr = fmr.getId() + "@chat.facebook.com";
+  //      Log.d("rgai", "SENDING MESSAGE TO: " + toStr);
+        Chat chat = xmpp.getChatManager().createChat(toStr, null);
+        
+        try {
+          chat.sendMessage(content);
+        } catch (XMPPException e) {
+          e.printStackTrace();
+          success = false;
+        }
       }
-
     }
+    
+    MessageSentIntent intent = new MessageSentIntent(Settings.Intents.MESSAGE_SENT_INTENT);
+    intent.setSentType(success ? MessageSendHandler.SENT : MessageSendHandler.FAIL);
+    intent.setHandlerClass();
+    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    
   }
 
   public void onClickPickQuery() {
