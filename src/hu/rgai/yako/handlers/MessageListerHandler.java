@@ -257,7 +257,6 @@ public class MessageListerHandler extends TimeoutHandler {
             storedFoundMessage = storedMessage;
           }
         }
-        Log.d("rgai3", "contains : " + newMessage + " - " + contains);
         if (!contains) {
           YakoApp.getMessages().add(newMessage);
 
@@ -271,17 +270,17 @@ public class MessageListerHandler extends TimeoutHandler {
           
           // only update old messages' flags with the new one, and nothing else
           if (newMessage.isUpdateFlags()) {
-            Log.d("rgai3", "update flags..");
+//            Log.d("rgai3", "update flags..");
             if (storedFoundMessage != null) {
               storedFoundMessage.setSeen(newMessage.isSeen());
               storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
             }
           } else {
-            Log.d("rgai3", "NOT update flags..");
+//            Log.d("rgai3", "NOT update flags..");
             MessageListElement itemToRemove = null;
             for (MessageListElement oldMessage : YakoApp.getMessages()) {
               if (newMessage.equals(oldMessage)) {
-                Log.d("rgai3", "IGEN, equals..");
+//                Log.d("rgai3", "IGEN, equals..");
                 // first updating person info anyway..
                 oldMessage.setFrom(newMessage.getFrom());
 

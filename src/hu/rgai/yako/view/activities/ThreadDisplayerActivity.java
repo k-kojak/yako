@@ -126,11 +126,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       return;
     }
     
+    
     // setting action bar
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setTitle((mMessage.getFrom() != null ? mMessage.getFrom().getName() : "") + " | " + mMessage.getAccount().getAccountType().toString());
-    
     
     
     

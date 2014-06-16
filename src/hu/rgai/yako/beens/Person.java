@@ -80,6 +80,10 @@ public final class Person implements Parcelable {
     return type;
   }
 
+  public void setType(MessageProvider.Type type) {
+    this.type = type;
+  }
+
   public void setName(String name) {
     this.name = name;
   }
@@ -189,10 +193,12 @@ public final class Person implements Parcelable {
           // that is the user id for sending message
           if (p.getType().equals(MessageProvider.Type.SMS)) {
             pa = getUserData(context, rawContactId, p.getName());
+            pa.setType(MessageProvider.Type.SMS);
             // if not using sms, than p.getId() can be used for communication
             // (fb id, email addr, etc.)
           } else {
             pa = getUserData(context, rawContactId, p.getId());
+            pa.setType(p.getType());
           }
           // Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
@@ -202,7 +208,7 @@ public final class Person implements Parcelable {
           if (p.getType().equals(MessageProvider.Type.SMS)) {
             pa = new Person(-1, p.getName(), p.getName(), MessageProvider.Type.SMS);
           } else {
-            pa = new Person(-1, p.getId(), p.getName(), MessageProvider.Type.SMS);
+            pa = new Person(-1, p.getId(), p.getName(), p.getType());
           }
         }
         return pa;
