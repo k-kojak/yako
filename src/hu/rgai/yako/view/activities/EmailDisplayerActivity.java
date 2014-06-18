@@ -29,7 +29,7 @@ import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
 import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
@@ -59,8 +59,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     
     setContentView(R.layout.activity_email_displayer);
 
-    String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
+    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
     mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
@@ -78,12 +78,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
             new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})),
             true, null);
-    marker.executeTask(null);
+    marker.executeTask(this, null);
 
 
     // handling if we came from notifier
-    if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)
-            && getIntent().getExtras().getBoolean(IntentParamStrings.FROM_NOTIFIER)) {
+    if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)
+            && getIntent().getExtras().getBoolean(IntentStrings.Params.FROM_NOTIFIER)) {
       mFromNotification = true;
     }
 
@@ -137,8 +137,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReplyActivity.class);
-        intent.putExtra(IntentParamStrings.MESSAGE_ID, mMessage.getId());
-        intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
+        intent.putExtra(IntentStrings.Params.MESSAGE_ID, mMessage.getId());
+        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:

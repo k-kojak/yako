@@ -1,16 +1,17 @@
 package hu.rgai.yako.workers;
 
 import android.content.Context;
+import android.content.Intent;
 import android.widget.Toast;
-import hu.rgai.yako.beens.EmailMessageRecipient;
-import hu.rgai.yako.beens.FacebookMessageRecipient;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
-import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
+import hu.rgai.yako.beens.EmailMessageRecipient;
 import hu.rgai.yako.beens.FacebookAccount;
-import hu.rgai.yako.handlers.MessageSendHandler;
+import hu.rgai.yako.beens.FacebookMessageRecipient;
+import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
+import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.FacebookMessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
@@ -26,21 +27,21 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   private final Context mContext;
   private final MessageRecipient mRecipient;
-  private final MessageSendHandler mHandler;
+  private final Intent mHandlerIntent;
   private final Account mFromAccount;
   private final String mContent;
   private final String mSubject;
   // private String recipients;
   
 
-  public MessageSender(MessageRecipient recipient, Account fromAccount, MessageSendHandler handler,
-          String subject, String content, Context context) {
+  public MessageSender(MessageRecipient recipient, Account fromAccount, Intent handlerIntent,
+          TimeoutHandler timeoutHandler, String subject, String content, Context context) {
     
-    super(handler);
+    super(timeoutHandler);
     
     this.mRecipient = recipient;
     this.mFromAccount = fromAccount;
-    this.mHandler = handler;
+    this.mHandlerIntent = handlerIntent;
     this.mSubject = subject;
     this.mContent = content;
     this.mContext = context;
@@ -75,18 +76,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
         recipients.add((MessageRecipient) mRecipient);
       }
       if (mp != null && recipients != null) {
-//        try {
-          mp.sendMessage(mContext, recipients, mContent, mSubject);
-//        } catch (NoSuchProviderException ex) {
-//          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-//          return FAIL;
-//        } catch (MessagingException ex) {
-//          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-//          return FAIL;
-//        } catch (IOException ex) {
-//          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-//          return FAIL;
-//        }
+        mp.sendMessage(mContext, mHandlerIntent, recipients, mContent, mSubject);
         loggingSendMessage();
       }
     }

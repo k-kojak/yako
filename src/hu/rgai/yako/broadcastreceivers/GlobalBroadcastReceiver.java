@@ -8,7 +8,7 @@ import android.net.NetworkInfo;
 import android.util.Log;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 
 public class GlobalBroadcastReceiver extends BroadcastReceiver {
 
@@ -31,7 +31,7 @@ public class GlobalBroadcastReceiver extends BroadcastReceiver {
           service.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setForceQuery(true);
-          service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           context.sendBroadcast(service);
         } else {
 //          Log.d("rgai", "JUST LOST WIFI NETWORK CONNECTION");

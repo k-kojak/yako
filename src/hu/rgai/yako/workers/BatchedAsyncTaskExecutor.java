@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.workers;
 
+import android.content.Context;
 import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import java.util.List;
@@ -55,7 +56,7 @@ public class BatchedAsyncTaskExecutor {
     this(tasks, null, progressId, handler);
   }
   
-  public boolean execute() {
+  public boolean execute(Context context) {
     for (BatchedTimeoutAsyncTask task : mTasks) {
       task.setExecutor(this);
     }
@@ -67,9 +68,9 @@ public class BatchedAsyncTaskExecutor {
       int i = 0;
       for (BatchedTimeoutAsyncTask task : mTasks) {
         if (mParams != null) {
-          task.executeTask(mParams[i++]);
+          task.executeTask(context, mParams[i++]);
         } else {
-          task.executeTask(null);
+          task.executeTask(context, null);
         }
       }
       return true;

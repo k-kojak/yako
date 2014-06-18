@@ -183,6 +183,24 @@
           <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
         </intent-filter>
       </receiver>
+      
+      <receiver android:name="hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver" >
+        <intent-filter>
+          <action android:name="hu.rgai.yako.message_sent_broadcast" />
+        </intent-filter>
+      </receiver>
+      
+      <receiver android:name="hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver" >
+        <intent-filter>
+          <action android:name="hu.rgai.yako.message_sent_broadcast" />
+        </intent-filter>
+      </receiver>
+      
+      <receiver android:name="hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver" >
+        <intent-filter>
+          <action android:name="hu.rgai.yako.message_sent_broadcast" />
+        </intent-filter>
+      </receiver>
 
       <receiver android:name="hu.rgai.yako.view.activities.ThreadDisplayerActivity$NewMessageReceiver">
       </receiver>

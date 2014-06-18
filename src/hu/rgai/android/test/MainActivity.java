@@ -48,7 +48,7 @@ import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.activities.AccountSettingsListActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
@@ -294,7 +294,7 @@ public class MainActivity extends ActionBarActivity {
           eParams.setAccount(a);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(YakoApp.getFilteredMessages(a).size());
-          intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
 //          Log.d("rgai", "refresh not .... needed!!!!!");
@@ -349,7 +349,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
   }
   
@@ -564,7 +564,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
   

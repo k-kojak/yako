@@ -1,5 +1,6 @@
 package hu.rgai.yako.messageproviders;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -23,7 +24,7 @@ import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -214,8 +215,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject)
-          throws NoSuchProviderException, MessagingException, IOException {
+  public void sendMessage(Context context, Intent handlerIntent, Set<? extends MessageRecipient> to,
+          String content, String subject) {
 
     for (MessageRecipient mr : to) {
 
@@ -262,7 +263,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         MainServiceExtraParams eParams = new MainServiceExtraParams();
         eParams.setAccount(SmsAccount.account);
         eParams.setForceQuery(true);
-        service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+        service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
         
         context.sendBroadcast(service);
       }
@@ -341,7 +342,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   /**
    * We never want to drop this connection.
    */
-  public void dropConnection() {
+  public void dropConnection(Context context) {
   }
 
   public boolean isMessageDeletable() {

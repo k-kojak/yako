@@ -36,7 +36,7 @@ import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
@@ -144,8 +144,8 @@ public class MainActivityFragment extends Fragment {
               MessageListElement message = contextSelectedElements.first();
               Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
               Intent intent = new Intent(mMainActivity, classToLoad);
-              intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
-              intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+              intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
+              intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
               mMainActivity.startActivity(intent);
             }
             hideContextualActionbar();
@@ -201,8 +201,8 @@ public class MainActivityFragment extends Fragment {
         Account a = message.getAccount();
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
         Intent intent = new Intent(mMainActivity, classToLoad);
-        intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
-        intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+        intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
+        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
         boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
         if (changed) {
           message.setSeen(true);
@@ -295,7 +295,7 @@ public class MainActivityFragment extends Fragment {
         MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
                 mle.getId(), handler, acc.isThreadAccount(), true);
         messageMarker.setTimeout(10000);
-        messageMarker.executeTask(null);
+        messageMarker.executeTask(MainActivityFragment.this.getActivity(), null);
 
         mTopProgressBar.setVisibility(View.VISIBLE);
         
@@ -337,7 +337,7 @@ public class MainActivityFragment extends Fragment {
           }
         }
       });
-      batchedMarker.execute();
+      batchedMarker.execute(getActivity());
     } catch (Exception ex) {
       Logger.getLogger(MainActivityFragment.class.getName()).log(Level.SEVERE, null, ex);
     }

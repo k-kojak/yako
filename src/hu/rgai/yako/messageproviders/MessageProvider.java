@@ -1,11 +1,15 @@
 package hu.rgai.yako.messageproviders;
 
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
+import hu.rgai.yako.intents.IntentStrings;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -145,7 +149,7 @@ public interface MessageProvider {
    * 
    * Just leaeve it blank if the provider cannot broadcast messages.
    */
-  public void dropConnection();
+  public void dropConnection(Context context);
   
   
   /**
@@ -168,11 +172,13 @@ public interface MessageProvider {
    * Sends a message to the given recipient with the given content.
    * 
    * @param context a context
+   * @param pendingIntent this intent will be called when a message is sent
    * @param to set of recipients
    * @param content the content of the message
    * @param subject subject of the message (optional)
    */
-  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject);
+  public void sendMessage(Context context, Intent pendingIntent, Set<? extends MessageRecipient> to,
+          String content, String subject);
   
   public static class Helper {
     
@@ -184,5 +190,20 @@ public interface MessageProvider {
       }
       return false;
     }
+    
+    public static void sendMessageSentBroadcast(Context context, Intent handlerIntent, int sentType) {
+      Log.d("rgai", "send message sent broadcast...");
+      Intent sendIntent = new Intent(context, MessageSentBroadcastReceiver.class);
+      sendIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+      sendIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, sentType);
+      if (handlerIntent != null) {
+        sendIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+      }
+      context.sendBroadcast(sendIntent);
+    }
+    
   }
+  
+  
+  
 }

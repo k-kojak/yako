@@ -29,7 +29,7 @@ import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.store.StoreHandler;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
@@ -57,7 +57,7 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   @Override
-  public void timeout() {
+  public void timeout(Context context) {
     if (mExtraParams.isForceQuery() || mExtraParams.isLoadMore()) {
       Toast.makeText(mContext, "Connection timeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
     }
@@ -194,13 +194,13 @@ public class MessageListerHandler extends TimeoutHandler {
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
-          resultIntent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
-          resultIntent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
+          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
+          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
         }
-        resultIntent.putExtra(IntentParamStrings.FROM_NOTIFIER, true);
+        resultIntent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
@@ -225,9 +225,9 @@ public class MessageListerHandler extends TimeoutHandler {
           NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReplyActivity.class);
-    intent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
-    intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
-    intent.putExtra(IntentParamStrings.FROM_NOTIFIER, true);
+    intent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
+    intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+    intent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
 

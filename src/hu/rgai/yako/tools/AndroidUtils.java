@@ -50,7 +50,7 @@ public class AndroidUtils {
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {
     if (mp.canBroadcastOnNewMessage() && !isConnectionAlive) {
       ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
-      connector.executeTask(null);
+      connector.executeTask(context, null);
     }
   }
   
@@ -58,7 +58,7 @@ public class AndroidUtils {
     MessageProvider provider = getMessageProviderInstanceByAccount(account, context);
     if (provider != null && provider.isConnectionAlive()) {
       Log.d("rgai", "Igen, dropping connection");
-      provider.dropConnection();
+      provider.dropConnection(context);
     } else {
       Log.d("rgai", "connection is not alive...thats the problem");
     }

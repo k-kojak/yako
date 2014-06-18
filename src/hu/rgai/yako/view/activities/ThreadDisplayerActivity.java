@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
@@ -50,15 +51,18 @@ import hu.rgai.yako.beens.FullThreadMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
+import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver;
+import hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
-import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
+import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
@@ -77,6 +81,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private final Date lastLoadMoreEvent = null;
   private boolean firstLoad = true;
   private DataUpdateReceiver mDataUpdateReceiver = null;
+  private MessageSentResultReceiver mMessageSentResultReceiver = null;
   private boolean fromNotification = false;
   private TextWatcher mTextWatcher = null;
   private TextView mCharCount = null;
@@ -114,12 +119,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     
     // setting variables
-    if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)
-            && getIntent().getExtras().getBoolean(IntentParamStrings.FROM_NOTIFIER)) {
+    if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)
+            && getIntent().getExtras().getBoolean(IntentStrings.Params.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
+    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
     mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
@@ -252,7 +257,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
               MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage,
                       simpleMessage, simpleMessage.getId(), handler, false, false);
               messageMarker.setTimeout(10000);
-              messageMarker.executeTask(null);
+              messageMarker.executeTask(ThreadDisplayerActivity.this, null);
             }
           });
           builder.setNegativeButton("No", null);
@@ -305,6 +310,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
     registerReceiver(mDataUpdateReceiver, iFilter);
 
+    mMessageSentResultReceiver = new MessageSentResultReceiver();
+    iFilter = new IntentFilter(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageSentResultReceiver, iFilter);
+    
+    
     displayContent();
     
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
@@ -384,20 +394,20 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     } else {
       ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
+    
     // TODO: write a nice handler here!!!
-    MessageSendHandler handler = new MessageSendHandler() {
-      @Override
-      public void success(String name) {
-        refreshMessageList();
-      }
-
-      @Override
-      public void fail(String name) {
-        Toast.makeText(ThreadDisplayerActivity.this, "Failed to send message", Toast.LENGTH_LONG).show();
-      }
-    };
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handler, "", mText.getText().toString(), this);
-    rs.executeTask(null);
+    Intent handlerIntent = new Intent(this, ThreadMessageSentBroadcastReceiver.class);
+    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+      
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handlerIntent,
+            new TimeoutHandler() {
+              @Override
+              public void timeout(Context context) {
+                Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+              }
+            },
+            "", mText.getText().toString(), this);
+    rs.executeTask(this, null);
     mText.setText("");
   }
 
@@ -412,6 +422,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     if (mDataUpdateReceiver != null) {
       unregisterReceiver(mDataUpdateReceiver);
     }
+    
+    if (mMessageSentResultReceiver != null) {
+      LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageSentResultReceiver);
+    }
+    
     if (mWifiListener != null) {
       unregisterReceiver(mWifiListener);
     }
@@ -506,7 +521,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     if (offset > 0) {
       myThread.setOffset(offset);
     }
-    myThread.executeTask(new String[]{mMessage.getId()});
+    myThread.executeTask(this, new String[]{mMessage.getId()});
   }
   
   private void refreshMessageList() {
@@ -548,6 +563,27 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       }
     }
     
+  }
+  
+  
+  public class MessageSentResultReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      Log.d("rgai", "local receive");
+      if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
+        int resultType = intent.getIntExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, -1);
+        switch(resultType) {
+          case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
+            ThreadDisplayerActivity.this.refreshMessageList();
+            break;
+          case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
+            Toast.makeText(context, "Unable to send message", Toast.LENGTH_SHORT).show();
+            break;
+          default:
+            break;
+        }
+      }
+    }
   }
   
   

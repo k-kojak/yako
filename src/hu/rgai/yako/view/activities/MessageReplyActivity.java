@@ -1,8 +1,10 @@
 package hu.rgai.yako.view.activities;
 
+import static android.app.Activity.RESULT_OK;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -43,14 +45,15 @@ import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.handlers.MessageSendHandler;
+import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
@@ -120,9 +123,9 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey(IntentParamStrings.MESSAGE_ID)) {
-        String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
-        Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_ID)) {
+        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
         mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
@@ -132,7 +135,7 @@ public class MessageReplyActivity extends ActionBarActivity {
           mSubject.setText(mFullMessage.getSubject());
         }
       }
-      if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)) {
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)) {
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
         // mMessage shouldn be null here...
@@ -141,7 +144,7 @@ public class MessageReplyActivity extends ActionBarActivity {
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
           MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
                   new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})), true, null);
-          marker.executeTask(null);
+          marker.executeTask(this, null);
         }
         
       }
@@ -347,7 +350,6 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     mChoosenAccountsToSend.add(from);
     
-//    List<MessageRecipient> to = recipients.getRecipients();
     String content = mContent.getText().toString().trim();
     String subject = null;
     if (mSubject.getVisibility() == View.VISIBLE) {
@@ -362,45 +364,23 @@ public class MessageReplyActivity extends ActionBarActivity {
       content += source.getRenderer().toString();
     }
     
-    MessageSendHandler handler = new MessageSendHandler() {
-      public void success(String name) {
-        displayNotification(true, name);
-      }
-
-      public void fail(String name) {
-        displayNotification(false, name);
-      }
-
-      private void displayNotification(boolean success, String to) {
-
-        String ticker = success ? "Message sent" : "Sending failed";
-        String title = success ? "Message sent to" : "Failed to send message to:";
-
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MessageReplyActivity.this)
-                .setSmallIcon(R.drawable.not_ic_action_email)
-                .setTicker(ticker)
-                .setContentTitle(title)
-                .setContentText(to);
-        mBuilder.setAutoCancel(true);
-        mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
-
-        if (success) {
-          new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
-            }
-          }, 5000);
-        }
-      }
-    };
     
-    MessageSender rs = new MessageSender(recipient, from, handler, subject, content, this);
-    rs.executeTask(null);
-      
+    // setting intent data for handling returning result
+    Intent handlerIntent = new Intent(this, SimpleMessageSentBrodacastReceiver.class);
+    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    handlerIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_RECIPIENT_NAME, recipient.getDisplayName());
+    
+    MessageSender rs = new MessageSender(recipient, from, handlerIntent,
+            new TimeoutHandler() {
+              @Override
+              public void timeout(Context context) {
+                Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+              }
+            },
+            subject, content, this);
+    
+    rs.setTimeout(5000);
+    rs.executeTask(this, null);
     
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
@@ -423,7 +403,7 @@ public class MessageReplyActivity extends ActionBarActivity {
         eParams.setForceQuery(true);
         Intent intent = new Intent(this, MainScheduler.class);
         intent.setAction(Context.ALARM_SERVICE);
-        intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
         this.sendBroadcast(intent);
       }
       finish();

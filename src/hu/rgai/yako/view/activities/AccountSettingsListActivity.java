@@ -32,7 +32,7 @@ import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
 import java.util.List;
 import java.util.TreeSet;
@@ -199,7 +199,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setAccount(account);
     eParams.setForceQuery(true);
-    service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     
     this.sendBroadcast(service);
   }

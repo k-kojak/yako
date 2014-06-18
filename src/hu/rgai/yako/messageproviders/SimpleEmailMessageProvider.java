@@ -23,9 +23,10 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
@@ -65,7 +66,6 @@ import javax.mail.Store;
 import javax.mail.UIDFolder;
 import javax.mail.event.MessageCountEvent;
 import javax.mail.event.MessageCountListener;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
@@ -314,7 +314,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //        } else {
 //          uid = m.getMessageNumber();
 //        }
-        Log.d("rgai", "UIDFOLDER msg ("+ account +") id: " + uid);
+//        Log.d("rgai", "UIDFOLDER msg ("+ account +") id: " + uid);
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -806,8 +806,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   @Override
-  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject) throws
-          NoSuchProviderException, MessagingException, IOException, AddressException {
+  public void sendMessage(Context context, Intent handlerIntent, Set<? extends MessageRecipient> to,
+          String content, String subject) {
     
     Properties props = System.getProperties();
     this.setProperties(props);
@@ -816,29 +816,40 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Session session = Session.getInstance(props, null);
     javax.mail.Message msg = new MimeMessage(session);
     
-    // FIXME: this is a VERY VERY UGRLY solution
-    if (account.getImapAddress().equals("mail.inf.u-szeged.hu")) {
-      msg.setFrom(new InternetAddress(account.getEmail() + "@inf.u-szeged.hu"));
-    } else {
-      msg.setFrom(new InternetAddress(account.getEmail()));
+    boolean success = true;
+    try {
+      // FIXME: this is a VERY VERY UGRLY solution
+      if (account.getImapAddress().equals("mail.inf.u-szeged.hu")) {
+        msg.setFrom(new InternetAddress(account.getEmail() + "@inf.u-szeged.hu"));
+      
+      } else {
+        msg.setFrom(new InternetAddress(account.getEmail()));
+      }
+    
+    
+      String addressList = getAddressList(to);
+
+      msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(addressList));
+      msg.setSubject(subject);
+      msg.setText(content);
+  //    msg.setHeader("X-Mailer", "");
+      msg.setSentDate(new Date());
+      SMTPTransport t;
+      if (account.isSsl()) {
+        t = (SMTPTransport)session.getTransport("smtps");
+      } else {
+        t = (SMTPTransport)session.getTransport("smtp");
+      }
+      t.connect(account.getSmtpAddress(), account.getEmail(), account.getPassword());
+      t.sendMessage(msg, msg.getAllRecipients());
+      t.close();
+    } catch (MessagingException ex) {
+      Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+      success = false;
     }
     
-    String addressList = getAddressList(to);
-
-    msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(addressList));
-    msg.setSubject(subject);
-    msg.setText(content);
-//    msg.setHeader("X-Mailer", "");
-    msg.setSentDate(new Date());
-    SMTPTransport t;
-    if (account.isSsl()) {
-      t = (SMTPTransport)session.getTransport("smtps");
-    } else {
-      t = (SMTPTransport)session.getTransport("smtp");
-    }
-    t.connect(account.getSmtpAddress(), account.getEmail(), account.getPassword());
-    t.sendMessage(msg, msg.getAllRecipients());
-    t.close();
+    MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+            success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
   }
   
@@ -964,7 +975,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(newMessageCount);
           eParams.setForceQuery(true);
-          service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           
           context.sendBroadcast(service);
         }
@@ -978,7 +989,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setAccount(account);
           eParams.setForceQuery(true);
-          service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           
           context.sendBroadcast(service);
         }
@@ -1027,7 +1038,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return false;
   }
   
-  public void dropConnection() {
+  public void dropConnection(Context context) {
     FolderIdleWithTimestamp fIdle = null;
     IMAPFolder queryFolder = null;
     Store store = null;
@@ -1049,7 +1060,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     validityMap.remove(accountFolder);
     
     ConnectionDropper dropper = new ConnectionDropper(fIdle, queryFolder, store);
-    dropper.executeTask(null);
+    dropper.executeTask(context, null);
   }
   
   @Override

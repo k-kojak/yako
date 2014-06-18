@@ -9,7 +9,7 @@ import android.os.Bundle;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.services.MainService;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import java.util.Calendar;
 
 
@@ -25,8 +25,8 @@ public class MainScheduler extends BroadcastReceiver {
       Intent repeatIntent = new Intent(context, MainService.class);
       Bundle bundle = new Bundle();
       MainServiceExtraParams eParams = new MainServiceExtraParams();
-      bundle.putParcelable(IntentParamStrings.EXTRA_PARAMS, eParams);
-      repeatIntent.putExtra(IntentParamStrings.EXTRA_PARAMS, bundle);
+      bundle.putParcelable(IntentStrings.Params.EXTRA_PARAMS, eParams);
+      repeatIntent.putExtra(IntentStrings.Params.EXTRA_PARAMS, bundle);
 //      repeatIntent.putExtra(ParamStrings.EXTRA_PARAMS, eParams);
       PendingIntent pending = PendingIntent.getService(context, 0, repeatIntent, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar cal = Calendar.getInstance();
@@ -36,8 +36,8 @@ public class MainScheduler extends BroadcastReceiver {
       
       
       Intent singleIntent = new Intent(context, MainService.class);
-      if (intent.getExtras() != null && intent.getExtras().containsKey(IntentParamStrings.EXTRA_PARAMS)) {
-        singleIntent.putExtra(IntentParamStrings.EXTRA_PARAMS, intent.getExtras().getParcelable(IntentParamStrings.EXTRA_PARAMS));
+      if (intent.getExtras() != null && intent.getExtras().containsKey(IntentStrings.Params.EXTRA_PARAMS)) {
+        singleIntent.putExtra(IntentStrings.Params.EXTRA_PARAMS, intent.getExtras().getParcelable(IntentStrings.Params.EXTRA_PARAMS));
       }
       context.startService(singleIntent);
       

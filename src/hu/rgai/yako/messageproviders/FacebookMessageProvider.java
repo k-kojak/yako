@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.facebook.HttpMethod;
 import com.facebook.Request;
@@ -23,12 +22,10 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
-import hu.rgai.yako.handlers.MessageSendHandler;
-import hu.rgai.yako.intents.MessageSentIntent;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
-import hu.rgai.yako.workers.MessageSender;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -249,7 +246,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   eParams.setAccount(account);
                   eParams.setForceQuery(true);
                   
-                  service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+                  service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
                   context.sendBroadcast(service);
 
                 }
@@ -371,7 +368,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public void sendMessage(Context context, Set<? extends MessageRecipient> to, String content, String subject) {
+  public void sendMessage(Context context, Intent handlerIntent, Set<? extends MessageRecipient> to,
+          String content, String subject) {
 
     ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
 
@@ -418,10 +416,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       }
     }
     
-    MessageSentIntent intent = new MessageSentIntent(Settings.Intents.MESSAGE_SENT_INTENT);
-    intent.setSentType(success ? MessageSendHandler.SENT : MessageSendHandler.FAIL);
-    intent.setHandlerClass();
-    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+            success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
   }
 
@@ -525,7 +521,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return "FacebookMessageProvider{" + "account=" + account + '}';
   }
 
-  public void dropConnection() {
+  public void dropConnection(Context context) {
     if (isConnectionAlive()) {
       xmpp.disconnect();
       xmpp = null;

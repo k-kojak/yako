@@ -21,7 +21,7 @@ import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
@@ -100,14 +100,14 @@ public class MainService extends Service {
     // in this case we have to make a full query
     boolean startedByAndroid = true;
     if (intent != null && intent.getExtras() != null) {
-      if (intent.getExtras().containsKey(IntentParamStrings.EXTRA_PARAMS)) {
+      if (intent.getExtras().containsKey(IntentStrings.Params.EXTRA_PARAMS)) {
         // alarm manager cannot send extra params via intent.putextra, we have
         // to use bundles, so if the request comes from there, we have a bundle
         // if not, we have the data directly in the intent
-        if (intent.getExtras().get(IntentParamStrings.EXTRA_PARAMS) instanceof Bundle) {
-          extraParams = intent.getExtras().getBundle(IntentParamStrings.EXTRA_PARAMS).getParcelable(IntentParamStrings.EXTRA_PARAMS);
+        if (intent.getExtras().get(IntentStrings.Params.EXTRA_PARAMS) instanceof Bundle) {
+          extraParams = intent.getExtras().getBundle(IntentStrings.Params.EXTRA_PARAMS).getParcelable(IntentStrings.Params.EXTRA_PARAMS);
         } else {
-          extraParams = intent.getExtras().getParcelable(IntentParamStrings.EXTRA_PARAMS);
+          extraParams = intent.getExtras().getParcelable(IntentStrings.Params.EXTRA_PARAMS);
         }
         startedByAndroid = false;
       } else {
@@ -178,7 +178,7 @@ public class MainService extends Service {
                     if (!asyncTaskQueue.isEmpty()) {
                       MainServiceExtraParams next = asyncTaskQueue.pollFirst();
                       Intent intent = new Intent(MainService.this, MainService.class);
-                      intent.putExtra(IntentParamStrings.EXTRA_PARAMS, next);
+                      intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, next);
                       MainService.this.startService(intent);
                     }
                   }
@@ -186,7 +186,7 @@ public class MainService extends Service {
                   LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
                 }
               });
-              executor.execute();
+              executor.execute(this);
             }
           } catch (Exception ex) {
             Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);

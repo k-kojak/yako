@@ -253,7 +253,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
       } else {
         Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this);
-        integrator.executeTask(new String[]{user.getId()});
+        integrator.executeTask(this, new String[]{user.getId()});
       }
     } else {
       Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();

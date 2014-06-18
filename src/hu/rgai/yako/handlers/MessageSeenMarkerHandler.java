@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.handlers;
 
+import android.content.Context;
 import android.widget.Toast;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
@@ -15,7 +16,7 @@ public class MessageSeenMarkerHandler extends TimeoutHandler {
   }
   
   @Override
-  public void timeout() {
+  public void timeout(Context context) {
     Toast.makeText(mFragment.getActivity(), "Timeout while marking messages", Toast.LENGTH_LONG).show();
   }
   

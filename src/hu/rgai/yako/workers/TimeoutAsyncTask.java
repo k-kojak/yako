@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.workers;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import hu.rgai.yako.handlers.TimeoutHandler;
@@ -45,7 +46,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
    * 
    * @param params the params to execute
    */
-  public void executeTask(Params[] params) {
+  public void executeTask(final Context context, Params[] params) {
     AndroidUtils.<Params, Progress, Result>startTimeoutAsyncTask(this, params);
     
     if (mTimeout != -1) {
@@ -56,7 +57,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
             TimeoutAsyncTask.this.taskCancelled();
             TimeoutAsyncTask.this.cancel(true);
             if (mTimeoutHandler != null) {
-              mTimeoutHandler.timeout();
+              mTimeoutHandler.timeout(context);
             }
           }
         }
