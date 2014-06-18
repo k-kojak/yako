@@ -9,6 +9,8 @@ public class IntentStrings {
   
   public static class Actions {
     public static final String MESSAGE_SENT_BROADCAST = "hu.rgai.yako.message_sent_broadcast";
+    public static final String SMS_DELIVERED = "hu.rgai.yako.intent.action.sms_delivered";
+    public static final String SMS_SENT = "hu.rgai.yako.intent.action.sms_sent";
     
   }
   
@@ -20,6 +22,8 @@ public class IntentStrings {
     public static final String QUERY_OFFSET = "query_offset";
     public static final String LOAD_MORE = "load_more";
     public static final String TYPE = "type";
+    public static final String ITEM_INDEX = "item_index";
+    public static final String ITEM_COUNT = "item_count";
     public static final String ACT_VIEWING_MESSAGE = "act_viewing_message";
     public static final String FORCE_QUERY = "force_query";
     public static final String RESULT = "result";

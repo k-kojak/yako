@@ -1,5 +1,6 @@
 package hu.rgai.yako.messageproviders;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -8,8 +9,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.util.Log;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -22,6 +25,7 @@ import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.intents.IntentStrings;
@@ -224,10 +228,29 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
       SmsManager smsMan = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
-//      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
-      
+
       ArrayList<String> dividedMessages = smsMan.divideMessage(content);
-      smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
+      
+      ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>(dividedMessages.size());
+      ArrayList<PendingIntent> deliveryIntents = new ArrayList<PendingIntent>(dividedMessages.size());
+      
+      for (int i = 0; i < dividedMessages.size(); i++) {
+        Intent sentIntent = new Intent(mContext, SmsMessageProvider.class);
+        sentIntent.setAction(IntentStrings.Actions.SMS_SENT);
+        sentIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
+        sentIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
+        sentIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+        sentIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), sentIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+        
+        Intent deliveryIntent = new Intent(mContext, SmsMessageProvider.class);
+        deliveryIntent.setAction(IntentStrings.Actions.SMS_DELIVERED);
+        deliveryIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
+        deliveryIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
+        deliveryIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+        deliveryIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), deliveryIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+      }
+      
+      smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, sentIntents, deliveryIntents);
       ContentValues sentSms = new ContentValues();
       sentSms.put("address", rawPhoneNum);
       sentSms.put("body", content);
@@ -245,7 +268,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
       // a bit the reading from inbox
       try {
-        Thread.sleep(750);
+        Thread.sleep(850);
       } catch (InterruptedException ex) {
         Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
@@ -268,15 +291,23 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         context.sendBroadcast(service);
       }
       
-//      // in case the first attempt was too quick, request the display again a little bit later
-//      try {
-//        Thread.sleep(2000);
-//      } catch (InterruptedException ex) {
-//        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//      res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-//      context.sendBroadcast(res);
+    } else if (intent.getAction().equals(IntentStrings.Actions.SMS_SENT)) {
+      Intent handlerIntent = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT);
+      handlerIntent.putExtra(IntentStrings.Params.ITEM_INDEX, intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
+      handlerIntent.putExtra(IntentStrings.Params.ITEM_COUNT, intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
+      boolean success = getResultCode() == Activity.RESULT_OK;
+      MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+            success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
+    } else if (intent.getAction().equals(IntentStrings.Actions.SMS_DELIVERED)) {
+      Log.d("rgai", "SMS DELIVERED");
+      Intent handlerIntent = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT);
+      handlerIntent.putExtra(IntentStrings.Params.ITEM_INDEX, intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, 0));
+      handlerIntent.putExtra(IntentStrings.Params.ITEM_COUNT, intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, 0));
+      boolean success = getResultCode() == Activity.RESULT_OK;
+      MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+            success ? MessageSentBroadcastReceiver.MESSAGE_DELIVERED : MessageSentBroadcastReceiver.MESSAGE_DELIVER_FAILED);
     }
+    
   }
 
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {

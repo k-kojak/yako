@@ -379,7 +379,7 @@ public class MessageReplyActivity extends ActionBarActivity {
             },
             subject, content, this);
     
-    rs.setTimeout(5000);
+    rs.setTimeout(20000);
     rs.executeTask(this, null);
     
     // this means this was the last call of sendMessage
