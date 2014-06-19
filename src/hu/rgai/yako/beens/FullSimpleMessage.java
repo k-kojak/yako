@@ -4,6 +4,7 @@ package hu.rgai.yako.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;

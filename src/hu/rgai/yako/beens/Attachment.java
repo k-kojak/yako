@@ -4,12 +4,13 @@ package hu.rgai.yako.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.yako.workers.AttachmentDownloader;
+import java.io.Serializable;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class Attachment implements Parcelable {
+public class Attachment implements Parcelable, Serializable {
   
   private String fileName;
   private long size; // in bytes

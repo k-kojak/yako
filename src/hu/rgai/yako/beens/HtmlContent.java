@@ -2,12 +2,13 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import java.io.Serializable;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class HtmlContent implements Parcelable {
+public class HtmlContent implements Parcelable, Serializable {
 
   public enum ContentType {
     TEXT("text/*"),

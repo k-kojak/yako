@@ -11,6 +11,7 @@ import android.provider.ContactsContract.PhoneLookup;
 import android.util.Log;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import java.util.Set;
  * 
  * @author Tamas Kojedzinszky
  */
-public final class Person implements Parcelable {
+public final class Person implements Parcelable, Serializable {
 
   protected String id;
   protected String name;

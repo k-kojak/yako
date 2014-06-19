@@ -1,13 +1,14 @@
 
 package hu.rgai.yako.beens;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class EmailContent {
+public class EmailContent implements Serializable {
   
   private HtmlContent content;
   private List<Attachment> attachmentList;

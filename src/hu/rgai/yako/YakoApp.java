@@ -29,7 +29,7 @@ public class YakoApp extends Application {
   
   private Tracker tracker = null;
   
-  private volatile static TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
+  private volatile static TreeSet<MessageListElement> messages = null;
   private volatile static  HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isPhone = null;
@@ -247,6 +247,13 @@ public class YakoApp extends Application {
     
     // TODO: we may have to update it on network state change!
     isPhone = setIsPhone();
+    
+    // read in message list
+//    messages = StoreHandler.getCurrentMessageList(this);
+    if (messages == null) {
+//      Log.d("rgai", "messages is null, create new object");
+      messages = new TreeSet<MessageListElement>();
+    }
     
   }
   

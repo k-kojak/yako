@@ -18,6 +18,7 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,6 +48,7 @@ public class StoreHandler {
   private static final String DATE_FORMAT = "EEE MMM dd kk:mm:ss z yyyy";
   private static final String LAST_NOTIFICATION_DATES_FILENAME = "yako_lastNotDatesFile";
   private static final String SELECTED_FILTER_ACCOUNT = "selected_filter_account";
+  private static final String MAIN_MESSAGE_LIST = "main_message_list";
   
   public static class SystemSettings {
     
@@ -67,6 +69,21 @@ public class StoreHandler {
       Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_VIBRATION, true);
       return not;
     }
+  }
+  
+  
+  public static TreeSet<MessageListElement> getCurrentMessageList(Context context) {
+    Object o = readObject(context, MAIN_MESSAGE_LIST);
+    if (o != null) {
+      return (TreeSet<MessageListElement>)o;
+    } else {
+      return null;
+    }
+  }
+  
+  
+  public static synchronized void saveCurrentMessageList(Context context, TreeSet<MessageListElement> messages) {
+    writeObject(context, messages, MAIN_MESSAGE_LIST);
   }
   
   

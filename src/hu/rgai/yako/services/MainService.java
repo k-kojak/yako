@@ -9,6 +9,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
@@ -19,9 +20,10 @@ import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageListerHandler;
-import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.store.StoreHandler;
+import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
@@ -174,6 +176,12 @@ public class MainService extends Service {
               BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
                 public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
                   if (processState.isDone()) {
+                    // store current message list to disk!
+                    synchronized (YakoApp.getMessages()) {
+//                      Log.i("rgai", "saving message list to disk");
+//                      StoreHandler.saveCurrentMessageList(MainService.this, YakoApp.getMessages());
+//                      Log.i("rgai", "saved");
+                    }
                     // if we have tasks in queue, then execute the next one
                     if (!asyncTaskQueue.isEmpty()) {
                       MainServiceExtraParams next = asyncTaskQueue.pollFirst();

@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider.Type;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -17,7 +18,7 @@ import java.util.Map;
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageListElement implements Parcelable, Comparable<MessageListElement> {
+public class MessageListElement implements Parcelable, Comparable<MessageListElement>, Serializable {
 
   protected String id;
   protected boolean seen;

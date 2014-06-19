@@ -15,13 +15,14 @@ import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.Utils;
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 
 /**
  *
  * @author k
  */
-public class AttachmentDownloader implements Runnable {
+public class AttachmentDownloader implements Runnable, Serializable {
 
   private final Attachment mAttachment;
   private final Handler mHandler;
