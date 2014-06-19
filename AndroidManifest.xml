@@ -192,7 +192,7 @@
         </intent-filter>
       </receiver>
       
-      <receiver android:name="hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver" >
+      <receiver android:name="hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver" >
         <intent-filter>
           <action android:name="hu.rgai.yako.message_sent_broadcast" />
         </intent-filter>

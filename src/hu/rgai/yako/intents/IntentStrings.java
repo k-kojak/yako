@@ -28,14 +28,17 @@ public class IntentStrings {
     public static final String FORCE_QUERY = "force_query";
     public static final String RESULT = "result";
     public static final String ERROR_MESSAGE = "error_message";
+    public static final String ACCOUNT = "account";
 
     // this 2 data is required to find a messageListElement
     public static final String MESSAGE_ID = "message_id";
     public static final String MESSAGE_ACCOUNT = "message_account";
     
     public static final String MESSAGE_SENT_RESULT_TYPE = "message_sent_result_type";
-    public static final String MESSAGE_SENT_HANDLER_INTENT = "handler_intent_param";
+    public static final String MESSAGE_SENT_BROADCAST_DATA = "message_sent_broadcast_data";
+    public static final String MESSAGE_SENT_HANDLER_DATA = "message_sent_handler_data";
     public static final String MESSAGE_SENT_RECIPIENT_NAME = "message_sent_recipient_name";
+    public static final String MESSAGE_SENT_LOAD_MESSAGES_AFTER_SUCCESS = "message_sent_load_messages_after_success";
     
   }
   

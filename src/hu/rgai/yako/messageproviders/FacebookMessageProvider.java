@@ -22,6 +22,7 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
@@ -368,7 +369,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public void sendMessage(Context context, Intent handlerIntent, Set<? extends MessageRecipient> to,
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
           String content, String subject) {
 
     ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
@@ -412,11 +413,16 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         } catch (XMPPException e) {
           e.printStackTrace();
           success = false;
+        } catch (IllegalStateException ex) {
+          ex.printStackTrace();
+          success = false;
         }
       }
     }
     
-    MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+    
+    
+    MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
   }

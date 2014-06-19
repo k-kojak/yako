@@ -8,6 +8,7 @@ import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.intents.IntentStrings;
 import java.io.IOException;
@@ -177,7 +178,7 @@ public interface MessageProvider {
    * @param content the content of the message
    * @param subject subject of the message (optional)
    */
-  public void sendMessage(Context context, Intent pendingIntent, Set<? extends MessageRecipient> to,
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
           String content, String subject);
   
   public static class Helper {
@@ -191,13 +192,13 @@ public interface MessageProvider {
       return false;
     }
     
-    public static void sendMessageSentBroadcast(Context context, Intent handlerIntent, int sentType) {
+    public static void sendMessageSentBroadcast(Context context, SentMessageBroadcastDescriptor sentMessageData, int sentType) {
       Log.d("rgai", "send message sent broadcast...");
       Intent sendIntent = new Intent(context, MessageSentBroadcastReceiver.class);
       sendIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
       sendIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, sentType);
-      if (handlerIntent != null) {
-        sendIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+      if (sentMessageData != null) {
+        sendIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
       }
       context.sendBroadcast(sendIntent);
     }

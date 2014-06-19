@@ -6,10 +6,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.MainServiceExtraParams;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
+import hu.rgai.yako.beens.SentMessageData;
+import hu.rgai.yako.beens.SimpleSentMessageData;
+import hu.rgai.yako.beens.SmsSentMessageData;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,20 +26,34 @@ import java.util.TimerTask;
  *
  * @author Tamas Kojedzinszky
  */
-public class SimpleMessageSentBrodacastReceiver extends BroadcastReceiver {
+public class SimpleMessageSentBroadcastReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
     if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
-      int resultType = intent.getIntExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, -1);
-      int itemCount = intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1);
-      int itemIndex = intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1);
-      String to = intent.getStringExtra(IntentStrings.Params.MESSAGE_SENT_RECIPIENT_NAME);
-      showNotification(context, resultType, itemIndex, itemCount, to);
+      showNotification(context, intent);
     }
   }
   
-  private void showNotification(final Context context, int resultType, int itemIndex, int itemCount, String to) {
+  private void showNotification(final Context context, Intent intent) {
+    SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+    
+    int resultType = sentMessageData.getResultType();
+    int itemCount = -1;
+    int itemIndex = -1;
+    String to = null;
+    Account accountToLoad = null;
+    if (sentMessageData.getMessageData() instanceof SmsSentMessageData) {
+      SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();
+      itemCount = smsData.getItemCount();
+      itemIndex = smsData.getItemIndex();
+      to = smsData.getRecipientName();
+      accountToLoad = smsData.getAccountToLoad();
+    } else {
+      SimpleSentMessageData simpleData = (SimpleSentMessageData)sentMessageData.getMessageData();
+      to = simpleData.getRecipientName();
+      accountToLoad = simpleData.getAccountToLoad();
+    }
     
     String ticker;
     String title;
@@ -81,6 +104,17 @@ public class SimpleMessageSentBrodacastReceiver extends BroadcastReceiver {
             mNotificationManager.cancel(sentId);
           }
         }, 5000);
+      }
+      
+      // if message was sent succesfully, and we have an account to refresh, then refresh it at main list
+      if (resultType == MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS && accountToLoad != null) {
+        MainServiceExtraParams eParams = new MainServiceExtraParams();
+        eParams.setAccount(accountToLoad);
+        eParams.setForceQuery(true);
+        Intent i = new Intent(context, MainScheduler.class);
+        i.setAction(Context.ALARM_SERVICE);
+        i.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+        context.sendBroadcast(i);
       }
     }
     

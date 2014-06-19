@@ -50,9 +50,10 @@ import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.FullThreadMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.beens.SmsMessageRecipient;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
-import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver;
+import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
@@ -396,10 +397,13 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     
     // TODO: write a nice handler here!!!
-    Intent handlerIntent = new Intent(this, ThreadMessageSentBroadcastReceiver.class);
-    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+//    Intent handlerIntent = new Intent(this, ThreadMessageSentBroadcastReceiver.class);
+//    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    
+    SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(ThreadMessageSentBroadcastReceiver.class,
+            IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
       
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handlerIntent,
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void timeout(Context context) {
@@ -571,7 +575,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       Log.d("rgai", "local receive");
       if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
-        int resultType = intent.getIntExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, -1);
+        SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+        int resultType = sentMessageData.getResultType();
         switch(resultType) {
           case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
             ThreadDisplayerActivity.this.refreshMessageList();

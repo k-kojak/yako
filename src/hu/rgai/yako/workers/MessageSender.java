@@ -9,6 +9,7 @@ import hu.rgai.yako.beens.EmailMessageRecipient;
 import hu.rgai.yako.beens.FacebookAccount;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
 import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.TimeoutHandler;
@@ -27,21 +28,21 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   private final Context mContext;
   private final MessageRecipient mRecipient;
-  private final Intent mHandlerIntent;
+  private final SentMessageBroadcastDescriptor mSentMessageData;
   private final Account mFromAccount;
   private final String mContent;
   private final String mSubject;
   // private String recipients;
   
 
-  public MessageSender(MessageRecipient recipient, Account fromAccount, Intent handlerIntent,
+  public MessageSender(MessageRecipient recipient, Account fromAccount, SentMessageBroadcastDescriptor sentMessageData,
           TimeoutHandler timeoutHandler, String subject, String content, Context context) {
     
     super(timeoutHandler);
     
     this.mRecipient = recipient;
     this.mFromAccount = fromAccount;
-    this.mHandlerIntent = handlerIntent;
+    this.mSentMessageData = sentMessageData;
     this.mSubject = subject;
     this.mContent = content;
     this.mContext = context;
@@ -76,7 +77,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
         recipients.add((MessageRecipient) mRecipient);
       }
       if (mp != null && recipients != null) {
-        mp.sendMessage(mContext, mHandlerIntent, recipients, mContent, mSubject);
+        mp.sendMessage(mContext, mSentMessageData, recipients, mContent, mSubject);
         loggingSendMessage();
       }
     }

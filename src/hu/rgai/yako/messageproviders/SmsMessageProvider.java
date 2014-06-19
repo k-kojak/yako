@@ -23,12 +23,14 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.beens.SmsSentMessageData;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
-import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -219,7 +221,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public void sendMessage(Context context, Intent handlerIntent, Set<? extends MessageRecipient> to,
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
           String content, String subject) {
 
     for (MessageRecipient mr : to) {
@@ -239,14 +241,14 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         sentIntent.setAction(IntentStrings.Actions.SMS_SENT);
         sentIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
         sentIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
-        sentIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+        sentIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
         sentIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), sentIntent, PendingIntent.FLAG_ONE_SHOT));
         
         Intent deliveryIntent = new Intent(mContext, SmsMessageProvider.class);
         deliveryIntent.setAction(IntentStrings.Actions.SMS_DELIVERED);
         deliveryIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
         deliveryIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
-        deliveryIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
+        deliveryIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
         deliveryIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), deliveryIntent, PendingIntent.FLAG_ONE_SHOT));
       }
       
@@ -292,19 +294,24 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
       
     } else if (intent.getAction().equals(IntentStrings.Actions.SMS_SENT)) {
-      Intent handlerIntent = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT);
-      handlerIntent.putExtra(IntentStrings.Params.ITEM_INDEX, intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
-      handlerIntent.putExtra(IntentStrings.Params.ITEM_COUNT, intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
+      SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+      SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();
+      
+      smsData.setItemIndex(intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
+      smsData.setItemCount(intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
       boolean success = getResultCode() == Activity.RESULT_OK;
-      MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+      
+      MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     } else if (intent.getAction().equals(IntentStrings.Actions.SMS_DELIVERED)) {
-      Log.d("rgai", "SMS DELIVERED");
-      Intent handlerIntent = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT);
-      handlerIntent.putExtra(IntentStrings.Params.ITEM_INDEX, intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, 0));
-      handlerIntent.putExtra(IntentStrings.Params.ITEM_COUNT, intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, 0));
+      SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+      SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();
+      
+      smsData.setItemIndex(intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
+      smsData.setItemCount(intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
       boolean success = getResultCode() == Activity.RESULT_OK;
-      MessageProvider.Helper.sendMessageSentBroadcast(context, handlerIntent,
+      
+      MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_DELIVERED : MessageSentBroadcastReceiver.MESSAGE_DELIVER_FAILED);
     }
     

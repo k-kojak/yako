@@ -4,6 +4,9 @@ package hu.rgai.yako.broadcastreceivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.intents.IntentStrings;
 
 /**
@@ -25,12 +28,19 @@ public class MessageSentBroadcastReceiver extends BroadcastReceiver {
     
     // TODO: later here we can add some message store logic if sent wasn't successfull for later resend
     if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
-      if (intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT) == null) {
+      if (intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA) == null) {
         
       } else {
-        Intent i = (Intent) intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT);
-        i.putExtra(IntentStrings.Params.MESSAGE_SENT_RESULT_TYPE, sentResultType);
+        
+        SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+        
+        sentMessageData.setResultType(sentResultType);
+        
+        Intent i = new Intent(context, sentMessageData.getBroadcastClassToCall());
+        i.setAction(sentMessageData.getAction());
+        i.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
         context.sendBroadcast(i);
+        
       }
     }
   }

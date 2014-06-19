@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
@@ -43,17 +44,21 @@ import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
+import hu.rgai.yako.beens.SimpleSentMessageData;
+import hu.rgai.yako.beens.SentMessageData;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
-import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBrodacastReceiver;
+import hu.rgai.yako.beens.SmsSentMessageData;
+import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.TimeoutHandler;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
@@ -366,11 +371,13 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
     // setting intent data for handling returning result
-    Intent handlerIntent = new Intent(this, SimpleMessageSentBrodacastReceiver.class);
-    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
-    handlerIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_RECIPIENT_NAME, recipient.getDisplayName());
+    SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(SimpleMessageSentBroadcastReceiver.class,
+            IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    SentMessageData smd = getSentMessageDataToAccount(recipient.getDisplayName(), from);
+    sentMessBroadcD.setMessageData(smd);
     
-    MessageSender rs = new MessageSender(recipient, from, handlerIntent,
+    
+    MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void timeout(Context context) {
@@ -385,30 +392,48 @@ public class MessageReplyActivity extends ActionBarActivity {
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
       // request a message list for the account we sent the message with
-      int threadAccountCount = 0;
-      Account threadAccount = null;
-      for (Account a : mChoosenAccountsToSend) {
-        if (a.isThreadAccount()) {
-          threadAccountCount++;
-          threadAccount = a;
-        }
-      }
-      Log.d("rgai", "thread account count: " + threadAccountCount);
-      Log.d("rgai", "thread account: " + threadAccount);
-      if (!mChoosenAccountsToSend.isEmpty()) {
-        MainServiceExtraParams eParams = new MainServiceExtraParams();
-        if (threadAccountCount == 1) {
-          eParams.setAccount(threadAccount);
-        }
-        eParams.setForceQuery(true);
-        Intent intent = new Intent(this, MainScheduler.class);
-        intent.setAction(Context.ALARM_SERVICE);
-        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
-        this.sendBroadcast(intent);
-      }
+//      int threadAccountCount = 0;
+//      Account threadAccount = null;
+//      for (Account a : mChoosenAccountsToSend) {
+//        if (a.isThreadAccount()) {
+//          threadAccountCount++;
+//          threadAccount = a;
+//        }
+//      }
+//      Log.d("rgai", "thread account count: " + threadAccountCount);
+//      Log.d("rgai", "thread account: " + threadAccount);
+//      if (!mChoosenAccountsToSend.isEmpty()) {
+//        Log.d("rgai", "sending request to get messages");
+//        MainServiceExtraParams eParams = new MainServiceExtraParams();
+//        if (threadAccountCount == 1) {
+//          eParams.setAccount(threadAccount);
+//        }
+//        eParams.setForceQuery(true);
+//        Intent intent = new Intent(this, MainScheduler.class);
+//        intent.setAction(Context.ALARM_SERVICE);
+//        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+//        this.sendBroadcast(intent);
+//      }
       finish();
     } else {
       prepareMessageSending(recipients);
+    }
+  }
+  
+  private SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
+  
+    if (from.getAccountType().equals(MessageProvider.Type.SMS)) {
+      SmsSentMessageData smsData = new SmsSentMessageData(recipientName);
+      if (from.isThreadAccount()) {
+        smsData.setAccountToLoad(from);
+      }
+      return smsData;
+    } else {
+      SimpleSentMessageData simpleData = new SimpleSentMessageData(recipientName);
+      if (from.isThreadAccount()) {
+        simpleData.setAccountToLoad(from);
+      }
+      return simpleData;
     }
   }
 
