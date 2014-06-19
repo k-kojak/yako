@@ -152,7 +152,7 @@ public class MainActivityFragment extends Fragment {
             return true;
           case R.id.discard:
             contextActionDeleteMessage();
-            hideContextualActionbar();
+//            hideContextualActionbar();
             return true;
           case R.id.mark_seen:
             contextActionMarkMessage(true);
@@ -265,7 +265,7 @@ public class MainActivityFragment extends Fragment {
   
     
   private void contextActionDeleteMessage() {
-    
+    cancelContextualActionbarTimer();
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
@@ -299,9 +299,14 @@ public class MainActivityFragment extends Fragment {
 
         mTopProgressBar.setVisibility(View.VISIBLE);
         
+        hideContextualActionbar();
       }
     });
-    builder.setNegativeButton("No", null);
+    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        startContextualActionbarTimer();
+      }
+    }); 
     builder.setTitle("Delete message");
     builder.setMessage("Delete selected message?").show();
     
