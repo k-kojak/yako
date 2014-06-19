@@ -73,15 +73,15 @@ public class SimpleMessageSentBrodacastReceiver extends BroadcastReceiver {
       final int sentId = (int)(Math.random() * 100000);
       mNotificationManager.notify(sentId, mBuilder.build());
       
-//      if (resultType == MessageSentBroadcastReceiver.MESSAGE_DELIVERED || resultType == MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS) {
-//        new Timer().schedule(new TimerTask() {
-//          @Override
-//          public void run() {
-//            NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//            mNotificationManager.cancel(sentId);
-//          }
-//        }, 5000);
-//      }
+      if (resultType == MessageSentBroadcastReceiver.MESSAGE_DELIVERED || resultType == MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS) {
+        new Timer().schedule(new TimerTask() {
+          @Override
+          public void run() {
+            NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancel(sentId);
+          }
+        }, 5000);
+      }
     }
     
   }

@@ -240,14 +240,14 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         sentIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
         sentIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
         sentIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
-        sentIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), sentIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+        sentIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), sentIntent, PendingIntent.FLAG_ONE_SHOT));
         
         Intent deliveryIntent = new Intent(mContext, SmsMessageProvider.class);
         deliveryIntent.setAction(IntentStrings.Actions.SMS_DELIVERED);
         deliveryIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
         deliveryIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
         deliveryIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_HANDLER_INTENT, handlerIntent);
-        deliveryIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), deliveryIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+        deliveryIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), deliveryIntent, PendingIntent.FLAG_ONE_SHOT));
       }
       
       smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, sentIntents, deliveryIntents);
