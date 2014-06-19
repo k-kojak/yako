@@ -53,7 +53,6 @@ import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.beens.SmsMessageRecipient;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
-import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
@@ -92,7 +91,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   
   
   private ConnectivityListener mWifiListener = null;
-  private boolean thereWasMessageDeletion = false;
+  private boolean mMessageListChanged = false;
 
   
   /**
@@ -133,12 +132,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     
     
+    
     // setting action bar
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setTitle((mMessage.getFrom() != null ? mMessage.getFrom().getName() : "") + " | " + mMessage.getAccount().getAccountType().toString());
-    
-    
+
     
     
     // initing GUI variables
@@ -151,7 +150,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     
     mText = (EditText) findViewById(R.id.text);
-    mHandler = new ThreadContentGetterHandler(this, mMessage);
+    mHandler = new ThreadContentGetterHandler(this);
     mCharCount = (TextView)findViewById(R.id.char_count);
     
     
@@ -225,7 +224,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
           AlertDialog.Builder builder = new AlertDialog.Builder(this);
           builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-              thereWasMessageDeletion = true;
+              mMessageListChanged = true;
               FullSimpleMessage simpleMessage = adapter.getItem(info.position);
               
               MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), ThreadDisplayerActivity.this);
@@ -274,7 +273,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    thereWasMessageDeletion = false;
+    mMessageListChanged = false;
     if (mMessage == null) return;
     
     
@@ -337,9 +336,9 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   @Override
   public void finish() {
     Intent resultIntent = new Intent();
-    resultIntent.putExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, thereWasMessageDeletion);
-    if (thereWasMessageDeletion) {
-      resultIntent.putExtra(Settings.Intents.ACCOUNT, (Parcelable)mMessage.getAccount());
+    resultIntent.putExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, mMessageListChanged);
+    if (mMessageListChanged) {
+      resultIntent.putExtra(IntentStrings.Params.ACCOUNT, (Parcelable)mMessage.getAccount());
     }
     setResult(RESULT_OK, resultIntent);
     super.finish();
@@ -573,13 +572,13 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public class MessageSentResultReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-      Log.d("rgai", "local receive");
       if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
         SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
         int resultType = sentMessageData.getResultType();
         switch(resultType) {
           case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
             ThreadDisplayerActivity.this.refreshMessageList();
+            mMessageListChanged = true;
             break;
           case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
             Toast.makeText(context, "Unable to send message", Toast.LENGTH_SHORT).show();

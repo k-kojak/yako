@@ -282,11 +282,11 @@ public class MainActivity extends ActionBarActivity {
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT) {
-      if (data != null && data.hasExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION)) {
-        boolean refreshNeeded = data.getBooleanExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, false);
+      if (data != null && data.hasExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED)) {
+        boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
-          Account a = data.getParcelableExtra(Settings.Intents.ACCOUNT);
+          Account a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();

@@ -40,6 +40,8 @@ public class IntentStrings {
     public static final String MESSAGE_SENT_RECIPIENT_NAME = "message_sent_recipient_name";
     public static final String MESSAGE_SENT_LOAD_MESSAGES_AFTER_SUCCESS = "message_sent_load_messages_after_success";
     
+    public static final String MESSAGE_THREAD_CHANGED = "message_thread_changed";
+    
   }
   
   
