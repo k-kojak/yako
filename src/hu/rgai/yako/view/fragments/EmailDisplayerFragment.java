@@ -79,7 +79,7 @@ public class EmailDisplayerFragment extends Fragment {
         if (url.startsWith("mailto:")) {
           Intent intent = new Intent(EmailDisplayerFragment.this.getActivity(), MessageReplyActivity.class);
           intent.putExtra("account", (Parcelable) mAccount);
-          intent.putExtra("from", mFrom);
+          intent.putExtra("from", (Parcelable)mFrom);
           startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         } else {
           Intent i = new Intent(Intent.ACTION_VIEW);
