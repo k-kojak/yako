@@ -173,11 +173,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     return mMessage.getAccount();
   }
 
-  /**
-   * A simple pager adapter that represents 5 {@link ScreenSlidePageFragment} objects, in
-   * sequence.
-   */
-  
   private class MyPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
 
     int mPosition;

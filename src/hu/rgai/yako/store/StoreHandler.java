@@ -19,6 +19,8 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -346,9 +348,11 @@ public class StoreHandler {
       saveAccounts(accounts, context);
     }
   }
-  
 
+
+  // TODO: saving accounts to shared preferences is unnecessary.
   public static void saveAccounts(TreeSet<Account> accounts, Context context) throws Exception {
+
     Log.d("rgai", "save accounts at store: " + accounts);
     removeAccountSettings(context);
     int i = 0;
@@ -394,6 +398,16 @@ public class StoreHandler {
     
     // reload accounts at application
     YakoApp.setAccounts(accounts);
+
+    // save accounts in database
+    // before we save accounts, delete messages because messages references to accounts
+    MessageListDAO msgDAO = new MessageListDAO(context);
+    msgDAO.clearTable();
+    msgDAO.close();
+
+    AccountDAO accDAO = new AccountDAO(context);
+    accDAO.insertAccounts(accounts);
+    accDAO.close();
   }
   
   

@@ -107,11 +107,6 @@ public class MessageListerHandler extends TimeoutHandler {
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      // itt mindig vegig iteral az osszes elemen, az osszes provider lekerdezesekor, ezert 5x is puttyog ha van 1 olvasatlan uzenet
-      // ES az utolso figyelmeztetes hangja regire van allitva: azaz frissen inditottuk az alkalmazast
-      // CSAK azokra az accountokra kellene nezni a feltetelt amit eppen lekerdeztunk
-      
-      // csak akkor szivatodik itt meg a rendszer, ha a JOVOBOL kapunk uzenetet....!!!!!!!!!!!!
       for (MessageListElement mle : YakoApp.getMessages()) {
         if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
           mle.setSeen(true);
@@ -286,9 +281,9 @@ public class MessageListerHandler extends TimeoutHandler {
 
                 /**
                  * "Marking" FB message seen here. Do not change info of the item,
-                 * if the date is the same, so the queried data will not override
+                 * if the date is the same, because the queried data would override
                  * the displayed object. Facebook does not mark messages as seen
-                 * when opening them, so we have to handle it at client side. OR
+                 * when opening it, so we have to handle it at client side. OR
                  * if we check the message at FB, then turn it seen at the app
                  * 
                  * plus if newmessage is BEFORE the oldMessage's date, thats ok, because

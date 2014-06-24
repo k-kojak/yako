@@ -270,36 +270,36 @@ public class MainActivityFragment extends Fragment {
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
         
-        MessageListElement mle = contextSelectedElements.first();
-        Account acc = mle.getAccount();
-        MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
+      MessageListElement mle = contextSelectedElements.first();
+      Account acc = mle.getAccount();
+      MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
 
-        MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
-          @Override
-          public void onMainListDelete(MessageListElement messageToDelete) {
-            synchronized (YakoApp.getMessages()) {
-              YakoApp.getMessages().remove(messageToDelete);
-            }
-            notifyAdapterChange();
+      MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
+        @Override
+        public void onMainListDelete(MessageListElement messageToDelete) {
+          synchronized (YakoApp.getMessages()) {
+            YakoApp.getMessages().remove(messageToDelete);
           }
+          notifyAdapterChange();
+        }
 
-          @Override
-          public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {}
+        @Override
+        public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {}
 
-          @Override
-          public void onComplete() {
-            mTopProgressBar.setVisibility(View.GONE);
-          }
-          
-        };
-        MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
-                mle.getId(), handler, acc.isThreadAccount(), true);
-        messageMarker.setTimeout(10000);
-        messageMarker.executeTask(MainActivityFragment.this.getActivity(), null);
+        @Override
+        public void onComplete() {
+          mTopProgressBar.setVisibility(View.GONE);
+        }
 
-        mTopProgressBar.setVisibility(View.VISIBLE);
-        
-        hideContextualActionbar();
+      };
+      MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
+              mle.getId(), handler, acc.isThreadAccount(), true);
+      messageMarker.setTimeout(10000);
+      messageMarker.executeTask(MainActivityFragment.this.getActivity(), null);
+
+      mTopProgressBar.setVisibility(View.VISIBLE);
+
+      hideContextualActionbar();
       }
     });
     builder.setNegativeButton("No", new DialogInterface.OnClickListener() {

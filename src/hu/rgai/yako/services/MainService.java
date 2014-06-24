@@ -22,16 +22,15 @@ import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,19 +79,9 @@ public class MainService extends Service {
     
   }
   
-  private void updateMessagesPrettyDate() {
-    if (YakoApp.getMessages() != null) {
-      SimpleDateFormat sdf = new SimpleDateFormat();
-      for (MessageListElement mlep : YakoApp.getMessages()) {
-        mlep.updatePrettyDateString(sdf);
-      }
-    }
-  }
-  
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    MessageListElement.refreshCurrentDates();
-    updateMessagesPrettyDate();
+    YakoApp.updateMessagesPrettyDateStrings();
     
     TreeSet<Account> accounts = YakoApp.getAccounts(this);
     
@@ -178,9 +167,21 @@ public class MainService extends Service {
                   if (processState.isDone()) {
                     // store current message list to disk!
                     synchronized (YakoApp.getMessages()) {
-//                      Log.i("rgai", "saving message list to disk");
-//                      StoreHandler.saveCurrentMessageList(MainService.this, YakoApp.getMessages());
-//                      Log.i("rgai", "saved");
+                      Log.i("rgai", "saving message list to disk");
+                      AccountDAO accDAO = new AccountDAO(MainService.this);
+                      TreeMap<Account, Integer> accounts = accDAO.getAccountToIdMap();
+
+                      // this means the database does not contains any accounts
+                      if (accounts.isEmpty()) {
+                        accDAO.insertAccounts(StoreHandler.getAccounts(MainService.this));
+                        accounts = accDAO.getAccountToIdMap();
+                      }
+                      accDAO.close();
+
+                      Log.d("rgai", "accountsMap: " + accounts);
+                      MessageListDAO msgDAO = new MessageListDAO(MainService.this);
+                      msgDAO.insertMessages(YakoApp.getMessages(), accounts);
+                      Log.i("rgai", "saved");
                     }
                     // if we have tasks in queue, then execute the next one
                     if (!asyncTaskQueue.isEmpty()) {

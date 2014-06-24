@@ -2,6 +2,7 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider.Type;
 import java.io.Serializable;
@@ -39,6 +40,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
   protected static Date today = new Date();
   protected static Date thisYear = new Date();
+  static {
+    refreshCurrentDates();
+  }
   
   public static final Parcelable.Creator<MessageListElement> CREATOR = new Parcelable.Creator<MessageListElement>() {
     public MessageListElement createFromParcel(Parcel in) {
@@ -61,7 +65,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param date date of the message
    * @param recipients the list of recipients
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
   public MessageListElement(String id, boolean seen, String title, String subTitle, int unreadCount, Person from,
@@ -123,7 +127,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param recipients the recipients of the message
    * @param date date of the message
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link  hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
   public MessageListElement(String id, boolean seen, String title, int unreadCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
     this(id, seen, title, null, unreadCount, from, recipients, date, account, messageType, false);
@@ -138,7 +142,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param date date of the message
    * @param recipients the original recipients
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
   public MessageListElement(String id, boolean seen, String title, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
     this(id, seen, title, null, -1, from, recipients, date, account, messageType, false);
@@ -154,7 +158,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param recipients the original recipients
    * @param date date of the message
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
   public MessageListElement(String id, boolean seen, String title, String snippet,
           Person from, List<Person> recipients, Date date, Account account, Type messageType) {

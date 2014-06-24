@@ -14,11 +14,12 @@ import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeSet;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 
 /**
@@ -38,6 +39,18 @@ public class YakoApp extends Application {
 
   public static TreeSet<MessageListElement> getMessages() {
     return messages;
+  }
+
+  public static void updateMessagesPrettyDateStrings() {
+    MessageListElement.refreshCurrentDates();
+    synchronized (YakoApp.getMessages()) {
+      if (YakoApp.getMessages() != null) {
+        SimpleDateFormat sdf = new SimpleDateFormat();
+        for (MessageListElement mlep : YakoApp.getMessages()) {
+          mlep.updatePrettyDateString(sdf);
+        }
+      }
+    }
   }
   
   public static boolean hasMessages() {
@@ -249,6 +262,15 @@ public class YakoApp extends Application {
     isPhone = setIsPhone();
     
     // read in message list
+    long start = System.currentTimeMillis();
+    AccountDAO accountDAO = new AccountDAO(this);
+    TreeMap<Integer, Account> accounts = accountDAO.getIdToAccountsMap();
+    accountDAO.close();
+
+    MessageListDAO msgDAO = new MessageListDAO(this);
+    messages = msgDAO.getAllMessages(accounts);
+    msgDAO.close();
+    Log.d("rgai", "time to read "+ messages.size() +" items from db: " + (System.currentTimeMillis() - start) + " ms");
 //    messages = StoreHandler.getCurrentMessageList(this);
     if (messages == null) {
 //      Log.d("rgai", "messages is null, create new object");
