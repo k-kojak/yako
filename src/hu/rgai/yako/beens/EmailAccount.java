@@ -44,14 +44,19 @@ public class EmailAccount extends Account {
 
   public EmailAccount(Parcel in) {
     this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(),
-            in.readInt(), in.readByte() == 1);
+            in.readInt(), in.readByte() == 1, in.readInt());
   }
 
   public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl) {
-    this(email, password, imapAddress, smtpAddress, default_imap_port, default_smtp_port, ssl);
+    this(email, password, imapAddress, smtpAddress, ssl, -1);
   }
 
-  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, int imapPort, int smtpPort, boolean ssl) {
+  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl, int _id) {
+    this(email, password, imapAddress, smtpAddress, default_imap_port, default_smtp_port, ssl, _id);
+  }
+
+  public EmailAccount(String email, String password, String imapAddress, String smtpAddress, int imapPort, int smtpPort,
+                      boolean ssl, int _id) {
     this.email = email;
     this.password = password;
     this.imapAddress = imapAddress;
@@ -59,6 +64,7 @@ public class EmailAccount extends Account {
     this.imapPort = imapPort;
     this.smtpPort = smtpPort;
     this.ssl = ssl;
+    this.m_id = _id;
     this.accountType = MessageProvider.Type.EMAIL;
   }
 
@@ -74,6 +80,7 @@ public class EmailAccount extends Account {
     out.writeInt(this.imapPort);
     out.writeInt(this.smtpPort);
     out.writeByte(this.ssl == true ? (byte) 1 : 0);
+    out.writeInt(m_id);
   }
 
   @Override

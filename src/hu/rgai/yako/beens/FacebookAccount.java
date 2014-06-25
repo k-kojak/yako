@@ -34,14 +34,19 @@ public class FacebookAccount extends Account {
   
   
   public FacebookAccount(Parcel in) {
-    this(in.readString(), in.readString(), in.readString(), in.readString());
+    this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt());
   }
-  
+
   public FacebookAccount(String displayName, String uniqueName, String id, String password) {
+    this(displayName, uniqueName, id, password, -1);
+  }
+
+  public FacebookAccount(String displayName, String uniqueName, String id, String password, int _id) {
     this.displayName = displayName;
     this.uniqueName = uniqueName;
     this.id = id;
     this.password = password;
+    this.m_id = _id;
     
     this.accountType = MessageProvider.Type.FACEBOOK;
   }
@@ -57,6 +62,7 @@ public class FacebookAccount extends Account {
     out.writeString(uniqueName);
     out.writeString(id);
     out.writeString(password);
+    out.writeInt(m_id);
   }
 
   @Override
@@ -86,7 +92,7 @@ public class FacebookAccount extends Account {
   public MessageProvider.Type getAccountType() {
     return accountType;
   }
-  
+
   @Override
   public String getDisplayName() {
     return displayName;

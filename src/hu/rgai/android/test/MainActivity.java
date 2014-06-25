@@ -1,11 +1,9 @@
 package hu.rgai.android.test;
 
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -46,6 +44,7 @@ import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
@@ -191,7 +190,7 @@ public class MainActivity extends ActionBarActivity {
     
     
     // setting filter adapter onResume, because it might change at settings panel
-    TreeSet<Account> accounts = YakoApp.getAccounts(this);
+    TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mDrawerList.setAdapter(mDrawerFilterAdapter);
     int indexOfAccount = 0;
@@ -241,6 +240,18 @@ public class MainActivity extends ActionBarActivity {
     refreshLoadingIndicatorState();
     
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
+
+    if (!StoreHandler.isMessageForDatabaseSorryDisplayed(this)) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+          StoreHandler.setIsMessageForDatabaseSorryDisplayed(MainActivity.this);
+        }
+      });
+      builder.setTitle("Backend changes");
+      builder.setMessage("A bigger code refactor's consequence was that your earlier accounts were lost.\n" +
+              "Please add them again at account manage.\nApologize for the inconvenience.").show();
+    }
   }
   
   @Override

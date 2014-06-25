@@ -57,6 +57,7 @@ import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
@@ -441,14 +442,12 @@ public class MessageReplyActivity extends ActionBarActivity {
 
     if (recipients.isEmpty()) return;
     
-    TreeSet<Account> accs = YakoApp.getAccounts(this);
+    TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 
     MessageRecipient ri = recipients.remove(0);
     List<Account> availableAccounts = new LinkedList<Account>();
-    Iterator<Account> accIt = accs.iterator();
 
-    while (accIt.hasNext()) {
-      Account actAcc = accIt.next();
+    for (Account actAcc : accounts) {
       if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
               && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
               || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))

@@ -82,9 +82,9 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     YakoApp.updateMessagesPrettyDateStrings();
-    
-    TreeSet<Account> accounts = YakoApp.getAccounts(this);
-    
+
+    TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
+
     final MainServiceExtraParams extraParams;
     
     // if true that means android system restarted the mainservice without sending any parameter
@@ -168,18 +168,18 @@ public class MainService extends Service {
                     // store current message list to disk!
                     synchronized (YakoApp.getMessages()) {
                       Log.i("rgai", "saving message list to disk");
-                      AccountDAO accDAO = new AccountDAO(MainService.this);
+                      AccountDAO accDAO = AccountDAO.getInstance(MainService.this);
                       TreeMap<Account, Integer> accounts = accDAO.getAccountToIdMap();
 
                       // this means the database does not contains any accounts
-                      if (accounts.isEmpty()) {
-                        accDAO.insertAccounts(StoreHandler.getAccounts(MainService.this));
-                        accounts = accDAO.getAccountToIdMap();
-                      }
+//                      if (accounts.isEmpty()) {
+//                        accDAO.insertAccounts(StoreHandler.getAccounts(MainService.this));
+//                        accounts = accDAO.getAccountToIdMap();
+//                      }
                       accDAO.close();
 
                       Log.d("rgai", "accountsMap: " + accounts);
-                      MessageListDAO msgDAO = new MessageListDAO(MainService.this);
+                      MessageListDAO msgDAO = MessageListDAO.getInstane(MainService.this);
                       msgDAO.insertMessages(YakoApp.getMessages(), accounts);
                       Log.i("rgai", "saved");
                     }

@@ -10,7 +10,13 @@ import java.io.Serializable;
  * @author Tamas Kojedzinszky
  */
 public abstract class Account implements Parcelable, Serializable, Comparable<Account> {
-  
+
+  protected int m_id;
+
+  public int getDatabaseId() {
+    return m_id;
+  }
+
   public abstract String getDisplayName();
   
   public abstract MessageProvider.Type getAccountType();

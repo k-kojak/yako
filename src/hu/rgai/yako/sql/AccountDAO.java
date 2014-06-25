@@ -3,46 +3,109 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-/**
- * Created by kojak on 6/23/2014.
- */
+
 public class AccountDAO  {
 
-  private SQLiteDatabase database;
-  private SQLHelper dbHelper;
-  private String[] allColumns = { SQLHelper.AccountTable.COL_ID, SQLHelper.AccountTable.COL_TYPE,
-          SQLHelper.AccountTable.COL_UNIQUE_NAME, SQLHelper.AccountTable.COL_PASS, SQLHelper.AccountTable.COL_IMAP_ADDR,
-          SQLHelper.AccountTable.COL_SMTP_ADDR, SQLHelper.AccountTable.COL_IMAP_PORT, SQLHelper.AccountTable.COL_SMTP_PORT,
-          SQLHelper.AccountTable.COL_IS_SSL, SQLHelper.AccountTable.COL_FB_DISP_NAME, SQLHelper.AccountTable.COL_FB_UNIQUE_NAME };
+  private static AccountDAO instance = null;
+  private SQLHelper mDbHelper = null;
 
-  public AccountDAO(Context context) {
-    dbHelper = new SQLHelper(context);
-    database = dbHelper.getWritableDatabase();
+
+  // table definitions
+  public static final String TABLE_ACCOUNTS = "accounts";
+
+  public static final String COL_ID = "_id";
+  private static final String COL_TYPE = "account_type";
+  // in case of email account this holds the email, in case of Facebook account it holds the unique number for XMPP
+  private static final String COL_UNIQUE_NAME = "unique_name";
+  private static final String COL_PASS = "password";
+  private static final String COL_IMAP_ADDR = "imap_address";
+  private static final String COL_SMTP_ADDR = "smtp_address";
+  private static final String COL_IMAP_PORT = "imap_port";
+  private static final String COL_SMTP_PORT = "smtp_port";
+  private static final String COL_IS_SSL = "is_ssl";
+  private static final String COL_FB_DISP_NAME = "fb_display_name";
+  private static final String COL_FB_UNIQUE_NAME = "fb_unique_name";
+
+
+  public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_ACCOUNTS + "("
+          + COL_ID + " integer primary key autoincrement, "
+          + COL_TYPE + " text not null, "
+          + COL_UNIQUE_NAME + " text, "
+          + COL_PASS + " text, "
+          + COL_IMAP_ADDR + " text, "
+          + COL_SMTP_ADDR + " text, "
+          + COL_IMAP_PORT + " integer, "
+          + COL_SMTP_PORT + " integer, "
+          + COL_IS_SSL + " integer, "
+          + COL_FB_DISP_NAME + " text, "
+          + COL_FB_UNIQUE_NAME + " text, "
+          + "UNIQUE ("+ COL_UNIQUE_NAME +","+ COL_TYPE +"));";
+
+  private String[] allColumns = { COL_ID, COL_TYPE, COL_UNIQUE_NAME, COL_PASS, COL_IMAP_ADDR, COL_SMTP_ADDR,
+          COL_IMAP_PORT, COL_SMTP_PORT, COL_IS_SSL, COL_FB_DISP_NAME, COL_FB_UNIQUE_NAME };
+
+
+  public static synchronized AccountDAO getInstance(Context context) {
+    if (instance == null) {
+      instance = new AccountDAO(context);
+    }
+    return instance;
   }
 
-  public void close() {
-    database.close();
-    dbHelper.close();
+
+  private AccountDAO(Context context) {
+    mDbHelper = SQLHelper.getInstance(context);
   }
 
-  public void insertAccounts(TreeSet<Account> accounts) {
-    clearTable();
-    for (Account a : accounts) {
-      insertAccount(a);
+
+  public synchronized void close() {
+    mDbHelper.closeDatabase();
+  }
+
+
+  public synchronized void checkSMSAccount(Context context, boolean isPhone) {
+    int _id = -1;
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, new String[] {COL_ID}, COL_TYPE + " = ?",
+            new String[]{MessageProvider.Type.SMS.toString()}, null, null, null);
+
+    cursor.moveToFirst();
+
+    while (!cursor.isAfterLast()) {
+      _id = cursor.getInt(0);
+      // there should be only 1 sms account in the db, so break if we found that one
+      break;
+    }
+    cursor.close();
+
+    Log.d("rgai", "_id = " + _id);
+    // do nothing, the sms account is in the db and the device is a phone
+    // OR account is not in the db and device is not a phone
+    if (_id != -1 && isPhone || _id == -1 && !isPhone) {
+      Log.d("rgai", "case 1");
+    }
+    // sms account is in the db, but this is not a phone (SIM card is removed?) so we have to remove that account and
+    // the messages to it
+    else if (_id != -1 && !isPhone) {
+      removeAccountWithCascade(context, _id);
+    }
+    // SMS account is not in DB, but the device is a phone, let's put SMS account to DB
+    else if (_id == -1 && isPhone) {
+      Log.d("rgai", "case 3");
+      addAccount(SmsAccount.account);
     }
   }
 
+
   public TreeMap<Account, Integer> getAccountToIdMap() {
     TreeMap<Account, Integer> accounts = new TreeMap<Account, Integer>();
-    Cursor cursor = database.query(SQLHelper.AccountTable.TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -54,9 +117,10 @@ public class AccountDAO  {
     return accounts;
   }
 
+
   public TreeMap<Integer, Account> getIdToAccountsMap() {
     TreeMap<Integer, Account> accounts = new TreeMap<Integer, Account>();
-    Cursor cursor = database.query(SQLHelper.AccountTable.TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -68,7 +132,15 @@ public class AccountDAO  {
     return accounts;
   }
 
-  private void insertAccount(Account account) {
+
+  public synchronized void modifyAccount(Context context, Account oldAccount, Account newAccount) {
+    MessageListDAO.getInstane(context).removeMessagesToAccount(oldAccount.getDatabaseId());
+    removeAccount(oldAccount.getDatabaseId());
+    addAccount(newAccount);
+  }
+
+
+  public synchronized void addAccount(Account account) {
     ContentValues values = null;
     MessageProvider.Type accountType = account.getAccountType();
     switch (accountType) {
@@ -88,56 +160,106 @@ public class AccountDAO  {
         break;
     }
     if (values != null) {
-      database.insert(SQLHelper.AccountTable.TABLE_ACCOUNTS, null, values);
+      mDbHelper.getDatabase().insert(TABLE_ACCOUNTS, null, values);
     }
   }
 
+
   private ContentValues buildEmailContentValues(EmailAccount a) {
     ContentValues cv = new ContentValues();
-    cv.put(SQLHelper.AccountTable.COL_TYPE, a.getAccountType().toString());
-    cv.put(SQLHelper.AccountTable.COL_UNIQUE_NAME, a.getEmail());
-    cv.put(SQLHelper.AccountTable.COL_PASS, a.getPassword());
-    cv.put(SQLHelper.AccountTable.COL_IMAP_ADDR, a.getImapAddress());
-    cv.put(SQLHelper.AccountTable.COL_SMTP_ADDR, a.getSmtpAddress());
-    cv.put(SQLHelper.AccountTable.COL_IMAP_PORT, a.getImapPort());
-    cv.put(SQLHelper.AccountTable.COL_SMTP_PORT, a.getSmtpPort());
-    cv.put(SQLHelper.AccountTable.COL_IS_SSL, a.isSsl() ? 1 : 0);
+    cv.put(COL_TYPE, a.getAccountType().toString());
+    cv.put(COL_UNIQUE_NAME, a.getEmail());
+    cv.put(COL_PASS, a.getPassword());
+    cv.put(COL_IMAP_ADDR, a.getImapAddress());
+    cv.put(COL_SMTP_ADDR, a.getSmtpAddress());
+    cv.put(COL_IMAP_PORT, a.getImapPort());
+    cv.put(COL_SMTP_PORT, a.getSmtpPort());
+    cv.put(COL_IS_SSL, a.isSsl() ? 1 : 0);
     return cv;
   }
+
 
   private ContentValues buildGmailContentValues(GmailAccount a) {
     ContentValues cv = new ContentValues();
-    cv.put(SQLHelper.AccountTable.COL_TYPE, a.getAccountType().toString());
-    cv.put(SQLHelper.AccountTable.COL_UNIQUE_NAME, a.getEmail());
-    cv.put(SQLHelper.AccountTable.COL_PASS, a.getPassword());
+    cv.put(COL_TYPE, a.getAccountType().toString());
+    cv.put(COL_UNIQUE_NAME, a.getEmail());
+    cv.put(COL_PASS, a.getPassword());
     return cv;
   }
+
 
   private ContentValues buildSMSContentValues() {
     ContentValues cv = new ContentValues();
-    cv.put(SQLHelper.AccountTable.COL_TYPE, MessageProvider.Type.SMS.toString());
+    cv.put(COL_TYPE, MessageProvider.Type.SMS.toString());
     return cv;
   }
+
 
   private ContentValues buildFacebookContentValues(FacebookAccount a) {
     ContentValues cv = new ContentValues();
-    cv.put(SQLHelper.AccountTable.COL_TYPE, a.getAccountType().toString());
-    cv.put(SQLHelper.AccountTable.COL_FB_DISP_NAME, a.getDisplayName());
-    cv.put(SQLHelper.AccountTable.COL_FB_UNIQUE_NAME, a.getUniqueName());
-    cv.put(SQLHelper.AccountTable.COL_UNIQUE_NAME, a.getId());
-    cv.put(SQLHelper.AccountTable.COL_PASS, a.getPassword());
+    cv.put(COL_TYPE, a.getAccountType().toString());
+    cv.put(COL_FB_DISP_NAME, a.getDisplayName());
+    cv.put(COL_FB_UNIQUE_NAME, a.getUniqueName());
+    cv.put(COL_UNIQUE_NAME, a.getId());
+    cv.put(COL_PASS, a.getPassword());
     return cv;
   }
 
-  public void clearTable() {
-    database.delete(SQLHelper.AccountTable.TABLE_ACCOUNTS, null, null);
+
+  private void removeAccount(int accountId) {
+    mDbHelper.getDatabase().delete(TABLE_ACCOUNTS, COL_ID + " = ?", new String[] {Integer.toString(accountId)});
   }
 
+
+  /**
+   * Deletes the given account and the MessageListElements which belongs to this account.
+   *
+   * @param context
+   * @param accountId the database _id of the account
+   */
+  public void removeAccountWithCascade(Context context, int accountId) {
+    MessageListDAO.getInstane(context).removeMessagesToAccount(accountId);
+    removeAccount(accountId);
+  }
+
+
+  /**
+   * Returns the number of accounts available in the system.
+   * @return
+   */
+  public int getAccountCount() {
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, new String[] {"COUNT(*)"}, null, null, null, null, null);
+    cursor.moveToFirst();
+    int count = cursor.getInt(0);
+    cursor.close();
+
+    return count;
+  }
+
+
+  /**
+   * Returns true if Facebook account is present, false otherwise.
+   * @return
+   */
+  public boolean isFacebookAccountAdded() {
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, new String[] {"COUNT(*)"}, COL_TYPE + " = ?",
+            new String[] {MessageProvider.Type.FACEBOOK.toString()}, null, null, null);
+    cursor.moveToFirst();
+    int count = cursor.getInt(0);
+    cursor.close();
+
+    return count != 0;
+  }
+
+
+  /**
+   * Returns all stored accounts.
+   * @return
+   */
   public TreeSet<Account> getAllAccounts() {
     TreeSet<Account> accounts = new TreeSet<Account>();
 
-    Cursor cursor = database.query(SQLHelper.AccountTable.TABLE_ACCOUNTS,
-            null, null, null, null, null, null);
+    Cursor cursor = getAllAccountsCursor();
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -150,7 +272,23 @@ public class AccountDAO  {
     return accounts;
   }
 
-  private Account cursorToAccount(Cursor cursor) {
+
+  /**
+   * Returns a cursor for the all account query.
+   * @return
+   */
+  public Cursor getAllAccountsCursor() {
+    return mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null,
+            COL_TYPE + " ASC, " + COL_UNIQUE_NAME + " ASC");
+  }
+
+
+  /**
+   * Returns an account to a cursor.
+   * @param cursor
+   * @return
+   */
+  public static Account cursorToAccount(Cursor cursor) {
     MessageProvider.Type type = MessageProvider.Type.valueOf(cursor.getString(1));
     switch (type) {
       case EMAIL:
@@ -167,20 +305,23 @@ public class AccountDAO  {
     return null;
   }
 
-  private Account cursorToEmailAccount(Cursor cursor) {
+
+  private static Account cursorToEmailAccount(Cursor cursor) {
     EmailAccount account = new EmailAccount(cursor.getString(2), cursor.getString(3), cursor.getString(4), cursor.getString(5),
-            cursor.getInt(6), cursor.getInt(7), cursor.getInt(8) == 1);
+            cursor.getInt(6), cursor.getInt(7), cursor.getInt(8) == 1, cursor.getInt(0));
     return account;
   }
 
-  private Account cursorToGmailAccount(Cursor cursor) {
-    GmailAccount account = new GmailAccount(cursor.getString(2), cursor.getString(3));
+
+  private static Account cursorToGmailAccount(Cursor cursor) {
+    GmailAccount account = new GmailAccount(cursor.getString(2), cursor.getString(3), cursor.getInt(0));
     return account;
   }
 
-  private Account cursorToFacebookAccount(Cursor cursor) {
+
+  private static Account cursorToFacebookAccount(Cursor cursor) {
     FacebookAccount account = new FacebookAccount(cursor.getString(9), cursor.getString(10), cursor.getString(2),
-            cursor.getString(3));
+            cursor.getString(3), cursor.getInt(0));
     return account;
   }
 

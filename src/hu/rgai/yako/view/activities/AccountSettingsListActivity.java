@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
@@ -28,6 +29,7 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -73,26 +75,27 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
-    TreeSet<Account> accounts = null;
-    try {
-      accounts = YakoApp.getAccounts(this);
-      Log.d("rgai", accounts.toString());
-    } catch (Exception ex) {
-      // TODO: handle exception
-      ex.printStackTrace();
-      Log.d("rgai", "TODO: handle exception");
-    }
+//    TreeSet<Account> accounts = null;
 
-    if (accounts == null || accounts.isEmpty()) {
+//    try {
+    int accountCount = AccountDAO.getInstance(this).getAccountCount();
+//      Log.d("rgai", accounts.toString());
+//    } catch (Exception ex) {
+//      // TODO: handle exception
+//      ex.printStackTrace();
+//      Log.d("rgai", "TODO: handle exception");
+//    }
+
+    if (accountCount == 0) {
       showAccountTypeChooser();
     } else {
       ListView lv = (ListView) findViewById(R.id.list);
-      AccountListAdapter adapter = new AccountListAdapter(this, accounts);
+      AccountListAdapter adapter = new AccountListAdapter(this, AccountDAO.getInstance(this).getAllAccountsCursor());
       lv.setAdapter(adapter);
       lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-          Account account = (Account) av.getItemAtPosition(itemIndex);
+          Account account = AccountDAO.cursorToAccount((Cursor) av.getItemAtPosition(itemIndex));
           
           if (account.getAccountType().equals(MessageProvider.Type.SMS)) return;
 
@@ -164,20 +167,21 @@ public class AccountSettingsListActivity extends ActionBarActivity {
       stillAddingFacebookAccount = false;
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
-          Account newAccount = (Account) data.getParcelableExtra("new_account");
-          StoreHandler.addAccount(this, newAccount);
+          Account newAccount = data.getParcelableExtra("new_account");
+          AccountDAO.getInstance(this).addAccount(newAccount);
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
-          Account oldAccount = (Account) data.getParcelableExtra("old_account");
-          Account newAccount = (Account) data.getParcelableExtra("new_account");
-          
-          StoreHandler.modifyAccount(this, oldAccount, newAccount);
-          
-          getMessagesToNewAccount(newAccount, this);
-          AndroidUtils.stopReceiversForAccount(oldAccount, this);
+          Account oldAccount = data.getParcelableExtra("old_account");
+          Account newAccount = data.getParcelableExtra("new_account");
+          if (!oldAccount.equals(newAccount)) {
+            AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
+
+            AndroidUtils.stopReceiversForAccount(oldAccount, this);
+            getMessagesToNewAccount(newAccount, this);
+          }
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
-          StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
+          AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
           YakoApp.removeMessagesToAccount(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
@@ -210,7 +214,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     builder.setTitle("Choose account type");
 
     String[] items;
-    fbAdded = YakoApp.isFacebookAccountAdded(this);
+    fbAdded = AccountDAO.getInstance(this).isFacebookAccountAdded();
     if (fbAdded) {
       items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_infemail),
         getString(R.string.account_name_simplemail)};

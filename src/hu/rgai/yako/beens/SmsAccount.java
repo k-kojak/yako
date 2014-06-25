@@ -10,16 +10,15 @@ public final class SmsAccount extends Account {
   public static final SmsAccount account = new SmsAccount();
   
 	public static final Parcelable.Creator<SmsAccount> CREATOR = new Parcelable.Creator<SmsAccount>() {
-	    public SmsAccount createFromParcel(Parcel in) {
-	      return new SmsAccount(in);
-	    }
+    public SmsAccount createFromParcel(Parcel in) {
+      return new SmsAccount(in);
+    }
 
-	    public SmsAccount[] newArray(int size) {
+    public SmsAccount[] newArray(int size) {
 	      return new SmsAccount[size];
 	    }
 	};
-	  
-	
+
 	private SmsAccount() {}
 	
 	public SmsAccount(Parcel in) {
@@ -42,6 +41,7 @@ public final class SmsAccount extends Account {
 
 	@Override
 	public void writeToParcel(Parcel dest, int flags) {
+
 	}
 
   // There are only 1 account to SMS (to SIM card), so yes, 2 SMS accounts are always the same

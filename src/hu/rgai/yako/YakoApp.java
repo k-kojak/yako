@@ -56,32 +56,13 @@ public class YakoApp extends Application {
   public static boolean hasMessages() {
     return messages != null && !messages.isEmpty();
   }
-  
-  public static TreeSet<Account> getAccounts(Context context) {
-    if (accounts == null) {
-      loadAccountsFromStore(context);
-    }
-    return accounts;
-  }
-  
-  private static void loadAccountsFromStore(Context context) {
-    accounts = StoreHandler.getAccounts(context);
-  }
-  
+
+
   public static void setAccounts(TreeSet<Account> newAccs) {
     accounts = newAccs;
   }
   
-  public static boolean isFacebookAccountAdded(Context context) {
-    for (Account a : getAccounts(context)) {
-      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  
+
   public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
     MessageListElement compareElement = new MessageListElement(id, acc);
     for (MessageListElement mle : messages) {
@@ -260,23 +241,21 @@ public class YakoApp extends Application {
     
     // TODO: we may have to update it on network state change!
     isPhone = setIsPhone();
+
+    AccountDAO.getInstance(this).checkSMSAccount(this, isPhone);
     
     // read in message list
     long start = System.currentTimeMillis();
-    AccountDAO accountDAO = new AccountDAO(this);
+    AccountDAO accountDAO = AccountDAO.getInstance(this);
     TreeMap<Integer, Account> accounts = accountDAO.getIdToAccountsMap();
     accountDAO.close();
 
-    MessageListDAO msgDAO = new MessageListDAO(this);
+    MessageListDAO msgDAO = MessageListDAO.getInstane(this);
     messages = msgDAO.getAllMessages(accounts);
     msgDAO.close();
     Log.d("rgai", "time to read "+ messages.size() +" items from db: " + (System.currentTimeMillis() - start) + " ms");
-//    messages = StoreHandler.getCurrentMessageList(this);
     if (messages == null) {
-//      Log.d("rgai", "messages is null, create new object");
       messages = new TreeSet<MessageListElement>();
     }
-    
   }
-  
 }
