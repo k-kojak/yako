@@ -174,6 +174,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
           Account oldAccount = data.getParcelableExtra("old_account");
           Account newAccount = data.getParcelableExtra("new_account");
           if (!oldAccount.equals(newAccount)) {
+            YakoApp.removeMessagesToAccount(oldAccount);
             AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
 
             AndroidUtils.stopReceiversForAccount(oldAccount, this);
