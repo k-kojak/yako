@@ -15,7 +15,6 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.beens.MainServiceExtraParams;
-import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
@@ -24,12 +23,11 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
-import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
-import java.text.SimpleDateFormat;
+
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -179,7 +177,7 @@ public class MainService extends Service {
                       accDAO.close();
 
                       Log.d("rgai", "accountsMap: " + accounts);
-                      MessageListDAO msgDAO = MessageListDAO.getInstane(MainService.this);
+                      MessageListDAO msgDAO = MessageListDAO.getInstance(MainService.this);
                       msgDAO.insertMessages(YakoApp.getMessages(), accounts);
                       Log.i("rgai", "saved");
                     }

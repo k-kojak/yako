@@ -1,15 +1,11 @@
 package hu.rgai.yako.view.activities;
 
 import android.app.AlertDialog;
-import android.app.TaskStackBuilder;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NavUtils;
+import android.support.v4.app.*;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
@@ -17,7 +13,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.test.R;
@@ -35,7 +30,6 @@ import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.TreeSet;
 
 public class EmailDisplayerActivity extends ActionBarActivity {

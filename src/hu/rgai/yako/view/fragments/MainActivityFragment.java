@@ -3,6 +3,7 @@ package hu.rgai.yako.view.fragments;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -35,17 +36,16 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -71,8 +71,9 @@ public class MainActivityFragment extends Fragment {
   };
   private ActionMode mActionMode = null;
 
+  TreeMap<Integer, Account> mAccounts = null;
+
   public static MainActivityFragment getInstance() {
-    
     return new MainActivityFragment();
   }
 
@@ -80,6 +81,8 @@ public class MainActivityFragment extends Fragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     contextSelectedElements = new TreeSet<MessageListElement>();
     mContextBarTimerHandler = new Handler();
+
+    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
     
     
     mRootView = inflater.inflate(R.layout.main, container, false);
@@ -190,14 +193,14 @@ public class MainActivityFragment extends Fragment {
       loadMoreButton.setEnabled(false);
     }
 
-    mAdapter = new MainListAdapter(mMainActivity);
+    mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(), mAccounts);
     mListView.setAdapter(mAdapter);
     mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
         if (av.getItemAtPosition(itemIndex) == null) return;
-        MessageListElement message = (MessageListElement) av.getItemAtPosition(itemIndex);
+        MessageListElement message = MessageListDAO.cursorToMessageListElement((Cursor)av.getItemAtPosition(itemIndex), mAccounts);
         Account a = message.getAccount();
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
         Intent intent = new Intent(mMainActivity, classToLoad);

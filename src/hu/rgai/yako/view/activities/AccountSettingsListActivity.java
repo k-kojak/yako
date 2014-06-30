@@ -173,13 +173,13 @@ public class AccountSettingsListActivity extends ActionBarActivity {
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
           Account oldAccount = data.getParcelableExtra("old_account");
           Account newAccount = data.getParcelableExtra("new_account");
-          if (!oldAccount.equals(newAccount)) {
-            YakoApp.removeMessagesToAccount(oldAccount);
-            AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
 
-            AndroidUtils.stopReceiversForAccount(oldAccount, this);
-            getMessagesToNewAccount(newAccount, this);
-          }
+          // TODO: only run code below if any change really made on accounts (pass, name, other, etc.)
+          YakoApp.removeMessagesToAccount(oldAccount);
+          AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
+
+          AndroidUtils.stopReceiversForAccount(oldAccount, this);
+          getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());

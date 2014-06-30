@@ -13,7 +13,6 @@ import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
@@ -176,7 +175,7 @@ public class YakoApp extends Application {
   private boolean setIsPhone() {
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
-    if (simState != TelephonyManager.SIM_STATE_ABSENT) {
+    if (simState == TelephonyManager.SIM_STATE_READY) {
       return true;
     } else {
       return false;
@@ -250,7 +249,7 @@ public class YakoApp extends Application {
     TreeMap<Integer, Account> accounts = accountDAO.getIdToAccountsMap();
     accountDAO.close();
 
-    MessageListDAO msgDAO = MessageListDAO.getInstane(this);
+    MessageListDAO msgDAO = MessageListDAO.getInstance(this);
     messages = msgDAO.getAllMessages(accounts);
     msgDAO.close();
     Log.d("rgai", "time to read "+ messages.size() +" items from db: " + (System.currentTimeMillis() - start) + " ms");

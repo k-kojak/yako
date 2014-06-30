@@ -24,7 +24,6 @@ public class AccountListAdapter extends CursorAdapter {
 
 //  private final List<Account> accounts;
   private static LayoutInflater inflater = null;
-  private int mLayoutRes;
 
 
   public AccountListAdapter(Context context, Cursor c) {
