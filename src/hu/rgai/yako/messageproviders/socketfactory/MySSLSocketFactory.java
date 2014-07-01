@@ -49,6 +49,10 @@ public class MySSLSocketFactory extends SSLSocketFactory {
     return factory.createSocket(s, i, inaddr, j);
   }
 
+  public Socket createSocket( ) throws IOException {
+    return factory.createSocket();
+  }
+
   public Socket createSocket(String s, int i) throws IOException {
     return factory.createSocket(s, i);
   }

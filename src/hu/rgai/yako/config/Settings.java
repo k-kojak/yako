@@ -32,7 +32,7 @@ import java.util.Map;
  * @author Tamas Kojedzinszky
  */
 public final class Settings {
-  
+
   public static final boolean DEBUG = false;
   public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
   public static final String FACEBOOK_ME_IMG_NAME = "me.png";
@@ -46,7 +46,7 @@ public final class Settings {
   public static final int MESSAGE_LOAD_INTERVAL = 60 * 2;
   
   /**
-   * Amount of messages to download for each account per query.
+   * Amount of messages to download for each instance per query.
    */
   public static final int MESSAGE_QUERY_LIMIT = 10;
   

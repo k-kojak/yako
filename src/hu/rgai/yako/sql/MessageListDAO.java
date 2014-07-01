@@ -3,6 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -93,11 +94,11 @@ public class MessageListDAO  {
     mDbHelper.getDatabase().delete(TABLE_MESSAGES, null, null);
   }
 
-  public synchronized void removeMessagesToAccount(int accountId) {
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ACCOUNT_ID + " = ?", new String[] {Integer.toString(accountId)});
+  public synchronized void removeMessagesToAccount(long accountId) {
+    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ACCOUNT_ID + " = ?", new String[] {Long.toString(accountId)});
   }
 
-  public synchronized void insertMessages(TreeSet<MessageListElement> messages, TreeMap<Account, Integer> accounts) {
+  public synchronized void insertMessages(TreeSet<MessageListElement> messages, TreeMap<Account, Long> accounts) {
     clearTable();
     for (MessageListElement mle : messages) {
       insertMessage(mle, accounts);
@@ -105,40 +106,40 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void updateFrom(int messageId, Person from) {
+  public synchronized void updateFrom(long messageRawId, Person from) {
     if (from != null) {
       ContentValues cv = new ContentValues();
       cv.put(COL_FROM_ID, from.getId());
       cv.put(COL_FROM_NAME, from.getName());
       cv.put(COL_FROM_TYPE, from.getType().toString());
       cv.put(COL_FROM_CONTACT_ID, from.getContactId());
-      mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{messageId + ""});
+      mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
     } else {
       throw new RuntimeException("Person was NULL when updating message's getFrom value");
     }
   }
 
 
-  public synchronized void updateMessage(int messageId, boolean isSeen, int unreadCount, Date date, String title, String subTitle) {
+  public synchronized void updateMessage(long messageRawId, boolean isSeen, int unreadCount, Date date, String title, String subTitle) {
     ContentValues cv = new ContentValues();
     cv.put(COL_SEEN, isSeen ? 1 : 0);
     cv.put(COL_UNREAD_CNT, unreadCount);
     cv.put(COL_DATE, new Timestamp(date.getTime()).toString());
     cv.put(COL_TITLE, title);
     cv.put(COL_SUBTITLE, subTitle);
-    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{messageId+""});
+    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
   }
 
 
-  public synchronized void updateMessageToSeen(int messageId) {
+  public synchronized void updateMessageToSeen(long messageId) {
     ContentValues cv = new ContentValues();
     cv.put(COL_SEEN, 1);
     cv.put(COL_UNREAD_CNT, 0);
-    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{messageId+""});
+    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageId)});
   }
 
 
-  public synchronized void insertMessage(MessageListElement mle, TreeMap<Account, Integer> accounts) {
+  public synchronized void insertMessage(MessageListElement mle, TreeMap<Account, Long> accounts) {
     ContentValues cv = new ContentValues();
     try {
       cv.put(COL_MSG_ID, mle.getId());
@@ -173,29 +174,64 @@ public class MessageListDAO  {
 
 
   public Cursor getAllMessagesCursor() {
-    return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, null, null, null, null, null);
+    return getAllMessagesCursor(-1);
   }
 
 
-  public TreeSet<MessageListElement> getAllMessages(TreeMap<Integer, Account> accounts) {
+  public Cursor getAllMessagesCursor(long accountId) {
+    String selection = null;
+    String[] selectionArgs = null;
+    if (accountId != -1) {
+      selection = COL_ACCOUNT_ID + " = ?";
+      selectionArgs = new String[]{Long.toString(accountId)};
+    }
+    return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, COL_DATE + " DESC");
+  }
+
+
+  public TreeSet<MessageListElement> getAllMessages(TreeMap<Long, Account> accounts) {
     return getAllMessages(accounts, -1);
   }
 
 
-  public synchronized void removeMessage(MessageListElement mle, int accountId) {
+  public synchronized void removeMessage(MessageListElement mle, long accountId) {
     mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_MSG_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?",
-            new String[] {mle.getId(), accountId+""});
+            new String[] {mle.getId(), Long.toString(accountId)});
   }
 
 
-  public TreeSet<MessageListElement> getAllMessages(TreeMap<Integer, Account> accounts, int accountId) {
+  public int getAllMessagesCount() {
+    return getAllMessagesCount(-1);
+  }
+
+
+  public int getAllMessagesCount(long accountId) {
+    int count = 0;
+
+    String sql = "SELECT COUNT(*) A cnt FROM " + TABLE_MESSAGES;
+    String[] selectionArgs = null;
+    if (accountId != -1) {
+      sql = "SELECT COUNT(*) AS cnt FROM " + TABLE_MESSAGES + " WHERE " + COL_ACCOUNT_ID + " = ?";
+      selectionArgs = new String[]{Long.toString(accountId)};
+    }
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(sql, selectionArgs);
+    cursor.moveToFirst();
+    if (!cursor.isAfterLast()) {
+      count = cursor.getInt(0);
+    }
+    cursor.close();
+    return count;
+  }
+
+
+  public TreeSet<MessageListElement> getAllMessages(TreeMap<Long, Account> accounts, long accountId) {
     TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
 
     String selection = null;
     String[] selectionArgs = null;
     if (accountId != -1) {
       selection = COL_ACCOUNT_ID + " = ?";
-      selectionArgs = new String[]{accountId + ""};
+      selectionArgs = new String[]{Long.toString(accountId)};
     }
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, null);
 
@@ -212,45 +248,78 @@ public class MessageListDAO  {
   }
 
 
-  public MessageListElement getMessageById(int messageId, TreeMap<Integer, Account> accounts) {
-    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, COL_ID + " = ?", new String[]{messageId+""},
-            null, null, null);
-    return cursorToMessageListElement(cursor, accounts);
+  public MessageListElement getMessageByRawId(long messageRawId, TreeMap<Long, Account> accounts) {
+    return getMessageById(Long.toString(messageRawId), accounts, true);
   }
 
 
-  public int getMessageId(MessageListElement mle, int accountId) {
-    Cursor cursor = mDbHelper.getDatabase().rawQuery("SELECT "+ COL_ID +" AS cnt FROM " + TABLE_MESSAGES
-            + " WHERE " + COL_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?", new String[] {mle.getId(), accountId+""});
+  public MessageListElement getMessageById(String messageId, TreeMap<Long, Account> accounts) {
+    return getMessageById(messageId, accounts, false);
+  }
+
+
+  public MessageListElement getMessageById(String messageId, Account account) {
+    TreeMap<Long, Account> accounts = new TreeMap<Long, Account>();
+    accounts.put(account.getDatabaseId(), account);
+    return getMessageById(messageId, accounts);
+  }
+
+
+  /**
+   *
+   * @param id
+   * @param accounts
+   * @param rawId if true, than id is a RAW id of the database, if false the id is the message id
+   * @return
+   */
+  private MessageListElement getMessageById(String id, TreeMap<Long, Account> accounts, boolean rawId) {
+    String column = rawId ? COL_ID : COL_MSG_ID;
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, column + " = ?", new String[]{id},
+            null, null, null);
     cursor.moveToFirst();
-    int _id = -1;
+    MessageListElement mle = cursorToMessageListElement(cursor, accounts);
+    cursor.close();
+    return mle;
+  }
+
+
+  public long getMessageRawId(MessageListElement mle, long accountId) {
+    String query = "SELECT "+ COL_ID +" AS cnt" +
+            " FROM " + TABLE_MESSAGES + "" +
+            " WHERE " + COL_MSG_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?";
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(query, new String[] {mle.getId(), Long.toString(accountId)});
+    cursor.moveToFirst();
+    long _id = -1;
     while (!cursor.isAfterLast()) {
-      _id = cursor.getInt(0);
+      _id = cursor.getLong(0);
       break;
     }
     return _id;
   }
 
 
-  public static MessageListElement cursorToMessageListElement(Cursor cursor, TreeMap<Integer, Account> accounts) {
-    Person from = new Person(cursor.getInt(9), cursor.getString(6), cursor.getString(7),
-            MessageProvider.Type.valueOf(cursor.getString(8)));
-    Date date = null;
-    try {
-      date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").parse(cursor.getString(10));
-    } catch (ParseException e) {
-      e.printStackTrace();
-    }
+  public static MessageListElement cursorToMessageListElement(Cursor cursor, TreeMap<Long, Account> accounts) {
     MessageListElement mle = null;
-    if (date != null) {
-      mle = new MessageListElement(cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
-              cursor.getString(4), from, null, date, accounts.get(cursor.getInt(12)),
-              MessageProvider.Type.valueOf(cursor.getString(11)));
-      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-        FullSimpleMessage fsm = new FullSimpleMessage(mle.getId(), "subject",
-                new HtmlContent(cursor.getString(13), HtmlContent.ContentType.TEXT_HTML), date, from, false,
-                mle.getMessageType(), null);
-        mle.setFullMessage(fsm);
+    if (!cursor.isAfterLast()) {
+      Person from = new Person(cursor.getInt(9), cursor.getString(6), cursor.getString(7),
+              MessageProvider.Type.valueOf(cursor.getString(8)));
+      Date date = null;
+      try {
+        date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").parse(cursor.getString(10));
+      } catch (ParseException e) {
+        e.printStackTrace();
+      }
+
+      if (date != null) {
+        mle = new MessageListElement(cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
+                cursor.getString(4), from, null, date, accounts.get(cursor.getLong(12)),
+                MessageProvider.Type.valueOf(cursor.getString(11)));
+        if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+          FullSimpleMessage fsm = new FullSimpleMessage(mle.getId(), "subject",
+                  new HtmlContent(cursor.getString(13), HtmlContent.ContentType.TEXT_HTML), date, from, false,
+                  mle.getMessageType(), null);
+          mle.setFullMessage(fsm);
+        }
       }
     }
     return mle;

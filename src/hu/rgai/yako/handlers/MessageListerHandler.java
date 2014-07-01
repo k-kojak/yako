@@ -15,6 +15,7 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
@@ -47,8 +48,8 @@ public class MessageListerHandler extends TimeoutHandler {
   
   public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
 
-  private TreeMap<Account, Integer> mAccountsAccountKey = null;
-  private TreeMap<Integer, Account> mAccountsIntegerKey = null;
+  private TreeMap<Account, Long> mAccountsAccountKey = null;
+  private TreeMap<Long, Account> mAccountsIntegerKey = null;
 
   public MessageListerHandler(Context context, MainServiceExtraParams extraParams, String accountDisplayName) {
     mContext = context;
@@ -67,6 +68,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
   
   public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
+    Log.d("rgai3", "Message lister handler finished");
     int newMessageCount = 0;
     if (errorMessage != null) {
       showErrorMessage(result, errorMessage);
@@ -111,11 +113,20 @@ public class MessageListerHandler extends TimeoutHandler {
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      for (MessageListElement mle : YakoApp.getMessages()) {
-        if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
-          mle.setSeen(true);
-          mle.setUnreadCount(0);
+      if (ThreadDisplayerActivity.actViewingMessage != null) {
+        long accountId = mAccountsAccountKey.get(ThreadDisplayerActivity.actViewingMessage.getAccount());
+        long storedMessageId = MessageListDAO.getInstance(mContext).getMessageRawId(ThreadDisplayerActivity.actViewingMessage, accountId);
+        if (storedMessageId != -1) {
+          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageId);
         }
+      }
+
+
+      for (MessageListElement mle : MessageListDAO.getInstance(mContext).getAllMessages(mAccountsIntegerKey)) {
+//        if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
+//          mle.setSeen(true);
+//          mle.setUnreadCount(0);
+//        }
         Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
         if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
           if (lastUnreadMsg == null) {
@@ -248,11 +259,11 @@ public class MessageListerHandler extends TimeoutHandler {
       // tree search does not return a valid value
       // causes problem at thread type messages like Facebook
 
-      int accountId = mAccountsAccountKey.get(newMessage.getAccount());
-      int storedMessageId = MessageListDAO.getInstance(mContext).getMessageId(newMessage, accountId);
+      long accountId = mAccountsAccountKey.get(newMessage.getAccount());
+      long storedMessageRawId = MessageListDAO.getInstance(mContext).getMessageRawId(newMessage, accountId);
 
       // if message is not stored in database
-      if (storedMessageId == -1) {
+      if (storedMessageRawId == -1) {
         MessageListDAO.getInstance(mContext).insertMessage(newMessage, mAccountsAccountKey);
 //          YakoApp.getMessages().add(newMessage);
 
@@ -267,7 +278,7 @@ public class MessageListerHandler extends TimeoutHandler {
         // only update old messages' flags with the new one, and nothing else
         if (newMessage.isUpdateFlags()) {
 //            Log.d("rgai3", "update flags..");
-          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageId);
+          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageRawId);
 //            if (storedFoundMessage != null) {
 //              storedFoundMessage.setSeen(newMessage.isSeen());
 //              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
@@ -279,7 +290,7 @@ public class MessageListerHandler extends TimeoutHandler {
 //              if (newMessage.equals(oldMessage)) {
 //                Log.d("rgai3", "IGEN, equals..");
               // first updating person info anyway..
-              MessageListDAO.getInstance(mContext).updateFrom(storedMessageId, newMessage.getFrom());
+              MessageListDAO.getInstance(mContext).updateFrom(storedMessageRawId, newMessage.getFrom());
 //                oldMessage.setFrom(newMessage.getFrom());
 
               /**
@@ -293,9 +304,9 @@ public class MessageListerHandler extends TimeoutHandler {
                * if you delete the last element, then the "new element" is older than the
                * old one
                */
-              MessageListElement oldMessage = MessageListDAO.getInstance(mContext).getMessageById(storedMessageId, mAccountsIntegerKey);
+              MessageListElement oldMessage = MessageListDAO.getInstance(mContext).getMessageByRawId(storedMessageRawId, mAccountsIntegerKey);
               if (!newMessage.getDate().equals(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
-                MessageListDAO.getInstance(mContext).updateMessage(storedMessageId, newMessage.isSeen(), newMessage.getUnreadCount(),
+                MessageListDAO.getInstance(mContext).updateMessage(storedMessageRawId, newMessage.isSeen(), newMessage.getUnreadCount(),
                         newMessage.getDate(), newMessage.getTitle(), newMessage.getSubTitle());
 //                  itemToRemove = oldMessage;
 //                  break;
@@ -321,7 +332,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
   private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
-      int accountId = mAccountsAccountKey.get(newMessages[0].getAccount());
+      long accountId = mAccountsAccountKey.get(newMessages[0].getAccount());
       TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(mContext).getAllMessages(mAccountsIntegerKey, accountId);
       
       SortedSet<MessageListElement> messagesToRemove;
@@ -335,7 +346,7 @@ public class MessageListerHandler extends TimeoutHandler {
       }
 
       for (MessageListElement mle : messagesToRemove) {
-        int accId = mAccountsAccountKey.get(mle.getAccount());
+        long accId = mAccountsAccountKey.get(mle.getAccount());
         MessageListDAO.getInstance(mContext).removeMessage(mle, accId);
 //        YakoApp.getMessages().remove(mle);
       }

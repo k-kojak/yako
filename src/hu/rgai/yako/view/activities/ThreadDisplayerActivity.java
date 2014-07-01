@@ -61,6 +61,7 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
@@ -234,9 +235,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
                 @Override
                 public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {
-                  synchronized (YakoApp.getMessages()) {
+                  // TODO: when storing thread messages in databasem there should be a call to delete message from there
+//                  synchronized (YakoApp.getMessages()) {
                     ((FullThreadMessage)messageToDelete.getFullMessage()).getMessages().remove(simpleMessage);
-                  }
+//                  }
                   for (int i = 0; i < adapter.getCount(); i++) {
                     if (adapter.getItem(i).equals(simpleMessage)) {
                       adapter.removeItem(i);
@@ -244,9 +246,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
                   }
                   adapter.notifyDataSetChanged();
                   if (adapter.getCount() == 0) {
-                    synchronized (YakoApp.getMessages()) {
-                      YakoApp.getMessages().remove(messageToDelete);
-                    }
+                    MessageListDAO.getInstance(ThreadDisplayerActivity.this).removeMessage(messageToDelete,
+                            messageToDelete.getAccount().getDatabaseId());
+//                    synchronized (YakoApp.getMessages()) {
+//                      YakoApp.getMessages().remove(messageToDelete);
+//                    }
                     finish();
                   }
                 }

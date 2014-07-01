@@ -46,7 +46,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
       FullThreadMessage threadMessage = null;
       try {
         if (account == null) {
-          Log.d("rgai", "account is NULL @ threadContentGetter");
+          Log.d("rgai", "instance is NULL @ threadContentGetter");
         } else {
 //          Log.d("rgai", "Getting thread messages...");
           Class providerClass = Settings.getAccountTypeToMessageProvider().get(account.getAccountType());

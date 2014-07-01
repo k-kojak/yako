@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.*;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -45,6 +46,7 @@ import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
@@ -53,7 +55,9 @@ import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
+
 import java.util.Date;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -72,6 +76,7 @@ public class MainActivity extends ActionBarActivity {
   private Menu mMenu;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
+  private TreeMap<Long, Account> mAccountsLongKey = null;
   
   
 
@@ -187,17 +192,19 @@ public class MainActivity extends ActionBarActivity {
     super.onResume();
     is_activity_visible = true;
     removeNotificationIfExists();
+
+    mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
     
     // setting filter adapter onResume, because it might change at settings panel
-    TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
+    TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mDrawerList.setAdapter(mDrawerFilterAdapter);
     int indexOfAccount = 0;
     if (actSelectedFilter != null) {
-      // +1 needed because 0th element in adapter is "all account"
+      // +1 needed because 0th element in adapter is "all instance"
       indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
-      // the saved selected account is not available anymore...
+      // the saved selected instance is not available anymore...
       if (indexOfAccount == -1) {
         actSelectedFilter = null;
       }
@@ -250,7 +257,7 @@ public class MainActivity extends ActionBarActivity {
       });
       builder.setTitle("Backend changes");
       builder.setMessage("A bigger code refactor's consequence was that your earlier accounts were lost.\n" +
-              "Please add them again at account manage.\nApologize for the inconvenience.").show();
+              "Please add them again at instance manage.\nApologize for the inconvenience.").show();
     }
   }
   
@@ -304,7 +311,10 @@ public class MainActivity extends ActionBarActivity {
           eParams.setForceQuery(true);
           eParams.setAccount(a);
           eParams.setQueryOffset(0);
-          eParams.setQueryLimit(YakoApp.getFilteredMessages(a).size());
+
+          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
+          long accountId = accountsAccountKey.get(a);
+          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountId));
           intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
@@ -562,7 +572,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Sending request to load messages.
    * 
-   * @param forceQuery true if load every message's account false otherwise
+   * @param forceQuery true if load every message's instance false otherwise
    */
   private void reloadMessages(boolean forceQuery) {
     refreshLoadingIndicatorState();
@@ -617,8 +627,15 @@ public class MainActivity extends ActionBarActivity {
       }
       
       // run query for selected filter only if list is empty OR selected all accounts
+
+      long accountId = -1;
+      if (actSelectedFilter != null) {
+        TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
+        accountId = accountsAccountKey.get(actSelectedFilter);
+      }
+
       if (actSelectedFilter == null
-              || actSelectedFilter != null && YakoApp.getFilteredMessages(actSelectedFilter).isEmpty()) {
+              || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
         reloadMessages(false);
       }
     }
@@ -645,7 +662,9 @@ public class MainActivity extends ActionBarActivity {
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
         if (adapter.getItem(actualVisiblePosition) != null) {
-          builder.append(((MessageListElement) (adapter.getItem(actualVisiblePosition))).getId());
+          Cursor cursor = (Cursor)adapter.getItem(actualVisiblePosition);
+          MessageListElement mle = MessageListDAO.cursorToMessageListElement(cursor, mAccountsLongKey);
+          builder.append(mle.getId());
           builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
         }
       }

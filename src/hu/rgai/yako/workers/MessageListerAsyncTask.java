@@ -1,6 +1,7 @@
 package hu.rgai.yako.workers;
 
 import android.content.Context;
+import android.os.Message;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
@@ -11,12 +12,16 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
@@ -73,13 +78,13 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     int offset = 0;
     int limit = Settings.MESSAGE_QUERY_LIMIT;
     if (loadMore) {
-      if (YakoApp.getMessages() != null) {
-        for (MessageListElement m : YakoApp.getMessages()) {
-          if (m.getAccount().equals(acc)) {
-            offset++;
-          }
-        }
-      }
+//      if (YakoApp.getMessages() != null) {
+//        for (MessageListElement m : YakoApp.getMessages()) {
+//          if (m.getAccount().equals(acc)) {
+            offset = MessageListDAO.getInstance(mContext).getAllMessagesCount(acc.getDatabaseId());
+//          }
+//        }
+//      }
     }
 
     if (queryLimit == -1 || queryOffset == -1) {
@@ -113,7 +118,8 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         }
 
         // the already loaded messages to the specific content type...
-        TreeSet<MessageListElement> loadedMessages = YakoApp.getFilteredMessages(acc);
+        TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
+        TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessages(accounts, acc.getDatabaseId());
         messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts

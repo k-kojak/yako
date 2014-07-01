@@ -137,8 +137,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
     password = (EditText)findViewById(R.id.password);
     
     Bundle b = getIntent().getExtras();
-    if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (FacebookAccount)b.getParcelable("account");
+    if (b != null && b.getParcelable("instance") != null) {
+      oldAccount = (FacebookAccount)b.getParcelable("instance");
       setFieldsByAccount(oldAccount);
     }
     
@@ -314,12 +314,12 @@ public class FacebookSettingActivity extends ActionBarActivity {
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
     
-    // If editing account, then old account exists
+    // If editing instance, then old instance exists
     if (oldAccount != null) {
       resultIntent.putExtra("old_account", (Parcelable)oldAccount);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY, resultIntent);
     }
-    // If new account...
+    // If new instance...
     else {
       resultIntent.putExtra("old_account", false);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW, resultIntent);

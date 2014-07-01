@@ -96,8 +96,8 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     
     
     Bundle b = getIntent().getExtras();
-    if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (EmailAccount)b.getParcelable("account");
+    if (b != null && b.getParcelable("instance") != null) {
+      oldAccount = (EmailAccount)b.getParcelable("instance");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
       imap.setText(oldAccount.getImapAddress());
@@ -168,12 +168,12 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
     
-    // If editing account, then old account exists
+    // If editing instance, then old instance exists
     if (oldAccount != null) {
       resultIntent.putExtra("old_account", (Parcelable)oldAccount);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY, resultIntent);
     }
-    // If new account...
+    // If new instance...
     else {
       resultIntent.putExtra("old_account", false);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW, resultIntent);

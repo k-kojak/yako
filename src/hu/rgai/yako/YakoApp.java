@@ -36,21 +36,24 @@ public class YakoApp extends Application {
   public static volatile Date lastFullMessageUpdate = null;
   private volatile static TreeSet<Account> accounts;
 
-  public static TreeSet<MessageListElement> getMessages() {
-    return messages;
-  }
+
+//  public static TreeSet<MessageListElement> getMessages() {
+//    return messages;
+//  }
+
 
   public static void updateMessagesPrettyDateStrings() {
     MessageListElement.refreshCurrentDates();
-    synchronized (YakoApp.getMessages()) {
-      if (YakoApp.getMessages() != null) {
+    synchronized (messages) {
+      if (messages != null) {
         SimpleDateFormat sdf = new SimpleDateFormat();
-        for (MessageListElement mlep : YakoApp.getMessages()) {
+        for (MessageListElement mlep : messages) {
           mlep.updatePrettyDateString(sdf);
         }
       }
     }
   }
+
   
   public static boolean hasMessages() {
     return messages != null && !messages.isEmpty();
@@ -82,7 +85,7 @@ public class YakoApp extends Application {
   }
   
   /**
-   * Removes messages from message list where the account matches with the
+   * Removes messages from message list where the instance matches with the
    * parameter.
    * 
    * @param account
@@ -131,10 +134,10 @@ public class YakoApp extends Application {
   
   
   /**
-   * Updates the last notification date of the given account.
+   * Updates the last notification date of the given instance.
    * Sets all of the accounts last notification date to the current date if null given.
    * 
-   * @param acc the account to update, or null if update all account's last event time
+   * @param acc the instance to update, or null if update all instance's last event time
    * @param c
    */
   public synchronized static void updateLastNotification(Account acc, Context c) {
@@ -149,12 +152,11 @@ public class YakoApp extends Application {
     StoreHandler.writeLastNotificationObject(c, lastNotificationDates);
   }
   
-  
-  
+
   /**
-   * Returns the last notification of the given account.
+   * Returns the last notification of the given instance.
    * 
-   * @param acc last notification time will be set to this account
+   * @param acc last notification time will be set to this instance
    * @return
    */
   public static Date getLastNotification(Account acc, Context c) {
@@ -193,21 +195,21 @@ public class YakoApp extends Application {
   }
   
   
-  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
-    if (filterAcc == null) {
-      return messages;
-    } else {
-      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
-      synchronized (messages) {
-        for (MessageListElement mlep : messages) {
-          if (mlep.getAccount().equals(filterAcc)) {
-            filterList.add(mlep);
-          }
-        }
-      }
-      return filterList;
-    }
-  }
+//  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
+//    if (filterAcc == null) {
+//      return messages;
+//    } else {
+//      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
+//      synchronized (messages) {
+//        for (MessageListElement mlep : messages) {
+//          if (mlep.getAccount().equals(filterAcc)) {
+//            filterList.add(mlep);
+//          }
+//        }
+//      }
+//      return filterList;
+//    }
+//  }
   
   
   public synchronized Tracker getTracker() {
@@ -242,11 +244,11 @@ public class YakoApp extends Application {
     isPhone = setIsPhone();
 
     AccountDAO.getInstance(this).checkSMSAccount(this, isPhone);
-    
+
     // read in message list
     long start = System.currentTimeMillis();
     AccountDAO accountDAO = AccountDAO.getInstance(this);
-    TreeMap<Integer, Account> accounts = accountDAO.getIdToAccountsMap();
+    TreeMap<Long, Account> accounts = accountDAO.getIdToAccountsMap();
     accountDAO.close();
 
     MessageListDAO msgDAO = MessageListDAO.getInstance(this);

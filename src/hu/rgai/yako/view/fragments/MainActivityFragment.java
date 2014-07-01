@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -71,7 +72,7 @@ public class MainActivityFragment extends Fragment {
   };
   private ActionMode mActionMode = null;
 
-  TreeMap<Integer, Account> mAccounts = null;
+  TreeMap<Long, Account> mAccounts = null;
 
   public static MainActivityFragment getInstance() {
     return new MainActivityFragment();
@@ -193,7 +194,12 @@ public class MainActivityFragment extends Fragment {
       loadMoreButton.setEnabled(false);
     }
 
-    mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(), mAccounts);
+    long accountId = -1;
+    if (MainActivity.actSelectedFilter != null) {
+      accountId = MainActivity.actSelectedFilter.getDatabaseId();
+    }
+    mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId),
+            mAccounts);
     mListView.setAdapter(mAdapter);
     mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -202,10 +208,16 @@ public class MainActivityFragment extends Fragment {
         if (av.getItemAtPosition(itemIndex) == null) return;
         MessageListElement message = MessageListDAO.cursorToMessageListElement((Cursor)av.getItemAtPosition(itemIndex), mAccounts);
         Account a = message.getAccount();
+        Log.d("rgai3", "message's account after click: " + a);
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
+//        Bundle b = new Bundle();
+//        b.setClassLoader(classToLoad.getClassLoader());
+//        b.putString(IntentStrings.Params.MESSAGE_ID, message.getId());
+//        b.putParcelable(IntentStrings.Params.MESSAGE_ACCOUNT, message.getAccount());
         Intent intent = new Intent(mMainActivity, classToLoad);
         intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
         intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+//        intent.putExtra(IntentStrings.Params.BUNDLE, b);
         boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
         if (changed) {
           message.setSeen(true);
@@ -280,9 +292,11 @@ public class MainActivityFragment extends Fragment {
       MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
         @Override
         public void onMainListDelete(MessageListElement messageToDelete) {
-          synchronized (YakoApp.getMessages()) {
-            YakoApp.getMessages().remove(messageToDelete);
-          }
+          MessageListDAO.getInstance(MainActivityFragment.this.getActivity()).removeMessage(messageToDelete,
+                  messageToDelete.getAccount().getDatabaseId());
+//          synchronized (YakoApp.getMessages()) {
+//            YakoApp.getMessages().remove(messageToDelete);
+//          }
           notifyAdapterChange();
         }
 
@@ -408,6 +422,11 @@ public class MainActivityFragment extends Fragment {
   }
   
   public void notifyAdapterChange() {
+    long accountId = -1;
+    if (MainActivity.actSelectedFilter != null) {
+      accountId = MainActivity.actSelectedFilter.getDatabaseId();
+    }
+    mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId));
     mAdapter.notifyDataSetChanged();
     if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
       loadMoreButton.setVisibility(View.VISIBLE);

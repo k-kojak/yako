@@ -79,6 +79,7 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    Log.d("rgai3", "Service onstartCommand");
     YakoApp.updateMessagesPrettyDateStrings();
 
     TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
@@ -164,23 +165,23 @@ public class MainService extends Service {
                 public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
                   if (processState.isDone()) {
                     // store current message list to disk!
-                    synchronized (YakoApp.getMessages()) {
-                      Log.i("rgai", "saving message list to disk");
-                      AccountDAO accDAO = AccountDAO.getInstance(MainService.this);
-                      TreeMap<Account, Integer> accounts = accDAO.getAccountToIdMap();
+//                    synchronized (YakoApp.getMessages()) {
+//                      Log.i("rgai", "saving message list to disk");
+//                      AccountDAO accDAO = AccountDAO.getInstance(MainService.this);
+//                      TreeMap<Account, Integer> accounts = accDAO.getAccountToIdMap();
 
                       // this means the database does not contains any accounts
 //                      if (accounts.isEmpty()) {
 //                        accDAO.insertAccounts(StoreHandler.getAccounts(MainService.this));
 //                        accounts = accDAO.getAccountToIdMap();
 //                      }
-                      accDAO.close();
+//                      accDAO.close();
 
-                      Log.d("rgai", "accountsMap: " + accounts);
-                      MessageListDAO msgDAO = MessageListDAO.getInstance(MainService.this);
-                      msgDAO.insertMessages(YakoApp.getMessages(), accounts);
-                      Log.i("rgai", "saved");
-                    }
+//                      Log.d("rgai", "accountsMap: " + accounts);
+//                      MessageListDAO msgDAO = MessageListDAO.getInstance(MainService.this);
+//                      msgDAO.insertMessages(YakoApp.getMessages(), accounts);
+//                      Log.i("rgai", "saved");
+//                    }
                     // if we have tasks in queue, then execute the next one
                     if (!asyncTaskQueue.isEmpty()) {
                       MainServiceExtraParams next = asyncTaskQueue.pollFirst();

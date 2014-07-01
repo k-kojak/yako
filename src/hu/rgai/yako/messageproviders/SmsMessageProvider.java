@@ -9,10 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.util.Log;
-import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -60,7 +58,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   public Account getAccount() {
-    return SmsAccount.account;
+    return SmsAccount.getInstance();
   }
   
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
@@ -153,7 +151,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           foundThreads++;
           if (foundThreads > limit + offset) break;
           messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
-                  from, null, new Date(ti.date), SmsAccount.account, Type.SMS));
+                  from, null, new Date(ti.date), SmsAccount.getInstance(), Type.SMS));
         }
       }
       cur.close();
@@ -279,14 +277,14 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
       
-      // TODO: do not make a full query to the given account/type, query only the
-      // affected message element, so select only 1 element instead of all messages of the given account
+      // TODO: do not make a full query to the given instance/type, query only the
+      // affected message element, so select only 1 element instead of all messages of the given instance
       if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainScheduler.class);
         service.setAction(Context.ALARM_SERVICE);
         
         MainServiceExtraParams eParams = new MainServiceExtraParams();
-        eParams.setAccount(SmsAccount.account);
+        eParams.setAccount(SmsAccount.getInstance());
         eParams.setForceQuery(true);
         service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
         

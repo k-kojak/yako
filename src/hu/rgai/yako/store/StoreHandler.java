@@ -152,6 +152,15 @@ public class StoreHandler {
       }
     }
   }
+
+
+  private static void deleteFileIfExists(Context context, String file) {
+    Log.d("rgai3", "DELETING FILE, BECAUSE WE HAD AN EXCEPTION WITH IT: " + file);
+    File destFile = new File(context.getCacheDir(), file);
+    if (destFile.isFile()) {
+      destFile.delete();
+    }
+  }
   
   
   private static Object readObject(Context context, String file) {
@@ -174,6 +183,7 @@ public class StoreHandler {
         Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
       } catch (IOException ex) {
         Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        deleteFileIfExists(context, file);
       } catch (ClassNotFoundException ex) {
         Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
       } finally {

@@ -392,7 +392,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
-      // request a message list for the account we sent the message with
+      // request a message list for the instance we sent the message with
 //      int threadAccountCount = 0;
 //      Account threadAccount = null;
 //      for (Account a : mChoosenAccountsToSend) {
@@ -401,8 +401,8 @@ public class MessageReplyActivity extends ActionBarActivity {
 //          threadAccount = a;
 //        }
 //      }
-//      Log.d("rgai", "thread account count: " + threadAccountCount);
-//      Log.d("rgai", "thread account: " + threadAccount);
+//      Log.d("rgai", "thread instance count: " + threadAccountCount);
+//      Log.d("rgai", "thread instance: " + threadAccount);
 //      if (!mChoosenAccountsToSend.isEmpty()) {
 //        Log.d("rgai", "sending request to get messages");
 //        MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -459,7 +459,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
     if (availableAccounts.isEmpty()) {
       Toast.makeText(this,
-              "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " account required for that.",
+              "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " instance required for that.",
               Toast.LENGTH_LONG).show();
     } else if (availableAccounts.size() == 1) {
       sendMessage(ri, availableAccounts.get(0), recipients);

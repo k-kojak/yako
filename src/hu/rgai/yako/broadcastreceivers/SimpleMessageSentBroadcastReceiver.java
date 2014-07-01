@@ -106,7 +106,7 @@ public class SimpleMessageSentBroadcastReceiver extends BroadcastReceiver {
         }, 5000);
       }
       
-      // if message was sent succesfully, and we have an account to refresh, then refresh it at main list
+      // if message was sent succesfully, and we have an instance to refresh, then refresh it at main list
       if (resultType == MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS && accountToLoad != null) {
         MainServiceExtraParams eParams = new MainServiceExtraParams();
         eParams.setAccount(accountToLoad);

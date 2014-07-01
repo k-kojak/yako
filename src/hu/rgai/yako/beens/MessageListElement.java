@@ -101,9 +101,11 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 //    this.prettyDate = in.readString();
     
     if (!stringToClassLoader.containsKey(messageType)) {
-      // TODO: display error message
+      Log.d("rgai3", "DISPLAY ERROR HERE");
     } else {
+      Log.d("rgai3", "BEFORE - READ IN ACCOUNT PARCELABLE");
       this.account = (Account)in.readParcelable(stringToClassLoader.get(messageType));
+      Log.d("rgai3", "AFTER - READ IN ACCOUNT PARCELABLE");
     }
   }
   
@@ -312,7 +314,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   @Override
   public String toString() {
-    return "MessageListElement{" + "id=" + id + ", account="+ account +", seen=" + seen + ", title=" + title
+    return "MessageListElement{" + "id=" + id + ", instance="+ account +", seen=" + seen + ", title=" + title
             + ", subTitle=" + subTitle + ", from=" + from + ", date=" + date + " ("+ (date != null ? date.getTime() : "-") +"), messageType="
             + messageType + ", updateFlags=" + updateFlags +'}';
   }
@@ -384,7 +386,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 //        }
       }
     }
-//    if (this.id.equals(o.getId()) && this.account.equals(o.account)) {
+//    if (this.id.equals(o.getId()) && this.instance.equals(o.instance)) {
 //      return 0;
 //    } else {
       // TODO: THIS IS A SOURCE OF UGLY BUGS!

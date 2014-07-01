@@ -22,7 +22,7 @@ public class AccountDAO  {
 
   public static final String COL_ID = "_id";
   private static final String COL_TYPE = "account_type";
-  // in case of email account this holds the email, in case of Facebook account it holds the unique number for XMPP
+  // in case of email instance this holds the email, in case of Facebook instance it holds the unique number for XMPP
   private static final String COL_UNIQUE_NAME = "unique_name";
   private static final String COL_PASS = "password";
   private static final String COL_IMAP_ADDR = "imap_address";
@@ -79,38 +79,41 @@ public class AccountDAO  {
 
     while (!cursor.isAfterLast()) {
       _id = cursor.getInt(0);
-      // there should be only 1 sms account in the db, so break if we found that one
+      // there should be only 1 sms instance in the db, so break if we found that one
       break;
     }
     cursor.close();
 
     Log.d("rgai", "_id = " + _id);
-    // do nothing, the sms account is in the db and the device is a phone
-    // OR account is not in the db and device is not a phone
+    // do nothing, the sms instance is in the db and the device is a phone
+    // OR instance is not in the db and device is not a phone
     if (_id != -1 && isPhone || _id == -1 && !isPhone) {
       Log.d("rgai", "case 1");
+      SmsAccount.setInstance(_id);
     }
-    // sms account is in the db, but this is not a phone (SIM card is removed?) so we have to remove that account and
-    // the messages to it
+    // sms instance is in the db, but this is not a phone anymore (SIM card is removed?) so we have to remove that
+    // instance and the messages to it
     else if (_id != -1 && !isPhone) {
       removeAccountWithCascade(context, _id);
     }
-    // SMS account is not in DB, but the device is a phone, let's put SMS account to DB
+    // SMS instance is not in DB, but the device is a phone, let's put SMS instance to DB
     else if (_id == -1 && isPhone) {
       Log.d("rgai", "case 3");
-      addAccount(SmsAccount.account);
+      SmsAccount.setInstance(-1);
+      long rawId = addAccount(SmsAccount.getInstance());
+      SmsAccount.setInstance(rawId);
     }
   }
 
 
-  public TreeMap<Account, Integer> getAccountToIdMap() {
-    TreeMap<Account, Integer> accounts = new TreeMap<Account, Integer>();
+  public TreeMap<Account, Long> getAccountToIdMap() {
+    TreeMap<Account, Long> accounts = new TreeMap<Account, Long>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
       Account account = cursorToAccount(cursor);
-      accounts.put(account, cursor.getInt(0));
+      accounts.put(account, cursor.getLong(0));
       cursor.moveToNext();
     }
     cursor.close();
@@ -118,14 +121,14 @@ public class AccountDAO  {
   }
 
 
-  public TreeMap<Integer, Account> getIdToAccountsMap() {
-    TreeMap<Integer, Account> accounts = new TreeMap<Integer, Account>();
+  public TreeMap<Long, Account> getIdToAccountsMap() {
+    TreeMap<Long, Account> accounts = new TreeMap<Long, Account>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
       Account account = cursorToAccount(cursor);
-      accounts.put(cursor.getInt(0), account);
+      accounts.put(cursor.getLong(0), account);
       cursor.moveToNext();
     }
     cursor.close();
@@ -140,7 +143,7 @@ public class AccountDAO  {
   }
 
 
-  public synchronized void addAccount(Account account) {
+  public synchronized long addAccount(Account account) {
     ContentValues values = null;
     MessageProvider.Type accountType = account.getAccountType();
     switch (accountType) {
@@ -160,7 +163,9 @@ public class AccountDAO  {
         break;
     }
     if (values != null) {
-      mDbHelper.getDatabase().insert(TABLE_ACCOUNTS, null, values);
+      return mDbHelper.getDatabase().insert(TABLE_ACCOUNTS, null, values);
+    } else {
+      return -1;
     }
   }
 
@@ -206,18 +211,18 @@ public class AccountDAO  {
   }
 
 
-  private void removeAccount(int accountId) {
-    mDbHelper.getDatabase().delete(TABLE_ACCOUNTS, COL_ID + " = ?", new String[] {Integer.toString(accountId)});
+  private void removeAccount(long accountId) {
+    mDbHelper.getDatabase().delete(TABLE_ACCOUNTS, COL_ID + " = ?", new String[] {Long.toString(accountId)});
   }
 
 
   /**
-   * Deletes the given account and the MessageListElements which belongs to this account.
+   * Deletes the given instance and the MessageListElements which belongs to this instance.
    *
    * @param context
-   * @param accountId the database _id of the account
+   * @param accountId the database _id of the instance
    */
-  public void removeAccountWithCascade(Context context, int accountId) {
+  public void removeAccountWithCascade(Context context, long accountId) {
     MessageListDAO.getInstance(context).removeMessagesToAccount(accountId);
     removeAccount(accountId);
   }
@@ -238,7 +243,7 @@ public class AccountDAO  {
 
 
   /**
-   * Returns true if Facebook account is present, false otherwise.
+   * Returns true if Facebook instance is present, false otherwise.
    * @return
    */
   public boolean isFacebookAccountAdded() {
@@ -274,7 +279,7 @@ public class AccountDAO  {
 
 
   /**
-   * Returns a cursor for the all account query.
+   * Returns a cursor for the all instance query.
    * @return
    */
   public Cursor getAllAccountsCursor() {
@@ -284,7 +289,7 @@ public class AccountDAO  {
 
 
   /**
-   * Returns an account to a cursor.
+   * Returns an instance to a cursor.
    * @param cursor
    * @return
    */
@@ -298,7 +303,7 @@ public class AccountDAO  {
       case FACEBOOK:
         return cursorToFacebookAccount(cursor);
       case SMS:
-        return SmsAccount.account;
+        return SmsAccount.getInstance();
       default:
         break;
     }

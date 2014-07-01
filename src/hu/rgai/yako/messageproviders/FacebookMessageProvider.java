@@ -524,7 +524,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 
   @Override
   public String toString() {
-    return "FacebookMessageProvider{" + "account=" + account + '}';
+    return "FacebookMessageProvider{" + "instance=" + account + '}';
   }
 
   public void dropConnection(Context context) {

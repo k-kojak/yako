@@ -108,7 +108,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
           }
           Intent i = new Intent(AccountSettingsListActivity.this, classToLoad);
 
-          i.putExtra("account", (Parcelable) account);
+          i.putExtra("instance", (Parcelable) account);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
 
         }
@@ -212,7 +212,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
   private void showAccountTypeChooser() {
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Choose account type");
+    builder.setTitle("Choose instance type");
 
     String[] items;
     fbAdded = AccountDAO.getInstance(this).isFacebookAccountAdded();

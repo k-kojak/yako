@@ -39,12 +39,10 @@ public class EmailAccount extends Account {
     }
   };
 
-  public EmailAccount() {
-  }
 
   public EmailAccount(Parcel in) {
     this(in.readString(), in.readString(), in.readString(), in.readString(), in.readInt(),
-            in.readInt(), in.readByte() == 1, in.readInt());
+            in.readInt(), in.readByte() == 1, in.readLong());
   }
 
   public EmailAccount(String email, String password, String imapAddress, String smtpAddress, boolean ssl) {
@@ -56,7 +54,8 @@ public class EmailAccount extends Account {
   }
 
   public EmailAccount(String email, String password, String imapAddress, String smtpAddress, int imapPort, int smtpPort,
-                      boolean ssl, int _id) {
+                      boolean ssl, long _id) {
+    super(_id);
     this.email = email;
     this.password = password;
     this.imapAddress = imapAddress;
@@ -64,7 +63,6 @@ public class EmailAccount extends Account {
     this.imapPort = imapPort;
     this.smtpPort = smtpPort;
     this.ssl = ssl;
-    this.m_id = _id;
     this.accountType = MessageProvider.Type.EMAIL;
   }
 
@@ -80,7 +78,7 @@ public class EmailAccount extends Account {
     out.writeInt(this.imapPort);
     out.writeInt(this.smtpPort);
     out.writeByte(this.ssl == true ? (byte) 1 : 0);
-    out.writeInt(m_id);
+    out.writeLong(m_id);
   }
 
   @Override

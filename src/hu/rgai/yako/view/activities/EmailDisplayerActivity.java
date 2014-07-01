@@ -23,6 +23,7 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
@@ -55,7 +56,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
 
     String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
     Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+    Log.d("rgai", "email displayer account: " + acc);
+    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+//    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;

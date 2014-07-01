@@ -28,7 +28,8 @@ public class IntentStrings {
     public static final String FORCE_QUERY = "force_query";
     public static final String RESULT = "result";
     public static final String ERROR_MESSAGE = "error_message";
-    public static final String ACCOUNT = "account";
+    public static final String ACCOUNT = "instance";
+    public static final String BUNDLE = "bundle";
 
     // this 2 data is required to find a messageListElement
     public static final String MESSAGE_ID = "message_id";

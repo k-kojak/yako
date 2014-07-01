@@ -11,9 +11,13 @@ import java.io.Serializable;
  */
 public abstract class Account implements Parcelable, Serializable, Comparable<Account> {
 
-  protected int m_id;
+  protected long m_id;
 
-  public int getDatabaseId() {
+  public Account(long _id) {
+    m_id = _id;
+  }
+
+  public long getDatabaseId() {
     return m_id;
   }
 
@@ -32,9 +36,9 @@ public abstract class Account implements Parcelable, Serializable, Comparable<Ac
   public abstract boolean isThreadAccount();
   
   /**
-   * True if this kind of account can have only one instance, false otherwise.
+   * True if this kind of instance can have only one instance, false otherwise.
    * 
-   * I.e. SMS and Facebook account is unique now, but email accounts are not.
+   * I.e. SMS and Facebook instance is unique now, but email accounts are not.
    * @return 
    */
   public abstract boolean isUnique();

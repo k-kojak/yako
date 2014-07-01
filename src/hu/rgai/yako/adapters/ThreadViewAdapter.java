@@ -71,7 +71,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
 
 		
-//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, instance.getAccountType(), coment.getFrom().getId());
 //    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
 		TextView msgBubble = (TextView) row.findViewById(R.id.comment);

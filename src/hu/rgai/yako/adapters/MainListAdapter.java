@@ -31,11 +31,11 @@ public class MainListAdapter extends CursorAdapter {
 
   private final Context mContext;
   private static LayoutInflater inflater = null;
-  private TreeMap<Integer, Account> mAccounts = null;
+  private TreeMap<Long, Account> mAccounts = null;
 
 
 
-  public MainListAdapter(Context context, Cursor cursor, TreeMap<Integer, Account> accounts) {
+  public MainListAdapter(Context context, Cursor cursor, TreeMap<Long, Account> accounts) {
     super(context, cursor, false);
     mContext = context;
     inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -291,7 +291,7 @@ public class MainListAdapter extends CursorAdapter {
 //  }
 
 
-  public void setAccounts(TreeMap<Integer, Account> mAccounts) {
+  public void setAccounts(TreeMap<Long, Account> mAccounts) {
     this.mAccounts = mAccounts;
   }
 

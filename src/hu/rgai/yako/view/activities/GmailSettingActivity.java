@@ -49,8 +49,8 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     pass = (EditText)findViewById(R.id.password);
     
     Bundle b = getIntent().getExtras();
-    if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (GmailAccount)b.getParcelable("account");
+    if (b != null && b.getParcelable("instance") != null) {
+      oldAccount = (GmailAccount)b.getParcelable("instance");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
     }
@@ -103,12 +103,12 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
     
-    // If editing account, then old account exists
+    // If editing instance, then old instance exists
     if (oldAccount != null) {
       resultIntent.putExtra("old_account", (Parcelable)oldAccount);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY, resultIntent);
     }
-    // If new account...
+    // If new instance...
     else {
       resultIntent.putExtra("old_account", false);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW, resultIntent);

@@ -27,6 +27,7 @@ import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.messageproviders.socketfactory.MySSLSocketFactory;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
@@ -76,7 +77,7 @@ import net.htmlparser.jericho.Source;
 /**
  * Implements a simple email message providing via IMAP protocol.
  * 
- * This class (in theory) can handle all email account types which supports IMAP.
+ * This class (in theory) can handle all email instance types which supports IMAP.
  * 
  * @author Tamas Kojedzinszky
  */
@@ -104,7 +105,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   /**
    * Constructs a SimpleEmailMessageProvider object.
    * 
-   * @param account the account to connect with
+   * @param account the instance to connect with
    * @param attachmentFolder path to folder where to save attachments
    */
   public SimpleEmailMessageProvider(EmailAccount account, String attachmentFolder) {
@@ -116,7 +117,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   /**
    * Constructs a SimpleEmailMessageProvider object.
    * 
-   * @param account the account to connect with
+   * @param account the instance to connect with
    */
   public SimpleEmailMessageProvider(EmailAccount account) {
     this.account = account;
@@ -136,7 +137,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     System.setProperty("java.net.preferIPv4Stack", "true");
     
     if (this.account.isSsl()) {
-      Security.setProperty("ssl.SocketFactory.provider", "hu.rgai.android.messageproviders.socketfactory.MySSLSocketFactory");
+      Security.setProperty("ssl.SocketFactory.provider", MySSLSocketFactory.class.getCanonicalName());
       props.setProperty("mail.imap.port", "993");
       props.setProperty("mail.smtp.port", "465");
       props.put("mail.imap.socketFactory.fallback", "false");
@@ -252,6 +253,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     } else {
       store = session.getStore("imap");
     }
+    Log.d("rgai3", "connecting with account: " + account);
     store.connect(account.getImapAddress(), account.getEmail(), account.getPassword());
     
     return store;
@@ -315,7 +317,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //        } else {
 //          uid = m.getMessageNumber();
 //        }
-//        Log.d("rgai", "UIDFOLDER msg ("+ account +") id: " + uid);
+//        Log.d("rgai", "UIDFOLDER msg ("+ instance +") id: " + uid);
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -396,7 +398,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       throw ex;
     } finally {
       
-//      setFolderIdleBlocked(account, false);
+//      setFolderIdleBlocked(instance, false);
     }
   }
   
@@ -766,7 +768,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
 //  private boolean supportsUIDforMessages() {
-//    if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
+//    if (instance.getAccountType().equals(MessageProvider.Type.GMAIL)) {
 //      return true;
 //    } else {
 //      return false;
@@ -890,7 +892,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           ex.printStackTrace();
         }
       }
-      // TODO: if account not support UID, then use simple id
+      // TODO: if instance not support UID, then use simple id
       msgs = uidFolder.getMessagesByUID(uids);
 //    } else {
 //      int[] messageIds = new int[ids.length];
@@ -902,7 +904,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //          ex.printStackTrace();
 //        }
 //      }
-//      // TODO: if account not support UID, then use simple id
+//      // TODO: if instance not support UID, then use simple id
 //      msgs = folder.getMessages(messageIds);
 //    }
     folder.setFlags(msgs, new Flags(Flags.Flag.SEEN), seen);
@@ -1012,7 +1014,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
       }
       
-//      Log.d("rgai", "Establishing connection: " + account);
+//      Log.d("rgai", "Establishing connection: " + instance);
       try {
         if (idleFolders == null) {
           idleFolders = new HashMap<AccountFolder, IMAPFolder>();
@@ -1031,7 +1033,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
     } else {
-//      Log.d("rgai", "No thanks, my connection is already alive: " + account);
+//      Log.d("rgai", "No thanks, my connection is already alive: " + instance);
     }
   }
   
@@ -1066,7 +1068,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   @Override
   public String toString() {
-    return "SimpleEmailMessageProvider{" + "account=" + account + '}';
+    return "SimpleEmailMessageProvider{" + "instance=" + account + '}';
   }
 
   public boolean isMessageDeletable() {
@@ -1132,7 +1134,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
     @Override
     public String toString() {
-      return "AccountFolder{" + "account=" + account + ", folder=" + folder + '}';
+      return "AccountFolder{" + "instance=" + account + ", folder=" + folder + '}';
     }
   }
 
@@ -1166,7 +1168,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         } finally {
 //          timer.cancel();
 //          Log.d("rgai", "END OF IDLE");
-//          Log.d("rgai", "RESTARTING IDLE STATE: " + account);
+//          Log.d("rgai", "RESTARTING IDLE STATE: " + instance);
           mRunning = false;
           if (!forceStop) {
             mMessageProvider.establishConnection(null);
