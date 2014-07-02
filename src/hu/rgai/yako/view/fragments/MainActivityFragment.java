@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -222,12 +223,18 @@ public class MainActivityFragment extends Fragment {
         intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
         intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
 //        intent.putExtra(IntentStrings.Params.BUNDLE, b);
-        boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
-        if (changed) {
-          message.setSeen(true);
-          message.setUnreadCount(0);
+//        boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
+        boolean changed = !message.isSeen();
+        if (!message.isSeen()) {
+          MessageListDAO.getInstance(getActivity()).updateMessageToSeen(message.getRawId());
+          mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(message.getRawId()));
           mAdapter.notifyDataSetChanged();
         }
+//        if (changed) {
+//          message.setSeen(true);
+//          message.setUnreadCount(0);
+
+//        }
 
         loggingOnClickEvent(message, changed);
         mMainActivity.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);

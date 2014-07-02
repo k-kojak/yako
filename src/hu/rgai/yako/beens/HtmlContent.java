@@ -16,7 +16,7 @@ public class HtmlContent implements Parcelable, Serializable {
     TEXT_HTML("text/html");
     
     private final String mimeType;
-    
+
     ContentType(String mimeType) {
       this.mimeType = mimeType;
     }
@@ -25,9 +25,11 @@ public class HtmlContent implements Parcelable, Serializable {
       return mimeType;
     }
   };
-  
+
+
   protected StringBuilder content;
   protected ContentType contentType;
+
   
   public static final Parcelable.Creator<HtmlContent> CREATOR = new Parcelable.Creator<HtmlContent>() {
     public HtmlContent createFromParcel(Parcel in) {

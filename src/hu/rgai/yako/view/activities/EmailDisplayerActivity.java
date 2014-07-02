@@ -64,7 +64,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       return;
     }
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
-    YakoApp.setMessageSeenAndReadLocally(mMessage);
+    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+//    YakoApp.setMessageSeenAndReadLocally(mMessage);
     
     
     getSupportActionBar().setTitle(mContent.getSubject());

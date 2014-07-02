@@ -69,22 +69,12 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 //      stillAddingFacebookAccount = false;
       return;
     }
-//    Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
-//    TreeSet<Account> accounts = null;
-
-//    try {
     int accountCount = AccountDAO.getInstance(this).getAccountCount();
-//      Log.d("rgai", accounts.toString());
-//    } catch (Exception ex) {
-//      // TODO: handle exception
-//      ex.printStackTrace();
-//      Log.d("rgai", "TODO: handle exception");
-//    }
 
     if (accountCount == 0) {
       showAccountTypeChooser();
@@ -175,7 +165,8 @@ public class AccountSettingsListActivity extends ActionBarActivity {
           Account newAccount = data.getParcelableExtra("new_account");
 
           // TODO: only run code below if any change really made on accounts (pass, name, other, etc.)
-          YakoApp.removeMessagesToAccount(oldAccount);
+
+//          YakoApp.removeMessagesToAccount(oldAccount);
           AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
 
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
@@ -183,7 +174,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
-          YakoApp.removeMessagesToAccount(oldAccount);
+//          YakoApp.removeMessagesToAccount(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {

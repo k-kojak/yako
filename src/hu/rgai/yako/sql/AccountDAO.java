@@ -137,8 +137,7 @@ public class AccountDAO  {
 
 
   public synchronized void modifyAccount(Context context, Account oldAccount, Account newAccount) {
-    MessageListDAO.getInstance(context).removeMessagesToAccount(oldAccount.getDatabaseId());
-    removeAccount(oldAccount.getDatabaseId());
+    removeAccountWithCascade(context, oldAccount.getDatabaseId());
     addAccount(newAccount);
   }
 
@@ -223,7 +222,7 @@ public class AccountDAO  {
    * @param accountId the database _id of the instance
    */
   public void removeAccountWithCascade(Context context, long accountId) {
-    MessageListDAO.getInstance(context).removeMessagesToAccount(accountId);
+    MessageListDAO.getInstance(context).removeMessagesToAccount(context, accountId);
     removeAccount(accountId);
   }
 

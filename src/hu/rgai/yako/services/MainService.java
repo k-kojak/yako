@@ -80,7 +80,6 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     Log.d("rgai3", "Service onstartCommand");
-    YakoApp.updateMessagesPrettyDateStrings();
 
     TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 

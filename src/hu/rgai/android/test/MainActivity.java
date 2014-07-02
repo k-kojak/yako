@@ -7,6 +7,7 @@ import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -128,7 +129,7 @@ public class MainActivity extends ActionBarActivity {
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    setContent(YakoApp.hasMessages() ? true : null);
+    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
@@ -603,7 +604,7 @@ public class MainActivity extends ActionBarActivity {
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
-        MainActivity.this.setContent(YakoApp.hasMessages());
+        MainActivity.this.setContent(MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount() != 0);
       }
     }
   }

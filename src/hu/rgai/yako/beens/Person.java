@@ -30,6 +30,7 @@ public final class Person implements Parcelable, Serializable {
 
   protected String id;
   protected String name;
+  protected String secondaryName;
   protected MessageProvider.Type type;
   private long contactId;
   
@@ -75,6 +76,10 @@ public final class Person implements Parcelable, Serializable {
 
   public String getName() {
     return name;
+  }
+
+  public String getSecondaryName() {
+    return secondaryName;
   }
 
   public MessageProvider.Type getType() {

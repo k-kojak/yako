@@ -61,6 +61,7 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
@@ -68,6 +69,7 @@ import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
+import java.util.TreeSet;
 
 public class ThreadDisplayerActivity extends ActionBarActivity {
 
@@ -78,7 +80,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private MessageListElement mMessage = null;
   private ListView lv = null;
   private EditText mText = null;
-  private ThreadViewAdapter adapter = null;
+  private ThreadViewAdapter mAdapter = null;
   private final Date lastLoadMoreEvent = null;
   private boolean firstLoad = true;
   private DataUpdateReceiver mDataUpdateReceiver = null;
@@ -126,7 +128,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
     Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+//    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
@@ -226,7 +229,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
           builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
               mMessageListChanged = true;
-              FullSimpleMessage simpleMessage = adapter.getItem(info.position);
+              FullSimpleMessage simpleMessage = mAdapter.getItem(info.position);
               
               MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), ThreadDisplayerActivity.this);
               MessageDeleteHandler handler = new MessageDeleteHandler(ThreadDisplayerActivity.this) {
@@ -235,17 +238,17 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
                 @Override
                 public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {
-                  // TODO: when storing thread messages in databasem there should be a call to delete message from there
+                  // TODO: when storing thread messages in database, there should be a call to delete message from there
 //                  synchronized (YakoApp.getMessages()) {
                     ((FullThreadMessage)messageToDelete.getFullMessage()).getMessages().remove(simpleMessage);
 //                  }
-                  for (int i = 0; i < adapter.getCount(); i++) {
-                    if (adapter.getItem(i).equals(simpleMessage)) {
-                      adapter.removeItem(i);
+                  for (int i = 0; i < mAdapter.getCount(); i++) {
+                    if (mAdapter.getItem(i).equals(simpleMessage)) {
+                      mAdapter.removeItem(i);
                     }
                   }
-                  adapter.notifyDataSetChanged();
-                  if (adapter.getCount() == 0) {
+                  mAdapter.notifyDataSetChanged();
+                  if (mAdapter.getCount() == 0) {
                     MessageListDAO.getInstance(ThreadDisplayerActivity.this).removeMessage(messageToDelete,
                             messageToDelete.getAccount().getDatabaseId());
 //                    synchronized (YakoApp.getMessages()) {
@@ -283,7 +286,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     actViewingMessage = mMessage;
     removeNotificationIfExists();
-    YakoApp.setMessageSeenAndReadLocally(mMessage);
+    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+//    YakoApp.setMessageSeenAndReadLocally(mMessage);
         
     
     // register wifi connection receiver if this acount depends on network, so after
@@ -349,10 +353,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   }
   
   
-  public void setMessageContent(FullThreadMessage content) {
-    mMessage.setFullMessage(content);
-    YakoApp.setMessageContent(mMessage, content);
-  }
+//  public void setMessageContent(FullThreadMessage content) {
+//    mMessage.setFullMessage(content);
+//    YakoApp.setMessageContent(mMessage, content);
+//  }
   
   public void dismissProgressDialog() {
     if (pd != null) {
@@ -491,33 +495,34 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   }
 
   public void appendLoadedMessages(FullThreadMessage fullMessage) {
-    if (mMessage.getFullMessage() == null) {
-      mMessage.setFullMessage(fullMessage);
-    } else {
-      FullThreadMessage tm = (FullThreadMessage)mMessage.getFullMessage();
-      tm.getMessages().addAll(fullMessage.getMessages());
-    }
-    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
+    FullMessageDAO.getInstance(this).appendMessages(this, mMessage.getRawId(), fullMessage);
+//    if (mMessage.getFullMessage() == null) {
+//      mMessage.setFullMessage(fullMessage);
+//    } else {
+//      FullThreadMessage tm = (FullThreadMessage)mMessage.getFullMessage();
+//      tm.getMessages().addAll(fullMessage.getMessages());
+//    }
+//    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
   
   public void displayMessage(boolean scrollToBottom) {
     int firstVisiblePos = lv.getFirstVisiblePosition();
     int oldItemCount = 0;
-    if (adapter != null) {
-      oldItemCount = adapter.getCount();
+    if (mAdapter != null) {
+      oldItemCount = mAdapter.getCount();
     }
-    if (mMessage.getFullMessage() != null) {
-      FullThreadMessage threadMessage = (FullThreadMessage)mMessage.getFullMessage();
-      adapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
-      for (FullSimpleMessage m : threadMessage.getMessages()) {
-        adapter.add(m);
+    TreeSet<FullSimpleMessage> messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(mMessage.getRawId());
+    if (messages != null && !messages.isEmpty()) {
+      mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
+      for (FullSimpleMessage m : messages) {
+        mAdapter.add(m);
       }
-      lv.setAdapter(adapter);
+      lv.setAdapter(mAdapter);
       if (firstLoad || scrollToBottom) {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);
       } else {
-        int newItemCount = adapter.getCount();
+        int newItemCount = mAdapter.getCount();
         lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
       }
     }
@@ -540,7 +545,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
 
     for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
-      builder.append((adapter.getItem(actualVisiblePosition)).getId());
+      builder.append((mAdapter.getItem(actualVisiblePosition)).getId());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     }
   }
@@ -621,7 +626,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
-      // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
       builder.append(mMessage.getAccount().getAccountType().name());

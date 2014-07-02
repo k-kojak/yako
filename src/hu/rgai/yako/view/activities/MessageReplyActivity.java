@@ -58,6 +58,7 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
@@ -126,13 +127,14 @@ public class MessageReplyActivity extends ActionBarActivity {
     mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
-    
-    
+
+
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_ID)) {
         String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
         Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+        mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+//        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }
@@ -144,9 +146,11 @@ public class MessageReplyActivity extends ActionBarActivity {
       if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)) {
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-        // mMessage shouldn be null here...
+        // mMessage shouldnt be null here...
         if (mMessage != null) {
-          YakoApp.setMessageSeenAndReadLocally(mMessage);
+          // TODO: check if message is set to read remotely in this case or not
+          MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+//          YakoApp.setMessageSeenAndReadLocally(mMessage);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
           MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
                   new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})), true, null);
@@ -163,12 +167,10 @@ public class MessageReplyActivity extends ActionBarActivity {
 
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
-        // TODO Auto-generated method stub
       }
 
       @Override
       public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        // TODO Auto-generated method stub
       }
 
       @Override
@@ -176,7 +178,6 @@ public class MessageReplyActivity extends ActionBarActivity {
         if (isCharCountVisible) {
           mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
         }
-        // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR

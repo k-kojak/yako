@@ -96,7 +96,7 @@ public class MainListAdapter extends CursorAdapter {
 //      }
 
 
-      final MessageListElement message = MessageListDAO.getInstance(context).cursorToMessageListElement(cursor, mAccounts);
+      MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
 
       // dealing with attachment display
       boolean hasAttachment;

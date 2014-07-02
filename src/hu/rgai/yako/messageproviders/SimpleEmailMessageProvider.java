@@ -335,7 +335,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           // skipping email
         } else {
 
-          MessageListElement testerElement = new MessageListElement(uid + "", seen, fromPerson, date, account, Type.EMAIL, true);
+          MessageListElement testerElement = new MessageListElement(-1, uid + "", seen, fromPerson, date, account, Type.EMAIL, true);
 
 
           if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
@@ -370,7 +370,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   //        System.out.println("fromName -> " + fromName);
   //        System.out.println("fromEmail -> " + fromEmail);
 
-          MessageListElement mle = new MessageListElement(uid + "", seen, subject, "",
+          MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "",
                   fromPerson, null, date, account, Type.EMAIL);
           FullSimpleMessage fsm = new FullSimpleMessage(uid + "", subject,
                   content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
@@ -443,7 +443,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       Flags flags = m.getFlags();
       boolean seen = flags.contains(Flags.Flag.SEEN);
       
-      MessageListElement testerElement = new MessageListElement(uid + "", seen, null, null, account, Type.EMAIL, true);
+      MessageListElement testerElement = new MessageListElement(-1, uid + "", seen, null, null, account, Type.EMAIL, true);
       if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
         emails.add(testerElement);
       }

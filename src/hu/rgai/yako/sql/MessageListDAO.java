@@ -3,17 +3,13 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class MessageListDAO  {
 
@@ -64,7 +60,7 @@ public class MessageListDAO  {
           " FOREIGN KEY (" + COL_ACCOUNT_ID + ") REFERENCES " + AccountDAO.TABLE_ACCOUNTS + "(" + AccountDAO.COL_ID + "));";
 
 
-  public static final String INDEX_ON_MSG_TYPE = COL_MSG_TYPE + "_idx";
+  public static final String INDEX_ON_MSG_TYPE = TABLE_MESSAGES + "__" + COL_MSG_TYPE + "__idx";
 
   public static final String CREATE_INDEX_ON_MSG_TYPE = "CREATE INDEX " + INDEX_ON_MSG_TYPE + " ON " + TABLE_MESSAGES + "(" + COL_ID + ");";
 
@@ -90,20 +86,24 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void clearTable() {
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, null, null);
-  }
+//  public synchronized void clearTable() {
+//    mDbHelper.getDatabase().delete(TABLE_MESSAGES, null, null);
+//  }
 
-  public synchronized void removeMessagesToAccount(long accountId) {
+  public synchronized void removeMessagesToAccount(Context context, long accountId) {
+    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId);
+
+    AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
+    FullMessageDAO.getInstance(context).removeMessagesToAccount(fullMessageIds);
     mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ACCOUNT_ID + " = ?", new String[] {Long.toString(accountId)});
   }
 
-  public synchronized void insertMessages(TreeSet<MessageListElement> messages, TreeMap<Account, Long> accounts) {
-    clearTable();
-    for (MessageListElement mle : messages) {
-      insertMessage(mle, accounts);
-    }
-  }
+//  public synchronized void insertMessages(TreeSet<MessageListElement> messages, TreeMap<Account, Long> accounts) {
+//    clearTable();
+//    for (MessageListElement mle : messages) {
+//      insertMessage(mle, accounts);
+//    }
+//  }
 
 
   public synchronized void updateFrom(long messageRawId, Person from) {
@@ -131,7 +131,7 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void updateMessageToSeen(long messageId) {
+  public void updateMessageToSeen(long messageId) {
     ContentValues cv = new ContentValues();
     cv.put(COL_SEEN, 1);
     cv.put(COL_UNREAD_CNT, 0);
@@ -284,15 +284,14 @@ public class MessageListDAO  {
 
 
   public long getMessageRawId(MessageListElement mle, long accountId) {
-    String query = "SELECT "+ COL_ID +" AS cnt" +
+    String query = "SELECT "+ COL_ID +
             " FROM " + TABLE_MESSAGES + "" +
             " WHERE " + COL_MSG_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?";
     Cursor cursor = mDbHelper.getDatabase().rawQuery(query, new String[] {mle.getId(), Long.toString(accountId)});
     cursor.moveToFirst();
     long _id = -1;
-    while (!cursor.isAfterLast()) {
+    if (!cursor.isAfterLast()) {
       _id = cursor.getLong(0);
-      break;
     }
     return _id;
   }
@@ -305,13 +304,13 @@ public class MessageListDAO  {
               MessageProvider.Type.valueOf(cursor.getString(8)));
       Date date = null;
       try {
-        date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").parse(cursor.getString(10));
+        date = SQLHelper.Utils.parseSQLdateString(cursor.getString(10));
       } catch (ParseException e) {
         e.printStackTrace();
       }
 
       if (date != null) {
-        mle = new MessageListElement(cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
+        mle = new MessageListElement(cursor.getLong(0), cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
                 cursor.getString(4), from, null, date, accounts.get(cursor.getLong(12)),
                 MessageProvider.Type.valueOf(cursor.getString(11)));
         if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {

@@ -21,6 +21,9 @@ import java.util.Map;
  */
 public class MessageListElement implements Parcelable, Comparable<MessageListElement>, Serializable {
 
+  // this is the database id of the message
+  protected long m_id;
+
   protected String id;
   protected boolean seen;
   protected String title;
@@ -57,7 +60,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   /**
    * Constructor for a message element in a list.
    * 
-   * @param id id of the message
+   * @param messageId messageId of the message
    * @param seen <code>true</code> if the message is seen, <code>false</code> otherwise
    * @param title title of the message, can be <code>null</code>
    * @param subTitle subtitle of the message, can be <code>null</code>
@@ -68,9 +71,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
-  public MessageListElement(String id, boolean seen, String title, String subTitle, int unreadCount, Person from,
+  public MessageListElement(long _id, String messageId, boolean seen, String title, String subTitle, int unreadCount, Person from,
           List<Person> recipients, Date date, Account account, Type messageType, boolean updateFlags) {
-    this.id = id;
+    m_id = _id;
+    this.id = messageId;
     this.seen = seen;
     this.title = title;
     this.subTitle = subTitle;
@@ -116,7 +120,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public MessageListElement(String id, Account account) {
-    this(id, false, null, null, 0, null, null, null, account, account.getAccountType(), false);
+    this(-1, id, false, null, null, 0, null, null, null, account, account.getAccountType(), false);
   }
   
   /**
@@ -132,7 +136,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link  hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
   public MessageListElement(String id, boolean seen, String title, int unreadCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, null, unreadCount, from, recipients, date, account, messageType, false);
+    this(-1, id, seen, title, null, unreadCount, from, recipients, date, account, messageType, false);
   }
   
   /**
@@ -146,8 +150,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param recipients the original recipients
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, null, -1, from, recipients, date, account, messageType, false);
+  public MessageListElement(long _id, String id, boolean seen, String title, Person from, List<Person> recipients,
+                            Date date, Account account, Type messageType) {
+    this(_id, id, seen, title, null, -1, from, recipients, date, account, messageType, false);
   }
   
    /**
@@ -162,23 +167,24 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param date date of the message
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, String snippet,
+  public MessageListElement(long _id, String id, boolean seen, String title, String snippet,
           Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, snippet, -1, from, recipients, date, account, messageType, false);
+    this(_id, id, seen, title, snippet, -1, from, recipients, date, account, messageType, false);
   }
   
-  public MessageListElement(String id, boolean seen, Person from, Date date, Account account, Type messageType, boolean updateFlags) {
-    this(id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
+  public MessageListElement(long _id, String id, boolean seen, Person from, Date date, Account account, Type messageType,
+                            boolean updateFlags) {
+    this(_id, id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
   }
   
   private void initStringToClassLoader() {
 	  if (stringToClassLoader == null) {
-	      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
-	      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccount.class.getClassLoader());
-	    }	  
+      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
+      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccount.class.getClassLoader());
+    }
   }
   
 
@@ -201,7 +207,16 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public int describeContents() {
     return 0;
   }
-  
+
+  public void setRawId(long rawId) {
+    m_id = rawId;
+  }
+
+
+  public long getRawId() {
+    return m_id;
+  }
+
   public String getPrettyDate() {
     if (prettyDate == null) {
       updatePrettyDateString(new SimpleDateFormat());

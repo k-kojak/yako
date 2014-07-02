@@ -125,7 +125,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());
         }
-
       }
     } catch (AuthenticationFailedException ex) {
       ex.printStackTrace();
@@ -162,7 +161,8 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     
     return messageResult;
   }
-  
+
+
   private synchronized static boolean isSetupRunning(RunningSetup rs) {
     if (runningTaskStack.containsKey(rs) && runningTaskStack.get(rs)) {
       return true;
@@ -171,6 +171,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       return false;
     }
   }
+
 
   private void extendPersonObject(List<MessageListElement> origi) {
     Person p;
