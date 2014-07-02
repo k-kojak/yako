@@ -1,6 +1,7 @@
 package hu.rgai.yako.view.fragments;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -58,7 +59,7 @@ public class MainActivityFragment extends Fragment {
   private ListView mListView;
   private View mRootView = null;
   private MainListAdapter mAdapter = null;
-  private TreeSet<MessageListElement> contextSelectedElements = null;
+  private TreeSet<Long> contextSelectedElements = null;
   private MainActivity mMainActivity = null;
   private Button loadMoreButton = null;
   private boolean loadMoreButtonVisible = false;
@@ -80,7 +81,7 @@ public class MainActivityFragment extends Fragment {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    contextSelectedElements = new TreeSet<MessageListElement>();
+    contextSelectedElements = new TreeSet<Long>();
     mContextBarTimerHandler = new Handler();
 
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
@@ -97,36 +98,38 @@ public class MainActivityFragment extends Fragment {
       public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
         MainActivityFragment.this.mActionMode = mode;
         
-        if (position != 0) {
-          if (checked) {
-            contextSelectedElements.add((MessageListElement)mAdapter.getItem(position));
-          } else {
-            contextSelectedElements.remove((MessageListElement)mAdapter.getItem(position));
-          }
-          if (contextSelectedElements.size() > 0) {
-            startContextualActionbarTimer();
-            mode.setTitle(contextSelectedElements.size() + " selected");
-            if (contextSelectedElements.size() == 1) {
-              mode.getMenu().findItem(R.id.reply).setVisible(true);
-              Account acc = contextSelectedElements.first().getAccount();
-              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
-              if (mp.isMessageDeletable()) {
-                mode.getMenu().findItem(R.id.discard).setVisible(true);
-                if (acc.isThreadAccount()) {
-                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
-                } else {
-                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
-                }
+        long rawId = ((Cursor)(mAdapter.getItem(position))).getInt(0);
+        if (checked) {
+          contextSelectedElements.add(rawId);
+        } else {
+          contextSelectedElements.remove(rawId);
+        }
+        if (contextSelectedElements.size() > 0) {
+          startContextualActionbarTimer();
+          mode.setTitle(contextSelectedElements.size() + " selected");
+          if (contextSelectedElements.size() == 1) {
+            mode.getMenu().findItem(R.id.reply).setVisible(true);
+            Context c = MainActivityFragment.this.getActivity();
+            MessageListElement mle = MessageListDAO.getInstance(c).getMessageByRawId(contextSelectedElements.first(),
+                    mAccounts);
+            Account acc = mle.getAccount();
+            MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
+            if (mp.isMessageDeletable()) {
+              mode.getMenu().findItem(R.id.discard).setVisible(true);
+              if (acc.isThreadAccount()) {
+                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
               } else {
-                mode.getMenu().findItem(R.id.discard).setVisible(false);
+                mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
               }
             } else {
-              mode.getMenu().findItem(R.id.reply).setVisible(false);
               mode.getMenu().findItem(R.id.discard).setVisible(false);
             }
           } else {
-            mode.finish();
+            mode.getMenu().findItem(R.id.reply).setVisible(false);
+            mode.getMenu().findItem(R.id.discard).setVisible(false);
           }
+        } else {
+          mode.finish();
         }
       }
 
@@ -145,7 +148,8 @@ public class MainActivityFragment extends Fragment {
         switch (item.getItemId()) {
           case R.id.reply:
             if (contextSelectedElements.size() == 1) {
-              MessageListElement message = contextSelectedElements.first();
+
+              MessageListElement message = MessageListDAO.getInstance(getActivity()).getMessageByRawId(contextSelectedElements.first(), mAccounts);
               Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
               Intent intent = new Intent(mMainActivity, classToLoad);
               intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
@@ -284,8 +288,9 @@ public class MainActivityFragment extends Fragment {
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
-        
-      MessageListElement mle = contextSelectedElements.first();
+      Log.d("rgai", "contextSelectedElements: " + contextSelectedElements);
+
+      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(contextSelectedElements.first(), mAccounts);
       Account acc = mle.getAccount();
       MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
 
@@ -333,7 +338,8 @@ public class MainActivityFragment extends Fragment {
   private void contextActionMarkMessage(boolean seen) {
     
     HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
-    for (MessageListElement mle : contextSelectedElements) {
+    for (Long rawId : contextSelectedElements) {
+      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(rawId, mAccounts);
       if (!messagesToAccounts.containsKey(mle.getAccount())) {
         messagesToAccounts.put(mle.getAccount(), new TreeSet<MessageListElement>());
       }
@@ -435,7 +441,8 @@ public class MainActivityFragment extends Fragment {
 
     if (!contextSelectedElements.isEmpty()) {
       for (int i = 1; i < mAdapter.getCount(); i++) {
-        mListView.setItemChecked(i, contextSelectedElements.contains((MessageListElement)mAdapter.getItem(i)));
+        long rawId = ((Cursor)(mAdapter.getItem(i))).getLong(0);
+        mListView.setItemChecked(i, contextSelectedElements.contains(rawId));
       }
     }
     

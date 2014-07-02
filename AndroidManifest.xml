@@ -28,8 +28,7 @@
     <application
       android:name="hu.rgai.yako.YakoApp"
       android:label="@string/app_name"
-      android:icon="@drawable/yako"
-      android:debuggable="false" >
+      android:icon="@drawable/yako">
       
       <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
       
