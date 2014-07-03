@@ -206,7 +206,7 @@ public class MainActivityFragment extends Fragment {
     }
     mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId),
             mAccounts);
-//    mListView.setAdapter(mAdapter);
+    mListView.setAdapter(mAdapter);
     mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
@@ -271,7 +271,6 @@ public class MainActivityFragment extends Fragment {
     Log.d("rgai3", "ONRESUME CALLED");
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
     mAdapter.setAccounts(mAccounts);
-    mListView.setAdapter(mAdapter);
   }
 
   @Override
