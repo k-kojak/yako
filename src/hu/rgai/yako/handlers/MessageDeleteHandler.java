@@ -28,9 +28,9 @@ public abstract class MessageDeleteHandler extends TimeoutHandler {
     Toast.makeText(mContext, s, Toast.LENGTH_LONG).show();
   }
   
-  public abstract void onMainListDelete(MessageListElement messageToDelete);
+  public abstract void onMainListDelete(long deletedMessageListRawId);
   
-  public abstract void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessageId);
+  public abstract void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId);
   
   public void onComplete() {}
 }

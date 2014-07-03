@@ -131,11 +131,14 @@ public class MessageListDAO  {
   }
 
 
-  public void updateMessageToSeen(long messageId) {
+  public void updateMessageToSeen(long rawId, boolean seen) {
     ContentValues cv = new ContentValues();
-    cv.put(COL_SEEN, 1);
-    cv.put(COL_UNREAD_CNT, 0);
-    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageId)});
+    cv.put(COL_SEEN, seen ? 1 : 0);
+    if (seen) {
+      cv.put(COL_UNREAD_CNT, 0);
+    }
+
+    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(rawId)});
   }
 
 
@@ -194,6 +197,11 @@ public class MessageListDAO  {
   }
 
 
+  public void removeMessage(long rawId) {
+    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ID + " = ?", new String[] {Long.toString(rawId)});
+  }
+
+
   public synchronized void removeMessage(MessageListElement mle, long accountId) {
     mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_MSG_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?",
             new String[] {mle.getId(), Long.toString(accountId)});
@@ -245,6 +253,19 @@ public class MessageListDAO  {
     }
     cursor.close();
     return messages;
+  }
+
+
+  public MessageListElement getMinimalMessage(long rawId, TreeMap<Long, Account> accounts) {
+    MessageListElement mle = null;
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, new String[] {COL_MSG_ID, COL_ACCOUNT_ID}, COL_ID + " = ?",
+            new String[] {Long.toString(rawId)}, null, null, null);
+    cursor.moveToFirst();
+    if (!cursor.isAfterLast()) {
+      mle = new MessageListElement(rawId, cursor.getString(0), accounts.get(cursor.getLong(1)));
+    }
+    cursor.close();
+    return mle;
   }
 
 
@@ -313,6 +334,7 @@ public class MessageListDAO  {
         mle = new MessageListElement(cursor.getLong(0), cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
                 cursor.getString(4), from, null, date, accounts.get(cursor.getLong(12)),
                 MessageProvider.Type.valueOf(cursor.getString(11)));
+        // TODO: content should come from fullmessage table, not like this
         if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
           FullSimpleMessage fsm = new FullSimpleMessage(mle.getId(), "subject",
                   new HtmlContent(cursor.getString(13), HtmlContent.ContentType.TEXT_HTML), date, from, false,

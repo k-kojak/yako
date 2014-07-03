@@ -117,7 +117,7 @@ public class MessageListerHandler extends TimeoutHandler {
         long accountId = mAccountsAccountKey.get(ThreadDisplayerActivity.actViewingMessage.getAccount());
         long storedMessageId = MessageListDAO.getInstance(mContext).getMessageRawId(ThreadDisplayerActivity.actViewingMessage, accountId);
         if (storedMessageId != -1) {
-          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageId);
+          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageId, true);
         }
       }
 
@@ -278,7 +278,7 @@ public class MessageListerHandler extends TimeoutHandler {
         // only update old messages' flags with the new one, and nothing else
         if (newMessage.isUpdateFlags()) {
 //            Log.d("rgai3", "update flags..");
-          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageRawId);
+          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageRawId, true);
 //            if (storedFoundMessage != null) {
 //              storedFoundMessage.setSeen(newMessage.isSeen());
 //              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());

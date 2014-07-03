@@ -22,7 +22,7 @@ import java.util.Map;
 public class MessageListElement implements Parcelable, Comparable<MessageListElement>, Serializable {
 
   // this is the database id of the message
-  protected long m_id;
+  protected long rawId;
 
   protected String id;
   protected boolean seen;
@@ -73,7 +73,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    */
   public MessageListElement(long _id, String messageId, boolean seen, String title, String subTitle, int unreadCount, Person from,
           List<Person> recipients, Date date, Account account, Type messageType, boolean updateFlags) {
-    m_id = _id;
+    rawId = _id;
     this.id = messageId;
     this.seen = seen;
     this.title = title;
@@ -171,7 +171,22 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
           Person from, List<Person> recipients, Date date, Account account, Type messageType) {
     this(_id, id, seen, title, snippet, -1, from, recipients, date, account, messageType, false);
   }
-  
+
+
+  /**
+   * This is a minimal constructor, used for cases when these datas are enough to make actions.
+   * I.e. marking message to seen at server side.
+   * @param id       message ID
+   * @param account  account to message
+   * @param m_id     database raw id
+   */
+  public MessageListElement(long m_id, String id, Account account) {
+    this.id = id;
+    this.account = account;
+    this.rawId = m_id;
+  }
+
+
   public MessageListElement(long _id, String id, boolean seen, Person from, Date date, Account account, Type messageType,
                             boolean updateFlags) {
     this(_id, id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
@@ -209,12 +224,16 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
 
   public void setRawId(long rawId) {
-    m_id = rawId;
+    this.rawId = rawId;
   }
 
 
+  /**
+   * Returns the database raw id of this message element.
+   * @return
+   */
   public long getRawId() {
-    return m_id;
+    return rawId;
   }
 
   public String getPrettyDate() {
@@ -248,7 +267,13 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public Person getFrom() {
     return from;
   }
-  
+
+
+  /**
+   * Returns the id of the message which was given by the provider.
+   * This id is not equivalent with raw id.
+   * @return
+   */
   public String getId() {
     return id;
   }

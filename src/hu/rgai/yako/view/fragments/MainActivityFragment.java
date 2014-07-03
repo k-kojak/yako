@@ -227,7 +227,7 @@ public class MainActivityFragment extends Fragment {
 //        boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
         boolean changed = !message.isSeen();
         if (!message.isSeen()) {
-          MessageListDAO.getInstance(getActivity()).updateMessageToSeen(message.getRawId());
+          MessageListDAO.getInstance(getActivity()).updateMessageToSeen(message.getRawId(), true);
           mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(message.getRawId()));
           mAdapter.notifyDataSetChanged();
         }
@@ -313,17 +313,13 @@ public class MainActivityFragment extends Fragment {
 
       MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
         @Override
-        public void onMainListDelete(MessageListElement messageToDelete) {
-          MessageListDAO.getInstance(MainActivityFragment.this.getActivity()).removeMessage(messageToDelete,
-                  messageToDelete.getAccount().getDatabaseId());
-//          synchronized (YakoApp.getMessages()) {
-//            YakoApp.getMessages().remove(messageToDelete);
-//          }
+        public void onMainListDelete(long deletedMessageListRawId) {
+          MessageListDAO.getInstance(MainActivityFragment.this.getActivity()).removeMessage(deletedMessageListRawId);
           notifyAdapterChange();
         }
 
         @Override
-        public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {}
+        public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId) {}
 
         @Override
         public void onComplete() {
@@ -331,7 +327,7 @@ public class MainActivityFragment extends Fragment {
         }
 
       };
-      MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
+      MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle.getRawId(), null,
               mle.getId(), handler, acc.isThreadAccount(), true);
       messageMarker.setTimeout(10000);
       messageMarker.executeTask(MainActivityFragment.this.getActivity(), null);
@@ -354,20 +350,21 @@ public class MainActivityFragment extends Fragment {
   
   private void contextActionMarkMessage(boolean seen) {
     
-    HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
+    HashMap<Account, TreeSet<String>> messageIdsToAccounts = new HashMap<Account, TreeSet<String>>();
     for (Long rawId : contextSelectedElements) {
-      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(rawId, mAccounts);
-      if (!messagesToAccounts.containsKey(mle.getAccount())) {
-        messagesToAccounts.put(mle.getAccount(), new TreeSet<MessageListElement>());
+      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMinimalMessage(rawId, mAccounts);
+      MessageListDAO.getInstance(getActivity()).updateMessageToSeen(rawId, seen);
+      if (!messageIdsToAccounts.containsKey(mle.getAccount())) {
+        messageIdsToAccounts.put(mle.getAccount(), new TreeSet<String>());
       }
-      messagesToAccounts.get(mle.getAccount()).add(mle);
+      messageIdsToAccounts.get(mle.getAccount()).add(mle.getId());
     }
     
     // TODO: block auto update while marking messages
     
     MessageSeenMarkerHandler handler = new MessageSeenMarkerHandler(this);
     List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
-    for (Map.Entry<Account, TreeSet<MessageListElement>> entry : messagesToAccounts.entrySet()) {
+    for (Map.Entry<Account, TreeSet<String>> entry : messageIdsToAccounts.entrySet()) {
       MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(entry.getKey(), getActivity());
       MessageSeenMarkerAsyncTask messageMarker = new MessageSeenMarkerAsyncTask(mp, entry.getValue(), seen, handler);
       messageMarker.setTimeout(10000);

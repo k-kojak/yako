@@ -228,32 +228,28 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
           AlertDialog.Builder builder = new AlertDialog.Builder(this);
           builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
+              final Context c = ThreadDisplayerActivity.this;
               mMessageListChanged = true;
               FullSimpleMessage simpleMessage = mAdapter.getItem(info.position);
-              
-              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), ThreadDisplayerActivity.this);
-              MessageDeleteHandler handler = new MessageDeleteHandler(ThreadDisplayerActivity.this) {
+//
+
+              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), c);
+              MessageDeleteHandler handler = new MessageDeleteHandler(c) {
                 @Override
-                public void onMainListDelete(MessageListElement messageToDelete) {}
+                public void onMainListDelete(long deletedMessageListRawId) {}
 
                 @Override
-                public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {
-                  // TODO: when storing thread messages in database, there should be a call to delete message from there
-//                  synchronized (YakoApp.getMessages()) {
-                    ((FullThreadMessage)messageToDelete.getFullMessage()).getMessages().remove(simpleMessage);
-//                  }
+                public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId) {
+                  FullMessageDAO.getInstance(c).removeMessage(deletedSimpleMessageId, deletedMessageListRawId);
                   for (int i = 0; i < mAdapter.getCount(); i++) {
-                    if (mAdapter.getItem(i).equals(simpleMessage)) {
+                    if (mAdapter.getItem(i).getId().equals(deletedSimpleMessageId)) {
                       mAdapter.removeItem(i);
+                      break;
                     }
                   }
                   mAdapter.notifyDataSetChanged();
                   if (mAdapter.getCount() == 0) {
-                    MessageListDAO.getInstance(ThreadDisplayerActivity.this).removeMessage(messageToDelete,
-                            messageToDelete.getAccount().getDatabaseId());
-//                    synchronized (YakoApp.getMessages()) {
-//                      YakoApp.getMessages().remove(messageToDelete);
-//                    }
+                    MessageListDAO.getInstance(c).removeMessage(deletedMessageListRawId);
                     finish();
                   }
                 }
@@ -261,10 +257,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
                 @Override
                 public void onComplete() {}
               };
-              MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage,
-                      simpleMessage, simpleMessage.getId(), handler, false, false);
+              MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage.getRawId(),
+                      simpleMessage.getId(), simpleMessage.getId(), handler, false, false);
               messageMarker.setTimeout(10000);
-              messageMarker.executeTask(ThreadDisplayerActivity.this, null);
+              messageMarker.executeTask(c, null);
             }
           });
           builder.setNegativeButton("No", null);
@@ -286,7 +282,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     actViewingMessage = mMessage;
     removeNotificationIfExists();
-    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //    YakoApp.setMessageSeenAndReadLocally(mMessage);
         
     
@@ -517,7 +513,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       for (FullSimpleMessage m : messages) {
         mAdapter.add(m);
       }
-      lv.setAdapter(mAdapter);
+      mAdapter.notifyDataSetChanged();
+      if (lv.getAdapter() == null) {
+        lv.setAdapter(mAdapter);
+      }
       if (firstLoad || scrollToBottom) {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);

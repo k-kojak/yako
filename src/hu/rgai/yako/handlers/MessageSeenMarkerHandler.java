@@ -3,9 +3,7 @@ package hu.rgai.yako.handlers;
 
 import android.content.Context;
 import android.widget.Toast;
-import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
-import java.util.TreeSet;
 
 public class MessageSeenMarkerHandler extends TimeoutHandler {
 
@@ -24,10 +22,7 @@ public class MessageSeenMarkerHandler extends TimeoutHandler {
     Toast.makeText(mFragment.getActivity(), s, Toast.LENGTH_LONG).show();
   }
   
-  public void success(TreeSet<MessageListElement> messagesToMark, boolean seen) {
-    for (MessageListElement mle : messagesToMark) {
-      mle.setSeen(seen);
-    }
+  public void success() {
     mFragment.notifyAdapterChange();
   }
 

@@ -149,11 +149,12 @@ public class MessageReplyActivity extends ActionBarActivity {
         // mMessage shouldnt be null here...
         if (mMessage != null) {
           // TODO: check if message is set to read remotely in this case or not
-          MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+          MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //          YakoApp.setMessageSeenAndReadLocally(mMessage);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-          MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
-                  new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})), true, null);
+          TreeSet<String> messagesToMark = new TreeSet<String>();
+          messagesToMark.add(mMessage.getId());
+          MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
           marker.executeTask(this, null);
         }
         

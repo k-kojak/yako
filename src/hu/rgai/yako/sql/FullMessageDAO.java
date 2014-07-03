@@ -50,6 +50,7 @@ public class FullMessageDAO {
           + COL_IS_ME + " integer, "
           + COL_MESSAGE_LIST_ID + " integer NOT NULL,"
           + COL_MSG_TYPE + " text NOT NULL, "
+          + " UNIQUE ("+ COL_MSG_ID +", "+ COL_MESSAGE_LIST_ID +"),"
           + " FOREIGN KEY (" + COL_FROM_ID + ") REFERENCES "
             + PersonSenderDAO.TABLE_PERSON + "(" + PersonSenderDAO.COL_ID + "),"
           + " FOREIGN KEY (" + COL_MESSAGE_LIST_ID + ") REFERENCES "
@@ -98,6 +99,9 @@ public class FullMessageDAO {
     cv.put(COL_MSG_TYPE, simpleMessage.getMessageType().toString());
     mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
   }
+
+
+
 
 
   /**
@@ -160,6 +164,12 @@ public class FullMessageDAO {
     }
 
     return messages;
+  }
+
+
+  public void removeMessage(String simpleMessageId, long messageListRawId) {
+    mDbHelper.getDatabase().delete(TABLE_MESSAGE_CONTENT, COL_MSG_ID + " = ? AND " + COL_MESSAGE_LIST_ID + " = ?",
+            new String[] {simpleMessageId, Long.toString(messageListRawId)});
   }
 
 

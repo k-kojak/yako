@@ -1,35 +1,34 @@
 
 package hu.rgai.yako.workers;
 
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.ThreadMessageProvider;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boolean> {
 
   private MessageProvider mProvider = null;
-  private MessageListElement mMessageToDelete = null;
-  private FullSimpleMessage mFullSimpleMessage = null;
+  private long mMessageListRawIdToDelete;
+  private String mFullSimpleMessageIdToDelete;
   private String mMessageId = null;
   private MessageDeleteHandler mHandler = null;
-  private boolean mThreadDelete = false;
+  private boolean mIsThreadAccountDelete = false;
   private boolean mDeleteAtMainList = false;
   
-  public MessageDeletionAsyncTask(MessageProvider messageProvider, MessageListElement messageToDelete,
-          FullSimpleMessage fullSimpleMessage, String msgId, MessageDeleteHandler handler,
-          boolean threadDelete, boolean deleteAtMainList) {
+  public MessageDeletionAsyncTask(MessageProvider messageProvider, long messageListRawIdToDelete,
+          String fullSimpleMessageIdToDelete, String msgId, MessageDeleteHandler handler,
+          boolean isThreadAccountDelete, boolean deleteAtMainList) {
     
     super(handler);
     mProvider = messageProvider;
-    mMessageToDelete = messageToDelete;
-    mFullSimpleMessage = fullSimpleMessage;
+    mMessageListRawIdToDelete = messageListRawIdToDelete;
+    mFullSimpleMessageIdToDelete = fullSimpleMessageIdToDelete;
     mMessageId = msgId;
     mHandler = handler;
-    mThreadDelete = threadDelete;
+    mIsThreadAccountDelete = isThreadAccountDelete;
     mDeleteAtMainList = deleteAtMainList;
   }
   
@@ -37,7 +36,7 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
   @Override
   protected Boolean doInBackground(Void... params) {
     try {
-      if (mThreadDelete && mProvider instanceof ThreadMessageProvider) {
+      if (mIsThreadAccountDelete && mProvider instanceof ThreadMessageProvider) {
         ((ThreadMessageProvider)mProvider).deleteThread(mMessageId);
       } else {
         mProvider.deleteMessage(mMessageId);
@@ -55,9 +54,9 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
     if (mHandler != null) {
       if (success) {
         if (mDeleteAtMainList) {
-          mHandler.onMainListDelete(mMessageToDelete);
+          mHandler.onMainListDelete(mMessageListRawIdToDelete);
         } else {
-          mHandler.onThreadListDelete(mMessageToDelete, mFullSimpleMessage);
+          mHandler.onThreadListDelete(mMessageListRawIdToDelete, mFullSimpleMessageIdToDelete);
         }
       } else {
         mHandler.toastMessage("Unable to delete message.");

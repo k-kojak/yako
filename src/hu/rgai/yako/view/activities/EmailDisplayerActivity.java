@@ -64,7 +64,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       return;
     }
     mContent = (FullSimpleMessage)mMessage.getFullMessage();
-    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId());
+    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //    YakoApp.setMessageSeenAndReadLocally(mMessage);
     
     
@@ -73,9 +73,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     
     // marking message as read
     MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-    MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
-            new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})),
-            true, null);
+    TreeSet<String> messagesToMark = new TreeSet<String>();
+    messagesToMark.add(mMessage.getId());
+    MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
     marker.executeTask(this, null);
 
 
