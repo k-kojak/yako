@@ -159,6 +159,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
           Account newAccount = data.getParcelableExtra("new_account");
           AccountDAO.getInstance(this).addAccount(newAccount);
+          Log.d("rgai3", "NEW ACCOUNT SAVED ");
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
           Account oldAccount = data.getParcelableExtra("old_account");

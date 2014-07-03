@@ -79,6 +79,7 @@ public class PersonSenderDAO {
       _id = insertPerson(person);
     }
     db.setTransactionSuccessful();
+    db.endTransaction();
     return _id;
   }
 
@@ -99,7 +100,7 @@ public class PersonSenderDAO {
             COL_KEY + " = ? AND " + COL_TYPE + " = ?", new String[]{person.getId(), person.getType().toString()},
             null, null, null);
     cursor.moveToFirst();
-    while (!cursor.isAfterLast()) {
+    if (!cursor.isAfterLast()) {
       _id = cursor.getLong(0);
     }
 

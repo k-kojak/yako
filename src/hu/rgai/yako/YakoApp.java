@@ -34,7 +34,7 @@ public class YakoApp extends Application {
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isPhone = null;
   public static volatile Date lastFullMessageUpdate = null;
-  private volatile static TreeSet<Account> accounts;
+//  private volatile static TreeSet<Account> accounts;
 
 
 
@@ -43,9 +43,9 @@ public class YakoApp extends Application {
 //  }
 
 
-  public static void setAccounts(TreeSet<Account> newAccs) {
-    accounts = newAccs;
-  }
+//  public static void setAccounts(TreeSet<Account> newAccs) {
+//    accounts = newAccs;
+//  }
   
 
 //  public static MessageListElement getMessageById_Account_Date(String id, Account acc) {

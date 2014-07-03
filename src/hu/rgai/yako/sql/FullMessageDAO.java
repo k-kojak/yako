@@ -141,7 +141,7 @@ public class FullMessageDAO {
     while (!cursor.isAfterLast()) {
       Person p = new Person(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_KEY)),
               cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_NAME)),
-              MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_NAME))));
+              MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_TYPE))));
       HtmlContent content = new HtmlContent(cursor.getString(cursor.getColumnIndex(COL_CONTENT_TEXT)),
               HtmlContent.ContentType.valueOf(cursor.getString(cursor.getColumnIndex(COL_CONTENT_TYPE))));
 
@@ -156,6 +156,7 @@ public class FullMessageDAO {
         e.printStackTrace();
       }
       messages.add(fsm);
+      cursor.moveToNext();
     }
 
     return messages;
@@ -175,6 +176,7 @@ public class FullMessageDAO {
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
       ids.add(cursor.getString(0));
+      cursor.moveToNext();
     }
     return ids;
   }

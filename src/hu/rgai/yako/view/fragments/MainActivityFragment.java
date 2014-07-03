@@ -85,8 +85,9 @@ public class MainActivityFragment extends Fragment {
     contextSelectedElements = new TreeSet<Long>();
     mContextBarTimerHandler = new Handler();
 
-    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
-    
+
+//    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
+    Log.d("rgai3", "QUERIING accounts: " + mAccounts);
     
     mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
@@ -205,7 +206,7 @@ public class MainActivityFragment extends Fragment {
     }
     mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId),
             mAccounts);
-    mListView.setAdapter(mAdapter);
+//    mListView.setAdapter(mAdapter);
     mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
@@ -261,6 +262,16 @@ public class MainActivityFragment extends Fragment {
       }
     });
     return mRootView;
+  }
+
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    Log.d("rgai3", "ONRESUME CALLED");
+    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
+    mAdapter.setAccounts(mAccounts);
+    mListView.setAdapter(mAdapter);
   }
 
   @Override

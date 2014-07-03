@@ -208,7 +208,7 @@ public class MessageListDAO  {
   public int getAllMessagesCount(long accountId) {
     int count = 0;
 
-    String sql = "SELECT COUNT(*) A cnt FROM " + TABLE_MESSAGES;
+    String sql = "SELECT COUNT(*) AS cnt FROM " + TABLE_MESSAGES;
     String[] selectionArgs = null;
     if (accountId != -1) {
       sql = "SELECT COUNT(*) AS cnt FROM " + TABLE_MESSAGES + " WHERE " + COL_ACCOUNT_ID + " = ?";

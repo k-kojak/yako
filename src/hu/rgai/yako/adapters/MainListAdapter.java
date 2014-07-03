@@ -71,7 +71,8 @@ public class MainListAdapter extends CursorAdapter {
 //  public void setListFilter(Account filterAccount) {
 //    this.filterAcc = filterAccount;
 //  }
-  
+
+
   public void bindView(View view, Context context, Cursor cursor) {
     
 //    if (position == 0) {
