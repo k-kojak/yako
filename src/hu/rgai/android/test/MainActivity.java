@@ -7,7 +7,6 @@ import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Message;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -17,11 +16,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
@@ -44,13 +39,13 @@ import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.view.activities.AccountSettingsListActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
@@ -186,8 +181,8 @@ public class MainActivity extends ActionBarActivity {
     mDrawerLayout.setDrawerListener(mDrawerToggle);
     
   }
-  
- 
+
+
   @Override
   protected void onResume() {
     super.onResume();

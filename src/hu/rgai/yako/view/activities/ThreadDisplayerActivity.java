@@ -599,7 +599,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   }
   
   
-  private class DataUpdateReceiver extends BroadcastReceiver {
+  public class DataUpdateReceiver extends BroadcastReceiver {
 
     private ThreadDisplayerActivity activity;
 
