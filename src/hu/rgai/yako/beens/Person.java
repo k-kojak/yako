@@ -39,6 +39,7 @@ public final class Person implements Parcelable, Serializable {
   
   private Map<MessageProvider.Type, Set<String>> idMap = null;
 
+
   public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
     @Override
     public Person createFromParcel(Parcel in) {
@@ -50,6 +51,7 @@ public final class Person implements Parcelable, Serializable {
       return new Person[size];
     }
   };
+
 
   public Person(String id, String name, MessageProvider.Type type) {
     this(-1, id, name, type);

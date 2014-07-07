@@ -41,6 +41,13 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 	}
 
   @Override
+  public void clear() {
+    if (messages != null) {
+      messages.clear();
+    }
+  }
+
+  @Override
 	public int getCount() {
 		return this.messages.size();
 	}

@@ -56,7 +56,8 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
         if (mDeleteAtMainList) {
           mHandler.onMainListDelete(mMessageListRawIdToDelete);
         } else {
-          mHandler.onThreadListDelete(mMessageListRawIdToDelete, mFullSimpleMessageIdToDelete);
+          mHandler.onThreadListDelete(mMessageListRawIdToDelete, mFullSimpleMessageIdToDelete,
+                  mProvider.getAccount().isInternetNeededForLoad());
         }
       } else {
         mHandler.toastMessage("Unable to delete message.");

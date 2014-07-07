@@ -67,7 +67,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 	          
           }
           // cast result to ThreadMessage, since this is a thread displayer
-          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, 20);
+          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, Settings.MESSAGE_QUERY_LIMIT);
           for (FullSimpleMessage fsm : threadMessage.getMessages()) {
             fsm.setFrom(Person.searchPersonAndr(context, fsm.getFrom()));
           }
@@ -97,7 +97,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 
     @Override
     protected void onPostExecute(FullThreadMessage result) {
-      mHandler.onComplete(true, result, scrollBottomAfterLoad);
+      mHandler.onComplete(account.isInternetNeededForLoad(), true, result, scrollBottomAfterLoad);
     }
     
   }

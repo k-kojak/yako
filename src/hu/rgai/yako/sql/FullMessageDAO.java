@@ -168,6 +168,21 @@ public class FullMessageDAO {
   }
 
 
+  public int getFullSimpleMessagesCount(long rawMessageListId) {
+    String q = "SELECT COUNT(*) AS cnt"
+            + " FROM " + TABLE_MESSAGE_CONTENT
+            + " WHERE " + COL_MESSAGE_LIST_ID + " = ?";
+
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(q, new String[] {Long.toString(rawMessageListId)});
+    cursor.moveToFirst();
+    if (!cursor.isAfterLast()) {
+      return cursor.getInt(0);
+    }
+    return 0;
+  }
+
+
+
   public void removeMessage(String simpleMessageId, long messageListRawId) {
     mDbHelper.getDatabase().delete(TABLE_MESSAGE_CONTENT, COL_MSG_ID + " = ? AND " + COL_MESSAGE_LIST_ID + " = ?",
             new String[] {simpleMessageId, Long.toString(messageListRawId)});

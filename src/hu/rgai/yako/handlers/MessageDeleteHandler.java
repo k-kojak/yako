@@ -30,7 +30,8 @@ public abstract class MessageDeleteHandler extends TimeoutHandler {
   
   public abstract void onMainListDelete(long deletedMessageListRawId);
   
-  public abstract void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId);
+  public abstract void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId,
+                                          boolean isInternetNeededForProvider);
   
   public void onComplete() {}
 }

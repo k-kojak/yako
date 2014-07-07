@@ -157,6 +157,7 @@ public class YakoApp extends Application {
   }
   
 
+  // TODO: this is just a quick hack for KitKat SMS handling
   private boolean isReadyForSmsProviding() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       String thisPackageName = getPackageName();

@@ -319,7 +319,8 @@ public class MainActivityFragment extends Fragment {
         }
 
         @Override
-        public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId) {}
+        public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId,
+                                       boolean isInternetNeededForProvider) {}
 
         @Override
         public void onComplete() {
