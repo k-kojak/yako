@@ -110,6 +110,7 @@ public class SQLHelper extends SQLiteOpenHelper {
         sb.append(s);
         i++;
       }
+      sb.append(")");
       return sb.toString();
     }
 

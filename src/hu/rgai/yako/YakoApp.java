@@ -3,21 +3,21 @@ package hu.rgai.yako;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Build;
+import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -32,7 +32,7 @@ public class YakoApp extends Application {
 //  private volatile static TreeSet<MessageListElement> messages = null;
   private volatile static  HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
-  public volatile static Boolean isPhone = null;
+  public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
 //  private volatile static TreeSet<Account> accounts;
 
@@ -157,7 +157,14 @@ public class YakoApp extends Application {
   }
   
 
-  private boolean setIsPhone() {
+  private boolean isReadyForSmsProviding() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      String thisPackageName = getPackageName();
+      if (!Telephony.Sms.getDefaultSmsPackage(this).equals(thisPackageName)) {
+        Toast.makeText(this, "Yako is not the default SMS provider. Please set as default at default applications.", Toast.LENGTH_LONG).show();
+        return false;
+      }
+    }
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
     if (simState == TelephonyManager.SIM_STATE_READY) {
@@ -224,9 +231,9 @@ public class YakoApp extends Application {
     }
     
     // TODO: we may have to update it on network state change!
-    isPhone = setIsPhone();
+    isRaedyForSms = isReadyForSmsProviding();
 
-    AccountDAO.getInstance(this).checkSMSAccount(this, isPhone);
+    AccountDAO.getInstance(this).checkSMSAccount(this, isRaedyForSms);
 
     // read in message list
     long start = System.currentTimeMillis();

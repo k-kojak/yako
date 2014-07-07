@@ -1,6 +1,7 @@
 package hu.rgai.yako.sql;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.List;
 
@@ -45,8 +46,13 @@ public class AttachmentDAO {
 
 
   public int deleteAttachments(List<Long> fullSimpleMessageIds) {
-    String inClosure = SQLHelper.Utils.getInClosure(fullSimpleMessageIds);
-    return mDbHelper.getDatabase().delete(TABLE_ATTACHMENTS, COL_MESSAGE_ID + " IN ?", new String[]{inClosure});
+    if (!fullSimpleMessageIds.isEmpty()) {
+      String inClosure = SQLHelper.Utils.getInClosure(fullSimpleMessageIds);
+//      Log.d("rgai", inClosure);
+      return mDbHelper.getDatabase().delete(TABLE_ATTACHMENTS, COL_MESSAGE_ID + " IN " + inClosure, null);
+    } else {
+      return 0;
+    }
   }
 
 

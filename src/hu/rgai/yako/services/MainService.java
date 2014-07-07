@@ -22,7 +22,6 @@ import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
@@ -107,7 +106,7 @@ public class MainService extends Service {
     }
     
     boolean isNet = isNetworkAvailable();
-    boolean isPhone = YakoApp.isPhone;
+    boolean isPhone = YakoApp.isRaedyForSms;
     MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
     if (accounts.isEmpty() && !isPhone) {
       preHandler.finished(null, false, MessageListerAsyncTask.NO_ACCOUNT_SET, null);

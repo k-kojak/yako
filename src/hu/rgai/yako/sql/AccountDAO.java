@@ -70,7 +70,7 @@ public class AccountDAO  {
   }
 
 
-  public synchronized void checkSMSAccount(Context context, boolean isPhone) {
+  public synchronized void checkSMSAccount(Context context, boolean readyForSms) {
     int _id = -1;
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, new String[] {COL_ID}, COL_TYPE + " = ?",
             new String[]{MessageProvider.Type.SMS.toString()}, null, null, null);
@@ -87,17 +87,17 @@ public class AccountDAO  {
     Log.d("rgai", "_id = " + _id);
     // do nothing, the sms instance is in the db and the device is a phone
     // OR instance is not in the db and device is not a phone
-    if (_id != -1 && isPhone || _id == -1 && !isPhone) {
+    if (_id != -1 && readyForSms || _id == -1 && !readyForSms) {
       Log.d("rgai", "case 1");
       SmsAccount.setInstance(_id);
     }
     // sms instance is in the db, but this is not a phone anymore (SIM card is removed?) so we have to remove that
     // instance and the messages to it
-    else if (_id != -1 && !isPhone) {
+    else if (_id != -1 && !readyForSms) {
       removeAccountWithCascade(context, _id);
     }
     // SMS instance is not in DB, but the device is a phone, let's put SMS instance to DB
-    else if (_id == -1 && isPhone) {
+    else if (_id == -1 && readyForSms) {
       Log.d("rgai", "case 3");
       SmsAccount.setInstance(-1);
       long rawId = addAccount(SmsAccount.getInstance());

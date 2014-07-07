@@ -9,8 +9,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -264,6 +268,13 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   @Override
   public void onReceive(Context context, Intent intent) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      String thisPackageName = context.getPackageName();
+      if (!Telephony.Sms.getDefaultSmsPackage(context).equals(thisPackageName)) {
+        Toast.makeText(context, "New message arrived, but Yako is not the default SMS provider.", Toast.LENGTH_LONG).show();
+        return;
+      }
+    }
     if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
       // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
       // a bit the reading from inbox
@@ -300,7 +311,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       boolean success = getResultCode() == Activity.RESULT_OK;
       
       MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
-            success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
+              success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     } else if (intent.getAction().equals(IntentStrings.Actions.SMS_DELIVERED)) {
       SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
       SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();

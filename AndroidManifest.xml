@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="hu.rgai.android.test"
-      android:versionCode="81"
-      android:versionName="1.0.81">
-  
-    <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="16"/>
-  
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_LOGS" />
+          package="hu.rgai.android.test"
+          android:versionCode="81"
+          android:versionName="1.0.81">
+
+    <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="19"/>
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_LOGS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.WRITE_SMS"/>
@@ -26,182 +26,211 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
-      android:name="hu.rgai.yako.YakoApp"
-      android:label="@string/app_name"
-      android:icon="@drawable/yako">
-      
-      <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
-      
-      <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:name="MainActivity"
-                android:label="@string/app_name">
-        <intent-filter>
-          <action android:name="android.intent.action.MAIN" />
-          <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-      </activity>
+            android:name="hu.rgai.yako.YakoApp"
+            android:label="@string/app_name"
+            android:icon="@drawable/yako">
 
-      <activity android:name="hu.rgai.yako.view.activities.EmailDisplayerActivity"
-                android:label="@string/app_name"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:parentActivityName="hu.rgai.android.test.MainActivity" >
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.android.test.MainActivity" />
-      </activity>
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
 
+        <activity android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:name="MainActivity"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
-      <activity android:name="hu.rgai.yako.view.activities.ThreadDisplayerActivity"
-                android:label="@string/app_name"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:parentActivityName="hu.rgai.android.test.MainActivity" >
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.android.test.MainActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.EmailDisplayerActivity"
+                  android:label="@string/app_name"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.android.test.MainActivity"/>
+        </activity>
 
 
-      <activity android:name="hu.rgai.yako.view.activities.SimpleEmailSettingActivity"
-                android:label="@string/setup_simple_email_account"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity" >
-        <meta-data  android:name="android.support.UI_OPTIONS"
-                    android:value="splitActionBarWhenNarrow" />
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.ThreadDisplayerActivity"
+                  android:label="@string/app_name"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.android.test.MainActivity"/>
+        </activity>
 
 
-      <activity android:name="hu.rgai.yako.view.activities.InfEmailSettingActivity"
-                android:label="@string/setup_inf_email_account"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity" >
-        <meta-data  android:name="android.support.UI_OPTIONS"
-                    android:value="splitActionBarWhenNarrow" />
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.SimpleEmailSettingActivity"
+                  android:label="@string/setup_simple_email_account"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                       android:value="splitActionBarWhenNarrow"/>
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
+        </activity>
 
 
-
-      <activity android:name="hu.rgai.yako.view.activities.GmailSettingActivity"
-                android:label="@string/setup_gmail_account"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity" >
-        <meta-data  android:name="android.support.UI_OPTIONS"
-                    android:value="splitActionBarWhenNarrow" />
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity" />
-      </activity>
-
-
-      <activity android:name="hu.rgai.yako.view.activities.SystemPreferences"
-                android:label="@string/settings"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:parentActivityName="hu.rgai.android.test.MainActivity" >
-        <meta-data  android:name="android.support.UI_OPTIONS"
-                    android:value="splitActionBarWhenNarrow" />
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.android.test.MainActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.InfEmailSettingActivity"
+                  android:label="@string/setup_inf_email_account"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                       android:value="splitActionBarWhenNarrow"/>
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
+        </activity>
 
 
-      <activity android:name="hu.rgai.yako.view.activities.FacebookSettingActivity"
-                android:label="@string/setup_fb_account"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:uiOptions="splitActionBarWhenNarrow"
-                android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity" >
-        <meta-data  android:name="android.support.UI_OPTIONS"
-                    android:value="splitActionBarWhenNarrow" />
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.GmailSettingActivity"
+                  android:label="@string/setup_gmail_account"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                       android:value="splitActionBarWhenNarrow"/>
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
+        </activity>
 
 
-      <activity android:name="hu.rgai.yako.view.activities.MessageReplyActivity"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:label="@string/app_name"
-                android:parentActivityName="hu.rgai.android.test.MainActivity" >
-
-        <intent-filter>
-          <action android:name="android.intent.action.SENDTO" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <data android:scheme="smsto" />
-          <data android:scheme="mailto" />
-        </intent-filter>
-
-        <intent-filter>
-          <action android:name="android.intent.action.SENDTO" />
-          <category android:name="android.intent.category.DEFAULT" />
-          <data android:scheme="imto" android:host="facebook" />
-        </intent-filter>
-
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.android.test.MainActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.SystemPreferences"
+                  android:label="@string/settings"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                       android:value="splitActionBarWhenNarrow"/>
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.android.test.MainActivity"/>
+        </activity>
 
 
-      <activity android:name="hu.rgai.yako.view.activities.AccountSettingsListActivity"
-                android:label="@string/account_settings"
-                android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                android:parentActivityName="hu.rgai.android.test.MainActivity" >
-        <meta-data  android:name="android.support.PARENT_ACTIVITY"
-                    android:value="hu.rgai.android.test.MainActivity" />
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.FacebookSettingActivity"
+                  android:label="@string/setup_fb_account"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:uiOptions="splitActionBarWhenNarrow"
+                  android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                       android:value="splitActionBarWhenNarrow"/>
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
+        </activity>
 
 
-      <activity android:name="com.facebook.LoginActivity"
-                android:label="@string/facebook_login_name">
-      </activity>
+        <activity android:name="hu.rgai.yako.view.activities.MessageReplyActivity"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:label="@string/app_name"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO"/>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="smsto"/>
+                <data android:scheme="sms"/>
+                <data android:scheme="mailto"/>
+                <data android:scheme="mms"/>
+                <data android:scheme="mmsto"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="imto" android:host="facebook"/>
+            </intent-filter>
+
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.android.test.MainActivity"/>
+        </activity>
 
 
-      <service  android:name="hu.rgai.yako.services.MainService"
-                android:icon="@drawable/yako"
-                android:label="@string/service_name" >
-      </service>
+        <activity android:name="hu.rgai.yako.view.activities.AccountSettingsListActivity"
+                  android:label="@string/account_settings"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value="hu.rgai.android.test.MainActivity"/>
+        </activity>
 
 
-      <receiver android:name="hu.rgai.yako.services.schedulestarters.MainScheduler" >
-        <intent-filter>
-          <action android:name="android.intent.action.BOOT_COMPLETED" />
-        </intent-filter>
-      </receiver>
+        <activity android:name="com.facebook.LoginActivity"
+                  android:label="@string/facebook_login_name">
+        </activity>
 
 
-      <receiver android:name="hu.rgai.yako.messageproviders.SmsMessageProvider">
-        <intent-filter>
-          <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-          <action android:name="hu.rgai.yako.intent.action.sms_sent" />
-          <action android:name="hu.rgai.yako.intent.action.sms_delivered" />
-        </intent-filter>
-      </receiver>
+        <service android:name="hu.rgai.yako.services.MainService"
+                 android:icon="@drawable/yako"
+                 android:label="@string/service_name">
+        </service>
 
 
-      <receiver android:name="hu.rgai.yako.broadcastreceivers.GlobalBroadcastReceiver" >
-        <intent-filter>
-          <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-        </intent-filter>
-      </receiver>
-      
-      <receiver android:name="hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver" >
-        <intent-filter>
-          <action android:name="hu.rgai.yako.message_sent_broadcast" />
-        </intent-filter>
-      </receiver>
-      
-      <receiver android:name="hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver" >
-        <intent-filter>
-          <action android:name="hu.rgai.yako.message_sent_broadcast" />
-        </intent-filter>
-      </receiver>
-      
-      <receiver android:name="hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver" >
-        <intent-filter>
-          <action android:name="hu.rgai.yako.message_sent_broadcast" />
-        </intent-filter>
-      </receiver>
+        <receiver android:name="hu.rgai.yako.services.schedulestarters.MainScheduler">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
+
+        <receiver android:name="hu.rgai.yako.messageproviders.SmsMessageProvider"
+                  android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+                <action android:name="android.provider.Telephony.SMS_DELIVER"/>
+                <action android:name="hu.rgai.yako.intent.action.sms_sent"/>
+                <action android:name="hu.rgai.yako.intent.action.sms_delivered"/>
+            </intent-filter>
+        </receiver>
+
+
+        <receiver android:name="hu.rgai.yako.messageproviders.SmsMessageProvider"
+                  android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER"/>
+                <data android:mimeType="application/vnd.wap.mms-message"/>
+            </intent-filter>
+        </receiver>
+
+
+        <service android:name="hu.rgai.yako.services.MainService"
+                 android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="sms"/>
+                <data android:scheme="smsto"/>
+                <data android:scheme="mms"/>
+                <data android:scheme="mmsto"/>
+            </intent-filter>
+        </service>
+
+
+        <receiver android:name="hu.rgai.yako.broadcastreceivers.GlobalBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver">
+            <intent-filter>
+                <action android:name="hu.rgai.yako.message_sent_broadcast"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver">
+            <intent-filter>
+                <action android:name="hu.rgai.yako.message_sent_broadcast"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver">
+            <intent-filter>
+                <action android:name="hu.rgai.yako.message_sent_broadcast"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

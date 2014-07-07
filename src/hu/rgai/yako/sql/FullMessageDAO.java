@@ -111,7 +111,7 @@ public class FullMessageDAO {
    */
   public List<Long> getFullMessageIdsByAccountId(long accountId) {
     List<Long> ids = new LinkedList<Long>();
-    String q = "SELECT " + COL_ID
+    String q = "SELECT c." + COL_ID
             + " FROM " + TABLE_MESSAGE_CONTENT + " AS c, " + MessageListDAO.TABLE_MESSAGES + " AS m"
             + " WHERE c." + COL_MESSAGE_LIST_ID + " = m." + MessageListDAO.COL_ID
               + " AND m." + MessageListDAO.COL_ACCOUNT_ID + " = ?";
@@ -119,6 +119,7 @@ public class FullMessageDAO {
     c.moveToFirst();
     while (!c.isAfterLast()) {
       ids.add(c.getLong(0));
+      c.moveToNext();
     }
     return ids;
   }
@@ -174,8 +175,12 @@ public class FullMessageDAO {
 
 
   public int removeMessagesToAccount(List<Long> fullSimpleMessageIds) {
-    String inClosure = SQLHelper.Utils.getInClosure(fullSimpleMessageIds);
-    return mDbHelper.getDatabase().delete(TABLE_MESSAGE_CONTENT, COL_ID + " IN ?", new String[]{inClosure});
+    if (!fullSimpleMessageIds.isEmpty()) {
+      String inClosure = SQLHelper.Utils.getInClosure(fullSimpleMessageIds);
+      return mDbHelper.getDatabase().delete(TABLE_MESSAGE_CONTENT, COL_ID + " IN " + inClosure, null);
+    } else {
+      return 0;
+    }
   }
 
 
