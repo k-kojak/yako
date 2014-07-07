@@ -32,7 +32,6 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
 
   private EditText email;
   private EditText pass;
-  private Spinner messageAmount;
   private EmailAccount oldAccount = null;
   public static final String IMAP_ADDRESS = "mail.inf.u-szeged.hu";
   private static final String SMTP_ADDRESS = "mail.inf.u-szeged.hu";
@@ -45,14 +44,7 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
-    
-    messageAmount = (Spinner)findViewById(R.id.initial_emails_num);
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-            R.array.initial_emails_num,
-            android.R.layout.simple_spinner_item);
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-    messageAmount.setAdapter(adapter);
+
     
     email = (EditText)findViewById(R.id.email_address);
     email.addTextChangedListener(this);
@@ -63,7 +55,6 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
       oldAccount = (EmailAccount)b.getParcelable("account");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
-      messageAmount.setSelection(AccountSettingsListActivity.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
   }
   
@@ -110,8 +101,7 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
     
     String m = email.getText().toString();
     String p = pass.getText().toString();
-    int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    EmailAccount newAccount = new EmailAccount(m, p, IMAP_ADDRESS, SMTP_ADDRESS, false, messageLimit);
+    EmailAccount newAccount = new EmailAccount(m, p, IMAP_ADDRESS, SMTP_ADDRESS, false);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);

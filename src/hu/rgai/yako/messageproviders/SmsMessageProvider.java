@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.telephony.SmsManager;
+import android.util.Log;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -22,8 +23,8 @@ import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -41,7 +42,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
 
-public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMessageProvider {
+public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
   Context context;
 
@@ -150,7 +151,7 @@ public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMess
       }
       cur.close();
     }
-    return new MessageListResult(messages, MessageListResult.ResultType.CHANGED, true);
+    return new MessageListResult(messages, MessageListResult.ResultType.CHANGED);
     
   }
 
@@ -344,7 +345,24 @@ public class SmsMessageProvider extends BroadcastReceiver  implements ThreadMess
   public void dropConnection() {
   }
 
+  public boolean isMessageDeletable() {
+    return true;
+  }
   
+  public void deleteThread(String id) {
+    Uri uriSMSURI = Uri.parse("content://sms");
+    int deleted = context.getContentResolver().delete(uriSMSURI,
+            "thread_id = ?",
+            new String[]{id});
+    Log.d("rgai", "delete count: " + deleted);
+  }
+
+  public void deleteMessage(String id) {
+    Uri uriSMSURI = Uri.parse("content://sms");
+    context.getContentResolver().delete(uriSMSURI,
+            "_id = ?",
+            new String[]{id});
+  }
 
   private class MessageItem {
     private String threadId;

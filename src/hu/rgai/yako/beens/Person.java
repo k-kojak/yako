@@ -1,16 +1,8 @@
 package hu.rgai.yako.beens;
 
-import android.content.ContentResolver;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.PhoneLookup;
-import android.util.Log;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -21,6 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.PhoneLookup;
+
 /**
  * 
  * @author Tamas Kojedzinszky
@@ -29,12 +30,12 @@ public final class Person implements Parcelable {
 
   protected String id;
   protected String name;
+  protected String secondaryName;
   protected MessageProvider.Type type;
-  private long contactId;
-  
+  private final long contactId;
+
   private static Map<String, Person> storedPerson = null;
 
-  
   private Map<MessageProvider.Type, Set<String>> idMap = null;
 
   public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
@@ -52,19 +53,19 @@ public final class Person implements Parcelable {
   public Person(String id, String name, MessageProvider.Type type) {
     this(-1, id, name, type);
   }
-  
+
   public Person(long contactId, String id, String name, MessageProvider.Type type) {
     this.contactId = contactId;
     this.id = id;
     this.name = name;
     this.type = type;
   }
-  
+
   /**
-   * The data which identifies the person.
-   * Although this is not enough to be unique, the type of the Person should be used with this
-   * data to be sure that the person and it's id is unique.
-   * The id holds something like: phone number, email address or Facebook user ID, etc.
+   * The data which identifies the person. Although this is not enough to be
+   * unique, the type of the Person should be used with this data to be sure
+   * that the person and it's id is unique. The id holds something like: phone
+   * number, email address or Facebook user ID, etc.
    * 
    * @return the id of the user
    */
@@ -76,14 +77,26 @@ public final class Person implements Parcelable {
     return name;
   }
 
+  public String getSecondaryName() {
+    return secondaryName;
+  }
+
   public MessageProvider.Type getType() {
     return type;
+  }
+
+  public void setType(MessageProvider.Type type) {
+    this.type = type;
   }
 
   public void setName(String name) {
     this.name = name;
   }
-  
+
+  public void setSecondaryName(String secondaryName) {
+    this.secondaryName = secondaryName;
+  }
+
   public void addId(MessageProvider.Type type, String id) {
     if (id == null) {
       throw new RuntimeException("Person id cannot be null!");
@@ -178,7 +191,7 @@ public final class Person implements Parcelable {
     } else {
 
       long rawContactId = getUid(context, p.getType(), p.getId(), p.getName());
-      
+
       key = p.getType().toString() + "_" + rawContactId;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
@@ -189,10 +202,13 @@ public final class Person implements Parcelable {
           // that is the user id for sending message
           if (p.getType().equals(MessageProvider.Type.SMS)) {
             pa = getUserData(context, rawContactId, p.getName());
+            pa.setType(MessageProvider.Type.SMS);
             // if not using sms, than p.getId() can be used for communication
             // (fb id, email addr, etc.)
           } else {
             pa = getUserData(context, rawContactId, p.getId());
+            pa.setType(p.getType());
+
           }
           // Log.d("rgai", "STORING IN PERSON MAP -> " + key + ", " + pa);
           storedPerson.put(key, pa);
@@ -202,7 +218,12 @@ public final class Person implements Parcelable {
           if (p.getType().equals(MessageProvider.Type.SMS)) {
             pa = new Person(-1, p.getName(), p.getName(), MessageProvider.Type.SMS);
           } else {
-            pa = new Person(-1, p.getId(), p.getName(), MessageProvider.Type.SMS);
+            pa = new Person(-1, p.getId(), p.getName(), p.getType());
+
+            if (p.getType().equals(MessageProvider.Type.FACEBOOK)) {
+              pa.setSecondaryName(p.getSecondaryName());
+            }
+
           }
         }
         return pa;
@@ -225,9 +246,9 @@ public final class Person implements Parcelable {
       // selection phone numbers
       cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { ContactsContract.CommonDataKinds.Phone.DATA },
 
-      ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
+          ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
 
-      new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE }, null);
+          new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.SMS, cursor.getColumnName(0));
       }
@@ -236,9 +257,9 @@ public final class Person implements Parcelable {
       // selection emails
       cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, new String[] { ContactsContract.CommonDataKinds.Email.DATA },
 
-      ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
+          ContactsContract.Data.RAW_CONTACT_ID + " = ? " + " AND " + ContactsContract.Data.MIMETYPE + " = ?",
 
-      new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE }, null);
+          new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
         pa.addId(MessageProvider.Type.EMAIL, cursor.getColumnName(0));
       }
@@ -285,11 +306,11 @@ public final class Person implements Parcelable {
     }
 
     Cursor cursor = context.getContentResolver().query(
-            ContactsContract.Data.CONTENT_URI,
-            new String[] { ContactsContract.Data.RAW_CONTACT_ID },
-            selection,
-            selectionArgs,
-            null);
+        ContactsContract.Data.CONTENT_URI,
+        new String[] { ContactsContract.Data.RAW_CONTACT_ID },
+        selection,
+        selectionArgs,
+        null);
     if (cursor != null) {
       if (cursor.getCount() > 0) {
         cursor.moveToFirst();
@@ -300,45 +321,44 @@ public final class Person implements Parcelable {
 
     return uid;
   }
-  
+
   private static long getUidForSms(Context context, String number) {
     long uid = -1;
     long contactId = -1;
-    
+
     ContentResolver contentResolver = context.getContentResolver();
     Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
-    String[] projection = new String[] {PhoneLookup._ID};
-    Cursor cursor =  contentResolver.query(uri, projection, null, null, null);
+    String[] projection = new String[] { PhoneLookup._ID };
+    Cursor cursor = contentResolver.query(uri, projection, null, null, null);
     if (cursor != null) {
-      while(cursor.moveToNext()){
+      while (cursor.moveToNext()) {
         contactId = cursor.getLong(cursor.getColumnIndexOrThrow(PhoneLookup._ID));
       }
       cursor.close();
     }
-    
-    
+
     // second query
     if (contactId != -1) {
       String[] contactProjection = new String[] {
-        ContactsContract.Data.RAW_CONTACT_ID
+          ContactsContract.Data.RAW_CONTACT_ID
       };
       Cursor contactCursor = contentResolver.query(ContactsContract.Data.CONTENT_URI,
-              contactProjection,
-              ContactsContract.Data.CONTACT_ID + " = ? ",
-              new String[]{contactId+""},
-              null);
+          contactProjection,
+          ContactsContract.Data.CONTACT_ID + " = ? ",
+          new String[] { contactId + "" },
+          null);
       if (contactCursor != null) {
-        while(contactCursor.moveToNext()){
+        while (contactCursor.moveToNext()) {
           uid = contactCursor.getLong(contactCursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID));
           break;
         }
         contactCursor.close();
       }
     }
-    
+
     return uid;
   }
-  
+
   @Override
   public int hashCode() {
     return Long.valueOf(contactId).hashCode();

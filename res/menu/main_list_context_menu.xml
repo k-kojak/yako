@@ -7,6 +7,11 @@
           android:title="@string/message_reply"
           messagelogger:showAsAction="ifRoom" />
   
+  <item android:id="@+id/discard"
+          android:icon="@drawable/ic_action_discard"
+          android:title="@string/delete_message"
+          messagelogger:showAsAction="ifRoom" />
+  
   <item android:id="@+id/mark_seen"
           android:icon="@drawable/ic_action_read"
           android:title="@string/mark_as_read"
@@ -16,5 +21,5 @@
           android:icon="@drawable/ic_action_unread"
           android:title="@string/mark_as_unread"
           messagelogger:showAsAction="ifRoom" />
-
+  
 </menu>

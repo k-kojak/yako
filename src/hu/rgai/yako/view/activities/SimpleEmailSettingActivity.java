@@ -36,7 +36,6 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
   private EditText imap;
   private EditText smtp;
   private Spinner securityType;
-  private Spinner messageAmount;
   private EmailAccount oldAccount = null;
   private Map<String, String> domainMap;
 
@@ -64,15 +63,8 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     
-    messageAmount = (Spinner)findViewById(R.id.initial_emails_num);
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-            R.array.initial_emails_num,
-            android.R.layout.simple_spinner_item);
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    messageAmount.setAdapter(adapter);
-    
     securityType = (Spinner)findViewById(R.id.security_type);
-    adapter = ArrayAdapter.createFromResource(this,
+    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
             R.array.security_types, android.R.layout.simple_spinner_item);
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     // Apply the adapter to the spinner
@@ -111,7 +103,6 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
       imap.setText(oldAccount.getImapAddress());
       smtp.setText(oldAccount.getSmtpAddress());
       securityType.setSelection(AccountSettingsListActivity.getSpinnerPosition(securityType.getAdapter(), oldAccount.isSsl() ? "SSL" : "None"));
-      messageAmount.setSelection(AccountSettingsListActivity.getSpinnerPosition(messageAmount.getAdapter(), oldAccount.getMessageLimit()));
     }
     
   }
@@ -172,8 +163,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
     String i = imap.getText().toString();
     String s = smtp.getText().toString();
     boolean ssl = this.isSsl();
-    int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
-    EmailAccount newAccount = new EmailAccount(m, p, i, s, ssl, messageLimit);
+    EmailAccount newAccount = new EmailAccount(m, p, i, s, ssl);
     
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);

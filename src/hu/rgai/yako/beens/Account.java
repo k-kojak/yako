@@ -18,12 +18,12 @@ public abstract class Account implements Parcelable, Serializable, Comparable<Ac
   @Override
   public abstract boolean equals(Object account);
   
-  public abstract int getMessageLimit();
-  
   @Override
   public abstract String toString();
   
   public abstract boolean isInternetNeededForLoad();
+  
+  public abstract boolean isThreadAccount();
   
   /**
    * True if this kind of account can have only one instance, false otherwise.

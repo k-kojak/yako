@@ -51,7 +51,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
   private String uniqueName;
   private EditText password;
   private String id = null;
-  private Spinner messageAmount;
   private FacebookAccount oldAccount = null;
   private UiLifecycleHelper uiHelper;
   private GraphUser user;
@@ -89,7 +88,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
               }
               syncFacebookContactList(null);
               try {
-              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId(), -1);
+              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
               } catch (Exception ex) {
                 Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
               }
@@ -124,33 +123,14 @@ public class FacebookSettingActivity extends ActionBarActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.account_settings_facebook_layout);
-//    final String fbToken = StoreHandler.getFacebookAccessToken(this);
-//    
-//    if (fbToken != null) {
-//      Session.openActiveSessionWithAccessToken(this,
-//              AccessToken.createFromExistingAccessToken(fbToken, new Date(2014, 1, 1), new Date(2013, 1, 1), AccessTokenSource.FACEBOOK_APPLICATION_NATIVE, Settings.getFacebookPermissions()),
-//              new StatusCallback() {
-//        public void call(Session sn, SessionState ss, Exception excptn) {
-//          Log.d("rgai", "REOPENING SESSION WITH ACCESS TOKEN -> " + fbToken);
-//          Log.d("rgai", sn.toString());
-//          Log.d("rgai", ss.toString());
-//          
-//        }
-//      });
-//    }
+
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
    
+    
     profilePictureView = (ProfilePictureView) findViewById(R.id.profilePicture);       
      
-    messageAmount = (Spinner)findViewById(R.id.initial_items_num);
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-            R.array.initial_emails_num,
-            android.R.layout.simple_spinner_item);
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-    messageAmount.setAdapter(adapter);
     
     name = (TextView)findViewById(R.id.display_name);
 //    uniqueName = (TextView)findViewById(R.id.unique_name);
@@ -189,19 +169,16 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
   private void setFieldsByAccount(FacebookAccount fba) {
     if (fba != null) {
-      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getId(), fba.getMessageLimit());
+      setFieldsByAccount(fba.getDisplayName(), fba.getUniqueName(), fba.getPassword(), fba.getId());
     }
   }
   
-  private void setFieldsByAccount(String displayName, String uName, String pass, String id, int messageLimit) {
+  private void setFieldsByAccount(String displayName, String uName, String pass, String id) {
     if (displayName != null) {
       name.setText(displayName);
     }
     if (pass != null) {
       password.setText(pass);
-    }
-    if (messageLimit != -1) {
-      messageAmount.setSelection(AccountSettingsListActivity.getSpinnerPosition(messageAmount.getAdapter(), messageLimit));
     }
     this.uniqueName = uName;
     this.id = id;
@@ -239,8 +216,6 @@ public class FacebookSettingActivity extends ActionBarActivity {
       
       findViewById(R.id.password).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.show_pass).setVisibility(user == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.initial_items_num).setVisibility(user == null ? View.GONE : View.VISIBLE);
-      findViewById(R.id.initial_items_num_label).setVisibility(user == null ? View.GONE : View.VISIBLE);
       findViewById(R.id.sync_fb_contact_list).setVisibility(user == null ? View.GONE : View.VISIBLE);
       
       if (user != null && oldAccount == null) {
@@ -331,9 +306,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
   }
 
   public void saveAccountSettings() {
-    int messageLimit = Integer.parseInt((String)messageAmount.getSelectedItem());
     FacebookAccount newAccount = new FacebookAccount(name.getText().toString(), uniqueName, id,
-            password.getText().toString(), messageLimit);
+            password.getText().toString());
     Log.d("rgai", "SAVING ACCOUNT -> " + newAccount.toString());
     Log.d("rgai", "id->" + id);
     

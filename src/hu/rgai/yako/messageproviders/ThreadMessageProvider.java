@@ -11,5 +11,9 @@ import javax.mail.NoSuchProviderException;
  * @author Tamas Kojedzinszky
  */
 public interface ThreadMessageProvider extends MessageProvider {
+  
   public FullMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException;
+  
+  public void deleteThread(String id);
+  
 }

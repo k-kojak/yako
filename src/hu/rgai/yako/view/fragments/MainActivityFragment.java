@@ -1,10 +1,12 @@
 package hu.rgai.yako.view.fragments;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,10 +26,12 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
+import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
+import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
@@ -35,6 +39,7 @@ import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
+import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -49,7 +54,7 @@ import java.util.logging.Logger;
  */
 public class MainActivityFragment extends Fragment {
 
-  private ListView lv;
+  private ListView mListView;
   private View mRootView = null;
   private MainListAdapter mAdapter = null;
   private TreeSet<MessageListElement> contextSelectedElements = null;
@@ -57,6 +62,14 @@ public class MainActivityFragment extends Fragment {
   private Button loadMoreButton = null;
   private boolean loadMoreButtonVisible = false;
   private ProgressBar mTopProgressBar;
+  
+  private Handler mContextBarTimerHandler = null;
+  private final Runnable mContextBarTimerCallback = new Runnable() {
+    public void run() {
+      hideContextualActionbar();
+    }
+  };
+  private ActionMode mActionMode = null;
 
   public static MainActivityFragment getInstance() {
     
@@ -66,29 +79,50 @@ public class MainActivityFragment extends Fragment {
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     contextSelectedElements = new TreeSet<MessageListElement>();
+    mContextBarTimerHandler = new Handler();
     
     
     mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
     
     mTopProgressBar = (ProgressBar) mRootView.findViewById(R.id.progressbar);
-    lv = (ListView) mRootView.findViewById(R.id.list);
+    mListView = (ListView) mRootView.findViewById(R.id.list);
     
-    lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-    lv.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+    mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+    mListView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
       public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
+        MainActivityFragment.this.mActionMode = mode;
+        
         if (position != 0) {
           if (checked) {
             contextSelectedElements.add((MessageListElement)mAdapter.getItem(position));
           } else {
             contextSelectedElements.remove((MessageListElement)mAdapter.getItem(position));
           }
-          if (contextSelectedElements.size() == 1) {
-            mode.getMenu().findItem(R.id.reply).setVisible(true);
+          if (contextSelectedElements.size() > 0) {
+            startContextualActionbarTimer();
+            mode.setTitle(contextSelectedElements.size() + " selected");
+            if (contextSelectedElements.size() == 1) {
+              mode.getMenu().findItem(R.id.reply).setVisible(true);
+              Account acc = contextSelectedElements.first().getAccount();
+              MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, mMainActivity);
+              if (mp.isMessageDeletable()) {
+                mode.getMenu().findItem(R.id.discard).setVisible(true);
+                if (acc.isThreadAccount()) {
+                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_thread);
+                } else {
+                  mode.getMenu().findItem(R.id.discard).setTitle(R.string.delete_message);
+                }
+              } else {
+                mode.getMenu().findItem(R.id.discard).setVisible(false);
+              }
+            } else {
+              mode.getMenu().findItem(R.id.reply).setVisible(false);
+              mode.getMenu().findItem(R.id.discard).setVisible(false);
+            }
           } else {
-            mode.getMenu().findItem(R.id.reply).setVisible(false);
+            mode.finish();
           }
-          mode.setTitle(contextSelectedElements.size() + " selected");
         }
       }
 
@@ -114,15 +148,19 @@ public class MainActivityFragment extends Fragment {
               intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
               mMainActivity.startActivity(intent);
             }
-            mode.finish();
+            hideContextualActionbar();
+            return true;
+          case R.id.discard:
+            contextActionDeleteMessage();
+            hideContextualActionbar();
             return true;
           case R.id.mark_seen:
             contextActionMarkMessage(true);
-            mode.finish();
+            hideContextualActionbar();
             return true;
           case R.id.mark_unseen:
             contextActionMarkMessage(false);
-            mode.finish();
+            hideContextualActionbar();
             return true;
           default:
             return false;
@@ -130,8 +168,7 @@ public class MainActivityFragment extends Fragment {
       }
 
       public void onDestroyActionMode(ActionMode mode) {
-        // Here you can make any necessary updates to the activity when
-        // the CAB is removed. By default, selected items are deselected/unchecked.
+        cancelContextualActionbarTimer();
       }
     });
 
@@ -147,16 +184,16 @@ public class MainActivityFragment extends Fragment {
       }
     });
     
-    lv.addFooterView(loadMoreButton);
+    mListView.addFooterView(loadMoreButton);
     
     if (BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY_KEY)) {
       loadMoreButton.setEnabled(false);
     }
 
     mAdapter = new MainListAdapter(mMainActivity);
-    lv.setAdapter(mAdapter);
-    lv.setOnScrollListener(new LogOnScrollListener(lv, mAdapter));
-    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    mListView.setAdapter(mAdapter);
+    mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
+    mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
         if (av.getItemAtPosition(itemIndex) == null) return;
@@ -183,7 +220,7 @@ public class MainActivityFragment extends Fragment {
       private void loggingOnClickEvent(MessageListElement message, boolean changed) {
         StringBuilder builder = new StringBuilder();
         appendClickedElementDatasToBuilder(message, builder);
-        mMainActivity.appendVisibleElementToStringBuilder(builder, lv, mAdapter);
+        mMainActivity.appendVisibleElementToStringBuilder(builder, mListView, mAdapter);
         builder.append(changed);
         EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
       }
@@ -199,13 +236,78 @@ public class MainActivityFragment extends Fragment {
     });
     return mRootView;
   }
-    
-    
+
   @Override
-  public void onResume() {
-    super.onResume(); //To change body of generated methods, choose Tools | Templates.
+  public void onPause() {
+    super.onPause();
+    hideContextualActionbar();
+  }
+  
+  
+  private void cancelContextualActionbarTimer() {
+    if (mContextBarTimerHandler != null && mContextBarTimerCallback != null) {
+      mContextBarTimerHandler.removeCallbacks(mContextBarTimerCallback);
+    }
+  }
+  
+  private void startContextualActionbarTimer() {
+    cancelContextualActionbarTimer();
+    mContextBarTimerHandler.postDelayed(mContextBarTimerCallback, 10000);
   }
 
+  
+  public void hideContextualActionbar() {
+    if (mActionMode != null) {
+      mActionMode.finish();
+      contextSelectedElements.clear();
+    }
+  }
+  
+    
+  private void contextActionDeleteMessage() {
+    
+    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        
+        MessageListElement mle = contextSelectedElements.first();
+        Account acc = mle.getAccount();
+        MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
+
+        MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
+          @Override
+          public void onMainListDelete(MessageListElement messageToDelete) {
+            synchronized (YakoApp.getMessages()) {
+              YakoApp.getMessages().remove(messageToDelete);
+            }
+            notifyAdapterChange();
+          }
+
+          @Override
+          public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {}
+
+          @Override
+          public void onComplete() {
+            mTopProgressBar.setVisibility(View.GONE);
+          }
+          
+        };
+        MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle, null,
+                mle.getId(), handler, acc.isThreadAccount(), true);
+        messageMarker.setTimeout(10000);
+        messageMarker.executeTask(null);
+
+        mTopProgressBar.setVisibility(View.VISIBLE);
+        
+      }
+    });
+    builder.setNegativeButton("No", null);
+    builder.setTitle("Delete message");
+    builder.setMessage("Delete selected message?").show();
+    
+  }
+  
+  
   private void contextActionMarkMessage(boolean seen) {
     
     HashMap<Account, TreeSet<MessageListElement>> messagesToAccounts = new HashMap<Account, TreeSet<MessageListElement>>();
@@ -237,154 +339,17 @@ public class MainActivityFragment extends Fragment {
       });
       batchedMarker.execute();
     } catch (Exception ex) {
-      Logger.getLogger(MainActivityFragment_F.class.getName()).log(Level.SEVERE, null, ex);
+      Logger.getLogger(MainActivityFragment.class.getName()).log(Level.SEVERE, null, ex);
     }
   }
   
-  
-  private View getContent() {
-    return null;
-//        setContentView(R.layout.main);
-//        lv = (ListView) findViewById(R.id.list);
-//        mTopProgressBar = (ProgressBar) findViewById(R.id.progressbar);
-        
-//        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-//        lv.setMultiChoiceModeListener(new MultiChoiceModeListener() {
-//
-//          public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
-//            if (position != 0) {
-//              if (checked) {
-//                contextSelectedElements.add((MessageListElement)adapter.getItem(position));
-//              } else {
-//                contextSelectedElements.remove((MessageListElement)adapter.getItem(position));
-//              }
-//              if (contextSelectedElements.size() == 1) {
-//                mode.getMenu().findItem(R.id.reply).setVisible(true);
-//              } else {
-//                mode.getMenu().findItem(R.id.reply).setVisible(false);
-//              }
-//              mode.setTitle(contextSelectedElements.size() + " selected");
-//            }
-//          }
-//
-//          public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-//            MenuInflater inflater = mode.getMenuInflater();
-//            inflater.inflate(R.menu.main_list_context_menu, menu);
-//            contextSelectedElements.clear();
-//            return true;
-//          }
-//
-//          public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-//            return false;
-//          }
-//
-//          public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-//            switch (item.getItemId()) {
-//              case R.id.reply:
-//                if (contextSelectedElements.size() == 1) {
-//                  MessageListElement message = contextSelectedElements.first();
-//                  Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
-////                  Intent intent = new Intent(MainActivityFragment_F.this, classToLoad);
-////                  intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
-////                  intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
-////                  MainActivityFragment_F.this.startActivity(intent);
-//                }
-//                mode.finish();
-//                return true;
-//              case R.id.mark_seen:
-//                contextActionMarkMessage(true);
-//                mode.finish();
-//                return true;
-//              case R.id.mark_unseen:
-//                contextActionMarkMessage(false);
-//                mode.finish();
-//                return true;
-//              default:
-//                return false;
-//            }
-//          }
-//
-//          public void onDestroyActionMode(ActionMode mode) {
-//            // Here you can make any necessary updates to the activity when
-//            // the CAB is removed. By default, selected items are deselected/unchecked.
-//          }
-//        });
-//
-////        loadMoreButton = new Button(this);
-//        loadMoreButton.setText("Load more ...");
-//        loadMoreButton.getBackground().setAlpha(0);
-//        loadMoreButton.setOnClickListener(new View.OnClickListener() {
-//          @Override
-//          public void onClick(View arg0) {
-//            EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_LOAD_MORE_BTN, true);
-//            loadMoreMessage();
-//          }
-//        });
-//        lv.addFooterView(loadMoreButton);
-//        if (BatchedAsyncTaskExecutor.isProgressRunning(MainService.MESSAGE_LIST_QUERY_KEY)) {
-//          loadMoreButton.setEnabled(false);
-//        }
-//
-////        adapter = new MainListAdapter(this);
-////        adapter.setListFilter(actSelectedFilter);
-//        lv.setAdapter(adapter);
-//        lv.setOnScrollListener(new LogOnScrollListener(lv, adapter));
-//        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//          @Override
-//          public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
-//            if (av.getItemAtPosition(itemIndex) == null) return;
-//            MessageListElement message = (MessageListElement) av.getItemAtPosition(itemIndex);
-//            Account a = message.getAccount();
-//            Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-////            Intent intent = new Intent(MainActivityFragment_F.this, classToLoad);
-////            intent.putExtra(IntentParamStrings.MESSAGE_ID, message.getId());
-////            intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
-//
-//            boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
-//            if (changed) {
-//              message.setSeen(true);
-//              message.setUnreadCount(0);
-//              adapter.notifyDataSetChanged();
-//            }
-//
-//            loggingOnClickEvent(message, changed);
-////            MainActivityFragment_F.this.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
-//          }
-//
-//          /**
-//           * Performs a log event when an item clicked on the main view list.
-//           */
-//          private void loggingOnClickEvent(MessageListElement message, boolean changed) {
-//            StringBuilder builder = new StringBuilder();
-//            appendClickedElementDatasToBuilder(message, builder);
-//            MainActivityFragment_F.this.appendVisibleElementToStringBuilder(builder, lv, adapter);
-//            builder.append(changed);
-//            EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
-//          }
-//
-//          private void appendClickedElementDatasToBuilder(MessageListElement message, StringBuilder builder) {
-//            builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
-//            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-//            builder.append(EventLogger.LOGGER_STRINGS.OTHER.CLICK_TO_MESSAGEGROUP_STR);
-//            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-//            builder.append(message.getId());
-//            builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-//          }
-//        });
-//      } else if (YakoApp.getMessages().isEmpty()) {
-////        TextView text = new TextView(this);
-////        text.setText(this.getString(R.string.empty_list));
-////        text.setGravity(Gravity.CENTER);
-////        this.setContentView(text);
-//      }
-//    } else {
-////      TextView text = new TextView(this);
-////      text.setText(this.getString(R.string.no_internet_access));
-////      text.setGravity(Gravity.CENTER);
-////      setContentView(text);
-//    }
+  public ListView getListView() {
+    return mListView;
   }
   
+  public MainListAdapter getAdapter() {
+    return mAdapter;
+  }
 
   private class LogOnScrollListener implements AbsListView.OnScrollListener {
     final ListView lv;
@@ -402,6 +367,9 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
+      if (!contextSelectedElements.isEmpty()) {
+        startContextualActionbarTimer();
+      }
       // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
@@ -437,6 +405,13 @@ public class MainActivityFragment extends Fragment {
       loadMoreButton.setVisibility(View.VISIBLE);
       loadMoreButtonVisible = true;
     }
+
+    if (!contextSelectedElements.isEmpty()) {
+      for (int i = 1; i < mAdapter.getCount(); i++) {
+        mListView.setItemChecked(i, contextSelectedElements.contains((MessageListElement)mAdapter.getItem(i)));
+      }
+    }
+    
   }
 
 }

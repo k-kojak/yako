@@ -25,6 +25,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Intents.Insert;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.QuickContactBadge;
 
@@ -34,15 +35,12 @@ import android.widget.QuickContactBadge;
  */
 public class AndroidUtils {
 
-  // public static void connectConnectableMessageProviders(Context context) {
-  // List<Account> accounts = StoreHandler.getAccounts(context);
-  //
-  // for (Account a : accounts) {
-  // Log.d("rgai", "try connecting account -> " + a);
-  // MessageProvider mp = getMessageProviderInstanceByAccount(a, context);
-  // checkAndConnectMessageProviderIfConnectable(mp, context);
-  // }
-  // }
+  public static String getCharCountStringForSMS(String text) {
+    SmsManager smsMan = SmsManager.getDefault();
+    ArrayList<String> dividedMessages = smsMan.divideMessage(text);
+    int size = dividedMessages.size();
+    return text.length() + "/" + size;
+  }
 
   public static int getIndexOfAccount(TreeSet<Account> accounts, Account account) {
     int index = 0;
@@ -158,16 +156,20 @@ public class AndroidUtils {
     /**
      * ArrayList elements:
      * 
-     * 1. Name 2. Userid
+     * 1. Name 2. Userid 3.Username
      */
 
     Intent i = new Intent(Intent.ACTION_INSERT_OR_EDIT);
     i.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
 
+    if (contactDatas.get(2) == null) {
+      contactDatas.set(2, "Facebook name");
+    }
+
     ArrayList<ContentValues> data = new ArrayList<ContentValues>();
     ContentValues row1 = new ContentValues();
     row1.put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE);
-    row1.put(ContactsContract.Data.DATA1, "facebook name");
+    row1.put(ContactsContract.Data.DATA1, contactDatas.get(2));
     row1.put(ContactsContract.Data.DATA2, ContactsContract.CommonDataKinds.Im.TYPE_OTHER);
     row1.put(ContactsContract.Data.DATA5, ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM);
     row1.put(ContactsContract.Data.DATA6, "Facebook");

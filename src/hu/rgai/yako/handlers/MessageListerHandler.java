@@ -1,22 +1,6 @@
 package hu.rgai.yako.handlers;
 
-import android.app.KeyguardManager;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Parcelable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
-import android.widget.Toast;
+import static hu.rgai.yako.workers.MessageListerAsyncTask.OK;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -34,20 +18,36 @@ import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
-import static hu.rgai.yako.workers.MessageListerAsyncTask.OK;
-import java.util.Comparator;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import android.app.KeyguardManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Parcelable;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
+import android.widget.Toast;
+
 public class MessageListerHandler extends TimeoutHandler {
 
   private final Context mContext;
   private final MainServiceExtraParams mExtraParams;
   private final String mAccountDispName;
-  
+
   public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
 
   public MessageListerHandler(Context context, MainServiceExtraParams extraParams, String accountDisplayName) {
@@ -63,7 +63,6 @@ public class MessageListerHandler extends TimeoutHandler {
     }
   }
 
-  
   public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
     int newMessageCount = 0;
     if (errorMessage != null) {
@@ -73,19 +72,18 @@ public class MessageListerHandler extends TimeoutHandler {
       MessageListElement[] newMessages = messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]);
       MessageListResult.ResultType resultType = messageResult.getResultType();
 
-      
       /*
-       * if NO_CHANGE or ERROR, then just return, we do not have to merge because messages
-       * is probably empty anyway...
+       * if NO_CHANGE or ERROR, then just return, we do not have to merge
+       * because messages is probably empty anyway...
        */
       if (resultType.equals(MessageListResult.ResultType.NO_CHANGE) || resultType.equals(MessageListResult.ResultType.ERROR)) {
         return;
       }
 
-      
       /*
-       * If new message packet comes from Facebook, and newMessages contains groupMessages,
-       * send a broadcast so the group Facebook chat is notified about the new messages.
+       * If new message packet comes from Facebook, and newMessages contains
+       * groupMessages, send a broadcast so the group Facebook chat is notified
+       * about the new messages.
        */
       if (newMessages != null) {
         boolean sendBC = false;
@@ -102,16 +100,20 @@ public class MessageListerHandler extends TimeoutHandler {
         }
       }
 
-      this.mergeMessages(newMessages, loadMore, resultType, messageResult.isProviderSupportsUID());
+      this.mergeMessages(newMessages, loadMore, resultType);
       MessageListElement lastUnreadMsg = null;
 
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      // itt mindig vegig iteral az osszes elemen, az osszes provider lekerdezesekor, ezert 5x is puttyog ha van 1 olvasatlan uzenet
-      // ES az utolso figyelmeztetes hangja regire van allitva: azaz frissen inditottuk az alkalmazast
-      // CSAK azokra az accountokra kellene nezni a feltetelt amit eppen lekerdeztunk
-      
-      // csak akkor szivatodik itt meg a rendszer, ha a JOVOBOL kapunk uzenetet....!!!!!!!!!!!!
+      // itt mindig vegig iteral az osszes elemen, az osszes provider
+      // lekerdezesekor, ezert 5x is puttyog ha van 1 olvasatlan uzenet
+      // ES az utolso figyelmeztetes hangja regire van allitva: azaz frissen
+      // inditottuk az alkalmazast
+      // CSAK azokra az accountokra kellene nezni a feltetelt amit eppen
+      // lekerdeztunk
+
+      // csak akkor szivatodik itt meg a rendszer, ha a JOVOBOL kapunk
+      // uzenetet....!!!!!!!!!!!!
       for (MessageListElement mle : YakoApp.getMessages()) {
         if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
           mle.setSeen(true);
@@ -132,11 +134,11 @@ public class MessageListerHandler extends TimeoutHandler {
       if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
         builNotification(newMessageCount, lastUnreadMsg);
       }
-      
+
       Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
       LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
     }
-    
+
   }
 
   private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
@@ -168,15 +170,15 @@ public class MessageListerHandler extends TimeoutHandler {
         }
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext)
-                .setLargeIcon(largeIcon)
-                .setSmallIcon(R.drawable.not_ic_action_email)
-                .setWhen(lastUnreadMsg.getDate().getTime())
-                .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
-                .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
-                .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
+            .setLargeIcon(largeIcon)
+            .setSmallIcon(R.drawable.not_ic_action_email)
+            .setWhen(lastUnreadMsg.getDate().getTime())
+            .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
+            .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
+            .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-                && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)) {
+            && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)) {
           notificationButtonHandling(lastUnreadMsg, mBuilder);
         }
 
@@ -186,7 +188,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
 
         if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext)) {
-          mBuilder.setVibrate(new long[]{100, 150, 100, 150, 500, 150, 100, 150});
+          mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
         }
 
         Intent resultIntent;
@@ -195,7 +197,7 @@ public class MessageListerHandler extends TimeoutHandler {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
           resultIntent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
-          resultIntent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
+          resultIntent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
@@ -208,7 +210,7 @@ public class MessageListerHandler extends TimeoutHandler {
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
-                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
       }
       // if main activity visible: only play sound
       else {
@@ -222,7 +224,7 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   private void notificationButtonHandling(MessageListElement lastUnreadMsg,
-          NotificationCompat.Builder mBuilder) {
+      NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReplyActivity.class);
     intent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
@@ -234,13 +236,15 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   /**
-   *
-   * @param newMessages the list of new messages
-   * @param loadMoreRequest true if result of "load more" action, false otherwise, which
-   * means this is a refresh action
+   * 
+   * @param newMessages
+   *          the list of new messages
+   * @param loadMoreRequest
+   *          true if result of "load more" action, false otherwise, which means
+   *          this is a refresh action
    */
   private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest,
-          MessageListResult.ResultType resultType, boolean providerSupportsUID) {
+      MessageListResult.ResultType resultType) {
     // TODO: optimize message merge
     synchronized (YakoApp.getMessages()) {
       for (MessageListElement newMessage : newMessages) {
@@ -258,36 +262,46 @@ public class MessageListerHandler extends TimeoutHandler {
           }
         }
         if (!contains) {
-          YakoApp.getMessages().add(newMessage);
 
+          YakoApp.getMessages().add(newMessage);
           if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
-                  || (ThreadDisplayerActivity.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
+              || (ThreadDisplayerActivity.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
             loggingNewMessageArrived(newMessage, true);
           } else {
             loggingNewMessageArrived(newMessage, false);
           }
         } else {
+
           // only update old messages' flags with the new one, and nothing else
           if (newMessage.isUpdateFlags()) {
+            // Log.d("rgai3", "update flags..");
             if (storedFoundMessage != null) {
               storedFoundMessage.setSeen(newMessage.isSeen());
               storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
             }
           } else {
+            // Log.d("rgai3", "NOT update flags..");
             MessageListElement itemToRemove = null;
             for (MessageListElement oldMessage : YakoApp.getMessages()) {
               if (newMessage.equals(oldMessage)) {
+                // Log.d("rgai3", "IGEN, equals..");
                 // first updating person info anyway..
                 oldMessage.setFrom(newMessage.getFrom());
 
-                /*
-                 * "Marking" FB message seen here. Do not change info of the item,
-                 * if the date is the same, so the queried data will not override
-                 * the displayed object. Facebook does not mark messages as seen
-                 * when opening them, so we have to handle it at client side. OR
-                 * if we check the message at FB, then turn it seen at the app
+                /**
+                 * "Marking" FB message seen here. Do not change info of the
+                 * item, if the date is the same, so the queried data will not
+                 * override the displayed object. Facebook does not mark
+                 * messages as seen when opening them, so we have to handle it
+                 * at client side. OR if we check the message at FB, then turn
+                 * it seen at the app
+                 * 
+                 * plus if newmessage is BEFORE the oldMessage's date, thats ok,
+                 * because if you delete the last element, then the
+                 * "new element" is older than the old one
                  */
-                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()
+                    || newMessage.getDate().before(oldMessage.getDate())) {
                   itemToRemove = oldMessage;
                   break;
                 }
@@ -300,37 +314,39 @@ public class MessageListerHandler extends TimeoutHandler {
           }
         }
       }
-      
+
       // checking for deleted messages here
       if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
-        deleteMergeMessages(newMessages, providerSupportsUID);
+        deleteMergeMessages(newMessages);
       }
-      
+
     }
-    
+
   }
 
-  private void deleteMergeMessages(MessageListElement[] newMessages, boolean providerSupportsUID) {
+  private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
       TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
-      
+
       SortedSet<MessageListElement> messagesToRemove;
-      if (!providerSupportsUID) {
-        messagesToRemove = new TreeSet<MessageListElement>(new Comparator<MessageListElement>() {
-          public int compare(MessageListElement lhs, MessageListElement rhs) {
-            if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) && lhs.getDate().equals(rhs.getDate())) {
-              return 0;
-            } else {
-              return lhs.getDate().compareTo(rhs.getDate());
-            }
-          }
-        });
-        messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length - 1]));
-      } else {
-        messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
-      }
-      
-      
+      // if (!providerSupportsUID) {
+      // messagesToRemove = new TreeSet<MessageListElement>(new
+      // Comparator<MessageListElement>() {
+      // public int compare(MessageListElement lhs, MessageListElement rhs) {
+      // if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) &&
+      // lhs.getDate().equals(rhs.getDate())) {
+      // return 0;
+      // } else {
+      // return lhs.getDate().compareTo(rhs.getDate());
+      // }
+      // }
+      // });
+      // messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length -
+      // 1]));
+      // } else {
+      messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
+      // }
+
       for (int i = 0; i < newMessages.length; i++) {
         if (messagesToRemove.contains(newMessages[i])) {
           messagesToRemove.remove(newMessages[i]);
@@ -366,26 +382,26 @@ public class MessageListerHandler extends TimeoutHandler {
   private void showErrorMessage(int result, String message) {
     String msg;
     switch (result) {
-      case MessageListerAsyncTask.AUTHENTICATION_FAILED_EXCEPTION:
-        msg = "Authentication failed: " + message;
-        break;
-      case MessageListerAsyncTask.UNKNOWN_HOST_EXCEPTION:
-      case MessageListerAsyncTask.IOEXCEPTION:
-      case MessageListerAsyncTask.CONNECT_EXCEPTION:
-      case MessageListerAsyncTask.NO_SUCH_PROVIDER_EXCEPTION:
-      case MessageListerAsyncTask.MESSAGING_EXCEPTION:
-      case MessageListerAsyncTask.SSL_HANDSHAKE_EXCEPTION:
-        msg = message;
-        break;
-      case MessageListerAsyncTask.NO_INTERNET_ACCESS:
-        msg = mContext.getString(R.string.no_internet_access);
-        break;
-      case MessageListerAsyncTask.NO_ACCOUNT_SET:
-        msg = mContext.getString(R.string.no_account_set);
-        break;
-      default:
-        msg = mContext.getString(R.string.exception_unknown);
-        break;
+    case MessageListerAsyncTask.AUTHENTICATION_FAILED_EXCEPTION:
+      msg = "Authentication failed: " + message;
+      break;
+    case MessageListerAsyncTask.UNKNOWN_HOST_EXCEPTION:
+    case MessageListerAsyncTask.IOEXCEPTION:
+    case MessageListerAsyncTask.CONNECT_EXCEPTION:
+    case MessageListerAsyncTask.NO_SUCH_PROVIDER_EXCEPTION:
+    case MessageListerAsyncTask.MESSAGING_EXCEPTION:
+    case MessageListerAsyncTask.SSL_HANDSHAKE_EXCEPTION:
+      msg = message;
+      break;
+    case MessageListerAsyncTask.NO_INTERNET_ACCESS:
+      msg = mContext.getString(R.string.no_internet_access);
+      break;
+    case MessageListerAsyncTask.NO_ACCOUNT_SET:
+      msg = mContext.getString(R.string.no_account_set);
+      break;
+    default:
+      msg = mContext.getString(R.string.exception_unknown);
+      break;
     }
     if (MainActivity.isMainActivityVisible()) {
       Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();

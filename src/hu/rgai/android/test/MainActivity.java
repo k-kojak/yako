@@ -239,13 +239,15 @@ public class MainActivity extends ActionBarActivity {
     YakoApp.updateLastNotification(null, this);
     
     refreshLoadingIndicatorState();
+    
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
   }
   
   @Override
   protected void onPause() {
     
     is_activity_visible = false;
-    
+    logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
     
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
     
@@ -273,6 +275,32 @@ public class MainActivity extends ActionBarActivity {
   public void onBackPressed() {
     EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
+  }
+
+  
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT) {
+      if (data != null && data.hasExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION)) {
+        boolean refreshNeeded = data.getBooleanExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, false);
+        if (refreshNeeded) {
+          Log.d("rgai", "REFRESH NEEDED!!!!!");
+          Account a = data.getParcelableExtra(Settings.Intents.ACCOUNT);
+          Intent intent = new Intent(this, MainScheduler.class);
+          intent.setAction(Context.ALARM_SERVICE);
+          MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setForceQuery(true);
+          eParams.setAccount(a);
+          eParams.setQueryOffset(0);
+          eParams.setQueryLimit(YakoApp.getFilteredMessages(a).size());
+          intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+          this.sendBroadcast(intent);
+        } else {
+//          Log.d("rgai", "refresh not .... needed!!!!!");
+        }
+      }
+    }
   }
   
   
@@ -573,6 +601,7 @@ public class MainActivity extends ActionBarActivity {
       actSelectedFilter = (Account)parent.getItemAtPosition(position);
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
       if (mFragment != null) {
+        mFragment.hideContextualActionbar();
         mFragment.notifyAdapterChange();
       }
       
@@ -596,11 +625,11 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
-
-//      if (actSelectedFilter == null)
-//        builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
-//      else
-//        builder.append(actSelectedFilter.getDisplayName());
+      if (actSelectedFilter == null) {
+        builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
+      } else {
+        builder.append(actSelectedFilter.getDisplayName());
+      }
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
@@ -616,7 +645,16 @@ public class MainActivity extends ActionBarActivity {
 
   }
   
-
+  private void logActivityEvent(String event) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(event);
+    builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+    if (mFragment != null) {
+      appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
+    }
+    Log.d("willrgai", builder.toString());
+    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+  }
   
   private void setUpAndRegisterScreenReceiver() {
     if (screenReceiver == null) {

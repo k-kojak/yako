@@ -49,6 +49,10 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 	public FullSimpleMessage getItem(int index) {
 		return this.messages.get(index);
 	}
+  
+  public void removeItem(int index) {
+    this.messages.remove(index);
+  }
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {

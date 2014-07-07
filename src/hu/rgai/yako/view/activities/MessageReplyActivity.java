@@ -12,6 +12,7 @@ import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,10 +30,14 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.adapters.ContactListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailMessageRecipient;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
 import hu.rgai.yako.beens.FullSimpleMessage;
+import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
@@ -42,18 +47,17 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.IntentParamStrings;
-import hu.rgai.yako.adapters.ContactListAdapter;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -75,7 +79,8 @@ public class MessageReplyActivity extends ActionBarActivity {
   public static final int MESSAGE_SENT_FAILED = 2;
 
   private int messageResult;
-  private TextView text;
+  private TextView mContent;
+  private TextView mCharCount;
   private ChipsMultiAutoCompleteTextView recipients;
   private Account mAccount;
   private WebView mQuotedMessage = null;
@@ -83,6 +88,8 @@ public class MessageReplyActivity extends ActionBarActivity {
   private EditText mSubject = null;
   private MessageListElement mMessage = null;
   private FullSimpleMessage mFullMessage = null;
+  private boolean isCharCountVisible = false;
+  private final TreeSet<Account> mChoosenAccountsToSend = new TreeSet<Account>();
 
   @Override
   public void onBackPressed() {
@@ -106,7 +113,8 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
     mSubject = (EditText) findViewById(R.id.subject);
-    text = (TextView) findViewById(R.id.message_content);
+    mCharCount = (TextView) findViewById(R.id.char_count);
+    mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
     
@@ -125,7 +133,6 @@ public class MessageReplyActivity extends ActionBarActivity {
         }
       }
       if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)) {
-//        Log.d("rgai", "yes, from notifier");
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
         // mMessage shouldn be null here...
@@ -143,7 +150,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     
 
-    text.addTextChangedListener(new TextWatcher() {
+    mContent.addTextChangedListener(new TextWatcher() {
 
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -157,6 +164,9 @@ public class MessageReplyActivity extends ActionBarActivity {
 
       @Override
       public void afterTextChanged(Editable s) {
+        if (isCharCountVisible) {
+          mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
+        }
         // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
@@ -168,6 +178,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     recipients.addOnChipChangeListener(new ChipsMultiAutoCompleteTextView.OnChipChangeListener() {
       public void onChipListChange() {
         showHideSubjectField();
+        showHideCharacterCountField();
       }
     });
 
@@ -184,6 +195,7 @@ public class MessageReplyActivity extends ActionBarActivity {
       mQuoteCheckbox.setVisibility(View.GONE);
     }
     showHideSubjectField();
+    showHideCharacterCountField();
 
     Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
     ContactListAdapter adapter = new ContactListAdapter(this, c);
@@ -199,7 +211,6 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
       processImplicitIntent(getIntent());
     }
-
   }
 
   private void showHideSubjectField() {
@@ -215,11 +226,28 @@ public class MessageReplyActivity extends ActionBarActivity {
     } else {
       collapse(mSubject);
     }
-    
   }
-
+  
+  
+  private void showHideCharacterCountField() {
+    boolean hasSmsRecipient = false;
+    for (MessageRecipient ri : recipients.getRecipients()) {
+      if (ri.getType().equals(MessageProvider.Type.SMS)) {
+        hasSmsRecipient = true;
+        break;
+      }
+    }
+    if (hasSmsRecipient) {
+      isCharCountVisible = true;
+      expand(mCharCount);
+      mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
+    } else {
+      isCharCountVisible = false;
+      collapse(mCharCount);
+    }
+  }
+  
   public void onQuoteClicked(View view) {
-    Log.d("rgai", "CLICKED");
     int visibility;
     if (mQuoteCheckbox.isChecked()) {
       visibility = View.VISIBLE;
@@ -294,7 +322,17 @@ public class MessageReplyActivity extends ActionBarActivity {
         finish();
         return true;
       case R.id.send_message:
-        prepareMessageSending();
+        List<MessageRecipient> to = recipients.getRecipients();
+        mChoosenAccountsToSend.clear();
+        if (to.isEmpty()) {
+          Toast.makeText(this, R.string.no_recipient_selected, Toast.LENGTH_SHORT).show();
+        } else {
+          if (mContent.getText().toString().trim().length() == 0) {
+            Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
+          } else {
+            prepareMessageSending(to);
+          }
+        }
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -302,13 +340,15 @@ public class MessageReplyActivity extends ActionBarActivity {
   }
 
 
-  public void sendMessage(Account from) {
+  public void sendMessage(MessageRecipient recipient, Account from, List<MessageRecipient> recipients) {
     if (from == null) {
       return;
     }
-
-    List<MessageRecipient> to = recipients.getRecipients();
-    String content = text.getText().toString().trim();
+    
+    mChoosenAccountsToSend.add(from);
+    
+//    List<MessageRecipient> to = recipients.getRecipients();
+    String content = mContent.getText().toString().trim();
     String subject = null;
     if (mSubject.getVisibility() == View.VISIBLE) {
       subject = mSubject.getText().toString();
@@ -316,99 +356,117 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (subject == null) {
       subject = "";
     }
-    for (MessageRecipient ri : to) {
-      if (mQuotedMessage.getVisibility() == View.VISIBLE) {
-        Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
-        content += source.getRenderer().toString();
+    
+    if (mQuotedMessage.getVisibility() == View.VISIBLE) {
+      Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
+      content += source.getRenderer().toString();
+    }
+    
+    MessageSendHandler handler = new MessageSendHandler() {
+      public void success(String name) {
+        displayNotification(true, name);
       }
-      MessageSendHandler handler = new MessageSendHandler() {
-        public void success(String name) {
-          displayNotification(true, name);
-        }
 
-        public void fail(String name) {
-          displayNotification(false, name);
+      public void fail(String name) {
+        displayNotification(false, name);
+      }
+
+      private void displayNotification(boolean success, String to) {
+
+        String ticker = success ? "Message sent" : "Sending failed";
+        String title = success ? "Message sent to" : "Failed to send message to:";
+
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MessageReplyActivity.this)
+                .setSmallIcon(R.drawable.not_ic_action_email)
+                .setTicker(ticker)
+                .setContentTitle(title)
+                .setContentText(to);
+        mBuilder.setAutoCancel(true);
+        mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
+
+        if (success) {
+          new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
+            }
+          }, 5000);
         }
-        
-        private void displayNotification(boolean success, String to) {
-          
-          String ticker = success ? "Message sent" : "Sending failed";
-          String title = success ? "Message sent to" : "Failed to send message to:";
-          
-          NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-          
-          NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MessageReplyActivity.this)
-                  .setSmallIcon(R.drawable.not_ic_action_email)
-                  .setTicker(ticker)
-                  .setContentTitle(title)
-                  .setContentText(to);
-          mBuilder.setAutoCancel(true);
-          mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
-          
-          if (success) {
-            new Timer().schedule(new TimerTask() {
-              @Override
-              public void run() {
-                NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
-              }
-            }, 5000);
-          }
-        }
-      };
-      MessageSender rs = new MessageSender(ri, from, handler, subject, content, this);
-      rs.executeTask(null);
-      finish();
+      }
+    };
+    
+    MessageSender rs = new MessageSender(recipient, from, handler, subject, content, this);
+    rs.executeTask(null);
       
+    
+    // this means this was the last call of sendMessage
+    if (recipients.isEmpty()) {
+      // request a message list for the account we sent the message with
+      int threadAccountCount = 0;
+      Account threadAccount = null;
+      for (Account a : mChoosenAccountsToSend) {
+        if (a.isThreadAccount()) {
+          threadAccountCount++;
+          threadAccount = a;
+        }
+      }
+      Log.d("rgai", "thread account count: " + threadAccountCount);
+      Log.d("rgai", "thread account: " + threadAccount);
+      if (!mChoosenAccountsToSend.isEmpty()) {
+        MainServiceExtraParams eParams = new MainServiceExtraParams();
+        if (threadAccountCount == 1) {
+          eParams.setAccount(threadAccount);
+        }
+        eParams.setForceQuery(true);
+        Intent intent = new Intent(this, MainScheduler.class);
+        intent.setAction(Context.ALARM_SERVICE);
+        intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+        this.sendBroadcast(intent);
+      }
+      finish();
+    } else {
+      prepareMessageSending(recipients);
     }
   }
 
-  private void prepareMessageSending() {
-    List<MessageRecipient> to = recipients.getRecipients();
-    if (to.isEmpty()) {
-      Toast.makeText(this, R.string.no_recipient_selected, Toast.LENGTH_SHORT).show();
-      return;
-    }
+  private void prepareMessageSending(List<MessageRecipient> recipients) {
 
-    if (text.getText().toString().trim().length() == 0) {
-      Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
-      return;
-    }
-
+    if (recipients.isEmpty()) return;
+    
     TreeSet<Account> accs = YakoApp.getAccounts(this);
 
-    for (MessageRecipient ri : to) {
-      List<Account> selectedAccs = new LinkedList<Account>();
-      Iterator<Account> accIt = accs.iterator();
-      if (ri.getType().equals(MessageProvider.Type.SMS) && YakoApp.isPhone) {
-//        selectedAccs.add(SmsAccount.account);
-      } else {
-        while (accIt.hasNext()) {
-          Account actAcc = accIt.next();
-          if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
-                  && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
-                  || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
-                  || ri.getType().equals(actAcc.getAccountType())) {
-            if (!selectedAccs.contains(actAcc)) {
-              selectedAccs.add(actAcc);
-            }
-          }
+    MessageRecipient ri = recipients.remove(0);
+    List<Account> availableAccounts = new LinkedList<Account>();
+    Iterator<Account> accIt = accs.iterator();
+
+    while (accIt.hasNext()) {
+      Account actAcc = accIt.next();
+      if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
+              && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
+              || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
+              || ri.getType().equals(actAcc.getAccountType())) {
+        if (!availableAccounts.contains(actAcc)) {
+          availableAccounts.add(actAcc);
         }
       }
-      if (selectedAccs.isEmpty()) {
-        Toast.makeText(this,
-                "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " account required for that.",
-                Toast.LENGTH_LONG).show();
-      } else if (selectedAccs.size() == 1) {
-        sendMessage(selectedAccs.get(0));
-      } else {
-        chooseAccount(selectedAccs);
-      }
     }
-
+    if (availableAccounts.isEmpty()) {
+      Toast.makeText(this,
+              "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " account required for that.",
+              Toast.LENGTH_LONG).show();
+    } else if (availableAccounts.size() == 1) {
+      sendMessage(ri, availableAccounts.get(0), recipients);
+    } else {
+      chooseAccount(ri, availableAccounts, recipients);
+    }
+    
   }
-
-  private static void expand(final View v) {
+  
+  
+  private void expand(final View v) {
     if (v.getVisibility() == View.VISIBLE) return;
     v.measure(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
     final int targtetHeight = v.getMeasuredHeight();
@@ -435,7 +493,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     v.startAnimation(a);
   }
 
-  private static void collapse(final View v) {
+  private void collapse(final View v) {
     if (v.getVisibility() == View.GONE) return;
     final int initialHeight = v.getMeasuredHeight();
 
@@ -461,7 +519,8 @@ public class MessageReplyActivity extends ActionBarActivity {
     v.startAnimation(a);
   }
 
-  private void chooseAccount(final List<Account> accs) {
+  private void chooseAccount(final MessageRecipient recipient, final List<Account> accs,
+          final List<MessageRecipient> recipients) {
 
     String[] items = new String[accs.size()];
     int i = 0;
@@ -470,11 +529,11 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Choose account to send from");
+    builder.setTitle("Send message to " + recipient.getDisplayName() + " from:");
     builder.setItems(items, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        sendMessage(accs.get(which));
+        sendMessage(recipient, accs.get(which), recipients);
       }
     });
 

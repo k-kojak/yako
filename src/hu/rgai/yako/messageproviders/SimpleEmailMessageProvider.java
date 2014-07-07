@@ -5,6 +5,7 @@ package hu.rgai.yako.messageproviders;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -61,6 +62,7 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.UIDFolder;
 import javax.mail.event.MessageCountEvent;
 import javax.mail.event.MessageCountListener;
 import javax.mail.internet.AddressException;
@@ -273,24 +275,25 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     try {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-//      Log.d("rgai", "ALWAYS get a new imapFolder here");
+      
       IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
       if (imapFolder == null) {
-//        Log.d("rgai", "IT WAS UNABLE TO OPEN FOLDER: " + account + ", " + "Inbox");
-        return new MessageListResult(emails, MessageListResult.ResultType.ERROR, supportsUIDforMessages());
+        return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
-      imapFolder.open(Folder.READ_ONLY);
-//      Log.d("rgai", "we have the folder");
       
+      
+      imapFolder.open(Folder.READ_ONLY);
+      UIDFolder uidImapFolder = (UIDFolder)imapFolder;
       int messageCount = imapFolder.getMessageCount();
-//      Log.d("rgai", "messagecount: " + messageCount);
-
-      if (offset == 0 && !hasNewMail(imapFolder, loadedMessages, messageCount) && supportsUIDforMessages()) {
+      long nextUID = getNextUID(imapFolder, uidImapFolder, messageCount);
+      Log.d("rgai", "NEXT UID ("+ account +"): " + nextUID);
+      
+      if (offset == 0 && !hasNewMail(nextUID, messageCount) && !loadedMessages.isEmpty()) {
 //        Log.d("rgai", "NO FRESH MAIL");
         if (MainActivity.isMainActivityVisible()) {
           return getFlagChangesOfMessages(messageCount, limit, offset, loadedMessages);
         } else {
-          return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE, supportsUIDforMessages());
+          return new MessageListResult(emails, MessageListResult.ResultType.NO_CHANGE);
         }
       }
 
@@ -299,22 +302,19 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
       // we are refreshing here, not loading older messages
 
-  //    Log.d("rgai", "messageCount: " + messageCount);
-  //    Log.d("rgai", "start: " + start);
-  //    Log.d("rgai", "end: " + end);
-  //    Log.d("rgai", "account: " + account);
       Message messages[] = imapFolder.getMessages(start, end);
   //    inbox.get
 //      Log.d("rgai", "messages: " + messages.length);
 
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
-        long uid;
-        if (supportsUIDforMessages()) {
-          uid = imapFolder.getUID(m);
-        } else {
-          uid = m.getMessageNumber();
-        }
+        long uid = uidImapFolder.getUID(m);
+//        if (supportsUIDforMessages()) {
+//          uid = imapFolder.getUID(m);
+//        } else {
+//          uid = m.getMessageNumber();
+//        }
+        Log.d("rgai", "UIDFOLDER msg ("+ account +") id: " + uid);
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -378,7 +378,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
       imapFolder.close(false);
       
-      return new MessageListResult(emails, MessageListResult.ResultType.CHANGED, supportsUIDforMessages());
+      return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
     } catch (AuthenticationFailedException ex) {
       throw ex;
     } catch (SSLHandshakeException ex) {
@@ -399,6 +399,17 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
   }
   
+  private long getNextUID(IMAPFolder folder, UIDFolder uidImapFolder, int messageCount) throws MessagingException {
+    if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
+      return folder.getUIDNext();
+    } else {
+      int start = Math.max(1, messageCount);
+      int end = start;
+      Message messages[] = folder.getMessages(start, end);
+      return uidImapFolder.getUID(messages[0]) + 1;
+    }
+  }
+  
   private MessageListResult getFlagChangesOfMessages(int messageCount,
           int limit, int offset, TreeSet<MessageListElement> loadedMessages) throws MessagingException {
     
@@ -406,13 +417,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Store store = getStore(account);
     
     if (store == null || !store.isConnected()) {
-      return new MessageListResult(emails, MessageListResult.ResultType.ERROR, supportsUIDforMessages());
+      return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
     }
     
     IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
     imapFolder.open(Folder.READ_ONLY);
-    
-    messageCount = imapFolder.getMessageCount();
+    UIDFolder uidFolder = (UIDFolder)imapFolder;
     
     int start = Math.max(1, messageCount - limit - offset + 1);
     int end = start + limit > messageCount ? messageCount : start + limit;
@@ -420,12 +430,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
     for (int i = messages.length - 1; i >= 0; i--) {
       Message m = messages[i];
-      long uid;
-      if (supportsUIDforMessages()) {
-        uid = imapFolder.getUID(m);
-      } else {
-        uid = m.getMessageNumber();
-      }
+      long uid = uidFolder.getUID(m);
+//      if (supportsUIDforMessages()) {
+//        uid = imapFolder.getUID(m);
+//      } else {
+//        uid = m.getMessageNumber();
+//      }
       
       Flags flags = m.getFlags();
       boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -435,21 +445,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         emails.add(testerElement);
       }
     }
-    
-    return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE, supportsUIDforMessages());
+    Log.d("rgai", "flag changes result: " + emails);
+    return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE);
   }
   
-  private boolean hasNewMail(IMAPFolder folder, TreeSet<MessageListElement> loadedMessages, int messageCount) throws MessagingException {
-    
-    // if the loaded messages is empty, than yes, we probably have new mails
-    if (loadedMessages.isEmpty()) {
-      return true;
-    }
-    
-    String nextUID = folder.getUIDNext() + "";
+  private boolean hasNewMail(long nextUID, int messageCount) throws MessagingException {
     
     String newKey = nextUID+"_"+messageCount;
-//    Log.d("rgai", "messageLoadKey: " + newKey);
+    Log.d("rgai", "messageLoadKey: " + newKey);
     
     String storedKey = getValidityString(accountFolder);
     if (newKey.equals(storedKey)) {
@@ -743,14 +746,15 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   public byte[] getAttachmentOfMessage(String messageId, String attachmentId) throws NoSuchProviderException, MessagingException, IOException {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    UIDFolder uidFolder = (UIDFolder)folder;
     folder.open(Folder.READ_ONLY);
     
-    Message ms;
-    if (supportsUIDforMessages()) {
-      ms = folder.getMessageByUID(Long.parseLong(messageId));
-    } else {
-      ms = folder.getMessage(Integer.parseInt(messageId));
-    }
+    Message ms = uidFolder.getMessageByUID(Long.parseLong(messageId));
+//    if (supportsUIDforMessages()) {
+//      ms = folder.getMessageByUID(Long.parseLong(messageId));
+//    } else {
+//      ms = folder.getMessage(Integer.parseInt(messageId));
+//    }
     
     byte[] data = getMessageAttachment(ms, attachmentId);
     
@@ -760,13 +764,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
   }
   
-  private boolean supportsUIDforMessages() {
-    if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+//  private boolean supportsUIDforMessages() {
+//    if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
   
   private byte[] getMessageAttachment(Message message, String attachmentId) throws IOException, MessagingException {
     Object msg = message.getContent();
@@ -859,10 +863,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   public void markMessagesAsRead(String[] ids, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
+    UIDFolder uidFolder = (UIDFolder)folder;
     
     Message[] msgs = null;
     
-    if (supportsUIDforMessages()) {
+//    if (supportsUIDforMessages()) {
     
       long[] uids = new long[ids.length];
       int i = 0;
@@ -874,20 +879,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
       }
       // TODO: if account not support UID, then use simple id
-      msgs = folder.getMessagesByUID(uids);
-    } else {
-      int[] messageIds = new int[ids.length];
-      int i = 0;
-      for (String s : ids) {
-        try {
-          messageIds[i++] = Integer.parseInt(s);
-        } catch (Exception ex) {
-          ex.printStackTrace();
-        }
-      }
-      // TODO: if account not support UID, then use simple id
-      msgs = folder.getMessages(messageIds);
-    }
+      msgs = uidFolder.getMessagesByUID(uids);
+//    } else {
+//      int[] messageIds = new int[ids.length];
+//      int i = 0;
+//      for (String s : ids) {
+//        try {
+//          messageIds[i++] = Integer.parseInt(s);
+//        } catch (Exception ex) {
+//          ex.printStackTrace();
+//        }
+//      }
+//      // TODO: if account not support UID, then use simple id
+//      msgs = folder.getMessages(messageIds);
+//    }
     folder.setFlags(msgs, new Flags(Flags.Flag.SEEN), seen);
 //    Message ms = folder.getMessageByUID(Long.parseLong(id));
 //    folder.s
@@ -902,13 +907,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
+    UIDFolder uidFolder = (UIDFolder)folder;
     
-    Message ms = null;
-    if (supportsUIDforMessages()) {
-      ms = folder.getMessageByUID(Long.parseLong(id));
-    } else {
-      ms = folder.getMessage(Integer.parseInt(id));
-    }
+    Message ms = uidFolder.getMessageByUID(Long.parseLong(id));
+//    if (supportsUIDforMessages()) {
+//      ms = folder.getMessageByUID(Long.parseLong(id));
+//    } else {
+//      ms = folder.getMessage(Integer.parseInt(id));
+//    }
     
     if (ms != null) {
       ms.setFlag(Flags.Flag.SEEN, seen);
@@ -1051,6 +1057,28 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return "SimpleEmailMessageProvider{" + "account=" + account + '}';
   }
 
+  public boolean isMessageDeletable() {
+    return true;
+  }
+
+  public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+    IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
+    folder.open(Folder.READ_WRITE);
+    UIDFolder uidFolder = (UIDFolder)folder;
+    
+    Message ms = uidFolder.getMessageByUID(Long.parseLong(id));
+//    if (supportsUIDforMessages()) {
+//      ms = folder.getMessageByUID(Long.parseLong(id));
+//    } else {
+//      ms = folder.getMessage(Integer.parseInt(id));
+//    }
+    
+    if (ms != null) {
+      ms.setFlag(Flags.Flag.DELETED, true);
+    }
+    folder.close(true);
+  }
+
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);
   }
@@ -1094,10 +1122,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     public String toString() {
       return "AccountFolder{" + "account=" + account + ", folder=" + folder + '}';
     }
-    
   }
 
-  
   
   private class FolderIdle implements Runnable {
 

@@ -71,8 +71,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
-    mContent = (FullSimpleMessage) mMessage.getFullMessage();
 
+    mContent = (FullSimpleMessage) mMessage.getFullMessage();
     YakoApp.setMessageSeenAndReadLocally(mMessage);
 
     getSupportActionBar().setTitle(mContent.getSubject());

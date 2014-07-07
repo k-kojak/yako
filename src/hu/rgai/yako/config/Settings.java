@@ -46,6 +46,11 @@ public final class Settings {
   public static final int MESSAGE_LOAD_INTERVAL = 60 * 2;
   
   /**
+   * Amount of messages to download for each account per query.
+   */
+  public static final int MESSAGE_QUERY_LIMIT = 10;
+  
+  /**
    * If live established connection (where it is supported) exceeds this timelimit in seconds,
    * the conneciton will be rebuild.
    */
@@ -253,6 +258,8 @@ public final class Settings {
     public static final String THREAD_SERVICE_INTENT = "hu.rgai.android.threadmsg_service_intent";
     public static final String NEW_MESSAGE_ARRIVED_BROADCAST = "hu.rgai.android.new_message_arrived_broadcast";
     public static final String NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE = "hu.rgai.android.notify_new_fb_group_thread_message";
+    public static final String THERE_WAS_MESSAGE_DELETION = "hu.rgai.android.there_was_message_deletion";
+    public static final String ACCOUNT = "hu.rgai.android.account";
   }
   
   public static final class Alarms {

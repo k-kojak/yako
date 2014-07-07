@@ -1,13 +1,5 @@
-
 package hu.rgai.yako;
 
-import android.app.Application;
-import android.content.Context;
-import android.telephony.TelephonyManager;
-import android.util.Log;
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
@@ -15,22 +7,31 @@ import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.store.StoreHandler;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import android.app.Application;
+import android.content.Context;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 /**
- *
+ * 
  * @author Tamas Kojedzinszky
  */
 public class YakoApp extends Application {
-  
+
   private Tracker tracker = null;
-  
+
   private volatile static TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
-  private volatile static  HashMap<Account, Date> lastNotificationDates = null;
+  private volatile static HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isPhone = null;
   public static volatile Date lastFullMessageUpdate = null;
@@ -39,26 +40,26 @@ public class YakoApp extends Application {
   public static TreeSet<MessageListElement> getMessages() {
     return messages;
   }
-  
+
   public static boolean hasMessages() {
     return messages != null && !messages.isEmpty();
   }
-  
+
   public static TreeSet<Account> getAccounts(Context context) {
     if (accounts == null) {
       loadAccountsFromStore(context);
     }
     return accounts;
   }
-  
+
   private static void loadAccountsFromStore(Context context) {
     accounts = StoreHandler.getAccounts(context);
   }
-  
+
   public static void setAccounts(TreeSet<Account> newAccs) {
     accounts = newAccs;
   }
-  
+
   public static boolean isFacebookAccountAdded(Context context) {
     for (Account a : getAccounts(context)) {
       if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
@@ -67,8 +68,7 @@ public class YakoApp extends Application {
     }
     return false;
   }
-  
-  
+
   public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
     MessageListElement compareElement = new MessageListElement(id, acc);
     for (MessageListElement mle : messages) {
@@ -78,7 +78,7 @@ public class YakoApp extends Application {
     }
     return null;
   }
-  
+
   public static void setMessageContent(MessageListElement message, FullMessage fullMessage) {
     for (MessageListElement m : messages) {
       if (m.equals(message)) {
@@ -87,7 +87,7 @@ public class YakoApp extends Application {
       }
     }
   }
-  
+
   /**
    * Removes messages from message list where the account matches with the
    * parameter.
@@ -103,12 +103,12 @@ public class YakoApp extends Application {
       }
     }
   }
-  
-  
+
   /**
    * Sets the seen status to true, and the unreadCount to 0.
    * 
-   * @param m  the message to set
+   * @param m
+   *          the message to set
    * @return true if status changed, false otherwise
    * 
    */
@@ -125,7 +125,6 @@ public class YakoApp extends Application {
     return changed;
   }
 
-  
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
       lastNotificationDates = StoreHandler.readLastNotificationObject(c);
@@ -133,15 +132,17 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
-//    Log.d("rgai2", "read in last notification dates: " + lastNotificationDates);
+    // Log.d("rgai2", "read in last notification dates: " +
+    // lastNotificationDates);
   }
-  
-  
+
   /**
-   * Updates the last notification date of the given account.
-   * Sets all of the accounts last notification date to the current date if null given.
+   * Updates the last notification date of the given account. Sets all of the
+   * accounts last notification date to the current date if null given.
    * 
-   * @param acc the account to update, or null if update all account's last event time
+   * @param acc
+   *          the account to update, or null if update all account's last event
+   *          time
    * @param c
    */
   public synchronized static void updateLastNotification(Account acc, Context c) {
@@ -155,13 +156,12 @@ public class YakoApp extends Application {
     }
     StoreHandler.writeLastNotificationObject(c, lastNotificationDates);
   }
-  
-  
-  
+
   /**
    * Returns the last notification of the given account.
    * 
-   * @param acc last notification time will be set to this account
+   * @param acc
+   *          last notification time will be set to this account
    * @return
    */
   public static Date getLastNotification(Account acc, Context c) {
@@ -177,7 +177,6 @@ public class YakoApp extends Application {
     }
     return ret;
   }
-  
 
   private boolean setIsPhone() {
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -188,18 +187,15 @@ public class YakoApp extends Application {
       return false;
     }
   }
-  
-  
+
   public static void setLastNotifiedMessage(MessageListElement lastNotifiedMessage) {
     mLastNotifiedMessage = lastNotifiedMessage;
   }
 
-  
   public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
-  
-  
+
   public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
     if (filterAcc == null) {
       return messages;
@@ -215,8 +211,7 @@ public class YakoApp extends Application {
       return filterList;
     }
   }
-  
-  
+
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -224,13 +219,13 @@ public class YakoApp extends Application {
     }
     return tracker;
   }
-  
+
   public void sendAnalyticsError(int code) {
-     Tracker t = getTracker();
-     t.send(new HitBuilders.ExceptionBuilder()
-             .setDescription("Custom, own catched error. Error code: " + code)
-             .setFatal(false)
-             .build());
+    Tracker t = getTracker();
+    t.send(new HitBuilders.ExceptionBuilder()
+        .setDescription("Custom, own catched error. Error code: " + code)
+        .setFatal(false)
+        .build());
   }
 
   @Override
@@ -244,10 +239,10 @@ public class YakoApp extends Application {
     } else {
       Log.d("rgai", "#DO NOT TURN GOOGLE ANALYTICS OFF: WE ARE IN PRODUCTION MODE");
     }
-    
+
     // TODO: we may have to update it on network state change!
     isPhone = setIsPhone();
-    
+
   }
-  
+
 }
