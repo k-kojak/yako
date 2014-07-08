@@ -257,6 +257,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
       
       smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, sentIntents, deliveryIntents);
+
       ContentValues sentSms = new ContentValues();
       sentSms.put("address", rawPhoneNum);
       sentSms.put("body", content);
@@ -273,54 +274,63 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       String thisPackageName = context.getPackageName();
       if (!Telephony.Sms.getDefaultSmsPackage(context).equals(thisPackageName)) {
-        Toast.makeText(context, "New message arrived, but Yako is not the default SMS provider.", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, "Yako: new SMS message arrived.", Toast.LENGTH_LONG).show();
         return;
       }
     }
     if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         Bundle bundle = intent.getExtras();
-        SmsMessage[] msgs = null;
+
         String messageReceived = "";
         if (bundle != null) {
           Object[] pdus = (Object[]) bundle.get("pdus");
-          msgs = new SmsMessage[pdus.length];
+          SmsMessage[] msgs = new SmsMessage[pdus.length];
           for (int i = 0; i < msgs.length; i++) {
             msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
             messageReceived += msgs[i].getMessageBody();
             messageReceived += "\n";
           }
-
           String senderPhoneNumber = msgs[0].getOriginatingAddress();
-          Toast.makeText(context, senderPhoneNumber + " - " + messageReceived, Toast.LENGTH_SHORT).show();
+
+          // saving message to sms store
+          ContentValues sentSms = new ContentValues();
+          sentSms.put("address", senderPhoneNumber);
+          sentSms.put("body", messageReceived);
+
+          ContentResolver contentResolver = context.getContentResolver();
+          Uri uri = Uri.parse("content://sms/inbox");
+          contentResolver.insert(uri, sentSms);
+
         }
       } else {
         // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
         // a bit the reading from inbox
         try {
-          Thread.sleep(850);
+          Thread.sleep(1000);
         } catch (InterruptedException ex) {
           Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-        res.putExtra("type", MessageProvider.Type.SMS.toString());
-        context.sendBroadcast(res);
-
-        // TODO: do not make a full query to the given instance/type, query only the
-        // affected message element, so select only 1 element instead of all messages of the given instance
-        if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
-          Intent service = new Intent(context, MainScheduler.class);
-          service.setAction(Context.ALARM_SERVICE);
-
-          MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setAccount(SmsAccount.getInstance());
-          eParams.setForceQuery(true);
-          service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
-
-          context.sendBroadcast(service);
-        }
       }
+
+      Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+      res.putExtra("type", MessageProvider.Type.SMS.toString());
+      context.sendBroadcast(res);
+
+      // TODO: do not make a full query to the given instance/type, query only the
+      // affected message element, so select only 1 element instead of all messages of the given instance
+      if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+        Intent service = new Intent(context, MainScheduler.class);
+        service.setAction(Context.ALARM_SERVICE);
+
+        MainServiceExtraParams eParams = new MainServiceExtraParams();
+        eParams.setAccount(SmsAccount.getInstance());
+        eParams.setForceQuery(true);
+        service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+
+        context.sendBroadcast(service);
+      }
+
       
     } else if (intent.getAction().equals(IntentStrings.Actions.SMS_SENT)) {
       SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);

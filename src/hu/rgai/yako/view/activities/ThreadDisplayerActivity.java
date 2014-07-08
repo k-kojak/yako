@@ -563,7 +563,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   
   private void refreshMessageList(int offset) {
     Log.d("rgai", "loading messages with offset: " + offset);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset == 0);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset <= 0);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
