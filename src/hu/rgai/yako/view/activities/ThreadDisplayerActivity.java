@@ -417,7 +417,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
             new TimeoutHandler() {
               @Override
-              public void timeout(Context context) {
+              public void onTimeout(Context context) {
                 Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
               }
             },

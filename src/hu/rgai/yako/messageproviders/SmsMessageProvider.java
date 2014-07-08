@@ -10,8 +10,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -276,30 +278,48 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       }
     }
     if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
-      // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
-      // a bit the reading from inbox
-      try {
-        Thread.sleep(850);
-      } catch (InterruptedException ex) {
-        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-      }
-      
-      Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-      res.putExtra("type", MessageProvider.Type.SMS.toString());
-      context.sendBroadcast(res);
-      
-      // TODO: do not make a full query to the given instance/type, query only the
-      // affected message element, so select only 1 element instead of all messages of the given instance
-      if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
-        Intent service = new Intent(context, MainScheduler.class);
-        service.setAction(Context.ALARM_SERVICE);
-        
-        MainServiceExtraParams eParams = new MainServiceExtraParams();
-        eParams.setAccount(SmsAccount.getInstance());
-        eParams.setForceQuery(true);
-        service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
-        
-        context.sendBroadcast(service);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        Bundle bundle = intent.getExtras();
+        SmsMessage[] msgs = null;
+        String messageReceived = "";
+        if (bundle != null) {
+          Object[] pdus = (Object[]) bundle.get("pdus");
+          msgs = new SmsMessage[pdus.length];
+          for (int i = 0; i < msgs.length; i++) {
+            msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+            messageReceived += msgs[i].getMessageBody();
+            messageReceived += "\n";
+          }
+
+          String senderPhoneNumber = msgs[0].getOriginatingAddress();
+          Toast.makeText(context, senderPhoneNumber + " - " + messageReceived, Toast.LENGTH_SHORT).show();
+        }
+      } else {
+        // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
+        // a bit the reading from inbox
+        try {
+          Thread.sleep(850);
+        } catch (InterruptedException ex) {
+          Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
+        res.putExtra("type", MessageProvider.Type.SMS.toString());
+        context.sendBroadcast(res);
+
+        // TODO: do not make a full query to the given instance/type, query only the
+        // affected message element, so select only 1 element instead of all messages of the given instance
+        if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
+          Intent service = new Intent(context, MainScheduler.class);
+          service.setAction(Context.ALARM_SERVICE);
+
+          MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setAccount(SmsAccount.getInstance());
+          eParams.setForceQuery(true);
+          service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+
+          context.sendBroadcast(service);
+        }
       }
       
     } else if (intent.getAction().equals(IntentStrings.Actions.SMS_SENT)) {

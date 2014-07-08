@@ -383,7 +383,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
             new TimeoutHandler() {
               @Override
-              public void timeout(Context context) {
+              public void onTimeout(Context context) {
                 Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
               }
             },

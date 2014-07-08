@@ -20,7 +20,7 @@ public abstract class MessageDeleteHandler extends TimeoutHandler {
   
  
   @Override
-  public void timeout(Context context) {
+  public void onTimeout(Context context) {
     Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
   }
   

@@ -60,9 +60,9 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   @Override
-  public void timeout(Context context) {
+  public void onTimeout(Context context) {
     if (mExtraParams.isForceQuery() || mExtraParams.isLoadMore()) {
-      Toast.makeText(mContext, "Connection timeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
+      Toast.makeText(mContext, "Connection onTimeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
     }
   }
 

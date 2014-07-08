@@ -156,10 +156,10 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //    props.put("mail.imap.connectiontimeout", 1000);
 //    props.put("mail.imaps.connectionpooltimeout", 1000);
 //    props.put("mail.imap.connectionpooltimeout", 1000);
-//    props.put("mail.imaps.timeout", 1000);
-//    props.put("mail.imap.timeout", 1000);
+//    props.put("mail.imaps.onTimeout", 1000);
+//    props.put("mail.imap.onTimeout", 1000);
     
-//    props.put("mail.smtp.timeout", 5000);
+//    props.put("mail.smtp.onTimeout", 5000);
   }
   
   private Store getStore(EmailAccount account) throws MessagingException {

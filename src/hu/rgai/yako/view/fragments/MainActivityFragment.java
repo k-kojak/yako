@@ -18,12 +18,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
+import android.widget.*;
 import android.widget.AbsListView.MultiChoiceModeListener;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -136,10 +132,15 @@ public class MainActivityFragment extends Fragment {
       }
 
       public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        MenuInflater inflater = mode.getMenuInflater();
-        inflater.inflate(R.menu.main_list_context_menu, menu);
-        contextSelectedElements.clear();
-        return true;
+        if (mTopProgressBar.getVisibility() == View.GONE) {
+          MenuInflater inflater = mode.getMenuInflater();
+          inflater.inflate(R.menu.main_list_context_menu, menu);
+          contextSelectedElements.clear();
+          return true;
+        } else {
+          return false;
+        }
+
       }
 
       public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
@@ -179,6 +180,7 @@ public class MainActivityFragment extends Fragment {
 
       public void onDestroyActionMode(ActionMode mode) {
         cancelContextualActionbarTimer();
+        contextSelectedElements.clear();
       }
     });
 
@@ -327,6 +329,11 @@ public class MainActivityFragment extends Fragment {
           mTopProgressBar.setVisibility(View.GONE);
         }
 
+        @Override
+        public void onTimeout(Context context) {
+          Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
+          mTopProgressBar.setVisibility(View.GONE);
+        }
       };
       MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle.getRawId(), null,
               mle.getId(), handler, acc.isThreadAccount(), true);

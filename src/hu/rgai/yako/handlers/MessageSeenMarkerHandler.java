@@ -14,7 +14,7 @@ public class MessageSeenMarkerHandler extends TimeoutHandler {
   }
   
   @Override
-  public void timeout(Context context) {
+  public void onTimeout(Context context) {
     Toast.makeText(mFragment.getActivity(), "Timeout while marking messages", Toast.LENGTH_LONG).show();
   }
   
