@@ -56,7 +56,7 @@ public class AttachmentDownloader implements Runnable, Serializable {
     running = true;
     mAttachment.setInProgress(true);
     mProgressBar.get().setIndeterminate(true);
-    SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider(mAccount);
+    SimpleEmailMessageProvider semp = SimpleEmailMessageProvider.getInstance(mAccount);
     semp.setAttachmentProgressUpdateListener(new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
       public void onProgressUpdate(int progress) {
         setProgressBarValue(progress, false);

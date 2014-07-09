@@ -68,7 +68,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
         recipients.add(new FacebookMessageRecipient(mRecipient.getData()));
       } else if (mRecipient.getType().equals(MessageProvider.Type.EMAIL) || mRecipient.getType().equals(MessageProvider.Type.GMAIL)) {
         publishProgress(mFromAccount.getDisplayName());
-        mp = new SimpleEmailMessageProvider((EmailAccount) mFromAccount);
+        mp = SimpleEmailMessageProvider.getInstance((EmailAccount) mFromAccount);
         recipients = new HashSet<MessageRecipient>();
         recipients.add(new EmailMessageRecipient(mRecipient.getDisplayName(), mRecipient.getData()));
       } else if (mRecipient.getType().equals(MessageProvider.Type.SMS)) {

@@ -87,39 +87,57 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private final EmailAccount account;
   private String attachmentFolder = "../files/";
   private AttachmentProgressUpdate progressUpdate = null;
-  private static HashMap<EmailAccount, Store> storeConnections;
-  private static HashMap<AccountFolder, IMAPFolder> queryFolders;
-  private static HashMap<AccountFolder, IMAPFolder> idleFolders;
-  private volatile static HashMap<AccountFolder, FolderIdleWithTimestamp> idleThreads;
+
+  private IMAPFolder queryFolder;
+  private IMAPFolder idleFolder;
+  private volatile FolderIdleWithTimestamp idleThread;
   private volatile static Context context = null;
   
   
   private MessageCallback messageListener = null;
-  
-  
-  // this map holds a unique state id for a query
+
+
+  // this String holds a unique state id for a query
   // String is a concatenation of nextMessageUID+messageCount
   // this string is unique for a state
-  private static HashMap<AccountFolder, String> validityMap;
+  private String validityKey;
+
+  private static HashMap<AccountFolder, SimpleEmailMessageProvider> providerMap = new HashMap<AccountFolder, SimpleEmailMessageProvider>();
+  private static HashMap<EmailAccount, Store> storeConnections;
+
+//  /**
+//   * Constructs a SimpleEmailMessageProvider object.
+//   *
+//   * @param account the instance to connect with
+//   * @param attachmentFolder path to folder where to save attachments
+//   */
+//  public SimpleEmailMessageProvider(EmailAccount account, String attachmentFolder) {
+//    this.account = account;
+//    this.attachmentFolder = attachmentFolder;
+//    this.accountFolder = new AccountFolder(account, "Inbox");
+//  }
+
+  public static synchronized SimpleEmailMessageProvider getInstance(EmailAccount a) {
+    return getInstance(a, "Inbox");
+  }
+
+  public static synchronized SimpleEmailMessageProvider getInstance(EmailAccount a, String folder) {
+    AccountFolder af = new AccountFolder(a, folder);
+    if (providerMap.containsKey(af) && providerMap.get(af) != null) {
+      return providerMap.get(af);
+    } else {
+      SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider(a);
+      providerMap.put(af, semp);
+      return semp;
+    }
+  }
 
   /**
    * Constructs a SimpleEmailMessageProvider object.
    * 
    * @param account the instance to connect with
-   * @param attachmentFolder path to folder where to save attachments
    */
-  public SimpleEmailMessageProvider(EmailAccount account, String attachmentFolder) {
-    this.account = account;
-    this.attachmentFolder = attachmentFolder;
-    this.accountFolder = new AccountFolder(account, "Inbox");
-  }
-  
-  /**
-   * Constructs a SimpleEmailMessageProvider object.
-   * 
-   * @param account the instance to connect with
-   */
-  public SimpleEmailMessageProvider(EmailAccount account) {
+  private SimpleEmailMessageProvider(EmailAccount account) {
     this.account = account;
     this.accountFolder = new AccountFolder(account, "Inbox");
   }
@@ -183,37 +201,30 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return store;
   }
   
-  private synchronized IMAPFolder getFolder(HashMap<AccountFolder, IMAPFolder> folderStore,
-          EmailAccount account, String folder) throws MessagingException {
-    return getFolder(folderStore, account, folder, false);
+  private synchronized IMAPFolder getFolder(IMAPFolder folder) throws MessagingException {
+    return getFolder(folder, false);
   }
   
-  private synchronized IMAPFolder getFolder(HashMap<AccountFolder, IMAPFolder> folderStore,
-          EmailAccount account, String folder, boolean attachListener) throws MessagingException {
+  private synchronized IMAPFolder getFolder(IMAPFolder folder, boolean attachListener) throws MessagingException {
 //    Log.d("rgai", "getFolder");
     
-    IMAPFolder imapFolder = null;
-    if (folderStore.containsKey(accountFolder)) {
-      imapFolder = folderStore.get(accountFolder);
-//      Log.d("rgai", "FOLDER EXISTS");
-    }
-    
-    if (imapFolder == null) {
+
+    if (folder == null) {
 //      Log.d("rgai", "CREATING imapFolder || reconnecting imapFolder");
       Store store = getStore(account);
       if (store != null) {
         if (store.isConnected()) {
-          imapFolder = (IMAPFolder)store.getFolder(folder);
+          folder = (IMAPFolder)store.getFolder(accountFolder.folder);
         } else {
           return null;
         }
         
-        if (imapFolder != null && !imapFolder.isOpen()) {
-          imapFolder.open(Folder.READ_ONLY);
+        if (folder != null && !folder.isOpen()) {
+          folder.open(Folder.READ_ONLY);
         }
         if (attachListener && messageListener != null) {
 //          Log.d("rgai", "adding event listeners....");
-          imapFolder.addMessageCountListener(new MessageCountListener() {
+          folder.addMessageCountListener(new MessageCountListener() {
             public void messagesAdded(MessageCountEvent mce) {
               messageListener.messageAdded(mce.getMessages().length);
             }
@@ -222,17 +233,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             }
           });
         }
-        folderStore.put(accountFolder, imapFolder);
       }
     } else {
-//      Log.d("rgai", "IMAPFolder OK, already opened");
+      Log.d("rgai", "IMAPFolder OK, already opened");
     }
     
-    if (imapFolder != null && !imapFolder.isOpen()) {
-      imapFolder.open(Folder.READ_ONLY);
+    if (folder != null && !folder.isOpen()) {
+      folder.open(Folder.READ_ONLY);
     }
     
-    return imapFolder;
+    return folder;
   }
   
   /**
@@ -425,7 +435,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
     imapFolder.open(Folder.READ_ONLY);
-    UIDFolder uidFolder = (UIDFolder)imapFolder;
+    UIDFolder uidFolder = imapFolder;
     
     int start = Math.max(1, messageCount - limit - offset + 1);
     int end = start + limit > messageCount ? messageCount : start + limit;
@@ -453,28 +463,26 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   private boolean hasNewMail(long nextUID, int messageCount) throws MessagingException {
-    
     String newKey = nextUID+"_"+messageCount;
     Log.d("rgai", "messageLoadKey: " + newKey);
     
-    String storedKey = getValidityString(accountFolder);
-    if (newKey.equals(storedKey)) {
+    if (newKey.equals(validityKey)) {
       return false;
     } else {
-      validityMap.put(accountFolder, newKey);
+      validityKey = newKey;
       return true;
     }
     
   }
   
-  private String getValidityString(AccountFolder accountFolder) {
-    if (validityMap == null) {
-      validityMap = new HashMap<AccountFolder, String>();
-      return null;
-    } else {
-      return validityMap.get(accountFolder);
-    }
-  }
+//  private String getValidityString(AccountFolder accountFolder) {
+//    if (validityKey == null) {
+//      validityKey = new HashMap<AccountFolder, String>();
+//      return null;
+//    } else {
+//      return validityKey.get(accountFolder);
+//    }
+//  }
   
   private Person getSenderPersonObject(Message m) throws MessagingException {
     String from = null;
@@ -711,19 +719,19 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
 
-    if (queryFolders == null) {
-      queryFolders = new HashMap<AccountFolder, IMAPFolder>();
+    if (queryFolder == null) {
+      queryFolder = getFolder(queryFolder);
     }
-    IMAPFolder folder = getFolder(queryFolders, account, "Inbox");
+//    IMAPFolder folder = getFolder(queryFolder, account, "Inbox");
     
-    if (folder == null) return null;
+    if (queryFolder == null) return null;
     
 //    if (!folder.isOpen()) {
 //      folder.open(Folder.READ_WRITE);
 //    }
     EmailContent content;
     
-    Message ms = folder.getMessage(Integer.parseInt(id));
+    Message ms = queryFolder.getMessage(Integer.parseInt(id));
 //    ms.s
     
     List<Person> to = new LinkedList<Person>();
@@ -739,8 +747,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     String subject = ms.getSubject();
     
     Date date = ms.getSentDate();
-    
-    folder.close(true);
+
+    queryFolder.close(true);
     
     return new FullSimpleMessage(id, subject, content.getContent(), date, from, false, MessageProvider.Type.EMAIL, null);
     
@@ -943,13 +951,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
   public boolean isConnectionAlive() {
 //    Log.d("rgai", "is connection alive?");
-//    Log.d("rgai", "idleThreads: " + idleThreads);
-    if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
+//    Log.d("rgai", "idleThread: " + idleThread);
+    if (idleThread != null) {
       
-      FolderIdleWithTimestamp fiWts = idleThreads.get(accountFolder);
+//      FolderIdleWithTimestamp fiWts = idleThread.get(accountFolder);
 //      Log.d("rgai", "not null, contains...isRunning?: " + fi.isRunning());
-      if (fiWts.folderIdle.isRunning()) {
-        if (fiWts.insertTime + Settings.ESTABLISHED_CONNECTION_TIMEOUT * 1000l < System.currentTimeMillis()) {
+      if (idleThread.folderIdle.isRunning()) {
+        if (idleThread.insertTime + Settings.ESTABLISHED_CONNECTION_TIMEOUT * 1000l < System.currentTimeMillis()) {
 //          Log.d("rgai", "yes alive, but connection timout reached, so we are reconnecting...");
           return false;
         } else {
@@ -1007,28 +1015,27 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     initMessageListener(context);
     if (!isConnectionAlive()) {
       // dropping previous connection if any
-      if (idleThreads != null && idleThreads.containsKey(accountFolder)) {
-        FolderIdleWithTimestamp fiWts = idleThreads.get(accountFolder);
-        if (fiWts.folderIdle != null) {
-          fiWts.folderIdle.forceStop();
+      if (idleThread != null) {
+        if (idleThread.folderIdle != null) {
+          idleThread.folderIdle.forceStop();
         }
       }
       
 //      Log.d("rgai", "Establishing connection: " + instance);
       try {
-        if (idleFolders == null) {
-          idleFolders = new HashMap<AccountFolder, IMAPFolder>();
+        if (idleFolder == null) {
+          idleFolder = getFolder(idleFolder);
         }
-        IMAPFolder folder = getFolder(idleFolders, account, "Inbox", true);
-        if (folder == null) return;
+//        IMAPFolder folder = getFolder(idleFolder, account, "Inbox", true);
+        if (idleFolder == null) return;
         
-        FolderIdle fi = new FolderIdle(folder, this);
+        FolderIdle fi = new FolderIdle(idleFolder, this);
         Thread t = new Thread(fi);
         t.start();
-        if (idleThreads == null) {
-          idleThreads = new HashMap<AccountFolder, FolderIdleWithTimestamp>();
-        }
-        idleThreads.put(accountFolder, new FolderIdleWithTimestamp(fi, System.currentTimeMillis()));
+//        if (idleThread == null) {
+//          idleThread = new HashMap<AccountFolder, FolderIdleWithTimestamp>();
+//        }
+        idleThread = new FolderIdleWithTimestamp(fi, System.currentTimeMillis());
       } catch (MessagingException ex) {
         Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
@@ -1042,27 +1049,28 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   public void dropConnection(Context context) {
-    FolderIdleWithTimestamp fIdle = null;
-    IMAPFolder queryFolder = null;
-    Store store = null;
+//    FolderIdleWithTimestamp fIdle = null;
+//    IMAPFolder queryFolder = null;
+//    Store store = null;
     
-    if (isConnectionAlive()) {
-      fIdle = idleThreads.get(accountFolder);
-    }
-    if (queryFolders != null && queryFolders.containsKey(accountFolder)) {
+//    if (isConnectionAlive()) {
+//      fIdle = idleThread.get(accountFolder);
+//    }
+//    if (SimpleEmailMessageProvider.queryFolder != null && SimpleEmailMessageProvider.queryFolder.containsKey(accountFolder)) {
 //      Log.d("rgai", "REMOVING FROM queryfolder");
-      queryFolder = queryFolders.get(accountFolder);
-      queryFolders.remove(accountFolder);
-    }
+//      queryFolder = SimpleEmailMessageProvider.queryFolder.get(accountFolder);
+//      SimpleEmailMessageProvider.queryFolder.remove(accountFolder);
+//    }
+    Store store = null;
     if (storeConnections != null && storeConnections.containsKey(account)) {
-//      Log.d("rgai", "REMOVING FROM storeStack");
+      Log.d("rgai", "REMOVING FROM storeStack");
       store = storeConnections.get(account);
       storeConnections.remove(account);
     }
-    
-    validityMap.remove(accountFolder);
-    
-    ConnectionDropper dropper = new ConnectionDropper(fIdle, queryFolder, store);
+
+//    validityKey.remove(accountFolder);
+
+    ConnectionDropper dropper = new ConnectionDropper(idleThread, queryFolder, store);
     dropper.executeTask(context, null);
   }
   
@@ -1097,7 +1105,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     public void onProgressUpdate(int progress);
   }
 
-  private class AccountFolder {
+  private static class AccountFolder {
     private EmailAccount account = null;
     private String folder = null;
 
@@ -1191,9 +1199,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
       }
-      if (idleFolders.containsKey(accountFolder)) {
-        idleFolders.remove(accountFolder);
-      }
+//      if (idleFolder.containsKey(accountFolder)) {
+        idleFolder = null;
+//      }
     }
   }
   

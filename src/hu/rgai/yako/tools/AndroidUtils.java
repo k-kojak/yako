@@ -79,9 +79,9 @@ public class AndroidUtils {
   public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {
     MessageProvider mp = null;
     if (account instanceof GmailAccount) {
-      mp = new SimpleEmailMessageProvider((GmailAccount) account);
+      mp = SimpleEmailMessageProvider.getInstance((GmailAccount)account);
     } else if (account instanceof EmailAccount) {
-      mp = new SimpleEmailMessageProvider((EmailAccount) account);
+      mp = SimpleEmailMessageProvider.getInstance((EmailAccount) account);
     } else if (account instanceof FacebookAccount) {
       mp = new FacebookMessageProvider((FacebookAccount) account);
     } else if (account instanceof SmsAccount) {
