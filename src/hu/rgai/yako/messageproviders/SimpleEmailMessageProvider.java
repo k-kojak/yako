@@ -1024,7 +1024,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //      Log.d("rgai", "Establishing connection: " + instance);
       try {
         if (idleFolder == null) {
-          idleFolder = getFolder(idleFolder);
+          idleFolder = getFolder(idleFolder, true);
         }
 //        IMAPFolder folder = getFolder(idleFolder, account, "Inbox", true);
         if (idleFolder == null) return;
