@@ -69,7 +69,6 @@ public class MessageListerHandler extends TimeoutHandler {
 
 
   public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
-    Log.d("rgai3", "Message lister handler finished");
     int newMessageCount = 0;
     if (errorMessage != null) {
       showErrorMessage(result, errorMessage);
