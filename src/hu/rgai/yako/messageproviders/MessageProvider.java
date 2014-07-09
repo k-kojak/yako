@@ -173,7 +173,6 @@ public interface MessageProvider {
    * Sends a message to the given recipient with the given content.
    * 
    * @param context a context
-   * @param pendingIntent this intent will be called when a message is sent
    * @param to set of recipients
    * @param content the content of the message
    * @param subject subject of the message (optional)
@@ -185,7 +184,7 @@ public interface MessageProvider {
     
     public static boolean isMessageLoaded(TreeSet<MessageListElement> messages, MessageListElement message) {
       for (MessageListElement mle : messages) {
-        if (mle.getDate().equals(message.getDate()) && mle.getAccount().equals(message.getAccount())) {
+        if (mle.getAccount().equals(message.getAccount()) && mle.getId().equals(message.getId())) {
           return true;
         }
       }

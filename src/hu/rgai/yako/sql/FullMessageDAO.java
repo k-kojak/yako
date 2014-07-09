@@ -129,7 +129,7 @@ public class FullMessageDAO {
    * Returns a set of simple messages.
    * This method can be used for simple message requests like email or thread requests as well.
    * In the first case the set size will be 1, otherwise the size of the set could be bigger than 1.
-   * @param rawMessageListId the rawId of the message list element
+   * @param rawMessageListId the mRawId of the message list element
    * @return
    */
   public TreeSet<FullSimpleMessage> getFullSimpleMessages(long rawMessageListId) {

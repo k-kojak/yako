@@ -22,7 +22,7 @@ import java.util.Map;
 public class MessageListElement implements Parcelable, Comparable<MessageListElement>, Serializable {
 
   // this is the database id of the message
-  protected long rawId;
+  protected long mRawId;
 
   protected String id;
   protected boolean seen;
@@ -71,9 +71,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
-  public MessageListElement(long _id, String messageId, boolean seen, String title, String subTitle, int unreadCount, Person from,
+  public MessageListElement(long rawId, String messageId, boolean seen, String title, String subTitle, int unreadCount, Person from,
           List<Person> recipients, Date date, Account account, Type messageType, boolean updateFlags) {
-    rawId = _id;
+    this.mRawId = rawId;
     this.id = messageId;
     this.seen = seen;
     this.title = title;
@@ -108,7 +108,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
       Log.d("rgai3", "DISPLAY ERROR HERE");
     } else {
       Log.d("rgai3", "BEFORE - READ IN ACCOUNT PARCELABLE");
-      this.account = (Account)in.readParcelable(stringToClassLoader.get(messageType));
+      this.account = in.readParcelable(stringToClassLoader.get(messageType));
       Log.d("rgai3", "AFTER - READ IN ACCOUNT PARCELABLE");
     }
   }
@@ -183,13 +183,13 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public MessageListElement(long m_id, String id, Account account) {
     this.id = id;
     this.account = account;
-    this.rawId = m_id;
+    this.mRawId = m_id;
   }
 
 
-  public MessageListElement(long _id, String id, boolean seen, Person from, Date date, Account account, Type messageType,
+  public MessageListElement(long rawId, String id, boolean seen, Person from, Date date, Account account, Type messageType,
                             boolean updateFlags) {
-    this(_id, id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
+    this(rawId, id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
   }
   
   private void initStringToClassLoader() {
@@ -224,7 +224,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
 
   public void setRawId(long rawId) {
-    this.rawId = rawId;
+    this.mRawId = rawId;
   }
 
 
@@ -233,7 +233,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @return
    */
   public long getRawId() {
-    return rawId;
+    return mRawId;
   }
 
   public String getPrettyDate() {

@@ -36,6 +36,7 @@ import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
+
 import static hu.rgai.yako.workers.MessageListerAsyncTask.OK;
 
 import java.util.*;
@@ -45,7 +46,7 @@ public class MessageListerHandler extends TimeoutHandler {
   private final Context mContext;
   private final MainServiceExtraParams mExtraParams;
   private final String mAccountDispName;
-  
+
   public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
 
   private TreeMap<Account, Long> mAccountsAccountKey = null;
@@ -66,7 +67,7 @@ public class MessageListerHandler extends TimeoutHandler {
     }
   }
 
-  
+
   public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
     Log.d("rgai3", "Message lister handler finished");
     int newMessageCount = 0;
@@ -107,7 +108,6 @@ public class MessageListerHandler extends TimeoutHandler {
       }
 
 
-
       this.mergeMessages(newMessages, loadMore, resultType);
       MessageListElement lastUnreadMsg = null;
 
@@ -115,7 +115,8 @@ public class MessageListerHandler extends TimeoutHandler {
 
       if (ThreadDisplayerActivity.actViewingMessage != null) {
         long accountId = mAccountsAccountKey.get(ThreadDisplayerActivity.actViewingMessage.getAccount());
-        long storedMessageId = MessageListDAO.getInstance(mContext).getMessageRawId(ThreadDisplayerActivity.actViewingMessage, accountId);
+        long storedMessageId = MessageListDAO.getInstance(mContext).getMessageRawId(ThreadDisplayerActivity.actViewingMessage,
+                accountId);
         if (storedMessageId != -1) {
           MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageId, true);
         }
@@ -142,11 +143,11 @@ public class MessageListerHandler extends TimeoutHandler {
       if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
         builNotification(newMessageCount, lastUnreadMsg);
       }
-      
+
       Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
       LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
     }
-    
+
   }
 
   private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
@@ -205,7 +206,7 @@ public class MessageListerHandler extends TimeoutHandler {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
           resultIntent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
-          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)lastUnreadMsg.getAccount());
+          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
@@ -232,7 +233,7 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   private void notificationButtonHandling(MessageListElement lastUnreadMsg,
-          NotificationCompat.Builder mBuilder) {
+                                          NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReplyActivity.class);
     intent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
@@ -244,10 +245,9 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   /**
-   *
-   * @param newMessages the list of new messages
+   * @param newMessages     the list of new messages
    * @param loadMoreRequest true if result of "load more" action, false otherwise, which
-   * means this is a refresh action
+   *                        means this is a refresh action
    */
   private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest, MessageListResult.ResultType resultType) {
     // TODO: optimize message merge
@@ -278,67 +278,49 @@ public class MessageListerHandler extends TimeoutHandler {
         // only update old messages' flags with the new one, and nothing else
         if (newMessage.isUpdateFlags()) {
 //            Log.d("rgai3", "update flags..");
-          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageRawId, true);
-//            if (storedFoundMessage != null) {
-//              storedFoundMessage.setSeen(newMessage.isSeen());
-//              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
-//            }
+          MessageListDAO.getInstance(mContext).updateMessageToSeen(storedMessageRawId, newMessage.isSeen());
         } else {
-//            Log.d("rgai3", "NOT update flags..");
-//            MessageListElement itemToRemove = null;
-//            for (MessageListElement oldMessage : YakoApp.getMessages()) {
-//              if (newMessage.equals(oldMessage)) {
-//                Log.d("rgai3", "IGEN, equals..");
-              // first updating person info anyway..
-              MessageListDAO.getInstance(mContext).updateFrom(storedMessageRawId, newMessage.getFrom());
-//                oldMessage.setFrom(newMessage.getFrom());
+          // first updating person info anyway..
+          MessageListDAO.getInstance(mContext).updateFrom(storedMessageRawId, newMessage.getFrom());
 
-              /**
-               * "Marking" FB message seen here. Do not change info of the item,
-               * if the date is the same, because the queried data would override
-               * the displayed object. Facebook does not mark messages as seen
-               * when opening it, so we have to handle it at client side. OR
-               * if we check the message at FB, then turn it seen at the app
-               *
-               * plus if newmessage is BEFORE the oldMessage's date, thats ok, because
-               * if you delete the last element, then the "new element" is older than the
-               * old one
-               */
-              MessageListElement oldMessage = MessageListDAO.getInstance(mContext).getMessageByRawId(storedMessageRawId, mAccountsIntegerKey);
-              if (!newMessage.getDate().equals(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
-                MessageListDAO.getInstance(mContext).updateMessage(storedMessageRawId, newMessage.isSeen(), newMessage.getUnreadCount(),
-                        newMessage.getDate(), newMessage.getTitle(), newMessage.getSubTitle());
-//                  itemToRemove = oldMessage;
-//                  break;
-              }
-//              }
-//            }
-//            if (itemToRemove != null) {
-//              YakoApp.getMessages().remove(itemToRemove);
-//              YakoApp.getMessages().add(newMessage);
-//            }
+          /**
+           * "Marking" FB message seen here. Do not change info of the item,
+           * if the date is the same, because the queried data would override
+           * the displayed object. Facebook does not mark messages as seen
+           * when opening it, so we have to handle it at client side. OR
+           * if we check the message at FB, then turn it seen at the app
+           *
+           * plus if newmessage is BEFORE the oldMessage's date, thats ok, because
+           * if you delete the last element, then the "new element" is older than the
+           * old one
+           */
+          MessageListElement oldMessage = MessageListDAO.getInstance(mContext).getMessageByRawId(storedMessageRawId, mAccountsIntegerKey);
+          if (!newMessage.getDate().equals(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()) {
+            MessageListDAO.getInstance(mContext).updateMessage(storedMessageRawId, newMessage.isSeen(), newMessage.getUnreadCount(),
+                    newMessage.getDate(), newMessage.getTitle(), newMessage.getSubTitle());
+          }
         }
       }
     }
-      
+
     // checking for deleted messages here
     if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
       deleteMergeMessages(newMessages);
     }
-      
+
 //    }
-    
+
   }
 
   private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
       long accountId = mAccountsAccountKey.get(newMessages[0].getAccount());
       TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(mContext).getAllMessages(mAccountsIntegerKey, accountId);
-      
+
       SortedSet<MessageListElement> messagesToRemove;
       messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
 
-      
+
       for (int i = 0; i < newMessages.length; i++) {
         if (messagesToRemove.contains(newMessages[i])) {
           messagesToRemove.remove(newMessages[i]);

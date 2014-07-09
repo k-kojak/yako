@@ -296,7 +296,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       
       
       imapFolder.open(Folder.READ_ONLY);
-      UIDFolder uidImapFolder = (UIDFolder)imapFolder;
+      UIDFolder uidImapFolder = imapFolder;
       int messageCount = imapFolder.getMessageCount();
       long nextUID = getNextUID(imapFolder, uidImapFolder, messageCount);
       Log.d("rgai", "NEXT UID ("+ account +"): " + nextUID);
@@ -345,7 +345,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           // skipping email
         } else {
 
-          MessageListElement testerElement = new MessageListElement(-1, uid + "", seen, fromPerson, date, account, Type.EMAIL, true);
+          MessageListElement testerElement = new MessageListElement(-1, Long.toString(uid), seen, fromPerson, date,
+                  account, Type.EMAIL, true);
 
 
           if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
@@ -433,29 +434,29 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
     }
     
-    IMAPFolder imapFolder = (IMAPFolder)store.getFolder("Inbox");
+    IMAPFolder imapFolder = (IMAPFolder)store.getFolder(accountFolder.folder);
     imapFolder.open(Folder.READ_ONLY);
     UIDFolder uidFolder = imapFolder;
     
-    int start = Math.max(1, messageCount - limit - offset + 1);
-    int end = start + limit > messageCount ? messageCount : start + limit;
-    Message messages[] = imapFolder.getMessages(start, end);
+    long[] uids = new long[loadedMessages.size()];
+    int i = 0;
+    for (MessageListElement mle : loadedMessages) {
+      uids[i++] = Long.parseLong(mle.getId());
+    }
+    Message messages[] = imapFolder.getMessagesByUID(uids);
 
-    for (int i = messages.length - 1; i >= 0; i--) {
+    for (i = messages.length - 1; i >= 0; i--) {
       Message m = messages[i];
-      long uid = uidFolder.getUID(m);
-//      if (supportsUIDforMessages()) {
-//        uid = imapFolder.getUID(m);
-//      } else {
-//        uid = m.getMessageNumber();
-//      }
-      
-      Flags flags = m.getFlags();
-      boolean seen = flags.contains(Flags.Flag.SEEN);
-      
-      MessageListElement testerElement = new MessageListElement(-1, uid + "", seen, null, null, account, Type.EMAIL, true);
-      if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
-        emails.add(testerElement);
+      if (m != null) {
+        long uid = uidFolder.getUID(m);
+
+        Flags flags = m.getFlags();
+        boolean seen = flags.contains(Flags.Flag.SEEN);
+        MessageListElement testerElement = new MessageListElement(-1, Long.toString(uid), seen, null, null, account,
+                Type.EMAIL, true);
+        if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
+          emails.add(testerElement);
+        }
       }
     }
     Log.d("rgai", "flag changes result: " + emails);
