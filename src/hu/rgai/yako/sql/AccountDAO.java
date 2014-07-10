@@ -222,7 +222,7 @@ public class AccountDAO  {
    * @param accountId the database _id of the instance
    */
   public void removeAccountWithCascade(Context context, long accountId) {
-    MessageListDAO.getInstance(context).removeMessagesToAccount(context, accountId);
+    MessageListDAO.getInstance(context).removeMessages(context, accountId);
     removeAccount(accountId);
   }
 

@@ -73,7 +73,7 @@ public class YakoApp extends Application {
 //   *
 //   * @param account
 //   */
-//  public static void removeMessagesToAccount(Account account) {
+//  public static void removeMessages(Account account) {
 //    Iterator<MessageListElement> it = messages.iterator();
 //    while (it.hasNext()) {
 //      MessageListElement mle = it.next();

@@ -541,7 +541,13 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public boolean isMessageDeletable() {
     return false;
   }
-  
+
+  @Override
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
+    Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
+    return null;
+  }
+
   public void deleteThread(String id) {
     // we cannot delete facebook messages through API
   }

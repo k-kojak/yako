@@ -27,7 +27,8 @@ public class MainServiceExtraParams implements Parcelable {
   private Account mAccount = null;
   private boolean mForceQuery = false;
   private int mResult = -1;
-  
+  private boolean mMessagesRemovedAtServer = false;
+
   public MainServiceExtraParams() {}
   
   public MainServiceExtraParams(Parcel in) {
@@ -38,6 +39,7 @@ public class MainServiceExtraParams implements Parcelable {
     mAccount = in.readParcelable(Account.class.getClassLoader());
     mForceQuery = in.readByte() == 1;
     mResult = in.readInt();
+    mMessagesRemovedAtServer = in.readByte() == 1;
   }
   
   public int describeContents() {
@@ -48,10 +50,11 @@ public class MainServiceExtraParams implements Parcelable {
     dest.writeByte((byte)(mFromNotifier ? 1 : 0));
     dest.writeInt(mQueryLimit);
     dest.writeInt(mQueryOffset);
-    dest.writeByte((byte)(mLoadMore ? 1 : 0));
+    dest.writeByte((byte) (mLoadMore ? 1 : 0));
     dest.writeParcelable(mAccount, flags);
-    dest.writeByte((byte)(mForceQuery ? 1 : 0));
+    dest.writeByte((byte) (mForceQuery ? 1 : 0));
     dest.writeInt(mResult);
+    dest.writeByte((byte) (mMessagesRemovedAtServer ? 1 : 0));
   }
 
   public boolean isFromNotifier() {
@@ -108,6 +111,14 @@ public class MainServiceExtraParams implements Parcelable {
 
   public void setResult(int mResult) {
     this.mResult = mResult;
+  }
+
+  public boolean isMessagesRemovedAtServer() {
+    return mMessagesRemovedAtServer;
+  }
+
+  public void setMessagesRemovedAtServer(boolean mMessagesRemovedAtServer) {
+    this.mMessagesRemovedAtServer = mMessagesRemovedAtServer;
   }
 
   @Override

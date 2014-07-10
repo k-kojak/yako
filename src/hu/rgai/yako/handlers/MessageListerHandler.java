@@ -15,7 +15,6 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
@@ -68,12 +67,12 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
 
-  public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
+  public void finished(MessageListResult messageResult, boolean loadMore, int exceptionCode, String errorMessage) {
     int newMessageCount = 0;
     if (errorMessage != null) {
-      showErrorMessage(result, errorMessage);
+      showErrorMessage(exceptionCode, errorMessage);
     }
-    if (result == OK) {
+    if (exceptionCode == OK) {
       MessageListElement[] newMessages = messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]);
       MessageListResult.ResultType resultType = messageResult.getResultType();
 
@@ -83,6 +82,14 @@ public class MessageListerHandler extends TimeoutHandler {
        * is probably empty anyway...
        */
       if (resultType.equals(MessageListResult.ResultType.NO_CHANGE) || resultType.equals(MessageListResult.ResultType.ERROR)) {
+        return;
+      }
+
+
+      // If a stored message is not present in the queried list, delete that message.
+      if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
+        reMatchMessages(newMessages);
+        notifyUIaboutMessageChange();
         return;
       }
 
@@ -143,10 +150,43 @@ public class MessageListerHandler extends TimeoutHandler {
         builNotification(newMessageCount, lastUnreadMsg);
       }
 
-      Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
-      LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
+      notifyUIaboutMessageChange();
     }
 
+  }
+
+
+  private void notifyUIaboutMessageChange() {
+    Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
+    LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
+  }
+
+
+
+  /**
+   * Matches the stored message elements based on the input.
+   * If a stored message is not present int the input messages than remove that message from store.
+   * @param etalonMessages the messages queried from server
+   */
+  private void reMatchMessages(MessageListElement[] etalonMessages) {
+    if (etalonMessages != null && etalonMessages.length > 0) {
+      Account a = etalonMessages[0].getAccount();
+      TreeSet<MessageListElement> storedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(a);
+      List<Long> messagesToRemove = new LinkedList<Long>();
+      for (MessageListElement stored : storedMessages) {
+        boolean found = false;
+        for (int i = 0; i < etalonMessages.length; i++) {
+          if (stored.getId().equals(etalonMessages[i].getId())) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          messagesToRemove.add(Long.parseLong(stored.getId()));
+        }
+      }
+      MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+    }
   }
 
   private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {

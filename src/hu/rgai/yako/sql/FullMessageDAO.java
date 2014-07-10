@@ -3,6 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.FullThreadMessage;
 import hu.rgai.yako.beens.HtmlContent;
@@ -101,23 +102,29 @@ public class FullMessageDAO {
   }
 
 
-
-
-
   /**
    * Returns the ids of the FullSimpleMessages elements based on the MessageListElement's account id.
    * @param accountId  the id of the MessageListElement account id
    * @return
    */
-  public List<Long> getFullMessageIdsByAccountId(long accountId) {
+  public List<Long> getFullMessageIdsByAccountId(long accountId, List<Long> messageIds) {
+    String idClause = null;
+    if (messageIds != null && !messageIds.isEmpty()) {
+      idClause = SQLHelper.Utils.getInClosure(messageIds, true);
+    }
     List<Long> ids = new LinkedList<Long>();
     String q = "SELECT c." + COL_ID
             + " FROM " + TABLE_MESSAGE_CONTENT + " AS c, " + MessageListDAO.TABLE_MESSAGES + " AS m"
             + " WHERE c." + COL_MESSAGE_LIST_ID + " = m." + MessageListDAO.COL_ID
-              + " AND m." + MessageListDAO.COL_ACCOUNT_ID + " = ?";
-    Cursor c = mDbHelper.getDatabase().rawQuery(q, new String[] {Long.toString(accountId)});
+            + " AND m." + MessageListDAO.COL_ACCOUNT_ID + " = " + accountId;
+    if (idClause != null) {
+      q += " AND m." + MessageListDAO.COL_MSG_ID + " IN " + idClause;
+    }
+    Log.d("rgai", "getFullMessageIdsByAccountId query : " + q);
+    Cursor c = mDbHelper.getDatabase().rawQuery(q, null);
     c.moveToFirst();
     while (!c.isAfterLast()) {
+      Log.d("rgai", c.toString());
       ids.add(c.getLong(0));
       c.moveToNext();
     }

@@ -84,7 +84,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private String attachmentFolder = "../files/";
   private AttachmentProgressUpdate progressUpdate = null;
 
-  private IMAPFolder queryFolder;
   private IMAPFolder idleFolder;
   private volatile FolderIdleWithTimestamp idleThread;
   private volatile static Context context = null;
@@ -196,7 +195,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     return store;
   }
-  
+
+  private synchronized IMAPFolder getFolder() throws MessagingException {
+    return getFolder(null);
+  }
+
   private synchronized IMAPFolder getFolder(IMAPFolder folder) throws MessagingException {
     return getFolder(folder, false);
   }
@@ -222,7 +225,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //          Log.d("rgai", "adding event listeners....");
           folder.addMessageCountListener(new MessageCountListener() {
             public void messagesAdded(MessageCountEvent mce) {
-              messageListener.messageAdded(mce.getMessages().length);
+              messageListener.messageAdded(mce.getMessages());
             }
             public void messagesRemoved(MessageCountEvent mce) {
               messageListener.messageRemoved(mce.getMessages());
@@ -447,6 +450,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
 
     addMessagesToListAs(uidFolder, emails, seenMessages.toArray(new Message[seenMessages.size()]), loadedMessages, true);
+
+    imapFolder.close(false);
 
     return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE);
   }
@@ -714,9 +719,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   @Override
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
 
-    if (queryFolder == null) {
-      queryFolder = getFolder(queryFolder);
-    }
+    Folder  queryFolder = getFolder();
 
     if (queryFolder == null) return null;
     
@@ -926,15 +929,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private void initMessageListener(final Context context) {
     if (messageListener == null) {
       messageListener = new MessageCallback() {
-        public void messageAdded(int newMessageCount) {
-//          Log.d("rgai", "messageAdded");
+        public void messageAdded(Message[] messages) {
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setAccount(account);
           eParams.setQueryOffset(0);
-          eParams.setQueryLimit(newMessageCount);
+          eParams.setQueryLimit(messages.length);
           eParams.setForceQuery(true);
           service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           
@@ -942,14 +944,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
 
         public void messageRemoved(Message[] messages) {
-            
-//          Log.d("rgai", "removing message");
+
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setAccount(account);
           eParams.setForceQuery(true);
+          eParams.setMessagesRemovedAtServer(true);
           service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           
           context.sendBroadcast(service);
@@ -1006,7 +1008,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       storeConnections.remove(account);
     }
 
-    ConnectionDropper dropper = new ConnectionDropper(idleThread, queryFolder, store);
+    ConnectionDropper dropper = new ConnectionDropper(idleThread, store);
     dropper.executeTask(context, null);
   }
   
@@ -1017,6 +1019,26 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
   public boolean isMessageDeletable() {
     return true;
+  }
+
+  @Override
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) throws MessagingException{
+    UIDFolder folder = getFolder();
+
+    if (folder == null) {
+      return null;
+    }
+    List<MessageListElement> mles = new LinkedList<MessageListElement>();
+    Message[] messages = folder.getMessagesByUID(Long.parseLong(lowestStoredMessageUID), UIDFolder.LASTUID);
+    for (int i = 0; i < messages.length; i++) {
+      Message m = messages[i];
+      if (m != null) {
+        long uid = folder.getUID(m);
+        MessageListElement testerElement = new MessageListElement(Long.toString(uid), account);
+        mles.add(testerElement);
+      }
+    }
+    return new MessageListResult(mles, MessageListResult.ResultType.MERGE_DELETE);
   }
 
   public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
@@ -1134,13 +1156,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private class ConnectionDropper extends TimeoutAsyncTask<Void, Void, Void> {
 
     private final FolderIdleWithTimestamp folderIdleWithTimestamp;
-    private final IMAPFolder queryFolder;
     private final Store store;
     
-    public ConnectionDropper(FolderIdleWithTimestamp folderIdleThread, IMAPFolder folder, Store store) {
+    public ConnectionDropper(FolderIdleWithTimestamp folderIdleThread, Store store) {
       super(null);
       this.folderIdleWithTimestamp = folderIdleThread;
-      this.queryFolder = folder;
       this.store = store;
     }
     
@@ -1148,14 +1168,6 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     protected Void doInBackground(Void... params) {
       if (folderIdleWithTimestamp != null && folderIdleWithTimestamp.folderIdle != null) {
         folderIdleWithTimestamp.folderIdle.forceStop();
-      }
-      
-      if (queryFolder != null && queryFolder.isOpen()) {
-        try {
-          queryFolder.close(false);
-        } catch (MessagingException ex) {
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-        }
       }
       
       if (store != null) {

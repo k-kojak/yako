@@ -86,24 +86,24 @@ public class MessageListDAO  {
   }
 
 
-//  public synchronized void clearTable() {
-//    mDbHelper.getDatabase().delete(TABLE_MESSAGES, null, null);
-//  }
-
-  public synchronized void removeMessagesToAccount(Context context, long accountId) {
-    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId);
+  public synchronized void removeMessages(Context context, long accountId, List<Long> messageIds) {
+    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageIds);
 
     AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
     FullMessageDAO.getInstance(context).removeMessagesToAccount(fullMessageIds);
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ACCOUNT_ID + " = ?", new String[] {Long.toString(accountId)});
+
+    String where = COL_ACCOUNT_ID + " = ?";
+    if (messageIds != null && !messageIds.isEmpty()) {
+      where += " AND " + COL_MSG_ID + " IN " + SQLHelper.Utils.getInClosure(messageIds, true);
+    }
+    mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, new String[]{Long.toString(accountId)});
+
   }
 
-//  public synchronized void insertMessages(TreeSet<MessageListElement> messages, TreeMap<Account, Long> accounts) {
-//    clearTable();
-//    for (MessageListElement mle : messages) {
-//      insertMessage(mle, accounts);
-//    }
-//  }
+
+  public synchronized void removeMessages(Context context, long accountId) {
+    removeMessages(context, accountId, null);
+  }
 
 
   public synchronized void updateFrom(long messageRawId, Person from) {
@@ -229,6 +229,17 @@ public class MessageListDAO  {
     }
     cursor.close();
     return count;
+  }
+
+
+  public TreeSet<MessageListElement> getAllMessagesToAccount(Account a) {
+    if (a != null) {
+      TreeMap<Long, Account> accounts = new TreeMap<Long, Account>();
+      accounts.put(a.getDatabaseId(), a);
+      return getAllMessages(accounts, a.getDatabaseId());
+    } else {
+      return null;
+    }
   }
 
 

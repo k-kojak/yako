@@ -99,7 +99,7 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   public static class Utils {
 
-    public static String getInClosure(Collection<Long> collection) {
+    public static String getInClosure(Collection<Long> collection, boolean isString) {
       StringBuilder sb = new StringBuilder();
       sb.append("(");
       int i = 0;
@@ -107,11 +107,21 @@ public class SQLHelper extends SQLiteOpenHelper {
         if (i > 0) {
           sb.append(",");
         }
+        if (isString) {
+          sb.append("\"");
+        }
         sb.append(s);
+        if (isString) {
+          sb.append("\"");
+        }
         i++;
       }
       sb.append(")");
       return sb.toString();
+    }
+
+    public static String getInClosure(Collection<Long> collection) {
+      return getInClosure(collection, false);
     }
 
     public static Date parseSQLdateString(String sqlDate) throws ParseException {

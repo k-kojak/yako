@@ -158,7 +158,15 @@ public interface MessageProvider {
    * @return true if can delete message, false otherwise
    */
   public boolean isMessageDeletable();
-  
+
+
+  /**
+   * Retrieves a MessageListResult with a list of minimal MessageListElement objects, where only the UID is used for
+   * merging messages locally.
+   * @param lowestStoredMessageUID the lowest UID of the stored message on the device
+   * @return a list of messages on the server starting from the lowestStoredMessageUID
+   */
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) throws MessagingException;
   
   /**
    * Deletes a single message item.

@@ -9,7 +9,19 @@ import java.util.List;
  */
 public class MessageListResult {
   
-  public static enum ResultType {NO_CHANGE, CHANGED, ERROR, FLAG_CHANGE, CANCELLED};
+  public static enum ResultType {
+    NO_CHANGE,
+    CHANGED,
+    ERROR,
+    FLAG_CHANGE,
+    CANCELLED,
+
+    /**
+     * Indicates that the returning messages are considered as the actual messages on the server side,
+     * so the UID which not in this list could be removed.
+     */
+    MERGE_DELETE
+  };
   
   private final List<MessageListElement> messages;
   private final ResultType resultType;

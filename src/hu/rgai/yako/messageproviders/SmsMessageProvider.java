@@ -425,7 +425,13 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   public boolean isMessageDeletable() {
     return true;
   }
-  
+
+  @Override
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
+    Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
+    return null;
+  }
+
   public void deleteThread(String id) {
     Uri uriSMSURI = Uri.parse("content://sms");
     int deleted = mContext.getContentResolver().delete(uriSMSURI,

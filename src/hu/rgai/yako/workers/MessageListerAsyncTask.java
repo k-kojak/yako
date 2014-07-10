@@ -55,6 +55,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private final Account acc;
   private final MessageProvider messageProvider;
   private boolean loadMore = false;
+  private boolean mMessageDeleteAtServer = false;
   private int queryLimit;
   private int queryOffset;
   private final MessageListerHandler mHandler;
@@ -64,13 +65,15 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
   public MessageListerAsyncTask(Context context, Account acc, MessageProvider messageProvider,
-          boolean loadMore, int queryLimitOverride, int queryOffsetOverride, MessageListerHandler handler) {
+          boolean loadMore, boolean messageDeleteAtServer, int queryLimitOverride, int queryOffsetOverride,
+          MessageListerHandler handler) {
     
     super(handler);
     mContext = context;
     this.acc = acc;
     this.messageProvider = messageProvider;
     this.loadMore = loadMore;
+    mMessageDeleteAtServer = messageDeleteAtServer;
     this.queryLimit = queryLimitOverride;
     this.queryOffset = queryOffsetOverride;
     this.mHandler = handler;
@@ -78,13 +81,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     int offset = 0;
     int limit = Settings.MESSAGE_QUERY_LIMIT;
     if (loadMore) {
-//      if (YakoApp.getMessages() != null) {
-//        for (MessageListElement m : YakoApp.getMessages()) {
-//          if (m.getAccount().equals(acc)) {
-            offset = MessageListDAO.getInstance(mContext).getAllMessagesCount(acc.getDatabaseId());
-//          }
-//        }
-//      }
+      offset = MessageListDAO.getInstance(mContext).getAllMessagesCount(acc.getDatabaseId());
     }
 
     if (queryLimit == -1 || queryOffset == -1) {
@@ -118,9 +115,19 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         }
 
         // the already loaded messages to the specific content type...
-        TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
-        TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessages(accounts, acc.getDatabaseId());
-        messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+//        TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
+        TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(acc);
+        if (mMessageDeleteAtServer) {
+          long minUID = Long.MAX_VALUE;
+          for (MessageListElement mle : loadedMessages) {
+            long uid = Long.parseLong(mle.getId());
+            if (uid < minUID) minUID = uid;
+          }
+          messageResult = messageProvider.getUIDListForMerge(Long.toString(minUID));
+        } else {
+          messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+        }
+
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());

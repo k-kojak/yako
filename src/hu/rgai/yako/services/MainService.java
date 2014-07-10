@@ -144,8 +144,8 @@ public class MainService extends Service {
                   
                   MessageListerHandler th = new MessageListerHandler(this, extraParams, acc.getDisplayName());
                   MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, acc,
-                          provider, extraParams.isLoadMore(), extraParams.getQueryLimit(),
-                          extraParams.getQueryOffset(), th);
+                          provider, extraParams.isLoadMore(), extraParams.isMessagesRemovedAtServer(),
+                          extraParams.getQueryLimit(), extraParams.getQueryOffset(), th);
                   myThread.setTimeout(25000);
                   
                   tasks.add(myThread);
