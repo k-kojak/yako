@@ -185,7 +185,11 @@ public class MessageListerHandler extends TimeoutHandler {
           messagesToRemove.add(Long.parseLong(stored.getId()));
         }
       }
-      MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+      // if there is nothing to remove, do not call remove messages, because that case it will remove all messages
+      // associated with the given account
+      if (!messagesToRemove.isEmpty()) {
+        MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+      }
     }
   }
 

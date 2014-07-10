@@ -6,6 +6,7 @@ package hu.rgai.yako.messageproviders;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import com.google.android.gms.internal.fo;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -280,9 +281,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException,
-          NoSuchProviderException, UnknownHostException, IOException, MessagingException,
-          AuthenticationFailedException {
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
     
     try {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
@@ -311,12 +311,35 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       int start = Math.max(1, messageCount - limit - offset + 1);
       int end = start + limit > messageCount ? messageCount : start + limit;
 
-      // we are refreshing here, not loading older messages
-
-      Message messages[] = imapFolder.getMessages(start, end);
+      Message[] messages;
+      List<MessageListElement> flagMessages = null;
+      if (offset == 0 && !loadedMessages.isEmpty()) {
+        messages = uidImapFolder.getMessagesByUID(getSmallestUID(loadedMessages), UIDFolder.LASTUID);
+        MessageListResult mlr = getFlagChangesOfMessages(loadedMessages);
+        flagMessages = mlr.getMessages();
+      } else {
+        messages = imapFolder.getMessages(start, end);
+      }
       for (int i = messages.length - 1; i >= 0; i--) {
         Message m = messages[i];
         long uid = uidImapFolder.getUID(m);
+
+
+        if (flagMessages != null) {
+          boolean found = false;
+          for (MessageListElement flagMessage : flagMessages) {
+            if (flagMessage.getId().equals(Long.toString(uid))) {
+              emails.add(flagMessage);
+              found = true;
+              break;
+            }
+          }
+          if (found) {
+//            Log.d("rgai", "continue here...just update flag...");
+            continue;
+          }
+        }
+
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -335,8 +358,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           MessageListElement testerElement = new MessageListElement(-1, Long.toString(uid), seen, fromPerson, date,
                   account, Type.EMAIL, true);
 
-
-          if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
+          MessageListElement loadedMsg = MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement);
+          if (loadedMsg != null) {
             emails.add(testerElement);
             continue;
           }/* else {
@@ -421,13 +444,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     imapFolder.open(Folder.READ_ONLY);
     UIDFolder uidFolder = imapFolder;
     
-    long smallestUID = Long.MAX_VALUE;
-    for (MessageListElement mle : loadedMessages) {
-      long mleUID = Long.parseLong(mle.getId());
-      if (mleUID < smallestUID) {
-        smallestUID = mleUID;
-      }
-    }
+    long smallestUID = getSmallestUID(loadedMessages);
+
     Message messages[] = imapFolder.getMessagesByUID(smallestUID, UIDFolder.LASTUID);
 
     FlagTerm ft = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
@@ -456,6 +474,19 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return new MessageListResult(emails, MessageListResult.ResultType.FLAG_CHANGE);
   }
 
+
+  private long getSmallestUID(TreeSet<MessageListElement> messages) {
+    long smallestUID = Long.MAX_VALUE;
+    for (MessageListElement mle : messages) {
+      long mleUID = Long.parseLong(mle.getId());
+      if (mleUID < smallestUID) {
+        smallestUID = mleUID;
+      }
+    }
+    return smallestUID;
+  }
+
+
   private void addMessagesToListAs(UIDFolder folder, List<MessageListElement> emails, Message[] messages,
                                    TreeSet<MessageListElement> loadedMessages, boolean seen) throws MessagingException {
     for (int i = 0; i < messages.length; i++) {
@@ -464,7 +495,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         long uid = folder.getUID(m);
         MessageListElement testerElement = new MessageListElement(-1, Long.toString(uid), seen, null, null, account,
                 Type.EMAIL, true);
-        if (MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement)) {
+        MessageListElement loadedMsg = MessageProvider.Helper.isMessageLoaded(loadedMessages, testerElement);
+        if (loadedMsg != null) {
+          testerElement.setDate(loadedMsg.getDate());
           emails.add(testerElement);
         }
       }
@@ -944,7 +977,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
 
         public void messageRemoved(Message[] messages) {
-
+          Log.d("rgai", "message removed...." + messages.length);
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
@@ -1011,18 +1044,21 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     ConnectionDropper dropper = new ConnectionDropper(idleThread, store);
     dropper.executeTask(context, null);
   }
-  
+
+
   @Override
   public String toString() {
     return "SimpleEmailMessageProvider{" + "instance=" + account + '}';
   }
 
+
   public boolean isMessageDeletable() {
     return true;
   }
 
+
   @Override
-  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) throws MessagingException{
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) throws MessagingException {
     UIDFolder folder = getFolder();
 
     if (folder == null) {
@@ -1040,6 +1076,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     return new MessageListResult(mles, MessageListResult.ResultType.MERGE_DELETE);
   }
+
 
   public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");

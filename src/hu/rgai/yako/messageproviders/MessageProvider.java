@@ -190,13 +190,13 @@ public interface MessageProvider {
   
   public static class Helper {
     
-    public static boolean isMessageLoaded(TreeSet<MessageListElement> messages, MessageListElement message) {
+    public static MessageListElement isMessageLoaded(TreeSet<MessageListElement> messages, MessageListElement message) {
       for (MessageListElement mle : messages) {
         if (mle.getAccount().equals(message.getAccount()) && mle.getId().equals(message.getId())) {
-          return true;
+          return mle;
         }
       }
-      return false;
+      return null;
     }
     
     public static void sendMessageSentBroadcast(Context context, SentMessageBroadcastDescriptor sentMessageData, int sentType) {
