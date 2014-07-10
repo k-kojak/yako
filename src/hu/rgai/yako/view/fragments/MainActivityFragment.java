@@ -7,38 +7,29 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.ActionMode;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
-import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
@@ -54,7 +45,6 @@ import java.util.logging.Logger;
 public class MainActivityFragment extends Fragment {
 
   private ListView mListView;
-  private View mRootView = null;
   private MainListAdapter mAdapter = null;
   private TreeSet<Long> contextSelectedElements = null;
   private MainActivity mMainActivity = null;
@@ -84,8 +74,8 @@ public class MainActivityFragment extends Fragment {
 
 //    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
     Log.d("rgai3", "QUERIING accounts: " + mAccounts);
-    
-    mRootView = inflater.inflate(R.layout.main, container, false);
+
+    View mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
     
     mTopProgressBar = (ProgressBar) mRootView.findViewById(R.id.progressbar);
@@ -283,7 +273,7 @@ public class MainActivityFragment extends Fragment {
   
   
   private void cancelContextualActionbarTimer() {
-    if (mContextBarTimerHandler != null && mContextBarTimerCallback != null) {
+    if (mContextBarTimerHandler != null) {
       mContextBarTimerHandler.removeCallbacks(mContextBarTimerCallback);
     }
   }
