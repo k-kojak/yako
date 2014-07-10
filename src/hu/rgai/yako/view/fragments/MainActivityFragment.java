@@ -141,8 +141,8 @@ public class MainActivityFragment extends Fragment {
         switch (item.getItemId()) {
           case R.id.reply:
             if (contextSelectedElements.size() == 1) {
-
-              MessageListElement message = MessageListDAO.getInstance(getActivity()).getMessageByRawId(contextSelectedElements.first(), mAccounts);
+              long firstId = contextSelectedElements.first();
+              MessageListElement message = MessageListDAO.getInstance(getActivity()).getMessageByRawId(firstId, mAccounts);
               Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
               Intent intent = new Intent(mMainActivity, classToLoad);
               intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
@@ -153,7 +153,6 @@ public class MainActivityFragment extends Fragment {
             return true;
           case R.id.discard:
             contextActionDeleteMessage();
-//            hideContextualActionbar();
             return true;
           case R.id.mark_seen:
             contextActionMarkMessage(true);
@@ -192,42 +191,23 @@ public class MainActivityFragment extends Fragment {
       loadMoreButton.setEnabled(false);
     }
 
-    long accountId = -1;
-    if (MainActivity.actSelectedFilter != null) {
-      accountId = MainActivity.actSelectedFilter.getDatabaseId();
-    }
-    mAdapter = new MainListAdapter(mMainActivity, MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId),
-            mAccounts);
-    mListView.setAdapter(mAdapter);
     mListView.setOnScrollListener(new LogOnScrollListener(mListView, mAdapter));
     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
         if (av.getItemAtPosition(itemIndex) == null) return;
-        MessageListElement message = MessageListDAO.cursorToMessageListElement((Cursor)av.getItemAtPosition(itemIndex), mAccounts);
+        Cursor cursorOfMessage = (Cursor)av.getItemAtPosition(itemIndex);
+        MessageListElement message = MessageListDAO.cursorToMessageListElement(cursorOfMessage, mAccounts);
         Account a = message.getAccount();
         Log.d("rgai3", "message's account after click: " + a);
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
-//        Bundle b = new Bundle();
-//        b.setClassLoader(classToLoad.getClassLoader());
-//        b.putString(IntentStrings.Params.MESSAGE_ID, message.getId());
-//        b.putParcelable(IntentStrings.Params.MESSAGE_ACCOUNT, message.getAccount());
         Intent intent = new Intent(mMainActivity, classToLoad);
         intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
         intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
-//        intent.putExtra(IntentStrings.Params.BUNDLE, b);
-//        boolean changed = YakoApp.setMessageSeenAndReadLocally(message);
         boolean changed = !message.isSeen();
         if (!message.isSeen()) {
           MessageListDAO.getInstance(getActivity()).updateMessageToSeen(message.getRawId(), true);
-          mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(message.getRawId()));
-          mAdapter.notifyDataSetChanged();
         }
-//        if (changed) {
-//          message.setSeen(true);
-//          message.setUnreadCount(0);
-
-//        }
 
         loggingOnClickEvent(message, changed);
         mMainActivity.startActivityForResult(intent, Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT);
@@ -262,7 +242,8 @@ public class MainActivityFragment extends Fragment {
     super.onResume();
     Log.d("rgai3", "ONRESUME CALLED");
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
-    mAdapter.setAccounts(mAccounts);
+
+    updateAdapter();
   }
 
   @Override
@@ -298,8 +279,8 @@ public class MainActivityFragment extends Fragment {
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
       Log.d("rgai", "contextSelectedElements: " + contextSelectedElements);
-
-      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(contextSelectedElements.first(), mAccounts);
+      long idOfFirst = contextSelectedElements.first();
+      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(idOfFirst, mAccounts);
       Account acc = mle.getAccount();
       MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
 
@@ -440,24 +421,39 @@ public class MainActivityFragment extends Fragment {
   }
   
   public void notifyAdapterChange() {
+    updateAdapter();
+    if (mAdapter != null) {
+      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
+        loadMoreButton.setVisibility(View.VISIBLE);
+        loadMoreButtonVisible = true;
+      }
+
+      if (!contextSelectedElements.isEmpty()) {
+        for (int i = 1; i < mAdapter.getCount(); i++) {
+          long rawId = ((Cursor) (mAdapter.getItem(i))).getLong(0);
+          mListView.setItemChecked(i, contextSelectedElements.contains(rawId));
+        }
+      }
+    }
+  }
+
+  private void updateAdapter() {
     long accountId = -1;
     if (MainActivity.actSelectedFilter != null) {
       accountId = MainActivity.actSelectedFilter.getDatabaseId();
     }
-    mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId));
-    mAdapter.notifyDataSetChanged();
-    if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
-      loadMoreButton.setVisibility(View.VISIBLE);
-      loadMoreButtonVisible = true;
-    }
+    if (mAdapter == null) {
+      mAdapter = new MainListAdapter(mMainActivity,
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId), mAccounts);
 
-    if (!contextSelectedElements.isEmpty()) {
-      for (int i = 1; i < mAdapter.getCount(); i++) {
-        long rawId = ((Cursor)(mAdapter.getItem(i))).getLong(0);
-        mListView.setItemChecked(i, contextSelectedElements.contains(rawId));
-      }
+    } else {
+      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId));
+      mAdapter.setAccounts(mAccounts);
+      mAdapter.notifyDataSetChanged();
     }
-    
+    if (mListView.getAdapter() == null) {
+      mListView.setAdapter(mAdapter);
+    }
   }
 
 }
