@@ -103,9 +103,9 @@ public class ErrorLog {
         pw.close();
         outs.close();
       } catch (FileNotFoundException ex) {
-        Logger.getLogger(ErrorLog.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IOException ex) { 
-        Logger.getLogger(ErrorLog.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
+      } catch (IOException ex) {
+        Log.d("rgai", "", ex);
       }
     }
   }

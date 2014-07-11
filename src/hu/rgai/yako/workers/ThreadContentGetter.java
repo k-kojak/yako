@@ -75,21 +75,21 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 
       // TODO: handle exceptions
       } catch (NoSuchMethodException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (InstantiationException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IllegalAccessException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IllegalArgumentException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (InvocationTargetException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (NoSuchProviderException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (MessagingException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       }
         
       return threadMessage;

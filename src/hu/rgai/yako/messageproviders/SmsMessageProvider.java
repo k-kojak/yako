@@ -309,7 +309,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         try {
           Thread.sleep(1000);
         } catch (InterruptedException ex) {
-          Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
 

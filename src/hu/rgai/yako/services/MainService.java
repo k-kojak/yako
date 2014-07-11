@@ -203,7 +203,7 @@ public class MainService extends Service {
               executor.execute(this);
             }
           } catch (Exception ex) {
-            Logger.getLogger(MainService.class.getName()).log(Level.SEVERE, null, ex);
+            Log.d("rgai", "start command exception", ex);
           }
           if (wasAnyFullUpdateCheck) {
             YakoApp.lastFullMessageUpdate = new Date();

@@ -149,8 +149,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
       Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
       // thrown when someone else returns here, and not facebook
     } catch (RuntimeException ex) {
-      Log.d("rgai", "catching FB exception");
-      ex.printStackTrace();
+      Log.d("rgai", "catching FB exception", ex);
     }
     
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
@@ -182,9 +181,8 @@ public class AccountSettingsListActivity extends ActionBarActivity {
           // do nothing
         }
       } catch (Exception ex) {
-        ex.printStackTrace();
         // TODO: handle exception
-        Log.d("rgai", "TODO: handle exception");
+        Log.d("rgai", "Unknown exception", ex);
       }
     }
   }

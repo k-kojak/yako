@@ -665,8 +665,7 @@ public class MainActivity extends ActionBarActivity {
         }
       }
     } catch (Exception ex) {
-      Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");
-      ex.printStackTrace();
+      Log.d("rgai", "NULL POINTER EXCEPTION CATCHED", ex);
     }
 
   }

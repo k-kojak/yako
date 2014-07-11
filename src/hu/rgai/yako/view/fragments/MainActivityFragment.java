@@ -360,7 +360,7 @@ public class MainActivityFragment extends Fragment {
       });
       batchedMarker.execute(getActivity());
     } catch (Exception ex) {
-      Logger.getLogger(MainActivityFragment.class.getName()).log(Level.SEVERE, null, ex);
+      Log.d("rgai", "mark message exception", ex);
     }
   }
   

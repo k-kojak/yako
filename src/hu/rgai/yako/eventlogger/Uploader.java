@@ -86,8 +86,7 @@ class Uploader implements Runnable {
         EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.LOG_UPLOAD.UPLOAD_FAILED_STR, true);
       }
     } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
     EventLogger.INSTANCE.saveTempBufferToLogFileAndClear();
   }
@@ -123,16 +122,13 @@ class Uploader implements Runnable {
       httpPost.setEntity(httpContactListEntity);
       response = getNewHttpClient().execute(httpPost);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     } catch (ClientProtocolException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     }
 
@@ -284,13 +280,13 @@ class Uploader implements Runnable {
 
       return new DefaultHttpClient(ccm, params);
     } catch (Exception e) {
+      Log.d("willrgai", "", e);
       return new DefaultHttpClient();
     } finally {
       try {
         inputStream.close();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        Log.d("willrgai", "", e);
       }
     }
   }

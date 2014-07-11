@@ -7,6 +7,7 @@ package hu.rgai.yako.workers;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,14 +84,13 @@ public class AttachmentDownloader implements Runnable, Serializable {
         });
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "Exception at attachment download", ex);
       setProgressBarValue(0, true);
       mHandler.post(new Runnable() {
         public void run() {
           Toast.makeText(mContext, "Failed to download file: " + mAttachment.getFileName(), Toast.LENGTH_LONG).show();
         }
       });
-      
     }
     running = false;
   }

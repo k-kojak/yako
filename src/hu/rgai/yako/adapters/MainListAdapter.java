@@ -42,60 +42,11 @@ public class MainListAdapter extends CursorAdapter {
     mAccounts = accounts;
   }
 
-  // TODO: this should be a copy of the original array
-//  public int getCount() {
-//    // the plus 1 item is because of the "last updated" row
-//    int messagesSize = YakoApp.getFilteredMessages(MainActivity.actSelectedFilter).size();
-//    return messagesSize == 0 ? 0 : messagesSize + 1;
-//  }
-  
-//  public Object getItem(int position) {
-//    if (position == 0) {
-//      return null;
-//    } else {
-//      int i = 0;
-//      for (MessageListElement mlep : YakoApp.getFilteredMessages(MainActivity.actSelectedFilter)) {
-//        if (i == position - 1) {
-//          return mlep;
-//        }
-//        i++;
-//      }
-//      return null;
-//    }
-//  }
-
-//  public long getItemId(int position) {
-//    return position;
-//  }
-
-//  public void setListFilter(Account filterAccount) {
-//    this.filterAcc = filterAccount;
-//  }
-
 
   public void bindView(View view, Context context, Cursor cursor) {
     
-//    if (position == 0) {
-//      return getLastUpdatedRow(view, parent);
-//    } else {
-    
-      ViewHolder holder = (ViewHolder)view.getTag();
-//      if (view == null || view.getTag() == null) {
-//        view = inflater.inflate(R.layout.list_row, null);
-//        holder = new ViewHolder();
-//
-//        holder.subject = (TextView) view.findViewById(R.id.subject);
-//        holder.from = (TextView) view.findViewById(R.id.from);
-//        holder.date = (TextView) view.findViewById(R.id.date);
-//        holder.icon = (AsyncImageView) view.findViewById(R.id.list_image);
-//        holder.msgType = (ImageView) view.findViewById(R.id.list_acc_type);
-//        holder.attachment = (ImageView) view.findViewById(R.id.attachment);
-//        holder.accountName = (TextView) view.findViewById(R.id.account_name);
-//        view.setTag(holder);
-//      } else {
-//        holder = (ViewHolder)view.getTag();
-//      }
 
+      ViewHolder holder = (ViewHolder)view.getTag();
 
       MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
 

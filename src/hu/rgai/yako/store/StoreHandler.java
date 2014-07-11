@@ -133,15 +133,15 @@ public class StoreHandler {
         oos.writeObject(object);
         oos.flush();
       } catch (FileNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } finally {
         try {
           oos.close();
           fos.close();
         } catch (IOException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
     }
@@ -178,21 +178,21 @@ public class StoreHandler {
         ois.close();
         fis.close();
       } catch (FileNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (OptionalDataException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
         deleteFileIfExists(context, file);
       } catch (ClassNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } finally {
         try {
           ois.close();
         } catch (IOException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         } catch (NullPointerException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
     }
@@ -235,7 +235,7 @@ public class StoreHandler {
         in.close();
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("rgai", "", e);
     }
     
     return data;
@@ -294,7 +294,7 @@ public class StoreHandler {
       outs.write(data);
       outs.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("rgai", "", e);
     }
     return true;
   }
@@ -349,6 +349,7 @@ public class StoreHandler {
       token = new SimpleDateFormat(DATE_FORMAT).parse(prefs.getString(context.getString(R.string.settings_fb_access_token_exp_date),
               new Date(token.getTime() + 1000L * 3600L * 24L * 365L).toString()));
     } catch (ParseException ex) {
+      Log.d("rgai", "", ex);
 //      Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
     }
     return token;

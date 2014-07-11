@@ -90,7 +90,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
               try {
               setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
               } catch (Exception ex) {
-                Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+                Log.d("rgai", "", ex);
               }
             } else {
 //              ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");

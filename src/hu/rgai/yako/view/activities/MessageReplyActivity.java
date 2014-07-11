@@ -286,10 +286,10 @@ public class MessageReplyActivity extends ActionBarActivity {
         }
       }
     } catch (UnsupportedCharsetException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       Toast.makeText(this, getString(R.string.unsupported_encoding), Toast.LENGTH_LONG).show();
     } catch (UnsupportedEncodingException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       Toast.makeText(this, getString(R.string.unsupported_charset), Toast.LENGTH_LONG).show();
     }
   }

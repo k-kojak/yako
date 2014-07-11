@@ -102,8 +102,8 @@ public enum EventLogger {
       bufferedWriter.newLine();
       bufferedWriter.flush();
     } catch (IOException e) {
+      Log.d("willrgai", "", e);
       // TODO Auto-generated catch block
-      e.printStackTrace();
     }
   }
 
@@ -115,17 +115,17 @@ public enum EventLogger {
         bufferedWriter = new BufferedWriter(new FileWriter(logfile, true));
       logfileCreatedTime = getLogFileCreateDate();
     } catch (NumberFormatException e) {
+      Log.d("willrgai", "", e);
       try {
         bufferedWriter.close();
       } catch (IOException e1) {
-        e1.printStackTrace();
+        Log.d("willrgai", "", e1);
       }
       lockedToUpload = true;
       deleteLogFileAndCreateNew();
-      e.printStackTrace();
+
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
   }
 
@@ -136,7 +136,7 @@ public enum EventLogger {
         pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
         appVersion = pInfo.versionName;
       } catch (NameNotFoundException e) {
-        e.printStackTrace();
+        Log.d("willrgai", "", e);
         appVersion = "not_checked_version";
       }
     }
@@ -151,8 +151,7 @@ public enum EventLogger {
     try {
       bufferedWriter.close();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
     return true;
   }
@@ -173,10 +172,9 @@ public enum EventLogger {
         bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        Log.d("willrgai", "", e);
       } catch (Exception ex) {
-        ex.printStackTrace();
+        Log.d("willrgai", "", ex);
       }
     } else {
       tempBufferToUpload.add(StringEscapeUtils.escapeJava(log));

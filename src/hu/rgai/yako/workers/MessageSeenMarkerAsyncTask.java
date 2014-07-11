@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.workers;
 
+import android.util.Log;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
@@ -40,7 +41,7 @@ public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Vo
     try {
       mProvider.markMessagesAsRead(ids, mSeen);
     } catch (Exception ex) {
-      Logger.getLogger(MessageSeenMarkerAsyncTask.class.getName()).log(Level.SEVERE, null, ex);
+      Log.d("rgai", "", ex);
       return false;
     }
     return true;

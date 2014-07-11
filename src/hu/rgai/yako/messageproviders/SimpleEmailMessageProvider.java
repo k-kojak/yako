@@ -374,6 +374,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             try {
               subject = MimeUtility.decodeText(subject);
             } catch (java.io.UnsupportedEncodingException ex) {
+              Log.d("rgai", "", ex);
             }
           } else {
             try {
@@ -382,6 +383,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
               subject = snippet;
             } catch (StackOverflowError so) {
+              Log.d("rgai", "", so);
             }
             if (subject == null) {
               subject = "<No subject>";
@@ -528,7 +530,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       try {
         from = MimeUtility.decodeText(from);
       } catch (java.io.UnsupportedEncodingException ex) {
-        ex.printStackTrace();
+        Log.d("rgai", "", ex);
       }
     }
 
@@ -708,7 +710,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           try {
             content = new HtmlContent(bp.getContent().toString(), HtmlContent.ContentType.TEXT_PLAIN);
           } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+            Log.d("rgai", "", ex);
           }
         }
       } else if (contentType.indexOf("text/html") != -1) {
@@ -733,7 +735,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     try {
       ad = MimeUtility.decodeText(ad);
     } catch (UnsupportedEncodingException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
     }
     
     int mailOp = ad.indexOf("<");
@@ -870,7 +872,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       t.sendMessage(msg, msg.getAllRecipients());
       t.close();
     } catch (MessagingException ex) {
-      Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+      Log.d("rgai", "", ex);
       success = false;
     }
     
@@ -911,7 +913,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       try {
         uids[i++] = Long.parseLong(s);
       } catch (Exception ex) {
-        ex.printStackTrace();
+        Log.d("rgai", "", ex);
       }
     }
     // TODO: if instance not support UID, then use simple id
@@ -1022,7 +1024,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //        }
         idleThread = new FolderIdleWithTimestamp(fi, System.currentTimeMillis());
       } catch (MessagingException ex) {
-        Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       }
     } else {
 //      Log.d("rgai", "No thanks, my connection is already alive: " + instance);
@@ -1161,7 +1163,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           
           mFolder.idle();
         } catch (Exception ex) {
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         } finally {
           mRunning = false;
           if (!forceStop) {
@@ -1182,7 +1184,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         try {
           mFolder.close(false);
         } catch (MessagingException ex) {
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
         idleFolder = null;
@@ -1211,7 +1213,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         try {
           store.close();
         } catch (MessagingException ex) {
-          Logger.getLogger(SimpleEmailMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
       

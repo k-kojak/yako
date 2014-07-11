@@ -165,7 +165,7 @@ public class FullMessageDAO {
                 p, cursor.getInt(cursor.getColumnIndex(COL_IS_ME)) == 1,
                 MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(COL_MSG_TYPE))), null);
       } catch (ParseException e) {
-        e.printStackTrace();
+        Log.d("rgai", "", e);
       }
       messages.add(fsm);
       cursor.moveToNext();

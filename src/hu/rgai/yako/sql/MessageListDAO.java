@@ -167,18 +167,12 @@ public class MessageListDAO  {
         cv.put(COL_CONTENT, ((FullSimpleMessage) mle.getFullMessage()).getContent().getContent().toString());
       }
     } catch (NullPointerException ex) {
-      Log.d("rgai", "mle.getFrom has a null value somewhere: " + mle.getFrom());
-      ex.printStackTrace();
+      Log.d("rgai", "mle.getFrom has a null value somewhere: " + mle.getFrom(), ex);
     }
 
     if (cv != null) {
       mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
     }
-  }
-
-
-  public Cursor getAllMessagesCursor() {
-    return getAllMessagesCursor(-1);
   }
 
 
@@ -349,7 +343,7 @@ public class MessageListDAO  {
       try {
         date = SQLHelper.Utils.parseSQLdateString(cursor.getString(10));
       } catch (ParseException e) {
-        e.printStackTrace();
+        Log.d("rgai", "", e);
       }
 
       if (date != null) {

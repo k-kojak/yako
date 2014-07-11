@@ -3,6 +3,8 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +24,7 @@ public class SimpleSentMessageData implements SentMessageData {
       try {
         return new SimpleSentMessageData(in);
       } catch (ClassNotFoundException ex) {
-        Logger.getLogger(SimpleSentMessageData.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
         return null;
       }
     }

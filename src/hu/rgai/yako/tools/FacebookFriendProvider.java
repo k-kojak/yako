@@ -120,7 +120,7 @@ public class FacebookFriendProvider {
 //            Log.d("rgai", "Integrating user ("+ (i+1) +"/"+ arr.length() +") -> " + name);
                   }
                 } catch (JSONException e) {
-                  e.printStackTrace();
+                  Log.d("rgai", "json exception", e);
                 }
               }
             });

@@ -3,6 +3,8 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,7 +26,7 @@ public class SentMessageBroadcastDescriptor implements Parcelable {
       try {
         return new SentMessageBroadcastDescriptor(in);
       } catch (ClassNotFoundException ex) {
-        Logger.getLogger(SentMessageBroadcastDescriptor.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
         return null;
       }
     }

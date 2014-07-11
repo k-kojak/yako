@@ -189,7 +189,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                 }
               }
             } catch (Throwable t) {
-              t.printStackTrace();
+              Log.d("rgai", "FB get message exception", t);
             }
           }
         } else {
@@ -257,13 +257,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         });
         
       } catch (XMPPException e) {
-        Log.d("rgai", "XMPP connection failed:");
+        Log.d("rgai", "XMPP connection failed:", e);
         xmpp.disconnect();
-        e.printStackTrace();
       } catch (Exception k) {
-        k.printStackTrace();
-        System.out.println(k);
-        System.out.println("HIBAA");
+        Log.d("rgai", "XMPP connection failed", k);
       }
     }
   }
@@ -354,7 +351,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                 }
               }
             } catch (Throwable t) {
-              t.printStackTrace();
+              Log.d("rgai", "", t);
             }
           }
         } else {
@@ -388,11 +385,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(account.getUniqueName(), account.getPassword());
       } catch (XMPPException e) {
+        Log.d("rgai", "", e);
         xmpp.disconnect();
-        e.printStackTrace();
         success = false;
       } catch (Exception e) {
-        e.printStackTrace();
         success = false;
       }
     }
@@ -411,10 +407,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         try {
           chat.sendMessage(content);
         } catch (XMPPException e) {
-          e.printStackTrace();
+          Log.d("rgai", "", e);
           success = false;
         } catch (IllegalStateException ex) {
-          ex.printStackTrace();
+          Log.d("rgai", "", ex);
           success = false;
         }
       }
@@ -486,8 +482,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
           }
 
         } catch (JSONException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          Log.d("rgai", "", e);
         }
 
       }

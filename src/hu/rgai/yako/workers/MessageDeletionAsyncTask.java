@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.workers;
 
+import android.util.Log;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.ThreadMessageProvider;
@@ -42,7 +43,7 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
         mProvider.deleteMessage(mMessageId);
       }
     } catch (Exception ex) {
-      Logger.getLogger(MessageDeletionAsyncTask.class.getName()).log(Level.SEVERE, null, ex);
+      Log.d("rgai", "message delete exception", ex);
       return false;
     }
     return true;

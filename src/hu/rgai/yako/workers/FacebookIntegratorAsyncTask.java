@@ -45,9 +45,9 @@ import java.util.logging.Logger;
       try {
         inputStream = new URL(url).openStream();
       } catch (MalformedURLException ex) {
-        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "cannot open FB img url", ex);
       } catch (IOException ex) {
-        Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "cannot open FB img url", ex);
       }
       Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
       StoreHandler.saveUserFbImage(activity, bitmap);

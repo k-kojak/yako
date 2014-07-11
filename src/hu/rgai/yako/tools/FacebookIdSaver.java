@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
+import android.util.Log;
 import hu.rgai.yako.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.yako.config.Settings;
 import java.io.ByteArrayOutputStream;
@@ -60,9 +61,9 @@ public class FacebookIdSaver {
       try {
         context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
       } catch (RemoteException ex) {
-        Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "exception @ FB integrate", ex);
       } catch (OperationApplicationException ex) {
-        Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "exception @ FB integrate", ex);
       }
     }
     
@@ -89,9 +90,9 @@ public class FacebookIdSaver {
         try {
           context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
         } catch (RemoteException ex) {
-          Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "FB integrate exception", ex);
         } catch (OperationApplicationException ex) {
-          Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "FB integrate exception", ex);
         }
       }
       // The user (even the name) does not exists in the contact list, so lets create it
@@ -126,9 +127,9 @@ public class FacebookIdSaver {
           try {
             is = (InputStream) new URL(fbii.getThumbImgUlr()).getContent();
           } catch (MalformedURLException ex) {
-            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            Log.d("rgai", "FB integrate exception", ex);
           } catch (IOException ex) {
-            Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
+            Log.d("rgai", "FB integrate exception", ex);
           }
           Bitmap img = BitmapFactory.decodeStream(is);
           if (img != null) {
@@ -141,37 +142,14 @@ public class FacebookIdSaver {
                     .withValue(ContactsContract.CommonDataKinds.Photo.PHOTO, stream.toByteArray())
                     .build());
           }
-          // insert full img
-//          if (fbii.getFullImg() != null) {
-            try {
-//              stream = new ByteArrayOutputStream();
-//              fbii.getFullImg().compress(Bitmap.CompressFormat.JPEG, 100, stream);
-//              byte[] fullImgArray = stream.toByteArray();
-              context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-//              long rawContactId = ContentUris.parseId(results[0].uri);
-//              final Uri displayPhotoUri = Uri.withAppendedPath(
-//                      ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId),
-//                      ContactsContract.RawContacts.DisplayPhoto.CONTENT_DIRECTORY);
-//              final FileOutputStream photoStream = context.getContentResolver().openAssetFileDescriptor(displayPhotoUri, "rw").createOutputStream();
-//              try {
-//                int bufferSize = 16 * 1024;
-//                for (int offset = 0; offset < fullImgArray.length; offset += bufferSize) {
-//                  bufferSize = Math.min(bufferSize, (fullImgArray.length - offset));
-//                  photoStream.write(fullImgArray, offset, bufferSize);
-//                }
-//              } finally {
-//                photoStream.close();
-//              }
-            } catch (RemoteException ex) {
-              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (OperationApplicationException ex) {
-              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (FileNotFoundException ex) {
-//              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (IOException ex) {
-//              Logger.getLogger(FacebookIdSaver.class.getName()).log(Level.SEVERE, null, ex);
-            }
-//          }
+          try {
+            context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+
+          } catch (RemoteException ex) {
+            Log.d("rgai", "FB integrate exception", ex);
+          } catch (OperationApplicationException ex) {
+            Log.d("rgai", "FB integrate exception", ex);
+          }
         }
       }
     }

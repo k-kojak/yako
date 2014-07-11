@@ -129,29 +129,29 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         }
       }
     } catch (AuthenticationFailedException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = AUTHENTICATION_FAILED_EXCEPTION;
       this.errorMessage = acc.getDisplayName();
     } catch (CertPathValidatorException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = CERT_PATH_VALIDATOR_EXCEPTION;
     } catch (SSLHandshakeException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = SSL_HANDSHAKE_EXCEPTION;
     } catch (NoSuchProviderException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = NO_SUCH_PROVIDER_EXCEPTION;
     } catch (ConnectException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = CONNECT_EXCEPTION;
     } catch (UnknownHostException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = UNKNOWN_HOST_EXCEPTION;
     } catch (MessagingException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = MESSAGING_EXCEPTION;
     } catch (IOException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       this.result = IOEXCEPTION;
     } finally {
       runningTaskStack.put(mRunningSetup, false);

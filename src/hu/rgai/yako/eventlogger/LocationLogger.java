@@ -53,7 +53,7 @@ public class LocationLogger implements LocationListener {
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
   }
 
