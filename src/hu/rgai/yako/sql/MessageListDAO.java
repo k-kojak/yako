@@ -88,22 +88,37 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void removeMessages(Context context, long accountId, List<Long> messageIds) {
-    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageIds);
+  public synchronized void removeMessages(Context context, long accountId, List<Long> messageListRawIds) throws Exception {
+    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageListRawIds);
 
     AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
     FullMessageDAO.getInstance(context).removeMessagesToAccount(fullMessageIds);
 
-    String where = COL_ACCOUNT_ID + " = ?";
-    if (messageIds != null && !messageIds.isEmpty()) {
-      where += " AND " + COL_MSG_ID + " IN " + SQLHelper.Utils.getInClosure(messageIds, true);
+    String where = null;
+    String[] whereArgs = null;
+
+    if (accountId != -1) {
+      where = COL_ACCOUNT_ID + " = ?";
+      whereArgs = new String[]{Long.toString(accountId)};
     }
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, new String[]{Long.toString(accountId)});
+
+    if (messageListRawIds != null && !messageListRawIds.isEmpty()) {
+      if (where == null) {
+        where = "";
+      } else {
+        where += " AND ";
+      }
+      where += COL_ID + " IN " + SQLHelper.Utils.getInClosure(messageListRawIds);
+    }
+    if (where == null) {
+      throw new Exception("where condition cannot be null: at least one condition should have a valid value");
+    }
+    mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, whereArgs);
 
   }
 
 
-  public synchronized void removeMessages(Context context, long accountId) {
+  public synchronized void removeMessages(Context context, long accountId) throws Exception {
     removeMessages(context, accountId, null);
   }
 
@@ -144,7 +159,7 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void insertMessage(MessageListElement mle, TreeMap<Account, Long> accounts) {
+  public synchronized void insertMessage(Context context, MessageListElement mle, TreeMap<Account, Long> accounts) {
     ContentValues cv = new ContentValues();
     try {
       cv.put(COL_MSG_ID, mle.getId());
@@ -164,15 +179,19 @@ public class MessageListDAO  {
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());
       cv.put(COL_MSG_TYPE, mle.getMessageType().toString());
       cv.put(COL_ACCOUNT_ID, accounts.get(mle.getAccount()));
-      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-        cv.put(COL_CONTENT, ((FullSimpleMessage) mle.getFullMessage()).getContent().getContent().toString());
-      }
+//      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+//        cv.put(COL_CONTENT, ((FullSimpleMessage) mle.getFullMessage()).getContent().getContent().toString());
+//      }
     } catch (NullPointerException ex) {
       Log.d("rgai", "mle.getFrom has a null value somewhere: " + mle.getFrom(), ex);
     }
 
     if (cv != null) {
-      mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
+      long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
+      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+        FullSimpleMessage fsm = (FullSimpleMessage) mle.getFullMessage();
+        FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
+      }
     }
   }
 
@@ -203,8 +222,10 @@ public class MessageListDAO  {
   }
 
 
-  public void removeMessage(long rawId) {
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_ID + " = ?", new String[] {Long.toString(rawId)});
+  public void removeMessage(Context context, long rawMessageId) throws Exception {
+    List<Long> ids = new ArrayList<Long>(1);
+    ids.add(rawMessageId);
+    removeMessages(context, -1, ids);
   }
 
 
@@ -344,24 +365,13 @@ public class MessageListDAO  {
     if (!cursor.isAfterLast()) {
       Person from = new Person(cursor.getInt(9), cursor.getString(6), cursor.getString(7),
               MessageProvider.Type.valueOf(cursor.getString(8)));
-      Date date = null;
       try {
-        date = SQLHelper.Utils.parseSQLdateString(cursor.getString(10));
-      } catch (ParseException e) {
-        Log.d("rgai", "", e);
-      }
-
-      if (date != null) {
+        Date date = SQLHelper.Utils.parseSQLdateString(cursor.getString(10));
         mle = new MessageListElement(cursor.getLong(0), cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
                 cursor.getString(4), from, null, date, accounts.get(cursor.getLong(12)),
                 MessageProvider.Type.valueOf(cursor.getString(11)));
-        // TODO: content should come from fullmessage table, not like this
-        if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-          FullSimpleMessage fsm = new FullSimpleMessage(mle.getId(), "subject",
-                  new HtmlContent(cursor.getString(13), HtmlContent.ContentType.TEXT_HTML), date, from, false,
-                  mle.getMessageType(), null);
-          mle.setFullMessage(fsm);
-        }
+      } catch (ParseException e) {
+        Log.d("rgai", "", e);
       }
     }
     return mle;

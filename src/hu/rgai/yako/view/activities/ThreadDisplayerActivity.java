@@ -249,7 +249,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
                   }
                   mAdapter.notifyDataSetChanged();
                   if (mAdapter.getCount() == 0) {
-                    MessageListDAO.getInstance(c).removeMessage(deletedMessageListRawId);
+                    try {
+                      MessageListDAO.getInstance(c).removeMessage(c, deletedMessageListRawId);
+                    } catch (Exception e) {
+                      Log.d("rgai", "", e);
+                    }
                     finish();
                   }
                 }
@@ -510,7 +514,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
   public void appendLoadedMessages(FullThreadMessage fullMessage, boolean saveToDatabase) {
     if (saveToDatabase) {
-      FullMessageDAO.getInstance(this).appendMessages(this, mMessage.getRawId(), fullMessage);
+      FullMessageDAO.getInstance(this).insertMessages(this, mMessage.getRawId(), fullMessage);
     } else {
       if (mMessage.getFullMessage() == null) {
         mMessage.setFullMessage(fullMessage);

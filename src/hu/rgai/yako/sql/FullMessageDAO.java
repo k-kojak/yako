@@ -75,17 +75,17 @@ public class FullMessageDAO {
   }
 
 
-  public void appendMessages(Context context, long messageListRawId, FullThreadMessage threadMessage) {
-    Set<String> addedFullMessageIds = getFullMessageIds(messageListRawId);
+  public void insertMessages(Context context, long messageListRawId, FullThreadMessage threadMessage) {
+    Set<String> addedFullMessageIds = getFullMessageIdsByMessageRawId(messageListRawId);
     for (FullSimpleMessage fsm : threadMessage.getMessages()) {
       if (!addedFullMessageIds.contains(fsm.getId())) {
-        addFullMessage(context, messageListRawId, fsm);
+        insertMessage(context, messageListRawId, fsm);
       }
     }
   }
 
 
-  private void addFullMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
+  public void insertMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
     long fromId = PersonSenderDAO.getInstance(context).getOrInsertPerson(simpleMessage.getFrom());
 
     ContentValues cv = new ContentValues();
@@ -99,6 +99,7 @@ public class FullMessageDAO {
     cv.put(COL_MESSAGE_LIST_ID, messageListRawId);
     cv.put(COL_MSG_TYPE, simpleMessage.getMessageType().toString());
     mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
+    Log.d("rgai", "saving message to full simple message table...");
   }
 
 
@@ -107,24 +108,27 @@ public class FullMessageDAO {
    * @param accountId  the id of the MessageListElement account id
    * @return
    */
-  public List<Long> getFullMessageIdsByAccountId(long accountId, List<Long> messageIds) {
+  public List<Long> getFullMessageIdsByAccountId(long accountId, List<Long> messageListRawIds) {
     String idClause = null;
-    if (messageIds != null && !messageIds.isEmpty()) {
-      idClause = SQLHelper.Utils.getInClosure(messageIds, true);
+    if (messageListRawIds != null && !messageListRawIds.isEmpty()) {
+      idClause = SQLHelper.Utils.getInClosure(messageListRawIds);
     }
     List<Long> ids = new LinkedList<Long>();
     String q = "SELECT c." + COL_ID
             + " FROM " + TABLE_MESSAGE_CONTENT + " AS c, " + MessageListDAO.TABLE_MESSAGES + " AS m"
-            + " WHERE c." + COL_MESSAGE_LIST_ID + " = m." + MessageListDAO.COL_ID
-            + " AND m." + MessageListDAO.COL_ACCOUNT_ID + " = " + accountId;
-    if (idClause != null) {
-      q += " AND m." + MessageListDAO.COL_MSG_ID + " IN " + idClause;
+            + " WHERE c." + COL_MESSAGE_LIST_ID + " = m." + MessageListDAO.COL_ID;
+
+    if (accountId != -1) {
+      q += " AND m." + MessageListDAO.COL_ACCOUNT_ID + " = " + accountId;
     }
-    Log.d("rgai", "getFullMessageIdsByAccountId query : " + q);
+
+    if (idClause != null) {
+      q += " AND m." + MessageListDAO.COL_ID + " IN " + idClause;
+    }
+//    Log.d("rgai", "getFullMessageIdsByAccountId query : " + q);
     Cursor c = mDbHelper.getDatabase().rawQuery(q, null);
     c.moveToFirst();
     while (!c.isAfterLast()) {
-      Log.d("rgai", c.toString());
       ids.add(c.getLong(0));
       c.moveToNext();
     }
@@ -206,7 +210,7 @@ public class FullMessageDAO {
   }
 
 
-  private Set<String> getFullMessageIds(long messageListRawId) {
+  private Set<String> getFullMessageIdsByMessageRawId(long messageListRawId) {
     Set<String> ids = new TreeSet<String>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGE_CONTENT, new String[] {COL_MSG_ID},
             COL_MESSAGE_LIST_ID + " = ?", new String[]{Long.toString(messageListRawId)}, null, null, null);

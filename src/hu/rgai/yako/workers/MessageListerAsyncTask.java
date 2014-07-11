@@ -206,7 +206,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     }
 
     TreeMap<Long, MessageListElement> allStoredMessages = MessageListDAO.getInstance(mContext).getAllMessagesMap(mAccountsIntegerKey);
-    this.mergeMessages(newMessages, allStoredMessages, loadMore, resultType);
+    mergeMessages(newMessages, allStoredMessages, loadMore, resultType);
 
     if (ThreadDisplayerActivity.actViewingMessage != null) {
       long accountId = mAccountsAccountKey.get(ThreadDisplayerActivity.actViewingMessage.getAccount());
@@ -233,13 +233,18 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
           }
         }
         if (!found) {
-          messagesToRemove.add(Long.parseLong(stored.getId()));
+          messagesToRemove.add(stored.getRawId());
         }
       }
       // if there is nothing to remove, do not call remove messages, because that case it will remove all messages
       // associated with the given account
       if (!messagesToRemove.isEmpty()) {
-        MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+        try {
+          MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+        } catch (Exception e) {
+          Log.d("rgai", "", e);
+        }
+
       }
     }
   }
@@ -264,7 +269,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
       // if message is not stored in database
       if (storedMessageRawId == -1) {
-        MessageListDAO.getInstance(mContext).insertMessage(newMessage, mAccountsAccountKey);
+        MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
 
         if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
                 || (ThreadDisplayerActivity.actViewingMessage == null && MainActivity.isMainActivityVisible())) {

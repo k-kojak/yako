@@ -23,6 +23,7 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
@@ -63,7 +64,14 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
-    mContent = (FullSimpleMessage)mMessage.getFullMessage();
+    TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(mMessage.getRawId());
+    if (fullMessages != null && !fullMessages.isEmpty()) {
+      mContent = fullMessages.first();
+      mMessage.setFullMessage(mContent);
+    } else {
+      finish(ErrorCodes.MESSAGE_CONTENT_NOT_PRESENT_IN_DB_FOR_EMAIL);
+      return;
+    }
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //    YakoApp.setMessageSeenAndReadLocally(mMessage);
     
@@ -120,7 +128,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
-    if (mMessage == null) return true;
+    if (mMessage == null || mContent == null) return true;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.email_message_options_menu, menu);
 
