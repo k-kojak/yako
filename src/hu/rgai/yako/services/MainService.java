@@ -109,15 +109,19 @@ public class MainService extends Service {
     boolean isPhone = YakoApp.isRaedyForSms;
     MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
     if (accounts.isEmpty() && !isPhone) {
-      preHandler.finished(null, false, MessageListerAsyncTask.NO_ACCOUNT_SET, null);
+      preHandler.finished(null, MessageListerAsyncTask.NO_ACCOUNT_SET, null);
     } else {
       if (!accounts.isEmpty() && !isPhone && !isNet) {
-        preHandler.finished(null, false, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
+        preHandler.finished(null, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
       } else {
         
         if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
           List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
           boolean wasAnyFullUpdateCheck = false;
+
+          TreeMap<Account, Long> accountsAccountKey = null;
+          TreeMap<Long, Account> accountsIntegerKey = null;
+
           for (Account acc : accounts) {
             
             if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
@@ -141,10 +145,14 @@ public class MainService extends Service {
                   if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
                     MainActivity.openFbSession(this);
                   }
-                  
+                  if (accountsAccountKey == null || accountsIntegerKey == null) {
+                    accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
+                    accountsIntegerKey = AccountDAO.getInstance(this).getIdToAccountsMap();
+                  }
+
                   MessageListerHandler th = new MessageListerHandler(this, extraParams, acc.getDisplayName());
-                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, acc,
-                          provider, extraParams.isLoadMore(), extraParams.isMessagesRemovedAtServer(),
+                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, accountsAccountKey, accountsIntegerKey,
+                          acc, provider, extraParams.isLoadMore(), extraParams.isMessagesRemovedAtServer(),
                           extraParams.getQueryLimit(), extraParams.getQueryOffset(), th);
                   myThread.setTimeout(25000);
                   

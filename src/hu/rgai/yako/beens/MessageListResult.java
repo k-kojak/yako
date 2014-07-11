@@ -17,28 +17,32 @@ public class MessageListResult {
     CANCELLED,
 
     /**
-     * Indicates that the returning messages are considered as the actual messages on the server side,
+     * Indicates that the returning mMessages are considered as the actual mMessages on the server side,
      * so the UID which not in this list could be removed.
      */
     MERGE_DELETE
   };
   
-  private final List<MessageListElement> messages;
+  private List<MessageListElement> mMessages;
   private final ResultType resultType;
 //  private final boolean providerSupportsUID;
 
   public MessageListResult(List<MessageListElement> messages, ResultType resultType) {
-    this.messages = messages;
+    this.mMessages = messages;
     this.resultType = resultType;
 //    this.providerSupportsUID = providerSupportsUID;
   }
 
   public List<MessageListElement> getMessages() {
-    return messages;
+    return mMessages;
   }
 
   public ResultType getResultType() {
     return resultType;
+  }
+
+  public void setMessages(List<MessageListElement> messages) {
+    mMessages = messages;
   }
 
 }

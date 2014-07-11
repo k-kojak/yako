@@ -3,6 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -244,7 +245,17 @@ public class MessageListDAO  {
 
 
   public TreeSet<MessageListElement> getAllMessages(TreeMap<Long, Account> accounts, long accountId) {
-    TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
+    return new TreeSet<MessageListElement>(getAllMessagesMap(accounts, accountId).values());
+  }
+
+
+  public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts) {
+    return getAllMessagesMap(accounts, -1);
+  }
+
+
+  public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts, long accountId) {
+    TreeMap<Long, MessageListElement> messages = new TreeMap<Long, MessageListElement>();
 
     String selection = null;
     String[] selectionArgs = null;
@@ -258,7 +269,7 @@ public class MessageListDAO  {
     while (!cursor.isAfterLast()) {
       MessageListElement mle = cursorToMessageListElement(cursor, accounts);
       if (mle != null) {
-        messages.add(mle);
+        messages.put(cursor.getLong(0), mle);
       }
       cursor.moveToNext();
     }
