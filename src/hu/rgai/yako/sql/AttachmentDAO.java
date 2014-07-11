@@ -16,7 +16,7 @@ public class AttachmentDAO {
   // table definitions
   public static final String TABLE_ATTACHMENTS = "attachments";
 
-  private static final String COL_ID = "_id";
+  public static final String COL_ID = "_id";
   private static final String COL_FILENAME = "filename";
   private static final String COL_SIZE = "size";
   private static final String COL_MESSAGE_ID = FullMessageDAO.TABLE_MESSAGE_CONTENT + FullMessageDAO.COL_ID;

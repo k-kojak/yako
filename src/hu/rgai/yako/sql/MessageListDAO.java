@@ -7,6 +7,7 @@ import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.tools.Utils;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -176,6 +177,7 @@ public class MessageListDAO  {
   }
 
 
+
   public Cursor getAllMessagesCursor(long accountId) {
     String selection = null;
     String[] selectionArgs = null;
@@ -183,6 +185,15 @@ public class MessageListDAO  {
       selection = COL_ACCOUNT_ID + " = ?";
       selectionArgs = new String[]{Long.toString(accountId)};
     }
+
+    // this is the query what I need
+    // SELECT a.*, SUM(b.cnt) FROM a LEFT JOIN (SELECT b.a_id, COUNT(c.*) AS cnt FROM b LEFT JOIN c ON b.id = c.b_id GROUP BY b.a_id) AS b ON a.id = b.a_id GROUP BY a.id;
+
+    String cols = Utils.joinString(allColumns, ", ");
+    String query = "SELECT " + cols + ", COUNT(a." + AttachmentDAO.COL_ID + ") AS attach_cnt"
+            + " FROM " + TABLE_MESSAGES + " AS m, " + AttachmentDAO.TABLE_ATTACHMENTS + " AS a"
+            + " WHERE a." + AttachmentDAO.COL_ID;
+    
     return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, COL_DATE + " DESC");
   }
 
@@ -251,13 +262,7 @@ public class MessageListDAO  {
   public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts, long accountId) {
     TreeMap<Long, MessageListElement> messages = new TreeMap<Long, MessageListElement>();
 
-    String selection = null;
-    String[] selectionArgs = null;
-    if (accountId != -1) {
-      selection = COL_ACCOUNT_ID + " = ?";
-      selectionArgs = new String[]{Long.toString(accountId)};
-    }
-    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, null);
+    Cursor cursor = getAllMessagesCursor(accountId);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
