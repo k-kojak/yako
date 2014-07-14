@@ -68,39 +68,41 @@ public class MessageListerHandler extends TimeoutHandler {
     if (errorMessage != null) {
       showErrorMessage(exceptionCode, errorMessage);
     }
-    MessageListResult.ResultType resultType = messageResult.getResultType();
 
-      
-
-    if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
-      notifyUIaboutMessageChange();
-      return;
-    }
+    if (messageResult != null) {
+      MessageListResult.ResultType resultType = messageResult.getResultType();
 
 
-    MessageListElement lastUnreadMsg = null;
-    Set<Account> accountsToUpdate = new HashSet<Account>();
-
-    for (MessageListElement mle : messageResult.getMessages()) {
-      Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
-      if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
-        if (lastUnreadMsg == null) {
-          lastUnreadMsg = mle;
-        }
-        newMessageCount++;
-        accountsToUpdate.add(mle.getAccount());
+      if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
+        notifyUIaboutMessageChange();
+        return;
       }
-    }
 
-    for (Account a : accountsToUpdate) {
-      YakoApp.updateLastNotification(a, mContext);
-    }
-    if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
-      builNotification(newMessageCount, lastUnreadMsg);
-    }
 
-    notifyUIaboutMessageChange();
-    Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
+      MessageListElement lastUnreadMsg = null;
+      Set<Account> accountsToUpdate = new HashSet<Account>();
+
+      for (MessageListElement mle : messageResult.getMessages()) {
+        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
+        if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
+          if (lastUnreadMsg == null) {
+            lastUnreadMsg = mle;
+          }
+          newMessageCount++;
+          accountsToUpdate.add(mle.getAccount());
+        }
+      }
+
+      for (Account a : accountsToUpdate) {
+        YakoApp.updateLastNotification(a, mContext);
+      }
+      if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
+        builNotification(newMessageCount, lastUnreadMsg);
+      }
+
+      notifyUIaboutMessageChange();
+      Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
+    }
   }
 
 
