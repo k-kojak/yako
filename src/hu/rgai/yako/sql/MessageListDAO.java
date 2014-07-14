@@ -3,7 +3,6 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -33,10 +32,11 @@ public class MessageListDAO  {
   public static final String COL_UNREAD_CNT = "unread_count";
   public static final String COL_CONTENT = "content";
 
-  public static final String COL_FROM_ID = "from_id";
-  public static final String COL_FROM_NAME = "from_name";
-  public static final String COL_FROM_TYPE = "from_type";
-  public static final String COL_FROM_CONTACT_ID = "from_contact_id";
+  private static final String COL_FROM_ID = PersonSenderDAO.TABLE_PERSON + PersonSenderDAO.COL_ID;
+//  public static final String COL_FROM_ID = "from_id";
+//  public static final String COL_FROM_NAME = "from_name";
+//  public static final String COL_FROM_TYPE = "from_type";
+//  public static final String COL_FROM_CONTACT_ID = "from_contact_id";
 
   public static final String COL_DATE = "date";
   public static final String COL_MSG_TYPE = "message_type";
@@ -52,22 +52,26 @@ public class MessageListDAO  {
           + COL_SUBTITLE + " text,"
           + COL_UNREAD_CNT + " integer not null, "
           + COL_CONTENT + " text, "
-          + COL_FROM_ID + " text, "
-          + COL_FROM_NAME + " text, "
-          + COL_FROM_TYPE + " text, "
-          + COL_FROM_CONTACT_ID + " integer, "
+          + COL_FROM_ID + " integer NOT NULL, "
+//          + COL_FROM_NAME + " text, "
+//          + COL_FROM_TYPE + " text, "
+//          + COL_FROM_CONTACT_ID + " integer, "
           + COL_DATE + " text, "
           + COL_MSG_TYPE + " text, "
-          + COL_ACCOUNT_ID + " integer not null," +
-          " FOREIGN KEY (" + COL_ACCOUNT_ID + ") REFERENCES " + AccountDAO.TABLE_ACCOUNTS + "(" + AccountDAO.COL_ID + "));";
+          + COL_ACCOUNT_ID + " integer not null,"
+          + " FOREIGN KEY (" + COL_ACCOUNT_ID + ")"
+            + " REFERENCES " + AccountDAO.TABLE_ACCOUNTS + "(" + AccountDAO.COL_ID + "),"
+          + " FOREIGN KEY (" + COL_FROM_ID + ")"
+            + " REFERENCES " + PersonSenderDAO.TABLE_PERSON + "(" + PersonSenderDAO.COL_ID + ")"
+          + ");";
 
 
   public static final String INDEX_ON_MSG_TYPE = TABLE_MESSAGES + "__" + COL_MSG_TYPE + "__idx";
 
   public static final String CREATE_INDEX_ON_MSG_TYPE = "CREATE INDEX " + INDEX_ON_MSG_TYPE + " ON " + TABLE_MESSAGES + "(" + COL_ID + ");";
 
-  private String[] allColumns = { COL_ID, COL_MSG_ID, COL_SEEN, COL_TITLE, COL_SUBTITLE, COL_UNREAD_CNT, COL_FROM_ID,
-          COL_FROM_NAME, COL_FROM_TYPE, COL_FROM_CONTACT_ID, COL_DATE, COL_MSG_TYPE, COL_ACCOUNT_ID, COL_CONTENT};
+  private static String[] allColumns = { TABLE_MESSAGES + "." + COL_ID, COL_MSG_ID, COL_SEEN, COL_TITLE, COL_SUBTITLE,
+          COL_UNREAD_CNT, COL_FROM_ID, COL_DATE, COL_MSG_TYPE, COL_ACCOUNT_ID, COL_CONTENT};
 
 
   public static synchronized MessageListDAO getInstance(Context context) {
@@ -123,13 +127,14 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void updateFrom(long messageRawId, Person from) {
+  public synchronized void updateFrom(Context context, long messageRawId, Person from) {
     if (from != null) {
+      long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(from);
       ContentValues cv = new ContentValues();
-      cv.put(COL_FROM_ID, from.getId());
-      cv.put(COL_FROM_NAME, from.getName());
-      cv.put(COL_FROM_TYPE, from.getType().toString());
-      cv.put(COL_FROM_CONTACT_ID, from.getContactId());
+      cv.put(COL_FROM_ID, fromID);
+//      cv.put(COL_FROM_NAME, from.getName());
+//      cv.put(COL_FROM_TYPE, from.getType().toString());
+//      cv.put(COL_FROM_CONTACT_ID, from.getContactId());
       mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
     } else {
       throw new RuntimeException("Person was NULL when updating message's getFrom value");
@@ -171,10 +176,11 @@ public class MessageListDAO  {
       // TODO: currently we are not storing messages where getFrom is null
       // this case happens now when we have a group chat, so there is no sender, just recipients, so the getFrom is NULL
       if (mle.getFrom() == null) return;
-      cv.put(COL_FROM_ID, mle.getFrom().getId());
-      cv.put(COL_FROM_NAME, mle.getFrom().getName());
-      cv.put(COL_FROM_TYPE, mle.getFrom().getType().toString());
-      cv.put(COL_FROM_CONTACT_ID, mle.getFrom().getContactId());
+      long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
+      cv.put(COL_FROM_ID, fromID);
+//      cv.put(COL_FROM_NAME, mle.getFrom().getName());
+//      cv.put(COL_FROM_TYPE, mle.getFrom().getType().toString());
+//      cv.put(COL_FROM_CONTACT_ID, mle.getFrom().getContactId());
 
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());
       cv.put(COL_MSG_TYPE, mle.getMessageType().toString());
@@ -190,30 +196,90 @@ public class MessageListDAO  {
       long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
       if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
         FullSimpleMessage fsm = (FullSimpleMessage) mle.getFullMessage();
-        FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
+        long fullMessageRawId = FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
+        AttachmentDAO.getInstance(context).insertAttachmentInfo(fullMessageRawId, fsm.getAttachments());
       }
     }
   }
 
 
+  public Cursor getAllMessagesCursor(long accountId, boolean getAttachments) {
+    return getMessagesCursor(accountId, null, false, getAttachments);
+//    String selection = null;
+//    String[] selectionArgs = null;
+//    if (accountId != -1) {
+//      selection = COL_ACCOUNT_ID + " = ?";
+//      selectionArgs = new String[]{Long.toString(accountId)};
+//    }
+//
+//    // this is the query what I need
+//    // SELECT a.*, SUM(b.cnt) FROM a LEFT JOIN (SELECT b.a_id, COUNT(c.*) AS cnt FROM b LEFT JOIN c ON b.id = c.b_id GROUP BY b.a_id) AS b ON a.id = b.a_id GROUP BY a.id;
+//
+//    String cols = Utils.joinString(allColumns, ", ");
+//    String query = "SELECT " + cols + ", COUNT(a." + AttachmentDAO.COL_ID + ") AS attach_cnt"
+//            + " FROM " + TABLE_MESSAGES + " AS m, " + AttachmentDAO.TABLE_ATTACHMENTS + " AS a"
+//            + " WHERE a." + AttachmentDAO.COL_ID;
+//
+//    return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, COL_DATE + " DESC");
+  }
 
-  public Cursor getAllMessagesCursor(long accountId) {
-    String selection = null;
-    String[] selectionArgs = null;
-    if (accountId != -1) {
-      selection = COL_ACCOUNT_ID + " = ?";
-      selectionArgs = new String[]{Long.toString(accountId)};
-    }
+
+  /**
+   *
+   * @param accountId
+   * @param messageId
+   * @param isRawId if true, than messageId is a RAW id of the database, if false the id is the message id
+   * @return
+   */
+  private Cursor getMessagesCursor(long accountId, String messageId, boolean isRawId, boolean getAttachments) {
+    List<String> selectionArgs = new LinkedList<String>();
+
 
     // this is the query what I need
     // SELECT a.*, SUM(b.cnt) FROM a LEFT JOIN (SELECT b.a_id, COUNT(c.*) AS cnt FROM b LEFT JOIN c ON b.id = c.b_id GROUP BY b.a_id) AS b ON a.id = b.a_id GROUP BY a.id;
 
     String cols = Utils.joinString(allColumns, ", ");
-    String query = "SELECT " + cols + ", COUNT(a." + AttachmentDAO.COL_ID + ") AS attach_cnt"
-            + " FROM " + TABLE_MESSAGES + " AS m, " + AttachmentDAO.TABLE_ATTACHMENTS + " AS a"
-            + " WHERE a." + AttachmentDAO.COL_ID;
-    
-    return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, COL_DATE + " DESC");
+
+    String attachmentQuerySel = "";
+    String attachmentQueryFrom = "";
+    String attachmentQueryGroup = "";
+    if (getAttachments) {
+      attachmentQuerySel = ", SUM(att.cnt) AS sum";
+      attachmentQueryFrom = " LEFT JOIN "
+              + "(SELECT fm." + FullMessageDAO.COL_MESSAGE_LIST_ID + ", COUNT(a." + AttachmentDAO.COL_ID + ") AS cnt"
+              + " FROM " + FullMessageDAO.TABLE_MESSAGE_CONTENT + " AS fm"
+              + " LEFT JOIN " + AttachmentDAO.TABLE_ATTACHMENTS + " AS a"
+              + " ON a." + AttachmentDAO.COL_MESSAGE_ID + " = fm." + FullMessageDAO.COL_ID
+              + " GROUP BY fm." + FullMessageDAO.COL_MESSAGE_LIST_ID + ") AS att"
+              + " ON " + allColumns[0] + " = att." + FullMessageDAO.COL_MESSAGE_LIST_ID;
+      attachmentQueryGroup = " GROUP BY " + cols + ", from_key, from_name, from_sec_name, from_type";
+    }
+
+    String query = "SELECT " + cols + ", " + PersonSenderDAO.COL_KEY + " AS from_key, "
+            + PersonSenderDAO.COL_NAME + " AS from_name, " + PersonSenderDAO.COL_SECONDARY_NAME + " AS from_sec_name, "
+            + PersonSenderDAO.COL_TYPE + " AS from_type" + attachmentQuerySel
+            + " FROM " + PersonSenderDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
+            + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
+            + attachmentQueryGroup;
+
+
+
+    if (accountId != -1) {
+      query += " AND " + COL_ACCOUNT_ID + " = ?";
+      selectionArgs.add(Long.toString(accountId));
+    }
+
+    if (messageId != null) {
+      query += " AND " + (isRawId ? TABLE_MESSAGES + "." + COL_ID : COL_MSG_ID) + " = ?";
+      selectionArgs.add(messageId);
+    }
+
+
+    query += " ORDER BY " + COL_DATE + " DESC";
+
+
+    String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
+    return mDbHelper.getDatabase().rawQuery(query, selectionArgsArray);
   }
 
 
@@ -283,7 +349,7 @@ public class MessageListDAO  {
   public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts, long accountId) {
     TreeMap<Long, MessageListElement> messages = new TreeMap<Long, MessageListElement>();
 
-    Cursor cursor = getAllMessagesCursor(accountId);
+    Cursor cursor = getAllMessagesCursor(accountId, false);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -336,13 +402,18 @@ public class MessageListDAO  {
    * @return
    */
   private MessageListElement getMessageById(String id, TreeMap<Long, Account> accounts, boolean rawId) {
-    String column = rawId ? COL_ID : COL_MSG_ID;
-    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, column + " = ?", new String[]{id},
-            null, null, null);
+    Cursor cursor = getMessagesCursor(-1, id, rawId, false);
     cursor.moveToFirst();
     MessageListElement mle = cursorToMessageListElement(cursor, accounts);
     cursor.close();
     return mle;
+//    String column = rawId ? COL_ID : COL_MSG_ID;
+//    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, column + " = ?", new String[]{id},
+//            null, null, null);
+//    cursor.moveToFirst();
+//    MessageListElement mle = cursorToMessageListElement(cursor, accounts);
+//    cursor.close();
+//    return mle;
   }
 
 
@@ -363,13 +434,29 @@ public class MessageListDAO  {
   public static MessageListElement cursorToMessageListElement(Cursor cursor, TreeMap<Long, Account> accounts) {
     MessageListElement mle = null;
     if (!cursor.isAfterLast()) {
-      Person from = new Person(cursor.getInt(9), cursor.getString(6), cursor.getString(7),
-              MessageProvider.Type.valueOf(cursor.getString(8)));
+      String personKey = cursor.getString(cursor.getColumnIndex("from_key"));
+      String personName = cursor.getString(cursor.getColumnIndex("from_name"));
+      String personSecondaryName = cursor.getString(cursor.getColumnIndex("from_sec_name"));
+      MessageProvider.Type personType = MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex("from_type")));
+
+      Person from = new Person(personKey, personName,  personType);
+      from.setSecondaryName(personSecondaryName);
       try {
-        Date date = SQLHelper.Utils.parseSQLdateString(cursor.getString(10));
-        mle = new MessageListElement(cursor.getLong(0), cursor.getString(1), cursor.getInt(2) == 1, cursor.getString(3),
-                cursor.getString(4), from, null, date, accounts.get(cursor.getLong(12)),
-                MessageProvider.Type.valueOf(cursor.getString(11)));
+        long rawId = cursor.getLong(cursor.getColumnIndex(COL_ID));
+        String messageId = cursor.getString(cursor.getColumnIndex(COL_MSG_ID));
+        boolean seen = cursor.getInt(cursor.getColumnIndex(COL_SEEN)) == 1;
+        String title = cursor.getString(cursor.getColumnIndex(COL_TITLE));
+        String subTitle = cursor.getString(cursor.getColumnIndex(COL_SUBTITLE));
+        Date date = SQLHelper.Utils.parseSQLdateString(cursor.getString(cursor.getColumnIndex(COL_DATE)));
+        Account account = accounts.get(cursor.getLong(cursor.getColumnIndex(COL_ACCOUNT_ID)));
+        MessageProvider.Type msgType = MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(COL_MSG_TYPE)));
+
+        int attachmentCount = 0;
+        if (cursor.getColumnIndex("sum") != -1) {
+          attachmentCount = cursor.getInt(cursor.getColumnIndex("sum"));
+        }
+
+        mle = new MessageListElement(rawId, messageId, seen, title, subTitle, attachmentCount, from, null, date, account, msgType);
       } catch (ParseException e) {
         Log.d("rgai", "", e);
       }

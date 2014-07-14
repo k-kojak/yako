@@ -1,8 +1,12 @@
 package hu.rgai.yako.sql;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.util.Log;
+import hu.rgai.yako.beens.Attachment;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -19,7 +23,7 @@ public class AttachmentDAO {
   public static final String COL_ID = "_id";
   private static final String COL_FILENAME = "filename";
   private static final String COL_SIZE = "size";
-  private static final String COL_MESSAGE_ID = FullMessageDAO.TABLE_MESSAGE_CONTENT + FullMessageDAO.COL_ID;
+  public static final String COL_MESSAGE_ID = FullMessageDAO.TABLE_MESSAGE_CONTENT + FullMessageDAO.COL_ID;
 
   public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_ATTACHMENTS + "("
           + COL_ID + " integer primary key autoincrement, "
@@ -52,6 +56,25 @@ public class AttachmentDAO {
       return mDbHelper.getDatabase().delete(TABLE_ATTACHMENTS, COL_MESSAGE_ID + " IN " + inClosure, null);
     } else {
       return 0;
+    }
+  }
+
+  public void insertAttachmentInfo(long fullMessageRawId, Attachment attachment) {
+    List<Attachment> collection = new ArrayList<Attachment>(1);
+    collection.add(attachment);
+    insertAttachmentInfo(fullMessageRawId, collection);
+  }
+
+  public void insertAttachmentInfo(long fullMessageRawId, Collection<Attachment> attachments) {
+    if (attachments != null) {
+      for (Attachment a : attachments) {
+        ContentValues cv = new ContentValues();
+        cv.put(COL_FILENAME, a.getFileName());
+        cv.put(COL_SIZE, a.getSize());
+        cv.put(COL_MESSAGE_ID, fullMessageRawId);
+        mDbHelper.getDatabase().insert(TABLE_ATTACHMENTS, null, cv);
+        Log.d("rgai", "inserting attachment to db....");
+      }
     }
   }
 

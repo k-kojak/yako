@@ -37,7 +37,7 @@ public class FullMessageDAO {
   private static final String COL_DATE = "date";
   private static final String COL_FROM_ID = PersonSenderDAO.TABLE_PERSON + PersonSenderDAO.COL_ID;
   private static final String COL_IS_ME = "is_me";
-  private static final String COL_MESSAGE_LIST_ID = MessageListDAO.TABLE_MESSAGES + MessageListDAO.COL_ID;
+  public static final String COL_MESSAGE_LIST_ID = MessageListDAO.TABLE_MESSAGES + MessageListDAO.COL_ID;
   private static final String COL_MSG_TYPE = "message_type";
 
   public static final String TABLE_CREATE = "create table " + TABLE_MESSAGE_CONTENT + "("
@@ -85,7 +85,7 @@ public class FullMessageDAO {
   }
 
 
-  public void insertMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
+  public long insertMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
     long fromId = PersonSenderDAO.getInstance(context).getOrInsertPerson(simpleMessage.getFrom());
 
     ContentValues cv = new ContentValues();
@@ -98,8 +98,8 @@ public class FullMessageDAO {
     cv.put(COL_IS_ME, simpleMessage.isIsMe() ? 1 : 0);
     cv.put(COL_MESSAGE_LIST_ID, messageListRawId);
     cv.put(COL_MSG_TYPE, simpleMessage.getMessageType().toString());
-    mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
-    Log.d("rgai", "saving message to full simple message table...");
+
+    return mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
   }
 
 

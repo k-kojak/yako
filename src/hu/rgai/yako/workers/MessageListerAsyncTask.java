@@ -288,7 +288,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         } else {
           // first updating person info anyway..
           if (!storedMessages.get(storedMessageRawId).getFrom().equals(newMessage.getFrom())) {
-            MessageListDAO.getInstance(mContext).updateFrom(storedMessageRawId, newMessage.getFrom());
+            MessageListDAO.getInstance(mContext).updateFrom(mContext, storedMessageRawId, newMessage.getFrom());
           }
 
           /**

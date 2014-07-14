@@ -446,15 +446,18 @@ public class MainActivityFragment extends Fragment {
     if (MainActivity.actSelectedFilter != null) {
       accountId = MainActivity.actSelectedFilter.getDatabaseId();
     }
+    long s = System.currentTimeMillis();
     if (mAdapter == null) {
       mAdapter = new MainListAdapter(mMainActivity,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId), mAccounts);
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId, true), mAccounts);
 
     } else {
-      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId));
+      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId, true));
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }
+    long e = System.currentTimeMillis();
+    Log.d("rgai", "time to query the main list: " + (e - s) + " ms");
     if (mListView.getAdapter() == null) {
       mListView.setAdapter(mAdapter);
     }

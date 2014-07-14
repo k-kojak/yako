@@ -51,18 +51,18 @@ public class MainListAdapter extends CursorAdapter {
       MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
 
       // dealing with attachment display
-      boolean hasAttachment;
-      if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessage) {
-        FullSimpleMessage fsmp = (FullSimpleMessage)message.getFullMessage();
-        if (fsmp.getAttachments() != null && !fsmp.getAttachments().isEmpty()) {
-          hasAttachment = true;
-        } else {
-          hasAttachment = false;
-        }
-      } else {
-        hasAttachment = false;
-      }
-      if (hasAttachment) {
+//      boolean hasAttachment;
+//      if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessage) {
+//        FullSimpleMessage fsmp = (FullSimpleMessage)message.getFullMessage();
+//        if (fsmp.getAttachments() != null && !fsmp.getAttachments().isEmpty()) {
+//          hasAttachment = true;
+//        } else {
+//          hasAttachment = false;
+//        }
+//      } else {
+//        hasAttachment = false;
+//      }
+      if (message.getAttachmentCount() != 0) {
         holder.attachment.setVisibility(View.VISIBLE);
       } else {
         holder.attachment.setVisibility(View.GONE);

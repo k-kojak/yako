@@ -84,6 +84,12 @@ public final class Person implements Parcelable, Serializable {
     return secondaryName;
   }
 
+
+  public void setSecondaryName(String secondaryName) {
+    this.secondaryName = secondaryName;
+  }
+
+
   public MessageProvider.Type getType() {
     return type;
   }

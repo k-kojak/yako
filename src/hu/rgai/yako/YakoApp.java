@@ -1,6 +1,6 @@
 /**
  * TODO:  1) messages DAO table's content column should contain only the preview text
- *          1b) save and load email content to/with FullMessageDAO
+ *          DONE: 1b) save and load email content to/with FullMessageDAO
  *        2) when loading email to main list, load only content for preview, be lazy and load content only on request
  *        3) save attachment info to database
  *        4) MainListAdapter should display if message has attachment

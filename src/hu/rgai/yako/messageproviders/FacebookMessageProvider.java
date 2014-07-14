@@ -157,6 +157,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                             seen,
                             snippet,
                             unreadCount,
+                            0,
                             from,
                             recipients,
                             new Date(msg.getLong("updated_time") * 1000),

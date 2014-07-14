@@ -390,7 +390,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             }
           }
 
-          MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "",
+          int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
+          MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "", attachSize,
                   fromPerson, null, date, account, Type.EMAIL);
           FullSimpleMessage fsm = new FullSimpleMessage(uid + "", subject,
                   content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
