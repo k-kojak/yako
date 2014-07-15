@@ -49,7 +49,11 @@ public class Attachment implements Parcelable, Serializable {
     
     setProgress(progress);
   }
-  
+
+  public long getRawId() {
+    return _id;
+  }
+
   public int getProgress() {
     return mProgress;
   }

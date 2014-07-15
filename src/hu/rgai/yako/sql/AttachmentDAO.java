@@ -86,6 +86,14 @@ public class AttachmentDAO {
   }
 
 
+//  public Cursor getAttachmentsCursorToMessage(long fullMessageRawId) {
+//    Cursor cursor = mDbHelper.getDatabase().query(TABLE_ATTACHMENTS, allColumns, COL_MESSAGE_ID + " = ?",
+//            new String[]{Long.toString(fullMessageRawId)}, null, null, COL_FILENAME);
+//    Log.d("rgai4", "attachment count: " + cursor.getCount() + " @ msg id " + fullMessageRawId);
+//    return cursor;
+//  }
+
+
   public Map<Long, List<Attachment>> getAttachments(Collection<Long> fullMessageRawIds) {
     HashMap<Long, List<Attachment>> attachments = new HashMap<Long, List<Attachment>>();
     if (fullMessageRawIds != null && !fullMessageRawIds.isEmpty()) {
@@ -124,6 +132,16 @@ public class AttachmentDAO {
     mDbHelper.closeDatabase();
   }
 
+  public static Attachment cursorToAttachment(Cursor cursor) {
+    Attachment attachment = null;
+    if (cursor != null && !cursor.isAfterLast()) {
+      long _id = cursor.getLong(cursor.getColumnIndex(COL_ID));
+      String fileName = cursor.getString(cursor.getColumnIndex(COL_FILENAME));
+      long fileSize = cursor.getLong(cursor.getColumnIndex(COL_SIZE));
+      attachment = new Attachment(_id, fileName, fileSize, 0);
+    }
+    return attachment;
+  }
 
 
 }

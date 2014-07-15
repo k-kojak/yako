@@ -33,6 +33,7 @@ public class AttachmentDownloader implements Runnable, Serializable {
   private final Context mContext;
   private WeakReference<TextView> mFileSize;
   private volatile boolean running = false;
+  private int mProgressState = 0;
   
   public AttachmentDownloader(Attachment attachment, Handler handler, EmailAccount account,
           String messageId, ProgressBar progressBar, TextView fileSize, Context context) {
@@ -47,6 +48,7 @@ public class AttachmentDownloader implements Runnable, Serializable {
   
   public void setProgressBarView(ProgressBar progressBar) {
     this.mProgressBar = new WeakReference<ProgressBar>(progressBar);
+    setProgressBarValue(mProgressState, false);
   }
   
   public void setFileSizeView(TextView fileSize) {
@@ -58,13 +60,14 @@ public class AttachmentDownloader implements Runnable, Serializable {
     mAttachment.setInProgress(true);
     mProgressBar.get().setIndeterminate(true);
     SimpleEmailMessageProvider semp = SimpleEmailMessageProvider.getInstance(mAccount);
-    semp.setAttachmentProgressUpdateListener(new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
-      public void onProgressUpdate(int progress) {
-        setProgressBarValue(progress, false);
-      }
-    });
     try {
-      byte[] file = semp.getAttachmentOfMessage(mMessageId, mAttachment.getFileName());
+      byte[] file = semp.getAttachmentOfMessage(mMessageId,
+              mAttachment.getFileName(), new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
+                public void onProgressUpdate(int progress) {
+                  setProgressBarValue(progress, false);
+                  mProgressState = progress;
+                }
+              });
       setProgressBarValue(100, false);
       if (StoreHandler.saveByteArrayToDownloadFolder(mContext, file, mAttachment.getFileName())) {
         mAttachment.setSize(file.length);

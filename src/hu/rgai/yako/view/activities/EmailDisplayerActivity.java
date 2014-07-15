@@ -179,6 +179,10 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     return mMessage.getAccount();
   }
 
+  public FullSimpleMessage getContent() {
+    return mContent;
+  }
+
   private class MyPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
 
     int mPosition;

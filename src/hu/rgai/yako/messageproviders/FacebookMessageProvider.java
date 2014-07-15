@@ -328,6 +328,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     String body = msg.getString("body");
 
                     ftm.addMessage(new FullSimpleMessage(
+                            -1,
                             msg.getString("message_id"),
                             "",
                             new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),

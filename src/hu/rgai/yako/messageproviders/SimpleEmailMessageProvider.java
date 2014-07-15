@@ -83,7 +83,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   private final AccountFolder accountFolder;
   private final EmailAccount account;
   private String attachmentFolder = "../files/";
-  private AttachmentProgressUpdate progressUpdate = null;
+//  private AttachmentProgressUpdate progressUpdate = null;
 
   private IMAPFolder idleFolder;
   private volatile FolderIdleWithTimestamp idleThread;
@@ -269,10 +269,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return store;
   }
   
-  public void setAttachmentProgressUpdateListener(AttachmentProgressUpdate progressUpdate) {
-    this.progressUpdate = progressUpdate;
-  }
-  
+
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
           ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
@@ -393,7 +390,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
           MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "", attachSize,
                   fromPerson, null, date, account, Type.EMAIL);
-          FullSimpleMessage fsm = new FullSimpleMessage(uid + "", subject,
+          FullSimpleMessage fsm = new FullSimpleMessage(-1, uid + "", subject,
                   content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
           mle.setFullMessage(fsm);
           emails.add(mle);
@@ -780,11 +777,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
     queryFolder.close(true);
     
-    return new FullSimpleMessage(id, subject, content.getContent(), date, from, false, MessageProvider.Type.EMAIL, null);
+    return new FullSimpleMessage(-1, id, subject, content.getContent(), date, from, false, MessageProvider.Type.EMAIL, null);
     
   }
   
-  public byte[] getAttachmentOfMessage(String messageId, String attachmentId) throws NoSuchProviderException, MessagingException, IOException {
+  public byte[] getAttachmentOfMessage(String messageId,
+          String attachmentId, AttachmentProgressUpdate onProgressUpdate)
+          throws NoSuchProviderException, MessagingException, IOException {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     UIDFolder uidFolder = (UIDFolder)folder;
@@ -792,7 +791,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     
     Message ms = uidFolder.getMessageByUID(Long.parseLong(messageId));
 
-    byte[] data = getMessageAttachment(ms, attachmentId);
+    byte[] data = getMessageAttachment(ms, attachmentId, onProgressUpdate);
     
     folder.close(false);
     
@@ -801,7 +800,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
 
-  private byte[] getMessageAttachment(Message message, String attachmentId) throws IOException, MessagingException {
+  private byte[] getMessageAttachment(Message message, String attachmentId,
+          AttachmentProgressUpdate onProgressUpdate) throws IOException, MessagingException {
     Object msg = message.getContent();
     ByteArrayOutputStream buffer = null;
     if (msg instanceof Multipart) {
@@ -820,8 +820,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           int fullSize = bp.getSize();
           while ((nRead = is.read(data, 0, data.length)) != -1) {
             buffer.write(data, 0, nRead);
-            if (progressUpdate != null) {
-              progressUpdate.onProgressUpdate(buffer.size() * 100 / fullSize);
+            if (onProgressUpdate != null) {
+              onProgressUpdate.onProgressUpdate(buffer.size() * 100 / fullSize);
             }
           }
           buffer.flush();

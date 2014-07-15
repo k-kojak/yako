@@ -195,6 +195,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 //        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
 //        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
         ftm.addMessage(new FullSimpleMessage(
+                -1,
                 cur.getString(1),
                 cur.getString(2),
                 new HtmlContent(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),

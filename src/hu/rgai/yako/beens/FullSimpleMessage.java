@@ -14,7 +14,8 @@ import java.util.List;
  * @author Tamas Kojedzinszky
  */
 public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMessage> {
-  
+
+  protected long _id;
   protected String id;
   protected String subject;
   protected HtmlContent content;
@@ -37,6 +38,7 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
   public FullSimpleMessage() {}
   
   public FullSimpleMessage(Parcel in) {
+    this._id = in.readLong();
     this.id = in.readString();
     this.subject = in.readString();
     this.content = in.readParcelable(HtmlContent.class.getClassLoader());
@@ -61,8 +63,9 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
    * @param isMe true if the sender of the message was me, false otherwise
    * @param type type of the message
    */
-  public FullSimpleMessage(String id, String subject, HtmlContent content, Date date, Person from,
+  public FullSimpleMessage(long rawId, String id, String subject, HtmlContent content, Date date, Person from,
           boolean isMe, MessageProvider.Type type, List<Attachment> attachments) {
+    this._id = rawId;
     this.id = id;
     this.subject = subject;
     this.content = content;
@@ -71,6 +74,10 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
     this.isMe = isMe;
     this.messageType = type;
     this.attachments = attachments;
+  }
+
+  public long getRawId() {
+    return _id;
   }
 
   public String getSubject() {
@@ -152,13 +159,14 @@ public class FullSimpleMessage implements FullMessage, Comparable<FullSimpleMess
   }
   
   public void writeToParcel(Parcel out, int flags) {
+    out.writeLong(_id);
     out.writeString(id);
     out.writeString(subject);
-    out.writeParcelable((Parcelable)content, flags);
+    out.writeParcelable(content, flags);
     out.writeLong(date.getTime());
     // from MUST be parcelable here
     out.writeParcelable(from, flags);
-    out.writeByte(isMe ? (byte)1 : (byte)0);
+    out.writeByte((byte)(isMe ? 1 : 0));
     out.writeString(messageType.toString());
     out.writeList(attachments);
     

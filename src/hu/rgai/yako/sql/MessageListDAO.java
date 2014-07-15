@@ -290,7 +290,6 @@ public class MessageListDAO  {
             + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
             + accountQuery + messageIdQuery + attachmentQueryGroup + " ORDER BY " + COL_DATE + " DESC";
 
-    Log.d("rgai", query);
     String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
     return mDbHelper.getDatabase().rawQuery(query, selectionArgsArray);
   }

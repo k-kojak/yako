@@ -160,7 +160,7 @@ public class FullMessageDAO {
 
       FullSimpleMessage fsm = null;
       try {
-        fsm = new FullSimpleMessage(cursor.getString(cursor.getColumnIndex(COL_MSG_ID)),
+        fsm = new FullSimpleMessage(_id, cursor.getString(cursor.getColumnIndex(COL_MSG_ID)),
                 cursor.getString(cursor.getColumnIndex(COL_SUBJECT)), content,
                 SQLHelper.Utils.parseSQLdateString(cursor.getString(cursor.getColumnIndex(COL_DATE))),
                 p, cursor.getInt(cursor.getColumnIndex(COL_IS_ME)) == 1,
