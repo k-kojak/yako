@@ -213,12 +213,7 @@ public class MainActivity extends ActionBarActivity {
     setTitleByFilter();
     
     
-    // notify the adapter if any change happened
-    if (mFragment != null) {
-      mFragment.notifyAdapterChange();
-    }
-    
-    
+
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);

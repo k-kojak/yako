@@ -442,6 +442,7 @@ public class MainActivityFragment extends Fragment {
   }
 
   private void updateAdapter() {
+    Log.d("rgai4", "@@ @@ update adapter....");
     long accountId = -1;
     if (MainActivity.actSelectedFilter != null) {
       accountId = MainActivity.actSelectedFilter.getDatabaseId();

@@ -240,6 +240,11 @@ public class MessageListDAO  {
 
     String cols = Utils.joinString(allColumns, ", ");
 
+
+
+    /**
+     * Constructing attachmentQuery part if needed
+     */
     String attachmentQuerySel = "";
     String attachmentQueryFrom = "";
     String attachmentQueryGroup = "";
@@ -255,29 +260,37 @@ public class MessageListDAO  {
       attachmentQueryGroup = " GROUP BY " + cols + ", from_key, from_name, from_sec_name, from_type";
     }
 
+
+
+    /**
+     * Constructing query part about account filter
+     */
+    String accountQuery = "";
+    if (accountId != -1) {
+      accountQuery = " AND " + COL_ACCOUNT_ID + " = ?";
+      selectionArgs.add(Long.toString(accountId));
+    }
+
+
+
+    /**
+     * Constructing specific message query part
+     */
+    String messageIdQuery = "";
+    if (messageId != null) {
+      messageIdQuery = " AND " + (isRawId ? TABLE_MESSAGES + "." + COL_ID : COL_MSG_ID) + " = ?";
+      selectionArgs.add(messageId);
+    }
+
+
     String query = "SELECT " + cols + ", " + PersonSenderDAO.COL_KEY + " AS from_key, "
             + PersonSenderDAO.COL_NAME + " AS from_name, " + PersonSenderDAO.COL_SECONDARY_NAME + " AS from_sec_name, "
             + PersonSenderDAO.COL_TYPE + " AS from_type" + attachmentQuerySel
             + " FROM " + PersonSenderDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
             + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
-            + attachmentQueryGroup;
+            + accountQuery + messageIdQuery + attachmentQueryGroup + " ORDER BY " + COL_DATE + " DESC";
 
-
-
-    if (accountId != -1) {
-      query += " AND " + COL_ACCOUNT_ID + " = ?";
-      selectionArgs.add(Long.toString(accountId));
-    }
-
-    if (messageId != null) {
-      query += " AND " + (isRawId ? TABLE_MESSAGES + "." + COL_ID : COL_MSG_ID) + " = ?";
-      selectionArgs.add(messageId);
-    }
-
-
-    query += " ORDER BY " + COL_DATE + " DESC";
-
-
+    Log.d("rgai", query);
     String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
     return mDbHelper.getDatabase().rawQuery(query, selectionArgsArray);
   }
