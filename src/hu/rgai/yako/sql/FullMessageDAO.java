@@ -4,18 +4,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.FullThreadMessage;
-import hu.rgai.yako.beens.HtmlContent;
-import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Created by kojak on 7/2/2014.
@@ -143,18 +137,21 @@ public class FullMessageDAO {
    * @param rawMessageListId the mRawId of the message list element
    * @return
    */
-  public TreeSet<FullSimpleMessage> getFullSimpleMessages(long rawMessageListId) {
-    TreeSet<FullSimpleMessage> messages = new TreeSet<FullSimpleMessage>();
-    String q = "SELECT " + COL_MSG_ID + ", " + COL_SUBJECT + ", " + COL_CONTENT_TYPE + ", " + COL_CONTENT_TEXT
-            + ", " + COL_DATE + ", " + COL_IS_ME + ", " + COL_MSG_TYPE + ", " + PersonSenderDAO.COL_KEY
+  public TreeSet<FullSimpleMessage> getFullSimpleMessages(Context context, long rawMessageListId) {
+    TreeMap<Long, FullSimpleMessage> messages = new TreeMap<Long, FullSimpleMessage>();
+    String q = "SELECT m." + COL_ID + ", " + COL_MSG_ID + ", " + COL_SUBJECT + ", " + COL_CONTENT_TYPE + ", "
+            + COL_CONTENT_TEXT + ", " + COL_DATE + ", " + COL_IS_ME + ", " + COL_MSG_TYPE + ", " + PersonSenderDAO.COL_KEY
             + ", " + PersonSenderDAO.COL_NAME + ", " + PersonSenderDAO.COL_SECONDARY_NAME + ", " + PersonSenderDAO.COL_TYPE
             + " FROM " + TABLE_MESSAGE_CONTENT + " AS m, " + PersonSenderDAO.TABLE_PERSON + " AS p"
             + " WHERE m." + COL_FROM_ID + " = p." + PersonSenderDAO.COL_ID
               + " AND " + COL_MESSAGE_LIST_ID + " = ?";
 
+    List<Long> fullMsgRawIds = new LinkedList<Long>();
     Cursor cursor = mDbHelper.getDatabase().rawQuery(q, new String[] {Long.toString(rawMessageListId)});
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
+      long _id = cursor.getLong(cursor.getColumnIndex(COL_ID));
+
       Person p = new Person(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_KEY)),
               cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_NAME)),
               MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_TYPE))));
@@ -168,14 +165,28 @@ public class FullMessageDAO {
                 SQLHelper.Utils.parseSQLdateString(cursor.getString(cursor.getColumnIndex(COL_DATE))),
                 p, cursor.getInt(cursor.getColumnIndex(COL_IS_ME)) == 1,
                 MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(COL_MSG_TYPE))), null);
+        fullMsgRawIds.add(_id);
       } catch (ParseException e) {
-        Log.d("rgai", "", e);
+        Log.d("rgai", "Parsing exception", e);
       }
-      messages.add(fsm);
+      messages.put(_id, fsm);
       cursor.moveToNext();
     }
 
-    return messages;
+    appendAttachmentsToMessages(context, fullMsgRawIds, messages);
+
+    return new TreeSet<FullSimpleMessage>(messages.values());
+  }
+
+
+  private void appendAttachmentsToMessages(Context context, List<Long> fullMessageRawIds,
+                                           TreeMap<Long, FullSimpleMessage> messages) {
+    Map<Long, List<Attachment>> attachments = AttachmentDAO.getInstance(context).getAttachments(fullMessageRawIds);
+    for (Map.Entry<Long, List<Attachment>> entry : attachments.entrySet()) {
+      if (messages.containsKey(entry.getKey())) {
+        messages.get(entry.getKey()).setAttachments(entry.getValue());
+      }
+    }
   }
 
 

@@ -2,12 +2,12 @@ package hu.rgai.yako.sql;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.util.Log;
 import hu.rgai.yako.beens.Attachment;
+import hu.rgai.yako.tools.Utils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by kojak on 7/2/2014.
@@ -76,6 +76,43 @@ public class AttachmentDAO {
         Log.d("rgai", "inserting attachment to db....");
       }
     }
+  }
+
+
+  public Map<Long, List<Attachment>> getAttachments(long fullMessageRawId) {
+    List<Long> ids = new ArrayList<Long>(1);
+    ids.add(fullMessageRawId);
+    return getAttachments(ids);
+  }
+
+
+  public Map<Long, List<Attachment>> getAttachments(Collection<Long> fullMessageRawIds) {
+    HashMap<Long, List<Attachment>> attachments = new HashMap<Long, List<Attachment>>();
+    if (fullMessageRawIds != null && !fullMessageRawIds.isEmpty()) {
+      String cols = Utils.joinString(allColumns, ",");
+      String ids = SQLHelper.Utils.getInClosure(fullMessageRawIds);
+      String[] selectionArgs = null;
+      String query = "SELECT " + cols
+              + " FROM " + TABLE_ATTACHMENTS
+              + " WHERE " + COL_MESSAGE_ID + " IN " + ids;
+
+      Cursor cursor = mDbHelper.getDatabase().rawQuery(query, selectionArgs);
+      cursor.moveToFirst();
+      while (!cursor.isAfterLast()) {
+        long _id = cursor.getLong(cursor.getColumnIndex(COL_ID));
+        long msg_id = cursor.getLong(cursor.getColumnIndex(COL_MESSAGE_ID));
+        String fileName = cursor.getString(cursor.getColumnIndex(COL_FILENAME));
+        long fileSize = cursor.getLong(cursor.getColumnIndex(COL_SIZE));
+        Attachment att = new Attachment(_id, fileName, fileSize, 0);
+        if (!attachments.containsKey(msg_id)) {
+          attachments.put(msg_id, new LinkedList<Attachment>());
+        }
+        attachments.get(msg_id).add(att);
+        cursor.moveToNext();
+      }
+    }
+
+    return attachments;
   }
 
 

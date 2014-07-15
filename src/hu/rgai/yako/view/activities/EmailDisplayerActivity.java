@@ -64,7 +64,7 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
-    TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(mMessage.getRawId());
+    TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
     if (fullMessages != null && !fullMessages.isEmpty()) {
       mContent = fullMessages.first();
       mMessage.setFullMessage(mContent);

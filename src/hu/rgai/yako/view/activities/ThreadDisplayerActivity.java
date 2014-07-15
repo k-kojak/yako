@@ -535,7 +535,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     TreeSet<FullSimpleMessage> messages = null;
     if (isInternetNeededForLoad) {
-      messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(mMessage.getRawId());
+      messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
     } else {
       FullMessage fm = mMessage.getFullMessage();
       if (fm != null) {
