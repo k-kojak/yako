@@ -110,7 +110,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         // the already loaded messages to the specific content type...
 //        TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
         TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(acc);
-        long s = System.currentTimeMillis();
         if (mMessageDeleteAtServer) {
           long minUID = Long.MAX_VALUE;
           for (MessageListElement mle : loadedMessages) {
@@ -123,7 +122,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         }
 //        Log.d("rgai", "time to query message: " + (System.currentTimeMillis() - s) + " ms");
 
-        if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
+        if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
           extendPersonObject(messageResult.getMessages());
         }
@@ -161,7 +160,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       this.result = OK;
     }
 
-    long s = System.currentTimeMillis();
     if (messageResult != null) {
       MessageListResult.ResultType resultType = messageResult.getResultType();
 

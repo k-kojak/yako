@@ -63,7 +63,6 @@ public class MessageListerHandler extends TimeoutHandler {
 
 
   public void finished(MessageListResult messageResult, int exceptionCode, String errorMessage) {
-    long s = System.currentTimeMillis();
     int newMessageCount = 0;
     if (errorMessage != null) {
       showErrorMessage(exceptionCode, errorMessage);
