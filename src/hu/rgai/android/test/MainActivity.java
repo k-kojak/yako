@@ -247,8 +247,8 @@ public class MainActivity extends ActionBarActivity {
         }
       });
       builder.setTitle("Backend changes");
-      builder.setMessage("A bigger code refactor's consequence was that your earlier accounts were lost.\n" +
-              "Please add them again at instance manage.\nApologize for the inconvenience.").show();
+      builder.setMessage("Due to a bigger code refactor, your account settings are lost.\n" +
+              "Please set them again and apologize for the inconvenience.").show();
     }
   }
   
