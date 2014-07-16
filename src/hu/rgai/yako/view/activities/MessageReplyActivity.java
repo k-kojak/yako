@@ -58,6 +58,7 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
@@ -134,14 +135,17 @@ public class MessageReplyActivity extends ActionBarActivity {
         String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
         Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
         mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
-//        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }
-        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessage) {
-          mFullMessage = (FullSimpleMessage) mMessage.getFullMessage();
-          mSubject.setText(mFullMessage.getSubject());
-        }
+        TreeSet<FullSimpleMessage> fullMessage = FullMessageDAO.getInstance(this).getFullSimpleMessages(this,
+                mMessage.getRawId());
+        mFullMessage = fullMessage.first();
+        mSubject.setText(mFullMessage.getSubject());
+//        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessage) {
+//          mFullMessage = (FullSimpleMessage) mMessage.getFullMessage();
+//          mSubject.setText(mFullMessage.getSubject());
+//        }
       }
       if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)) {
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
