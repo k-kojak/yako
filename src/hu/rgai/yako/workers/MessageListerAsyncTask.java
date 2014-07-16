@@ -121,7 +121,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         } else {
           messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
         }
-        Log.d("rgai", "time to query message: " + (System.currentTimeMillis() - s) + " ms");
+//        Log.d("rgai", "time to query message: " + (System.currentTimeMillis() - s) + " ms");
 
         if (messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
           // searching for android contacts
@@ -176,7 +176,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
               .getAllMessages(mAccountsIntegerKey));
       messageResult.setMessages(msgs);
     }
-    Log.d("rgai", "time to post process: " + (System.currentTimeMillis() - s) + " ms");
+//    Log.d("rgai", "time to post process: " + (System.currentTimeMillis() - s) + " ms");
 
     return messageResult;
   }

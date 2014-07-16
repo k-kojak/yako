@@ -23,6 +23,7 @@ import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 
 import java.util.*;
@@ -36,82 +37,12 @@ public class YakoApp extends Application {
   
   private Tracker tracker = null;
   
-//  private volatile static TreeSet<MessageListElement> messages = null;
   private volatile static  HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
-//  private volatile static TreeSet<Account> accounts;
 
 
-
-//  public static boolean hasMessages() {
-//    return messages != null && !messages.isEmpty();
-//  }
-
-
-//  public static void setAccounts(TreeSet<Account> newAccs) {
-//    accounts = newAccs;
-//  }
-  
-
-//  public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
-//    MessageListElement compareElement = new MessageListElement(id, acc);
-//    for (MessageListElement mle : messages) {
-//      if (mle.equals(compareElement)) {
-//        return mle;
-//      }
-//    }
-//    return null;
-//  }
-  
-//  public static void setMessageContent(MessageListElement message, FullMessage fullMessage) {
-//    for (MessageListElement m : messages) {
-//      if (m.equals(message)) {
-//        m.setFullMessage(fullMessage);
-//        break;
-//      }
-//    }
-//  }
-  
-//  /**
-//   * Removes messages from message list where the instance matches with the
-//   * parameter.
-//   *
-//   * @param account
-//   */
-//  public static void removeMessages(Account account) {
-//    Iterator<MessageListElement> it = messages.iterator();
-//    while (it.hasNext()) {
-//      MessageListElement mle = it.next();
-//      if (mle.getAccount().equals(account)) {
-//        it.remove();
-//      }
-//    }
-//  }
-  
-  
-//  /**
-//   * Sets the seen status to true, and the unreadCount to 0.
-//   *
-//   * @param m  the message to set
-//   * @return true if status changed, false otherwise
-//   *
-//   */
-//  public static boolean setMessageSeenAndReadLocally(MessageListElement m) {
-//    boolean changed = false;
-//    for (MessageListElement mlep : messages) {
-//      if (mlep.equals(m) && !mlep.isSeen()) {
-//        changed = true;
-//        mlep.setSeen(true);
-//        mlep.setUnreadCount(0);
-//        break;
-//      }
-//    }
-//    return changed;
-//  }
-
-  
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
       lastNotificationDates = StoreHandler.readLastNotificationObject(c);
@@ -119,7 +50,6 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
-//    Log.d("rgai2", "read in last notification dates: " + lastNotificationDates);
   }
   
   
@@ -193,23 +123,6 @@ public class YakoApp extends Application {
   }
   
   
-//  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
-//    if (filterAcc == null) {
-//      return messages;
-//    } else {
-//      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
-//      synchronized (messages) {
-//        for (MessageListElement mlep : messages) {
-//          if (mlep.getAccount().equals(filterAcc)) {
-//            filterList.add(mlep);
-//          }
-//        }
-//      }
-//      return filterList;
-//    }
-//  }
-  
-  
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -243,18 +156,6 @@ public class YakoApp extends Application {
 
     AccountDAO.getInstance(this).checkSMSAccount(this, isRaedyForSms);
 
-    // read in message list
-    long start = System.currentTimeMillis();
-    AccountDAO accountDAO = AccountDAO.getInstance(this);
-    TreeMap<Long, Account> accounts = accountDAO.getIdToAccountsMap();
-    accountDAO.close();
-
-//    MessageListDAO msgDAO = MessageListDAO.getInstance(this).getAllMessages(accounts);
-//    messages = msgDAO.getAllMessages(accounts);
-//    msgDAO.close();
-//    Log.d("rgai", "time to read "+ messages.size() +" items from db: " + (System.currentTimeMillis() - start) + " ms");
-//    if (messages == null) {
-//      messages = new TreeSet<MessageListElement>();
-//    }
+    MessageListDAO.getInstance(this).purgeMessageList(this, 100);
   }
 }

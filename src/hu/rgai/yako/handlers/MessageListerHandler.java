@@ -101,7 +101,7 @@ public class MessageListerHandler extends TimeoutHandler {
       }
 
       notifyUIaboutMessageChange();
-      Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
+//      Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
     }
   }
 

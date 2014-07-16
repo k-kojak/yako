@@ -443,6 +443,30 @@ public class MessageListDAO  {
   }
 
 
+  public void purgeMessageList(Context context, int messagesToRemain) {
+    int cnt = getAllMessagesCount();
+    Log.d("rgai", "total msg count: " + cnt);
+    if (cnt > messagesToRemain) {
+      List<Long> msgRawIds = new LinkedList<Long>();
+      int top = cnt - messagesToRemain;
+      Log.d("rgai", "removing " + top + " msgs");
+              Cursor c = mDbHelper.getDatabase().rawQuery("SELECT " + COL_ID
+                      + " FROM " + TABLE_MESSAGES + " ORDER BY " + COL_DATE + " ASC LIMIT ?", new String[]{Integer.toString(top)});
+      c.moveToFirst();
+      while (!c.isAfterLast()) {
+        msgRawIds.add(c.getLong(0));
+        c.moveToNext();
+      }
+      try {
+        removeMessages(context, -1, msgRawIds);
+      } catch (Exception e) {
+        Log.d("rgai", "", e);
+      }
+    }
+
+  }
+
+
   public static MessageListElement cursorToMessageListElement(Cursor cursor, TreeMap<Long, Account> accounts) {
     MessageListElement mle = null;
     if (!cursor.isAfterLast()) {

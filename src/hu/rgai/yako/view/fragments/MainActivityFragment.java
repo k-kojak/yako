@@ -36,8 +36,6 @@ import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Tamas Kojedzinszky
@@ -242,8 +240,8 @@ public class MainActivityFragment extends Fragment {
     super.onResume();
     Log.d("rgai3", "ONRESUME CALLED");
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
-
     updateAdapter();
+    setLoadMoreButtonVisibility();
   }
 
   @Override
@@ -426,11 +424,12 @@ public class MainActivityFragment extends Fragment {
   
   public void notifyAdapterChange() {
     updateAdapter();
+    setLoadMoreButtonVisibility();
     if (mAdapter != null) {
-      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
-        loadMoreButton.setVisibility(View.VISIBLE);
-        loadMoreButtonVisible = true;
-      }
+//      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
+//        loadMoreButton.setVisibility(View.VISIBLE);
+//        loadMoreButtonVisible = true;
+//      }
 
       if (!contextSelectedElements.isEmpty()) {
         for (int i = 1; i < mAdapter.getCount(); i++) {
@@ -440,6 +439,17 @@ public class MainActivityFragment extends Fragment {
       }
     }
   }
+
+
+  private void setLoadMoreButtonVisibility() {
+    if (mAdapter != null) {
+      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
+        loadMoreButton.setVisibility(View.VISIBLE);
+        loadMoreButtonVisible = true;
+      }
+    }
+  }
+
 
   private void updateAdapter() {
     Log.d("rgai4", "@@ @@ update adapter....");
@@ -458,7 +468,7 @@ public class MainActivityFragment extends Fragment {
       mAdapter.notifyDataSetChanged();
     }
     long e = System.currentTimeMillis();
-    Log.d("rgai", "time to query the main list: " + (e - s) + " ms");
+//    Log.d("rgai", "time to query the main list: " + (e - s) + " ms");
     if (mListView.getAdapter() == null) {
       mListView.setAdapter(mAdapter);
     }
