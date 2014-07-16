@@ -99,7 +99,7 @@ public class EmailDisplayerFragment extends Fragment {
    * Displays the message.
    */
   private void displayMessage() {
-    Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom.getContactId()).getBitmap();
+    Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom).getBitmap();
     ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));

@@ -142,10 +142,6 @@ public class MessageReplyActivity extends ActionBarActivity {
                 mMessage.getRawId());
         mFullMessage = fullMessage.first();
         mSubject.setText(mFullMessage.getSubject());
-//        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessage) {
-//          mFullMessage = (FullSimpleMessage) mMessage.getFullMessage();
-//          mSubject.setText(mFullMessage.getSubject());
-//        }
       }
       if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)) {
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -154,7 +150,6 @@ public class MessageReplyActivity extends ActionBarActivity {
         if (mMessage != null) {
           // TODO: check if message is set to read remotely in this case or not
           MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
-//          YakoApp.setMessageSeenAndReadLocally(mMessage);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
           TreeSet<String> messagesToMark = new TreeSet<String>();
           messagesToMark.add(mMessage.getId());

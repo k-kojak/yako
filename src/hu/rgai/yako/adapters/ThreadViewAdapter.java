@@ -130,7 +130,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
         smallTopPadding = true;
       } else {
         iv.setVisibility(View.VISIBLE);
-        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId()).getBitmap();
+        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom()).getBitmap();
         if (img == null) {
           img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
         }

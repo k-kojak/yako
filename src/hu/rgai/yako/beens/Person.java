@@ -194,10 +194,7 @@ public final class Person implements Parcelable, Serializable {
     if (storedPerson.containsKey(key)) {
       return storedPerson.get(key);
     } else {
-
       long rawContactId = getUid(context, p.getType(), p.getId(), p.getName());
-      
-      key = p.getType().toString() + "_" + rawContactId;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
       } else {
@@ -229,6 +226,21 @@ public final class Person implements Parcelable, Serializable {
       }
     }
   }
+
+
+  public static boolean isPersonStoredInCache(Person p) {
+    if (p == null) {
+      return false;
+    } else {
+      String key = p.getType().toString() + "_" + p.getId();
+      if (storedPerson != null && storedPerson.containsKey(key)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
 
   private static Person getUserData(Context context, long rawContactId, String userAddrId) {
     Person pa = null;

@@ -135,7 +135,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
         Bitmap largeIcon;
         if (lastUnreadMsg.getFrom() != null) {
-          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom().getContactId()).getBitmap();
+          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom()).getBitmap();
         } else {
           largeIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.group_chat);
         }

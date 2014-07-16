@@ -11,12 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.AsyncImageLoadProvider;
-import hu.rgai.yako.beens.BitmapResult;
-import hu.rgai.yako.beens.EmailAccount;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.sql.MessageListDAO;
@@ -122,30 +117,30 @@ public class MainListAdapter extends CursorAdapter {
 
       if (message.getFrom() != null) {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
-          public BitmapResult getBitmap(long id) {
-            return ProfilePhotoProvider.getImageToUser(mContext, id);
+          public BitmapResult getBitmap(Person p) {
+            return ProfilePhotoProvider.getImageToUser(mContext, p);
           }
-          public boolean isBitmapLoaded(long id) {
-            return ProfilePhotoProvider.isImageToUserInCache(id);
+          public boolean isBitmapLoaded(Person p) {
+            return ProfilePhotoProvider.isImageToUserInCache(p);
           }
           public Bitmap getDefaultBitmap(Context c) {
             return ProfilePhotoProvider.getDefaultBitmap(c);
           }
-        }, message.getFrom().getContactId());
+        }, message.getFrom());
   //      img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
       } else {
         holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
-          public BitmapResult getBitmap(long id) {
+          public BitmapResult getBitmap(Person p) {
             return ProfilePhotoProvider.getGroupChatPhoto(mContext);
           }
 
-          public boolean isBitmapLoaded(long id) {
+          public boolean isBitmapLoaded(Person p) {
             return ProfilePhotoProvider.isGroupChatPhotoLoaded();
           }
           public Bitmap getDefaultBitmap(Context c) {
             return ProfilePhotoProvider.getGroupChatPhoto(c).getBitmap();
           }
-        }, 0);
+        }, null);
       }
 
 

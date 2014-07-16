@@ -108,7 +108,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
         }
 
         // the already loaded messages to the specific content type...
-//        TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
         TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(acc);
         if (mMessageDeleteAtServer) {
           long minUID = Long.MAX_VALUE;
@@ -119,12 +118,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
           messageResult = messageProvider.getUIDListForMerge(Long.toString(minUID));
         } else {
           messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
-        }
-//        Log.d("rgai", "time to query message: " + (System.currentTimeMillis() - s) + " ms");
-
-        if (messageResult != null && messageResult.getResultType().equals(MessageListResult.ResultType.CHANGED)) {
-          // searching for android contacts
-          extendPersonObject(messageResult.getMessages());
         }
       }
     } catch (AuthenticationFailedException ex) {
@@ -345,27 +338,6 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     } else {
       runningTaskStack.put(rs, true);
       return false;
-    }
-  }
-
-
-  private void extendPersonObject(List<MessageListElement> origi) {
-    Person p;
-    for (MessageListElement mle : origi) {
-      p = Person.searchPersonAndr(mContext, mle.getFrom());
-      mle.setFrom(p);
-      if (!mle.isUpdateFlags()) {
-        if (mle.getFullMessage() != null && mle.getFullMessage() instanceof FullSimpleMessage) {
-          ((FullSimpleMessage) mle.getFullMessage()).setFrom(p);
-        }
-
-        if (mle.getRecipientsList() != null) {
-          for (int i = 0; i < mle.getRecipientsList().size(); i++) {
-            p = Person.searchPersonAndr(mContext, mle.getRecipientsList().get(i));
-            mle.getRecipientsList().set(i, p);
-          }
-        }
-      }
     }
   }
 
