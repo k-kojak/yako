@@ -81,15 +81,20 @@ public class MessageListerHandler extends TimeoutHandler {
       MessageListElement lastUnreadMsg = null;
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      for (MessageListElement mle : messageResult.getMessages()) {
-        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
-        if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
-          if (lastUnreadMsg == null) {
-            lastUnreadMsg = mle;
+      if (messageResult.getMessages() != null) {
+        for (MessageListElement mle : messageResult.getMessages()) {
+          Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
+          if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
+            if (lastUnreadMsg == null) {
+              lastUnreadMsg = mle;
+            }
+            newMessageCount++;
+            accountsToUpdate.add(mle.getAccount());
           }
-          newMessageCount++;
-          accountsToUpdate.add(mle.getAccount());
         }
+      } else {
+        Log.d("rgai", "messageResult.getMessages() is somehow null here, result type is: " + resultType,
+                new NullPointerException("messageResult.getMessages() is null"));
       }
 
       for (Account a : accountsToUpdate) {
