@@ -29,7 +29,14 @@
   <string name="delete">Delete</string>
   <string name="cancel">Cancel</string>
   <string name="send">Send</string>
+  <string name="mark_as_read">Mark as read</string>
+  <string name="mark_as_unread">Mark as unread</string>
+  <string name="delete_message">Delete message</string>
+  <string name="delete_thread">Delete thread</string>
   <string name="loading">Loading...</string>
+  <string name="last_full_update">Last full update: </string>
+  <string name="today">Today</string>
+  <string name="all">All</string>
     
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>
@@ -56,7 +63,6 @@
   <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
   <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
   <string name="settings_accounts_item_ssl">hu.rgai.android.settings.accounts.item.ssl</string>
-  <string name="settings_accounts_item_amount">hu.rgai.android.settings.accounts.item.amount</string>
     
     
   <string name="settings_email_file_key">hu.rgai.android.settings.file.email</string>
@@ -74,7 +80,7 @@
   <string name="exception_ssl_handshake">SSL Handshake exception.</string>
   <string name="exception_cert_path_validator">Certification path validator exception.</string>
   <string name="no_internet_access">Not connected to internet.</string>
-  <string name="empty_list">There are no messages.</string>
+  <string name="empty_list">No messages to display.</string>
   <string name="no_account_set">No logon info provided. Go to settings.</string>
   <string name="unsupported_encoding">Unsopported encoding exception.</string>
   <string name="unsupported_charset">Unsopported charset exception.</string>
@@ -86,18 +92,9 @@
   <string name="label_smtp_address">SMTP address</string>
   <string name="label_security_type">Security type</string>
   <string name="label_password">Password</string>
-  <string name="label_initial_email_num">Initial amount of emails to load</string>
-  <string name="label_initial_msg_num">Initial amount of messages to load</string>
   <string name="quote_original_message">Quote original message</string>
   <string name="no_recipient_selected">No recipient selected</string>
   <string name="empty_message">Empty message</string>
-  <string-array name="initial_emails_num">
-    <item>5</item>
-    <item>10</item>
-    <item>15</item>
-    <item>20</item>
-    <item>30</item>
-  </string-array>
   <string-array name="security_types">
     <item>None</item>
     <item>SSL</item>
@@ -117,6 +114,9 @@
   <string name="message_reply_all">Reply all</string>
   <string name="message_forward">Forward</string>
   <string name="refresh">Refresh</string>
+  
+  <string name="mainlist_open_drawer">Open drawer</string>
+  <string name="mainlist_close_drawer">Close drawer</string>
     
     
 </resources>

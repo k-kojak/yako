@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:messagelogger="http://schemas.android.com/apk/res-auto" >
+
+  <item android:id="@+id/reply"
+          android:icon="@drawable/ic_action_reply"
+          android:title="@string/message_reply"
+          messagelogger:showAsAction="ifRoom" />
+  
+  <item android:id="@+id/discard"
+          android:icon="@drawable/ic_action_discard"
+          android:title="@string/delete_message"
+          messagelogger:showAsAction="ifRoom" />
+  
+  <item android:id="@+id/mark_seen"
+          android:icon="@drawable/ic_action_read"
+          android:title="@string/mark_as_read"
+          messagelogger:showAsAction="ifRoom" />
+  
+  <item android:id="@+id/mark_unseen"
+          android:icon="@drawable/ic_action_unread"
+          android:title="@string/mark_as_unread"
+          messagelogger:showAsAction="ifRoom" />
+  
+</menu>

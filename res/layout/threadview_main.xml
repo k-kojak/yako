@@ -21,29 +21,38 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:orientation="vertical" >
-
+      
       <LinearLayout android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:layout_width="0px"
-                android:layout_height="0px" />
-        <EditText
-            android:id="@+id/text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:nextFocusUp="@id/text"
-            android:nextFocusLeft="@id/text"
-            android:inputType="textMultiLine"
-            android:layout_toLeftOf="@+id/sendButton"
-        />
-        <Button android:text="Send"
-            android:id="@+id/sendButton" 
-            android:textSize="14dp"
-            android:layout_alignParentRight="true" 
-            android:layout_height="wrap_content" 
-            android:layout_width="80dp"
-            android:onClick="sendMessage"
-            >
+                    android:focusableInTouchMode="true"
+                    android:layout_width="0px"
+                    android:layout_height="0px" />
+
+      <EditText android:id="@+id/text"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_alignParentLeft="true"
+                android:nextFocusUp="@id/text"
+                android:nextFocusLeft="@id/text"
+                android:inputType="textMultiLine"
+                android:layout_toLeftOf="@+id/sendButton" />
+      
+      <TextView android:id="@+id/char_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/text"
+                android:layout_marginLeft="8dp"
+                android:textSize="12sp"
+                android:layout_above="@+id/sendButton" />
+        
+        <Button android:id="@+id/sendButton" 
+                android:layout_alignParentRight="true" 
+                android:layout_alignBottom="@id/text"
+                android:layout_height="48dp" 
+                android:layout_width="48dp"
+                android:background="@drawable/thread_send_button"
+                android:onClick="sendMessage" >
+          
         </Button>
     </RelativeLayout>
 
