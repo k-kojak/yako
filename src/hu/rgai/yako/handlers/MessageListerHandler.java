@@ -184,11 +184,11 @@ public class MessageListerHandler extends TimeoutHandler {
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
 
-        String msgId = null;
+        long msgRawId = -1;
         if (newMessageCount == 1) {
-          msgId = lastUnreadMsg.getId();
+          msgRawId = lastUnreadMsg.getRawId();
         }
-        setDeleteIntent(mContext, mBuilder, msgId);
+        setDeleteIntent(mContext, mBuilder, lastUnreadMsg.getRawId());
 
         mBuilder.setAutoCancel(true);
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
@@ -208,9 +208,9 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
 
-  private void setDeleteIntent(Context context, NotificationCompat.Builder mBuilder, String msgId) {
+  private void setDeleteIntent(Context context, NotificationCompat.Builder mBuilder, long msgRawId) {
     Intent i = new Intent(IntentStrings.Actions.DELETE_INTENT);
-    i.putExtra(IntentStrings.Params.MESSAGE_ID, msgId);
+    i.putExtra(IntentStrings.Params.MESSAGE_ID, msgRawId);
     PendingIntent pi = PendingIntent.getBroadcast(context, DeleteIntentBroadcastReceiver.DELETE_INTENT_REQ_CODE,
             i, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.setDeleteIntent(pi);
