@@ -26,6 +26,7 @@ import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
+import hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.intents.IntentStrings;
@@ -182,6 +183,13 @@ public class MessageListerHandler extends TimeoutHandler {
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
+
+        String msgId = null;
+        if (newMessageCount == 1) {
+          msgId = lastUnreadMsg.getId();
+        }
+        setDeleteIntent(mContext, mBuilder, msgId);
+
         mBuilder.setAutoCancel(true);
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
@@ -198,6 +206,16 @@ public class MessageListerHandler extends TimeoutHandler {
       }
     }
   }
+
+
+  private void setDeleteIntent(Context context, NotificationCompat.Builder mBuilder, String msgId) {
+    Intent i = new Intent(IntentStrings.Actions.DELETE_INTENT);
+    i.putExtra(IntentStrings.Params.MESSAGE_ID, msgId);
+    PendingIntent pi = PendingIntent.getBroadcast(context, DeleteIntentBroadcastReceiver.DELETE_INTENT_REQ_CODE,
+            i, PendingIntent.FLAG_UPDATE_CURRENT);
+    mBuilder.setDeleteIntent(pi);
+  }
+
 
   private void notificationButtonHandling(MessageListElement lastUnreadMsg,
                                           NotificationCompat.Builder mBuilder) {

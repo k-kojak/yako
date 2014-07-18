@@ -11,7 +11,8 @@ public class IntentStrings {
     public static final String MESSAGE_SENT_BROADCAST = "hu.rgai.yako.message_sent_broadcast";
     public static final String SMS_DELIVERED = "hu.rgai.yako.intent.action.sms_delivered";
     public static final String SMS_SENT = "hu.rgai.yako.intent.action.sms_sent";
-    
+    public static final String DELETE_INTENT = "hu.rgai.yako.intent.action.delete_intent";
+
   }
   
   public static class Params {

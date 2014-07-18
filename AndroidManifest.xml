@@ -226,6 +226,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver">
+            <intent-filter>
+                <action android:name="hu.rgai.yako.intent.action.delete_intent"/>
+            </intent-filter>
+        </receiver>
+
         <receiver android:name="hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver">
             <intent-filter>
                 <action android:name="hu.rgai.yako.message_sent_broadcast"/>
