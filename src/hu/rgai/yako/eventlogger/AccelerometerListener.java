@@ -69,7 +69,7 @@ public class AccelerometerListener implements SensorEventListener {
         mLastZ = z;
 
         if (hasAccData == true) {
-          EventLogger.INSTANCE.writeToLogFile(sb.toString(), true);
+//          EventLogger.INSTANCE.writeToLogFile(sb.toString(), true);
         }
       }
     }

@@ -50,9 +50,9 @@ public class MainService extends Service {
   public void onCreate() {
     RUNNING = true;
 
-    sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
-    sensorManager.registerListener(new AccelerometerListener(),
-            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+//    sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
+//    sensorManager.registerListener(new AccelerometerListener(),
+//            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override

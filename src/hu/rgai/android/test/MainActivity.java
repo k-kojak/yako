@@ -109,9 +109,9 @@ public class MainActivity extends ActionBarActivity {
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
     }
-    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-    sensorManager.registerListener(new AccelerometerListener(),
-    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+//    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+//    sensorManager.registerListener(new AccelerometerListener(),
+//    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     
     
     
