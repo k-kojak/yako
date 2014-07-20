@@ -143,8 +143,8 @@ public class MainActivityFragment extends Fragment {
               MessageListElement message = MessageListDAO.getInstance(getActivity()).getMessageByRawId(firstId, mAccounts);
               Class classToLoad = Settings.getAccountTypeToMessageReplyer().get(message.getAccount().getAccountType());
               Intent intent = new Intent(mMainActivity, classToLoad);
-              intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
-              intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+              intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, message.getRawId());
+//              intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
               mMainActivity.startActivity(intent);
             }
             hideContextualActionbar();
@@ -200,8 +200,9 @@ public class MainActivityFragment extends Fragment {
         Log.d("rgai3", "message's account after click: " + a);
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
         Intent intent = new Intent(mMainActivity, classToLoad);
-        intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
-        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+//        intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
+//        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) message.getAccount());
+        intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, message.getRawId());
         boolean changed = !message.isSeen();
         if (!message.isSeen()) {
           MessageListDAO.getInstance(getActivity()).updateMessageToSeen(message.getRawId(), true);

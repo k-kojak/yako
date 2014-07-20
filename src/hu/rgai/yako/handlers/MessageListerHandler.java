@@ -173,8 +173,8 @@ public class MessageListerHandler extends TimeoutHandler {
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
-          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
-          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+          resultIntent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
+//          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
@@ -210,7 +210,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
   private void setDeleteIntent(Context context, NotificationCompat.Builder mBuilder, long msgRawId) {
     Intent i = new Intent(IntentStrings.Actions.DELETE_INTENT);
-    i.putExtra(IntentStrings.Params.MESSAGE_ID, msgRawId);
+    i.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, msgRawId);
     PendingIntent pi = PendingIntent.getBroadcast(context, DeleteIntentBroadcastReceiver.DELETE_INTENT_REQ_CODE,
             i, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.setDeleteIntent(pi);
@@ -221,8 +221,9 @@ public class MessageListerHandler extends TimeoutHandler {
                                           NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReplyActivity.class);
-    intent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
-    intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+//    intent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
+//    intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+    intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
     intent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);

@@ -44,7 +44,8 @@
         <activity android:name="hu.rgai.yako.view.activities.EmailDisplayerActivity"
                   android:label="@string/app_name"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:parentActivityName="hu.rgai.android.test.MainActivity">
+                  android:parentActivityName="hu.rgai.android.test.MainActivity"
+                  android:exported="true">
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value="hu.rgai.android.test.MainActivity"/>
         </activity>

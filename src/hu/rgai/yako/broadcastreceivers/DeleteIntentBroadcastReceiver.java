@@ -22,7 +22,7 @@ public class DeleteIntentBroadcastReceiver extends BroadcastReceiver {
   @Override
   public void onReceive(Context context, Intent intent) {
     if (intent.getAction() != null && intent.getAction().equals(IntentStrings.Actions.DELETE_INTENT)) {
-      long rawId = intent.getLongExtra(IntentStrings.Params.MESSAGE_ID, -1);
+      long rawId = intent.getLongExtra(IntentStrings.Params.MESSAGE_RAW_ID, -1);
       Log.d("rgai", "deleted message raw id: " + rawId);
       if (rawId != -1) {
         TreeMap<Long, Account> accountsLongKey = AccountDAO.getInstance(context).getIdToAccountsMap();

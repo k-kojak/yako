@@ -23,6 +23,7 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
@@ -32,6 +33,7 @@ import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import java.util.Arrays;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class EmailDisplayerActivity extends ActionBarActivity {
@@ -54,11 +56,16 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     t.send(new HitBuilders.AppViewBuilder().build());
     
     setContentView(R.layout.activity_email_displayer);
+    long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
 
-    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-    Log.d("rgai", "email displayer account: " + acc);
-    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+    mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
+
+
+//    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+//    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
+//    Log.d("rgai", "email displayer account: " + acc);
+//    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
 //    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
@@ -143,8 +150,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     switch (item.getItemId()) {
       case R.id.message_reply:
         Intent intent = new Intent(this, MessageReplyActivity.class);
-        intent.putExtra(IntentStrings.Params.MESSAGE_ID, mMessage.getId());
-        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
+        intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, mMessage.getRawId());
+//        intent.putExtra(IntentStrings.Params.MESSAGE_ID, mMessage.getId());
+//        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:

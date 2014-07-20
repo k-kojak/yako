@@ -49,6 +49,7 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.tools.AndroidUtils;
@@ -58,6 +59,7 @@ import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class ThreadDisplayerActivity extends ActionBarActivity {
@@ -115,9 +117,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
             && getIntent().getExtras().getBoolean(IntentStrings.Params.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+//    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+//    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
+    long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
+    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+    mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
 //    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);

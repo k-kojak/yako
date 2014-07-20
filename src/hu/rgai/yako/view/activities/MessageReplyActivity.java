@@ -68,15 +68,8 @@ import hu.rgai.yako.workers.MessageSender;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.TreeSet;
+import java.util.*;
+
 import net.htmlparser.jericho.Source;
 
 /**
@@ -131,10 +124,12 @@ public class MessageReplyActivity extends ActionBarActivity {
 
 
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_ID)) {
-        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-        mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
+//        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+//        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
+        long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
+        TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+        mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }
