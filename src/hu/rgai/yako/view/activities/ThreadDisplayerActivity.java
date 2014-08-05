@@ -59,6 +59,8 @@ import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -228,7 +230,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
               MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), c);
               MessageDeleteHandler handler = new MessageDeleteHandler(c) {
                 @Override
-                public void onMainListDelete(long deletedMessageListRawId) {}
+                public void onMainListDelete(List<MessageListElement> deletedMessage) {}
 
                 @Override
                 public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId,
@@ -254,7 +256,9 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
                   mAdapter.notifyDataSetChanged();
                   if (mAdapter.getCount() == 0) {
                     try {
-                      MessageListDAO.getInstance(c).removeMessage(c, deletedMessageListRawId);
+                      List<MessageListElement> deleteMessages = new LinkedList<MessageListElement>();
+                      deleteMessages.add(new MessageListElement(deletedMessageListRawId,deletedSimpleMessageId,null));
+                      MessageListDAO.getInstance(c).removeMessage(c, deleteMessages);
                     } catch (Exception e) {
                       Log.d("rgai", "", e);
                     }

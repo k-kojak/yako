@@ -87,11 +87,8 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
     if (mHandler != null) {
       if (success) {       
         if (mDeleteAtMainList) {
-          for (MessageListElement mle : mDeleteMessages){
-              
-            mProvider= AndroidUtils.getMessageProviderInstanceByAccount(mle.getAccount(), mContext);
-            mHandler.onMainListDelete(mle.getRawId());
-          }
+            mHandler.onMainListDelete(mDeleteMessages);
+          
         } else {
             mHandler.onThreadListDelete(mMessageListRawIdToDelete, mFullSimpleMessageIdToDelete,
                     mProvider.getAccount().isInternetNeededForLoad());

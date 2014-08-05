@@ -290,9 +290,9 @@ public class MainActivityFragment extends Fragment {
      
       MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
         @Override
-        public void onMainListDelete(long deletedMessageListRawId) {
+        public void onMainListDelete(List<MessageListElement> deletedMessageList) {
           try {
-            MessageListDAO.getInstance(getActivity()).removeMessage(getActivity(), deletedMessageListRawId);
+            MessageListDAO.getInstance(getActivity()).removeMessage(getActivity(), deletedMessageList);
           } catch (Exception e) {
             Log.d("rgai", "", e);
           }

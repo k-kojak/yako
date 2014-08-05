@@ -1,6 +1,8 @@
 
 package hu.rgai.yako.handlers;
 
+import java.util.List;
+
 import android.content.Context;
 import android.widget.Toast;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -28,7 +30,7 @@ public abstract class MessageDeleteHandler extends TimeoutHandler {
     Toast.makeText(mContext, s, Toast.LENGTH_LONG).show();
   }
   
-  public abstract void onMainListDelete(long deletedMessageListRawId);
+  public abstract void onMainListDelete(List<MessageListElement> deletedMessageList);
   
   public abstract void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId,
                                           boolean isInternetNeededForProvider);

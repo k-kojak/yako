@@ -102,10 +102,10 @@ public class FullMessageDAO {
    * @param accountId  the id of the MessageListElement account id
    * @return
    */
-  public List<Long> getFullMessageIdsByAccountId(long accountId, List<Long> messageListRawIds) {
+  public List<Long> getFullMessageIdsByAccountId(long accountId, List<MessageListElement> messageList) {
     String idClause = null;
-    if (messageListRawIds != null && !messageListRawIds.isEmpty()) {
-      idClause = SQLHelper.Utils.getInClosure(messageListRawIds);
+    if (messageList != null && !messageList.isEmpty()) {
+      idClause = SQLHelper.Utils.getInClosureFromListElement(messageList);
     }
     List<Long> ids = new LinkedList<Long>();
     String q = "SELECT c." + COL_ID
