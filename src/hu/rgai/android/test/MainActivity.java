@@ -18,6 +18,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.*;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
@@ -56,6 +57,7 @@ import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -77,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
   private TreeMap<Long, Account> mAccountsLongKey = null;
+  private LinkedList<Account> selectedAccounts = null ;
   
   
 
@@ -127,7 +130,8 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setHomeButtonEnabled(true);
 
     
-    actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
+    selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
+    //selectedAccounts = new LinkedList<Account>();
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -136,6 +140,8 @@ public class MainActivity extends ActionBarActivity {
     
     
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+    
+
 
     
 
@@ -203,17 +209,28 @@ public class MainActivity extends ActionBarActivity {
     TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mDrawerList.setAdapter(mDrawerFilterAdapter);
-    int indexOfAccount = 0;
-    if (actSelectedFilter != null) {
-      // +1 needed because 0th element in adapter is "all instance"
-      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
+    
+    LinkedList<Integer> indexOfAccounts = null;
+    if (!selectedAccounts.isEmpty()) {
+
+      indexOfAccounts = new LinkedList<Integer>();     
+      indexOfAccounts = AndroidUtils.getIndexOfAccount(accounts, selectedAccounts);
       // the saved selected instance is not available anymore...
-      if (indexOfAccount == -1) {
-        actSelectedFilter = null;
+      if (indexOfAccounts.isEmpty()) {
+        selectedAccounts.clear();
       }
-      indexOfAccount++;
+    }  
+
+    if(selectedAccounts.isEmpty()){
+      mDrawerList.setItemChecked(0, true);
+    }else{
+      for(int i=0; i < indexOfAccounts.size(); i++){
+        // +1 needed because 0th element in adapter is "all instance"
+        mDrawerList.setItemChecked(indexOfAccounts.get(i) + 1, true);
+      }
+      
     }
-    mDrawerList.setItemChecked(indexOfAccount, true);
+
     
     
     // setting title
@@ -236,7 +253,7 @@ public class MainActivity extends ActionBarActivity {
       reloadMessages(true);
     } else {
       long now = System.currentTimeMillis();
-      if (actSelectedFilter == null
+      if (selectedAccounts.isEmpty()
               && (YakoApp.lastFullMessageUpdate == null || YakoApp.lastFullMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now)) {
         reloadMessages(false);
       }
@@ -327,7 +344,7 @@ public class MainActivity extends ActionBarActivity {
   
   
   private void setTitleByFilter() {
-    if (actSelectedFilter == null) {
+    if (selectedAccounts.isEmpty()) {
       getSupportActionBar().setTitle("");
     } else {
       getSupportActionBar().setTitle("Filter on");
@@ -624,10 +641,30 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-      mDrawerList.setItemChecked(position, true);
-      mDrawerLayout.closeDrawer(mDrawerList);
-      actSelectedFilter = (Account)parent.getItemAtPosition(position);
-      StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
+
+      
+        if(position == 0 || mDrawerList.getCheckedItemCount() == 0 
+            || mDrawerList.getCheckedItemCount() == mDrawerList.getCount() - 1 
+            && !mDrawerList.isItemChecked(0)){
+          
+          mDrawerList.clearChoices();
+          //mDrawerList.requestLayout();
+          mDrawerList.setItemChecked(0, true);
+          selectedAccounts.clear();
+          
+        }else{
+          mDrawerList.setItemChecked(0, false);
+          
+          if (mDrawerList.isItemChecked(position)) {
+            selectedAccounts.add((Account)parent.getItemAtPosition(position));
+          } else {
+            selectedAccounts.remove((Account)parent.getItemAtPosition(position));
+          }
+        }        
+     
+      //actSelectedFilter = (Account)parent.getItemAtPosition(position);
+      
+      StoreHandler.saveSelectedFilterAccount(MainActivity.this, selectedAccounts);
       if (mFragment != null) {
         mFragment.hideContextualActionbar();
         mFragment.notifyAdapterChange();
@@ -660,10 +697,12 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
-      if (actSelectedFilter == null) {
+      if (selectedAccounts.isEmpty()) {
         builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
-      } else {
-        builder.append(actSelectedFilter.getDisplayName());
+      } else {        
+        for (int i=0; i<selectedAccounts.size(); i++ ){
+          builder.append(selectedAccounts.get(i).getDisplayName());
+        }
       }
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
