@@ -58,6 +58,7 @@ import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -79,12 +80,10 @@ public class MainActivity extends ActionBarActivity {
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
   private TreeMap<Long, Account> mAccountsLongKey = null;
-  private LinkedList<Account> selectedAccounts = null ;
   
   
-
+  public static LinkedList<Account> selectedAccounts = null ;
   private static volatile String fbToken = null;
-  public static Account actSelectedFilter = null;
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
   public static final int PREFERENCES_REQUEST_CODE = 1;
@@ -131,7 +130,10 @@ public class MainActivity extends ActionBarActivity {
 
     
     selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
-    //selectedAccounts = new LinkedList<Account>();
+    
+    if(selectedAccounts == null){
+    selectedAccounts = new LinkedList<Account>();
+    }
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -322,17 +324,20 @@ public class MainActivity extends ActionBarActivity {
         boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
-          Account a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
+          List<Account> a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setForceQuery(true);
-          eParams.setAccount(a);
+          eParams.setAccounts(a);
           eParams.setQueryOffset(0);
 
-          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
-          long accountId = accountsAccountKey.get(a);
-          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountId));
+          LinkedList<Long> accountIds = new LinkedList<Long>();
+          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();          
+          for(Account acc: selectedAccounts){
+            accountIds.add(accountsAccountKey.get(acc));
+          }
+          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountIds));
           intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
@@ -391,8 +396,8 @@ public class MainActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setLoadMore(true);
-    if (actSelectedFilter != null) {
-      eParams.setAccount(actSelectedFilter);
+    if (!selectedAccounts.isEmpty()) {
+        eParams.setAccounts(selectedAccounts);
     }
     service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
@@ -606,8 +611,8 @@ public class MainActivity extends ActionBarActivity {
     if (forceQuery) {
       eParams.setForceQuery(true);
     }
-    if (actSelectedFilter != null) {
-      eParams.setAccount(actSelectedFilter);
+    if (!selectedAccounts.isEmpty()) {
+      eParams.setAccounts(selectedAccounts);
     }
     intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
@@ -670,16 +675,19 @@ public class MainActivity extends ActionBarActivity {
         mFragment.notifyAdapterChange();
       }
       
-      // run query for selected filter only if list is empty OR selected all accounts
+      // run query for selected filter only if list is empty OR selected all accounts     
+      LinkedList<Long> accountIds = new LinkedList<Long>();
 
-      long accountId = -1;
-      if (actSelectedFilter != null) {
+      if (!selectedAccounts.isEmpty()) {
         TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
-        accountId = accountsAccountKey.get(actSelectedFilter);
+       
+        for(Account acc: selectedAccounts){
+          accountIds.add(accountsAccountKey.get(acc));
+        }
       }
 
-      if (actSelectedFilter == null
-              || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
+      if (selectedAccounts.isEmpty()
+              || !selectedAccounts.isEmpty() && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountIds) == 0) {
         reloadMessages(false);
       }
     }

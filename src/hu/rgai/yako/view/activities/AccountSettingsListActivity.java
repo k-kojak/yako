@@ -36,6 +36,8 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
+
+import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -192,7 +194,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     
     MainServiceExtraParams eParams = new MainServiceExtraParams();
-    eParams.setAccount(account);
+    eParams.addAccount(account);
     eParams.setForceQuery(true);
     service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     

@@ -203,8 +203,8 @@ public class MessageListDAO  {
   }
 
 
-  public Cursor getAllMessagesCursor(long accountId, boolean getAttachments) {
-    return getMessagesCursor(accountId, null, false, getAttachments);
+  public Cursor getAllMessagesCursor(LinkedList<Long> accountIds, boolean getAttachments) {
+    return getMessagesCursor(accountIds, null, false, getAttachments);
 //    String selection = null;
 //    String[] selectionArgs = null;
 //    if (accountId != -1) {
@@ -231,7 +231,7 @@ public class MessageListDAO  {
    * @param isRawId if true, than messageId is a RAW id of the database, if false the id is the message id
    * @return
    */
-  private Cursor getMessagesCursor(long accountId, String messageId, boolean isRawId, boolean getAttachments) {
+  private Cursor getMessagesCursor(LinkedList<Long> accountIds, String messageId, boolean isRawId, boolean getAttachments) {
     List<String> selectionArgs = new LinkedList<String>();
 
 
@@ -266,9 +266,10 @@ public class MessageListDAO  {
      * Constructing query part about account filter
      */
     String accountQuery = "";
-    if (accountId != -1) {
-      accountQuery = " AND " + COL_ACCOUNT_ID + " = ?";
-      selectionArgs.add(Long.toString(accountId));
+    if (!accountIds.isEmpty()) {
+      String inClosure = SQLHelper.Utils.getInClosure(accountIds);
+      accountQuery = " AND " + COL_ACCOUNT_ID + " IN " + inClosure;      
+      //selectionArgs.add(inClosure);
     }
 
 
@@ -314,10 +315,30 @@ public class MessageListDAO  {
 
 
   public int getAllMessagesCount() {
-    return getAllMessagesCount(-1);
+    return getAllMessagesCount(new LinkedList<Long>());
   }
 
 
+  public int getAllMessagesCount(LinkedList<Long> accountIds) {
+    int count = 0;
+    
+    String inClosure = SQLHelper.Utils.getInClosure(accountIds);
+    
+    String sql = "SELECT COUNT(*) AS cnt FROM " + TABLE_MESSAGES;
+    String[] selectionArgs = null;
+    if (!accountIds.isEmpty()) {
+      sql = "SELECT COUNT(*) AS cnt FROM " + TABLE_MESSAGES + " WHERE " + COL_ACCOUNT_ID + " IN " + inClosure;
+      selectionArgs = new String[]{inClosure};
+    }
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(sql, null);
+    cursor.moveToFirst();
+    if (!cursor.isAfterLast()) {
+      count = cursor.getInt(0);
+    }
+    cursor.close();
+    return count;
+  }
+  
   public int getAllMessagesCount(long accountId) {
     int count = 0;
 
@@ -360,8 +381,11 @@ public class MessageListDAO  {
 
   public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts, long accountId) {
     TreeMap<Long, MessageListElement> messages = new TreeMap<Long, MessageListElement>();
-
-    Cursor cursor = getAllMessagesCursor(accountId, false);
+    LinkedList<Long> accountIds = new LinkedList<Long>();
+    if (accountId != -1)
+      accountIds.add(accountId);
+    
+    Cursor cursor = getAllMessagesCursor(accountIds, false);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -414,7 +438,7 @@ public class MessageListDAO  {
    * @return
    */
   private MessageListElement getMessageById(String id, TreeMap<Long, Account> accounts, boolean rawId) {
-    Cursor cursor = getMessagesCursor(-1, id, rawId, false);
+    Cursor cursor = getMessagesCursor(new LinkedList<Long>(), id, rawId, false);
     cursor.moveToFirst();
     MessageListElement mle = cursorToMessageListElement(cursor, accounts);
     cursor.close();

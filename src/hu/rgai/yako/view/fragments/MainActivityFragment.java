@@ -454,17 +454,21 @@ public class MainActivityFragment extends Fragment {
 
   private void updateAdapter() {
     Log.d("rgai4", "@@ @@ update adapter....");
-    long accountId = -1;
-    if (MainActivity.actSelectedFilter != null) {
-      accountId = MainActivity.actSelectedFilter.getDatabaseId();
+    
+    LinkedList<Long> accountIds = new LinkedList<Long>();        
+    
+    if (!MainActivity.selectedAccounts.isEmpty()) {
+      for(int i=0; i < MainActivity.selectedAccounts.size(); i++){
+        accountIds.add(MainActivity.selectedAccounts.get(i).getDatabaseId());
+      }
     }
     long s = System.currentTimeMillis();
     if (mAdapter == null) {
       mAdapter = new MainListAdapter(mMainActivity,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId, true), mAccounts);
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true), mAccounts);
 
     } else {
-      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountId, true));
+      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true));
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }
