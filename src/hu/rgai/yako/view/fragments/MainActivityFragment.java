@@ -21,6 +21,7 @@ import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
@@ -178,7 +179,7 @@ public class MainActivityFragment extends Fragment {
     loadMoreButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View arg0) {
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_LOAD_MORE_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_LOAD_MORE_BTN, true);
         mMainActivity.loadMoreMessage();
       }
     });
@@ -220,7 +221,7 @@ public class MainActivityFragment extends Fragment {
         appendClickedElementDatasToBuilder(message, builder);
         mMainActivity.appendVisibleElementToStringBuilder(builder, mListView, mAdapter);
         builder.append(changed);
-        EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
       }
 
       private void appendClickedElementDatasToBuilder(MessageListElement message, StringBuilder builder) {
@@ -407,7 +408,7 @@ public class MainActivityFragment extends Fragment {
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
       mMainActivity.appendVisibleElementToStringBuilder(builder, lv, adapter);
-      EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
     }
 
   }

@@ -80,6 +80,7 @@ class LogUploader implements Runnable {
         } else {
           try {
             EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(c);
+            EventLogger.INSTANCE.zipMessages();
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch ( InterruptedException e ) {
             Log.d("willrgai", "", e);

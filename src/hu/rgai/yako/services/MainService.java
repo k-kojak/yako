@@ -19,6 +19,7 @@ import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.handlers.BatchedAsyncTaskHandler;
 import hu.rgai.yako.handlers.MessageListerHandler;
@@ -64,9 +65,9 @@ public class MainService extends Service {
     });
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
-      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+      EventLogger.INSTANCE.openAllLogFile();
     }
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.APPLICATION.APPLICATION_START_STR
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH,EventLogger.LOGGER_STRINGS.APPLICATION.APPLICATION_START_STR
             + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + EventLogger.INSTANCE.getAppVersion()
             + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);

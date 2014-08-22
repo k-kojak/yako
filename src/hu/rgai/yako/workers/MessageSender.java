@@ -11,12 +11,14 @@ import hu.rgai.yako.beens.FacebookMessageRecipient;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.FacebookMessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -95,7 +97,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     builder.append(mRecipient.getContactId());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(RSAENCODING.INSTANCE.encodingString(mRecipient.getData()));
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);
   }
 
   @Override

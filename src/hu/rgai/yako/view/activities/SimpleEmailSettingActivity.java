@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.android.test.R;
 
@@ -41,7 +42,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
 
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.SIMPLE_EMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
