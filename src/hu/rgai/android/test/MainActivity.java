@@ -131,7 +131,7 @@ public class MainActivity extends ActionBarActivity {
     
     selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
     
-    if(selectedAccounts == null){
+    if (selectedAccounts == null) {
     selectedAccounts = new LinkedList<Account>();
     }
     
@@ -139,13 +139,8 @@ public class MainActivity extends ActionBarActivity {
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-    
-    
+       
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-    
-
-
-    
 
     // ActionBarDrawerToggle ties together the proper interactions
     // between the sliding drawer and the action bar app icon
@@ -223,24 +218,17 @@ public class MainActivity extends ActionBarActivity {
       }
     }  
 
-    if(selectedAccounts.isEmpty()){
+    if (selectedAccounts.isEmpty()) {
       mDrawerList.setItemChecked(0, true);
-    }else{
-      for(int i=0; i < indexOfAccounts.size(); i++){
+    } else {
+      for (int i=0; i < indexOfAccounts.size(); i++) {
         // +1 needed because 0th element in adapter is "all instance"
         mDrawerList.setItemChecked(indexOfAccounts.get(i) + 1, true);
-      }
-      
-    }
-
-    
+      }     
+    }    
     
     // setting title
     setTitleByFilter();
-    
-    
-
-
 
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
@@ -334,7 +322,7 @@ public class MainActivity extends ActionBarActivity {
 
           LinkedList<Long> accountIds = new LinkedList<Long>();
           TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();          
-          for(Account acc: selectedAccounts){
+          for (Account acc: selectedAccounts) {
             accountIds.add(accountsAccountKey.get(acc));
           }
           eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountIds));
@@ -648,16 +636,16 @@ public class MainActivity extends ActionBarActivity {
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
       
-        if(position == 0 || mDrawerList.getCheckedItemCount() == 0 
+        if (position == 0 || mDrawerList.getCheckedItemCount() == 0 
             || mDrawerList.getCheckedItemCount() == mDrawerList.getCount() - 1 
-            && !mDrawerList.isItemChecked(0)){
+            && !mDrawerList.isItemChecked(0)) {
           
           mDrawerList.clearChoices();
           //mDrawerList.requestLayout();
           mDrawerList.setItemChecked(0, true);
           selectedAccounts.clear();
           
-        }else{
+        } else {
           mDrawerList.setItemChecked(0, false);
           
           if (mDrawerList.isItemChecked(position)) {
@@ -681,7 +669,7 @@ public class MainActivity extends ActionBarActivity {
       if (!selectedAccounts.isEmpty()) {
         TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
        
-        for(Account acc: selectedAccounts){
+        for (Account acc: selectedAccounts) {
           accountIds.add(accountsAccountKey.get(acc));
         }
       }
@@ -708,7 +696,7 @@ public class MainActivity extends ActionBarActivity {
       if (selectedAccounts.isEmpty()) {
         builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
       } else {        
-        for (int i=0; i<selectedAccounts.size(); i++ ){
+        for (int i=0; i<selectedAccounts.size(); i++ ) {
           builder.append(selectedAccounts.get(i).getDisplayName());
         }
       }

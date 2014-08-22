@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -141,7 +140,7 @@ public class MainServiceExtraParams implements Parcelable {
   @Override
   public String toString() {
     String ToString = "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccounts=";
-    for(int i = 0; i < mAccounts.size(); i++){
+    for (int i = 0; i < mAccounts.size(); i++) {
       ToString += mAccounts.get(i) + ", ";
     }
     ToString += "mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
