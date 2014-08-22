@@ -315,15 +315,20 @@ public enum EventLogger {
 
     ZipEntry zipEntry = new ZipEntry(inputFile.getName());
     zipOutputStream.putNextEntry(zipEntry);
-
-    FileInputStream fileInputStream = new FileInputStream(inputFile);
+    
+    FileInputStream fileInputStream;
+    if (!sdCard)
+      fileInputStream = context.openFileInput( inputFilePath);
+    else
+      fileInputStream = new FileInputStream(inputFile);
     byte[] buf = new byte[1024];
     int bytesRead;
 
     while ((bytesRead = fileInputStream.read(buf)) > 0) {
         zipOutputStream.write(buf, 0, bytesRead);
+        Log.d("willrgai", String.valueOf(bytesRead));
     }
-
+    
     // close ZipEntry to store the stream to the file
     zipOutputStream.closeEntry();
     zipOutputStream.close();
