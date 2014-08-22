@@ -282,8 +282,7 @@ public class MainActivityFragment extends Fragment {
       LinkedList<MessageListElement> deletemessages = new LinkedList<MessageListElement>();
       MessageListElement mle;
       
-      for(Long idx : contextSelectedElements){
-        
+      for (Long idx : contextSelectedElements) {        
         mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(idx, mAccounts);
         deletemessages.add(mle);        
       }
