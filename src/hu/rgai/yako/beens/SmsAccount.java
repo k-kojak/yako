@@ -2,10 +2,8 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
-// TODO: this class should be a singletone
 public final class SmsAccount extends Account {
   
   private static SmsAccount instance = null;
@@ -20,28 +18,23 @@ public final class SmsAccount extends Account {
 	    }
 	};
 
-
-  public static synchronized void setInstance(long _id) {
-    Log.d("rgai2", "setting account instance with id: " + _id);
-    if (instance == null) {
-      instance = new SmsAccount(_id);
-    } else {
-      instance.m_id = _id;
-    }
-  }
-
-
   public static synchronized void clearInstance() {
     instance = null;
   }
 
-
+  public void setId(long _id) {
+    this.m_id = _id;
+  }
+  
   public static SmsAccount getInstance() {
+    if (instance == null) {
+      instance = new SmsAccount(-1);
+    }
     return instance;
   }
 
 
-  public SmsAccount(long _id) {
+  private SmsAccount(long _id) {
     super(_id);
   }
 
