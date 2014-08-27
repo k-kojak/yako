@@ -552,7 +552,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     if (messages != null && !messages.isEmpty()) {
       if (mAdapter == null) {
-        mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
+        mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item_me);
       } else {
         mAdapter.clear();
       }
