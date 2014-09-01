@@ -332,7 +332,7 @@ public class MainActivityFragment extends Fragment {
       }
     }); 
     builder.setTitle("Delete message");
-    builder.setMessage("Delete selected message?").show();
+    builder.setMessage("Delete selected message"+ (contextSelectedElements.size() == 1 ? "" : "s") +"?").show();
     
   }
   
