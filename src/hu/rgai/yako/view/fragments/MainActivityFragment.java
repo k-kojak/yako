@@ -464,7 +464,7 @@ public class MainActivityFragment extends Fragment {
     LinkedList<Long> accountIds = new LinkedList<Long>();        
     
     if (!MainActivity.selectedAccounts.isEmpty()) {
-      for(int i=0; i < MainActivity.selectedAccounts.size(); i++){
+      for (int i=0; i < MainActivity.selectedAccounts.size(); i++) {
         accountIds.add(MainActivity.selectedAccounts.get(i).getDatabaseId());
       }
     }

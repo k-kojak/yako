@@ -49,7 +49,7 @@ public class AndroidUtils {
     int index = 0;
     
     for (Account a : accounts) {
-      for(Account b : selectedAccounts) {
+      for (Account b : selectedAccounts) {
         if (a.equals(b)) {
           indexs.add(index);
           break;

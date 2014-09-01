@@ -963,8 +963,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   private void initMessageListener(final Context context) {
-    if (messageListener == null) {
-      
+    if (messageListener == null) {    
       messageListener = new MessageCallback() {
         public void messageAdded(Message[] messages) {
           Intent service = new Intent(context, MainScheduler.class);
