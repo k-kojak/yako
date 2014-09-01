@@ -7,6 +7,7 @@ import hu.rgai.android.test.MainActivity;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -17,6 +18,7 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.net.ssl.SSLHandshakeException;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -365,8 +367,10 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       builder.append(mle.getMessageType());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(RSAENCODING.INSTANCE.encodingString(fromID));
-      EventLogger.INSTANCE.writeToLogFile(builder.toString(), false);
+      builder.append(fromID);
+      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
+      builder.append(mle.getFullMessage());
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), false);
     }
   }
 
