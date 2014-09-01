@@ -46,7 +46,7 @@ public enum EventLogger {
     private final String path;
 
     /**
-     * @param text
+     * @param path
      */
     private LogFilePaths(final String path) {
         this.path = path;
