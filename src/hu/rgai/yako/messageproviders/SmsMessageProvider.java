@@ -1,5 +1,7 @@
 package hu.rgai.yako.messageproviders;
 
+import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -7,8 +9,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -19,11 +27,14 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.beens.SmsSentMessageData;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -44,16 +55,16 @@ import javax.net.ssl.SSLHandshakeException;
 
 public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessageProvider {
 
-  Context context;
+  Context mContext;
 
   public SmsMessageProvider(){};
   
   public SmsMessageProvider(Context myContext) {
-    context = myContext;
+    mContext = myContext;
   }
 
   public Account getAccount() {
-    return SmsAccount.account;
+    return SmsAccount.getInstance();
   }
   
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
@@ -73,7 +84,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     int foundThreads = 0;
     
     Uri uriSMSURI = Uri.parse("content://sms");
-    Cursor cur = context.getContentResolver().query(uriSMSURI,
+    Cursor cur = mContext.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "body", "date", "seen", "person", "address", "type"},
             null,
             null,
@@ -145,8 +156,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
         } else {
           foundThreads++;
           if (foundThreads > limit + offset) break;
-          messages.add(new MessageListElement(ti.threadId, ti.isMe ? true : ti.seen, ti.title,
-                  from, null, new Date(ti.date), SmsAccount.account, Type.SMS));
+          messages.add(new MessageListElement(-1, ti.threadId, ti.isMe ? true : ti.seen, ti.title,
+                  from, null, new Date(ti.date), SmsAccount.getInstance(), Type.SMS));
         }
       }
       cur.close();
@@ -164,7 +175,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     String[] selectionArgs = new String[]{threadId};
 
     Uri uriSMSURI = Uri.parse("content://sms");
-    Cursor cur = context.getContentResolver().query(uriSMSURI,
+    Cursor cur = mContext.getContentResolver().query(uriSMSURI,
             new String[]{"thread_id", "_id", "subject", "body", "date", "person", "address", "type"},
             selection, selectionArgs, "_id DESC LIMIT "+offset+","+limit);
 
@@ -184,6 +195,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 //        Log.d("rgai", "SMS TYPE -> " + cur.getLong(9));
 //        Log.d("rgai", "SMS SEEN -> " + cur.getLong(16));
         ftm.addMessage(new FullSimpleMessage(
+                -1,
                 cur.getString(1),
                 cur.getString(2),
                 new HtmlContent(cur.getString(3), HtmlContent.ContentType.TEXT_PLAIN),
@@ -205,7 +217,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     Uri uriSMSURI = Uri.parse("content://sms");
     ContentValues values = new ContentValues();
     values.put("seen", 1);
-    context.getContentResolver().update(
+    mContext.getContentResolver().update(
             uriSMSURI,
             values,
             "thread_id = ?",
@@ -214,8 +226,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject)
-          throws NoSuchProviderException, MessagingException, IOException {
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
+          String content, String subject) {
 
     for (MessageRecipient mr : to) {
 
@@ -223,60 +235,126 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
       SmsManager smsMan = SmsManager.getDefault();
       String rawPhoneNum = smr.getData().replaceAll("[^\\+0-9]", "");
-//      Log.d("rgai", "SENDING SMS TO THIS PHONE NUMBER -> " + rawPhoneNum);
-      
-        ArrayList<String> dividedMessages = smsMan.divideMessage(content);
-        smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, null, null);
-        ContentValues sentSms = new ContentValues();
-        sentSms.put("address", rawPhoneNum);
-        sentSms.put("body", content);
 
-        ContentResolver contentResolver = context.getContentResolver();
-        Uri uri = Uri.parse("content://sms/sent");
-        contentResolver.insert(uri, sentSms);
+      ArrayList<String> dividedMessages = smsMan.divideMessage(content);
+      
+      ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>(dividedMessages.size());
+      ArrayList<PendingIntent> deliveryIntents = new ArrayList<PendingIntent>(dividedMessages.size());
+      
+      for (int i = 0; i < dividedMessages.size(); i++) {
+        Intent sentIntent = new Intent(mContext, SmsMessageProvider.class);
+        sentIntent.setAction(IntentStrings.Actions.SMS_SENT);
+        sentIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
+        sentIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
+        sentIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
+        sentIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), sentIntent, PendingIntent.FLAG_ONE_SHOT));
+        
+        Intent deliveryIntent = new Intent(mContext, SmsMessageProvider.class);
+        deliveryIntent.setAction(IntentStrings.Actions.SMS_DELIVERED);
+        deliveryIntent.putExtra(IntentStrings.Params.ITEM_INDEX, i);
+        deliveryIntent.putExtra(IntentStrings.Params.ITEM_COUNT, dividedMessages.size());
+        deliveryIntent.putExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA, sentMessageData);
+        deliveryIntents.add(PendingIntent.getBroadcast(context, (int)System.currentTimeMillis(), deliveryIntent, PendingIntent.FLAG_ONE_SHOT));
+      }
+      
+      smsMan.sendMultipartTextMessage(rawPhoneNum, null, dividedMessages, sentIntents, deliveryIntents);
+
+      ContentValues sentSms = new ContentValues();
+      sentSms.put("address", rawPhoneNum);
+      sentSms.put("body", content);
+
+      ContentResolver contentResolver = mContext.getContentResolver();
+      Uri uri = Uri.parse("content://sms/sent");
+      contentResolver.insert(uri, sentSms);
 
     }
-
   }
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
-      // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
-      // a bit the reading from inbox
-      try {
-        Thread.sleep(750);
-      } catch (InterruptedException ex) {
-        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      String thisPackageName = context.getPackageName();
+      if (!Telephony.Sms.getDefaultSmsPackage(context).equals(thisPackageName)) {
+        Toast.makeText(context, "Yako: new SMS message arrived.", Toast.LENGTH_LONG).show();
+        return;
       }
-      
+    }
+    if (intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        Bundle bundle = intent.getExtras();
+
+        String messageReceived = "";
+        if (bundle != null) {
+          Object[] pdus = (Object[]) bundle.get("pdus");
+          SmsMessage[] msgs = new SmsMessage[pdus.length];
+          for (int i = 0; i < msgs.length; i++) {
+            msgs[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+            messageReceived += msgs[i].getMessageBody();
+            messageReceived += "\n";
+          }
+          String senderPhoneNumber = msgs[0].getOriginatingAddress();
+
+          // saving message to sms store
+          ContentValues sentSms = new ContentValues();
+          sentSms.put("address", senderPhoneNumber);
+          sentSms.put("body", messageReceived);
+
+          ContentResolver contentResolver = context.getContentResolver();
+          Uri uri = Uri.parse("content://sms/inbox");
+          contentResolver.insert(uri, sentSms);
+
+        }
+      } else {
+        // sms broadcast arrives earlier than sms actually stored in inbox, we have to delay
+        // a bit the reading from inbox
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+          Log.d("rgai", "", ex);
+        }
+      }
+
       Intent res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
       res.putExtra("type", MessageProvider.Type.SMS.toString());
       context.sendBroadcast(res);
-      
-      // TODO: do not make a full query to the given account/type, query only the
-      // affected message element, so select only 1 element instead of all messages of the given account
+
+      // TODO: do not make a full query to the given instance/type, query only the
+      // affected message element, so select only 1 element instead of all messages of the given instance
       if (ThreadDisplayerActivity.actViewingMessage == null || !ThreadDisplayerActivity.actViewingMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
         Intent service = new Intent(context, MainScheduler.class);
         service.setAction(Context.ALARM_SERVICE);
-        
+
         MainServiceExtraParams eParams = new MainServiceExtraParams();
-        eParams.setAccount(SmsAccount.account);
+        eParams.setAccount(SmsAccount.getInstance());
         eParams.setForceQuery(true);
-        service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
-        
+        service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+
         context.sendBroadcast(service);
       }
+
       
-//      // in case the first attempt was too quick, request the display again a little bit later
-//      try {
-//        Thread.sleep(2000);
-//      } catch (InterruptedException ex) {
-//        Logger.getLogger(SmsMessageProvider.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//      res = new Intent(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
-//      context.sendBroadcast(res);
+    } else if (intent.getAction().equals(IntentStrings.Actions.SMS_SENT)) {
+      SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+      SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();
+      
+      smsData.setItemIndex(intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
+      smsData.setItemCount(intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
+      boolean success = getResultCode() == Activity.RESULT_OK;
+      
+      MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
+              success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
+    } else if (intent.getAction().equals(IntentStrings.Actions.SMS_DELIVERED)) {
+      SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+      SmsSentMessageData smsData = (SmsSentMessageData)sentMessageData.getMessageData();
+      
+      smsData.setItemIndex(intent.getIntExtra(IntentStrings.Params.ITEM_INDEX, -1));
+      smsData.setItemCount(intent.getIntExtra(IntentStrings.Params.ITEM_COUNT, -1));
+      boolean success = getResultCode() == Activity.RESULT_OK;
+      
+      MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
+            success ? MessageSentBroadcastReceiver.MESSAGE_DELIVERED : MessageSentBroadcastReceiver.MESSAGE_DELIVER_FAILED);
     }
+    
   }
 
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
@@ -290,7 +368,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
       // just setting last sms of the thread to unseen
       
       Uri uriSMSURI = Uri.parse("content://sms");
-      Cursor cur = context.getContentResolver().query(uriSMSURI,
+      Cursor cur = mContext.getContentResolver().query(uriSMSURI,
               new String[]{"_id"},
               "thread_id = ? AND type != 2",
               new String[]{threadId},
@@ -303,7 +381,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
           
           ContentValues values = new ContentValues();
           values.put("seen", 2);
-          context.getContentResolver().update(
+          mContext.getContentResolver().update(
                   uriSMSURI,
                   values,
                   "_id = ?",
@@ -342,16 +420,22 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   /**
    * We never want to drop this connection.
    */
-  public void dropConnection() {
+  public void dropConnection(Context context) {
   }
 
   public boolean isMessageDeletable() {
     return true;
   }
-  
+
+  @Override
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
+    Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
+    return null;
+  }
+
   public void deleteThread(String id) {
     Uri uriSMSURI = Uri.parse("content://sms");
-    int deleted = context.getContentResolver().delete(uriSMSURI,
+    int deleted = mContext.getContentResolver().delete(uriSMSURI,
             "thread_id = ?",
             new String[]{id});
     Log.d("rgai", "delete count: " + deleted);
@@ -359,7 +443,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   public void deleteMessage(String id) {
     Uri uriSMSURI = Uri.parse("content://sms");
-    context.getContentResolver().delete(uriSMSURI,
+    mContext.getContentResolver().delete(uriSMSURI,
             "_id = ?",
             new String[]{id});
   }

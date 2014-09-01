@@ -55,9 +55,8 @@ public class AndroidUtils {
 
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {
     if (mp.canBroadcastOnNewMessage() && !isConnectionAlive) {
-      ActiveConnectionConnector connector = new ActiveConnectionConnector(mp,
-          context);
-      connector.executeTask(null);
+      ActiveConnectionConnector connector = new ActiveConnectionConnector(mp, context);
+      connector.executeTask(context, null);
     }
   }
 
@@ -66,7 +65,7 @@ public class AndroidUtils {
         context);
     if (provider != null && provider.isConnectionAlive()) {
       Log.d("rgai", "Igen, dropping connection");
-      provider.dropConnection();
+      provider.dropConnection(context);
     } else {
       Log.d("rgai", "connection is not alive...thats the problem");
     }
@@ -87,9 +86,9 @@ public class AndroidUtils {
   public static MessageProvider getMessageProviderInstanceByAccount(Account account, Context context) {
     MessageProvider mp = null;
     if (account instanceof GmailAccount) {
-      mp = new SimpleEmailMessageProvider((GmailAccount) account);
+      mp = SimpleEmailMessageProvider.getInstance((GmailAccount)account);
     } else if (account instanceof EmailAccount) {
-      mp = new SimpleEmailMessageProvider((EmailAccount) account);
+      mp = SimpleEmailMessageProvider.getInstance((EmailAccount) account);
     } else if (account instanceof FacebookAccount) {
       mp = new FacebookMessageProvider((FacebookAccount) account);
     } else if (account instanceof SmsAccount) {

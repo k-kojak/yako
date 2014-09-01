@@ -2,12 +2,13 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import java.io.Serializable;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class HtmlContent implements Parcelable {
+public class HtmlContent implements Parcelable, Serializable {
 
   public enum ContentType {
     TEXT("text/*"),
@@ -15,7 +16,7 @@ public class HtmlContent implements Parcelable {
     TEXT_HTML("text/html");
     
     private final String mimeType;
-    
+
     ContentType(String mimeType) {
       this.mimeType = mimeType;
     }
@@ -24,9 +25,11 @@ public class HtmlContent implements Parcelable {
       return mimeType;
     }
   };
-  
+
+
   protected StringBuilder content;
   protected ContentType contentType;
+
   
   public static final Parcelable.Creator<HtmlContent> CREATOR = new Parcelable.Creator<HtmlContent>() {
     public HtmlContent createFromParcel(Parcel in) {

@@ -1,6 +1,7 @@
 
 package hu.rgai.yako.workers;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import hu.rgai.yako.handlers.TimeoutHandler;
@@ -8,10 +9,10 @@ import hu.rgai.yako.tools.AndroidUtils;
 
 
 /**
- * This class is an extension of AsyncTask with timeout functionality.
+ * This class is an extension of AsyncTask with onTimeout functionality.
  * 
- * If a timeout is set for the class and the time of execution exceeds the timelimit,
- * .cancel() will be called for the AsyncTask and a .timeout() method will be called 
+ * If a onTimeout is set for the class and the time of execution exceeds the timelimit,
+ * .cancel() will be called for the AsyncTask and a .onTimeout() method will be called
  * on the provided TimeoutHandler (if provided). To handle the cancellation properly 
  * on the thread is the responsibility of the programmer, because calling .cancel() will not
  * stop immediately the thread if it is stucked on the doInBackground method.
@@ -45,7 +46,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
    * 
    * @param params the params to execute
    */
-  public void executeTask(Params[] params) {
+  public void executeTask(final Context context, Params[] params) {
     AndroidUtils.<Params, Progress, Result>startTimeoutAsyncTask(this, params);
     
     if (mTimeout != -1) {
@@ -56,7 +57,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
             TimeoutAsyncTask.this.taskCancelled();
             TimeoutAsyncTask.this.cancel(true);
             if (mTimeoutHandler != null) {
-              mTimeoutHandler.timeout();
+              mTimeoutHandler.onTimeout(context);
             }
           }
         }

@@ -54,8 +54,7 @@ public class LogToJsonConverter {
       record.put(RECORDS_STR, recordsInRecord);
       return record.toString();
     } catch (JSONException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return null;
     }
   }
@@ -80,10 +79,9 @@ public class LogToJsonConverter {
       record.put(DATA_STR, event.toString());
       recordsInRecord.put(record);
     } catch (NoSuchElementException e) {
-      Log.d("willrgai", "nincs ilyen elem");
+      Log.d("willrgai", "nincs ilyen elem", e);
     } catch (JSONException e) {
-      // TODO Auto-generated catch block
-      Log.d("willrgai", "json hiba");
+      Log.d("willrgai", "json hiba", e);
     }
   }
 

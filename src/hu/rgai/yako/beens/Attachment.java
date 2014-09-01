@@ -4,13 +4,15 @@ package hu.rgai.yako.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.yako.workers.AttachmentDownloader;
+import java.io.Serializable;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class Attachment implements Parcelable {
+public class Attachment implements Parcelable, Serializable {
   
+  private long _id;
   private String fileName;
   private long size; // in bytes
   private volatile int mProgress; // in percent
@@ -28,6 +30,7 @@ public class Attachment implements Parcelable {
   };
   
   public Attachment(Parcel in) {
+    _id = in.readLong();
     fileName = in.readString();
     size = in.readLong();
     mProgress = in.readInt();
@@ -35,17 +38,22 @@ public class Attachment implements Parcelable {
   }
   
   public Attachment(String fileName, long size) {
-    this(fileName, size, 0);
+    this(-1, fileName, size, 0);
   }
   
-  public Attachment(String fileName, long size, int progress) {
+  public Attachment(long _id, String fileName, long size, int progress) {
+    this._id = _id;
     this.fileName = fileName;
     this.size = size;
     mAttachmentDownloader = null;
     
     setProgress(progress);
   }
-  
+
+  public long getRawId() {
+    return _id;
+  }
+
   public int getProgress() {
     return mProgress;
   }
@@ -100,6 +108,7 @@ public class Attachment implements Parcelable {
   }
 
   public void writeToParcel(Parcel out ,int flags) {
+    out.writeLong(_id);
     out.writeString(fileName);
     out.writeLong(size);
     out.writeInt(mProgress);

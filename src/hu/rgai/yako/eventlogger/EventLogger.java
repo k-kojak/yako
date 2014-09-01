@@ -7,14 +7,20 @@ import static hu.rgai.yako.eventlogger.Constants.appPackageName;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -29,14 +35,32 @@ import android.util.Log;
 
 public enum EventLogger {
   INSTANCE;
-
+  
   private static final int GPS_AND_PROCCES_LOGGING_WAIT_TIME = 60 * 1000;
 
-  private volatile BufferedWriter bufferedWriter;
+  
+  public enum LogFilePaths {
+    FILE_TO_UPLOAD_PATH(getFullPathToFile("upload_logfile.txt")),
+    FILE_TO_MESSAGES_PATH(getFullPathToFile("messages_logfile.txt"));
+    
+    private final String path;
 
+    /**
+     * @param path
+     */
+    private LogFilePaths(final String path) {
+        this.path = path;
+    }
+
+    @Override
+    public String toString() {
+        return path;
+    }
+  }
+  
+  Map< LogFilePaths, BufferedWriter> fileWriters = new HashMap<LogFilePaths, BufferedWriter>();
+  
   private boolean logFileOpen = false;
-
-  String logFilePath;
 
   long logfileCreatedTime;
 
@@ -63,69 +87,73 @@ public enum EventLogger {
 
   Thread actUploaderThread = null;
 
-  boolean sdCard = false;
+  static boolean sdCard = false;
 
   Set<ArchivedRunningAppProcessInfo> runnedApps = new HashSet<ArchivedRunningAppProcessInfo>();
 
-  public synchronized boolean openLogFile(String logFilePath, boolean isFullPath) {
-
-    File logfile = null;
-    if (isFullPath) {
-      logfile = new File(logFilePath);
+  public static String getFullPathToFile( String path) {
+    
+    if (isSdPresent()) {
+      sdCard = true;
+      return new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), path).getAbsolutePath();
     } else {
-      if (isSdPresent()) {
-        sdCard = true;
-        logfile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), logFilePath);
-      } else {
-        logfile = new File(logFilePath);
-      }
+      return new File(path).getName();
     }
-    this.logFilePath = logfile.getPath();
+  }
+  
+  public synchronized boolean openAllLogFile() {
+    boolean opening = true;
+
+    opening = opening && openLogFile(LogFilePaths.FILE_TO_MESSAGES_PATH);
+    opening = opening && openLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH);
+
+    logFileOpen = opening;
+    return opening;
+  }
+  
+  private synchronized boolean openLogFile(LogFilePaths logFilePath) {
+    File logfile = new File(logFilePath.toString());
     if (logfile.exists()) {
       openExistingLogFile(logFilePath, logfile);
     } else {
       openNotExistingLogfile(logFilePath, logfile);
     }
-
-    logFileOpen = true;
     return true;
   }
 
-  private void openNotExistingLogfile(String logFilePath, File logfile) {
+  private void openNotExistingLogfile(LogFilePaths logFilePath, File logfile) {
     try {
+      BufferedWriter bufferedWriter;
       if (!sdCard)
-        bufferedWriter = new BufferedWriter(new OutputStreamWriter(context.openFileOutput(logFilePath, Context.MODE_PRIVATE)));
+        bufferedWriter = new BufferedWriter( new OutputStreamWriter( context.openFileOutput( logFilePath.toString(), Context.MODE_PRIVATE)));
       else
         bufferedWriter = new BufferedWriter(new FileWriter(logfile));
       logfileCreatedTime = LogToJsonConverter.getCurrentTime();
       bufferedWriter.write(Long.toString(logfileCreatedTime));
       bufferedWriter.newLine();
       bufferedWriter.flush();
+      fileWriters.put( logFilePath, bufferedWriter);
     } catch (IOException e) {
+      Log.d("willrgai", "", e);
       // TODO Auto-generated catch block
-      e.printStackTrace();
     }
   }
 
-  private void openExistingLogFile(String logFilePath, File logfile) {
+  private void openExistingLogFile(LogFilePaths logFilePath, File logfile) {
     try {
+      BufferedWriter bufferedWriter;
       if (!sdCard)
-        bufferedWriter = new BufferedWriter(new OutputStreamWriter(context.openFileOutput(logFilePath, Context.MODE_APPEND)));
+        bufferedWriter = new BufferedWriter(new OutputStreamWriter(context.openFileOutput(logFilePath.toString(), Context.MODE_APPEND)));
       else
         bufferedWriter = new BufferedWriter(new FileWriter(logfile, true));
       logfileCreatedTime = getLogFileCreateDate();
+      fileWriters.put( logFilePath, bufferedWriter);
     } catch (NumberFormatException e) {
-      try {
-        bufferedWriter.close();
-      } catch (IOException e1) {
-        e1.printStackTrace();
-      }
+      Log.d("willrgai", "", e);
       lockedToUpload = true;
-      deleteLogFileAndCreateNew();
-      e.printStackTrace();
+      deleteLogFileAndCreateNew(logFilePath);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
   }
 
@@ -136,7 +164,7 @@ public enum EventLogger {
         pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
         appVersion = pInfo.versionName;
       } catch (NameNotFoundException e) {
-        e.printStackTrace();
+        Log.d("willrgai", "", e);
         appVersion = "not_checked_version";
       }
     }
@@ -148,35 +176,36 @@ public enum EventLogger {
   }
 
   public synchronized boolean closeLogFile() {
-    try {
-      bufferedWriter.close();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+    for (Map.Entry<LogFilePaths, BufferedWriter> entry_fileWriters : fileWriters.entrySet()) {
+      try {
+        entry_fileWriters.getValue().close();
+      } catch (IOException e) {
+        Log.d("willrgai", "", e);
+      }
     }
     return true;
   }
 
-  public synchronized void writeToLogFile(String log, boolean logTimeStamp) {
+  public synchronized void writeToLogFile( LogFilePaths logFilePath, String log, boolean logTimeStamp) {
     if (logTimeStamp) {
-      writeFormatedLogToLogFile(LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
+      writeFormatedLogToLogFile( logFilePath, LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
-      writeFormatedLogToLogFile(log);
+      writeFormatedLogToLogFile( logFilePath, log);
     }
   }
 
-  private void writeFormatedLogToLogFile(String log) {
+  private void writeFormatedLogToLogFile( LogFilePaths logFilePath, String log) {
 //    Log.d("willrgai", log);
+    BufferedWriter bufferedWriter = fileWriters.get(logFilePath);
     if (!lockedToUpload) {
       try {
-        bufferedWriter.write(StringEscapeUtils.escapeJava(log));
+        bufferedWriter.write( StringEscapeUtils.escapeJava(log));
         bufferedWriter.newLine();
         bufferedWriter.flush();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        Log.d( "willrgai", "", e);
       } catch (Exception ex) {
-        ex.printStackTrace();
+        Log.d( "willrgai", "", ex);
       }
     } else {
       tempBufferToUpload.add(StringEscapeUtils.escapeJava(log));
@@ -197,12 +226,13 @@ public enum EventLogger {
 
     runnedApps = runningApps;
     StringBuilder sb = new StringBuilder(String.valueOf(timeStamp));
+    sb.append(SPACE_STR).append(LOGGER_STRINGS.OTHER.RUNNING_APPLICATIONS);
     for (ArchivedRunningAppProcessInfo archivedRunningAppProcessInfo : runnedApps) {
       sb.append(SPACE_STR).append(String.valueOf(archivedRunningAppProcessInfo.uid))
           .append(SPACE_STR).append(archivedRunningAppProcessInfo.processName)
           .append(SPACE_STR).append(archivedRunningAppProcessInfo.importance);
     }
-    writeToLogFile(sb.toString(), false);
+    writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, sb.toString(), false);
   }
 
   private static boolean isSdPresent() {
@@ -212,26 +242,26 @@ public enum EventLogger {
   private synchronized long getLogFileCreateDate() throws NumberFormatException, IOException {
     BufferedReader br;
     if (sdCard)
-      br = new BufferedReader(new FileReader(logFilePath));
+      br = new BufferedReader(new FileReader(LogFilePaths.FILE_TO_UPLOAD_PATH.toString()));
     else
-      br = new BufferedReader(new InputStreamReader(context.openFileInput(logFilePath)));
+      br = new BufferedReader(new InputStreamReader(context.openFileInput(LogFilePaths.FILE_TO_UPLOAD_PATH.toString())));
     String readLine = br.readLine();
     Long dateInMillis = Long.valueOf(readLine);
     br.close();
     return dateInMillis;
   }
 
-  synchronized void deleteLogFileAndCreateNew() {
-    File logfile = new File(logFilePath);
+  synchronized void deleteLogFileAndCreateNew( LogFilePaths logFilePath) {
+    File logfile = new File( logFilePath.toString());
     logfile.delete();
-    openLogFile(logFilePath, true);
-    saveTempBufferToLogFileAndClear();
+    openLogFile( logFilePath);
+    saveTempBufferToLogFileAndClear( logFilePath);
   }
 
-  void saveTempBufferToLogFileAndClear() {
+  void saveTempBufferToLogFileAndClear( LogFilePaths logFilePath) {
     lockedToUpload = false;
     for (String log : tempBufferToUpload) {
-      writeToLogFile(log, false);
+      writeToLogFile(logFilePath, log, false);
     }
     tempBufferToUpload.clear();
   }
@@ -262,6 +292,50 @@ public enum EventLogger {
     h.postDelayed(myRunnable, GPS_AND_PROCCES_LOGGING_WAIT_TIME);
   }
 
+  public void zipMessages() {
+    try {
+      zipFile( LogFilePaths.FILE_TO_MESSAGES_PATH.toString(),  LogFilePaths.FILE_TO_MESSAGES_PATH.toString() +  ".YAKOZIP" + String.valueOf(getLogfileCreatedTime()) );
+      deleteLogFileAndCreateNew(LogFilePaths.FILE_TO_MESSAGES_PATH);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+  }
+  
+  public void zipFile(String inputFilePath, String outputFilePath) throws IOException{
+    FileOutputStream fileOutputStream;
+    if (!sdCard)
+      fileOutputStream = context.openFileOutput(outputFilePath, Context.MODE_PRIVATE);
+    else
+      fileOutputStream = new FileOutputStream(outputFilePath);
+    ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
+
+    File inputFile = new File(inputFilePath);
+
+    ZipEntry zipEntry = new ZipEntry(inputFile.getName());
+    zipOutputStream.putNextEntry(zipEntry);
+    
+    FileInputStream fileInputStream;
+    if (!sdCard)
+      fileInputStream = context.openFileInput( inputFilePath);
+    else
+      fileInputStream = new FileInputStream(inputFile);
+    byte[] buf = new byte[1024];
+    int bytesRead;
+
+    while ((bytesRead = fileInputStream.read(buf)) > 0) {
+        zipOutputStream.write(buf, 0, bytesRead);
+        Log.d("willrgai", String.valueOf(bytesRead));
+    }
+    
+    // close ZipEntry to store the stream to the file
+    zipOutputStream.closeEntry();
+    zipOutputStream.close();
+    fileInputStream.close();
+    
+  }
+  
   public static class LOGGER_STRINGS {
 
     public static class OTHER {
@@ -272,6 +346,7 @@ public enum EventLogger {
       public static final String SENDMESSAGE_STR = "sendmessage";
       public static final String EDITTEXT_WRITE_STR = "edittext_write";
       public static final String MESSAGE_WRITE_FROM_CONTACT_LIST = "message_write_from_contact_list";
+      public static final String RUNNING_APPLICATIONS = "running_applications";
     }
 
     public static class MAINPAGE {
@@ -329,6 +404,8 @@ public enum EventLogger {
     }
 
   }
+
+
 
 }
 

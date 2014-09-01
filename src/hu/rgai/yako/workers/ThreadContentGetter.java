@@ -46,7 +46,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
       FullThreadMessage threadMessage = null;
       try {
         if (account == null) {
-          Log.d("rgai", "account is NULL @ threadContentGetter");
+          Log.d("rgai", "instance is NULL @ threadContentGetter");
         } else {
 //          Log.d("rgai", "Getting thread messages...");
           Class providerClass = Settings.getAccountTypeToMessageProvider().get(account.getAccountType());
@@ -67,7 +67,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 	          
           }
           // cast result to ThreadMessage, since this is a thread displayer
-          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, 20);
+          threadMessage = (FullThreadMessage)mp.getMessage(params[0], offset, Settings.MESSAGE_QUERY_LIMIT);
           for (FullSimpleMessage fsm : threadMessage.getMessages()) {
             fsm.setFrom(Person.searchPersonAndr(context, fsm.getFrom()));
           }
@@ -75,21 +75,21 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 
       // TODO: handle exceptions
       } catch (NoSuchMethodException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (InstantiationException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IllegalAccessException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IllegalArgumentException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (InvocationTargetException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (NoSuchProviderException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (MessagingException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(ThreadDisplayerActivity.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       }
         
       return threadMessage;
@@ -97,7 +97,7 @@ public class ThreadContentGetter extends TimeoutAsyncTask<String, Integer, FullT
 
     @Override
     protected void onPostExecute(FullThreadMessage result) {
-      mHandler.onComplete(true, result, scrollBottomAfterLoad);
+      mHandler.onComplete(account.isInternetNeededForLoad(), true, result, scrollBottomAfterLoad);
     }
     
   }

@@ -1,30 +1,26 @@
 package hu.rgai.yako.workers;
 
 import android.content.Context;
-import android.os.Handler;
+import android.content.Intent;
 import android.widget.Toast;
-import hu.rgai.yako.beens.EmailMessageRecipient;
-import hu.rgai.yako.beens.FacebookMessageRecipient;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
-import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
+import hu.rgai.yako.beens.EmailMessageRecipient;
 import hu.rgai.yako.beens.FacebookAccount;
-import hu.rgai.yako.handlers.MessageSendHandler;
+import hu.rgai.yako.beens.FacebookMessageRecipient;
+import hu.rgai.yako.beens.MessageRecipient;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
+import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
+import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.FacebookMessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.view.activities.MessageReplyActivity;
-import java.io.IOException;
+
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
 
 /**
  * 
@@ -34,24 +30,21 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   private final Context mContext;
   private final MessageRecipient mRecipient;
-  private final MessageSendHandler mHandler;
+  private final SentMessageBroadcastDescriptor mSentMessageData;
   private final Account mFromAccount;
   private final String mContent;
   private final String mSubject;
   // private String recipients;
   
-  private static final int SUCCESS = 0;
-  private static final int FAIL = 1;
 
-
-  public MessageSender(MessageRecipient recipient, Account fromAccount, MessageSendHandler handler,
-          String subject, String content, Context context) {
+  public MessageSender(MessageRecipient recipient, Account fromAccount, SentMessageBroadcastDescriptor sentMessageData,
+          TimeoutHandler timeoutHandler, String subject, String content, Context context) {
     
-    super(handler);
+    super(timeoutHandler);
     
     this.mRecipient = recipient;
     this.mFromAccount = fromAccount;
-    this.mHandler = handler;
+    this.mSentMessageData = sentMessageData;
     this.mSubject = subject;
     this.mContent = content;
     this.mContext = context;
@@ -77,7 +70,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
         recipients.add(new FacebookMessageRecipient(mRecipient.getData()));
       } else if (mRecipient.getType().equals(MessageProvider.Type.EMAIL) || mRecipient.getType().equals(MessageProvider.Type.GMAIL)) {
         publishProgress(mFromAccount.getDisplayName());
-        mp = new SimpleEmailMessageProvider((EmailAccount) mFromAccount);
+        mp = SimpleEmailMessageProvider.getInstance((EmailAccount) mFromAccount);
         recipients = new HashSet<MessageRecipient>();
         recipients.add(new EmailMessageRecipient(mRecipient.getDisplayName(), mRecipient.getData()));
       } else if (mRecipient.getType().equals(MessageProvider.Type.SMS)) {
@@ -86,22 +79,11 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
         recipients.add((MessageRecipient) mRecipient);
       }
       if (mp != null && recipients != null) {
-        try {
-          mp.sendMessage(recipients, mContent, mSubject);
-        } catch (NoSuchProviderException ex) {
-          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-          return FAIL;
-        } catch (MessagingException ex) {
-          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-          return FAIL;
-        } catch (IOException ex) {
-          Logger.getLogger(MessageReplyActivity.class.getName()).log(Level.SEVERE, null, ex);
-          return FAIL;
-        }
+        mp.sendMessage(mContext, mSentMessageData, recipients, mContent, mSubject);
         loggingSendMessage();
       }
     }
-    return SUCCESS;
+    return 0;
   }
 
   private void loggingSendMessage() {
@@ -115,18 +97,18 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     builder.append(mRecipient.getContactId());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(RSAENCODING.INSTANCE.encodingString(mRecipient.getData()));
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);
   }
 
   @Override
   protected void onPostExecute(Integer resultCode) {
-    if (mHandler != null) {
-      if (resultCode == SUCCESS) {
-        mHandler.success(mRecipient.getDisplayName());
-      } else {
-        mHandler.fail(mRecipient.getDisplayName());
-      }
-    }
+//    if (mHandler != null) {
+//      if (resultCode == SENT) {
+//        mHandler.success(mRecipient.getDisplayName());
+//      } else {
+//        mHandler.fail(mRecipient.getDisplayName());
+//      }
+//    }
   }
 
   @Override

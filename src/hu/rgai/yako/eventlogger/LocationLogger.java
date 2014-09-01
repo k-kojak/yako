@@ -1,5 +1,6 @@
 package hu.rgai.yako.eventlogger;
 
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
@@ -53,7 +54,7 @@ public class LocationLogger implements LocationListener {
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
   }
 
@@ -69,15 +70,15 @@ public class LocationLogger implements LocationListener {
     }
     if ((gpsLocation != null) && (networkLocation != null)) {
       if (gpsLocation.getAccuracy() > networkLocation.getAccuracy())
-        EventLogger.INSTANCE.writeToLogFile(getFormatedLocationString(gpsLocation), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(gpsLocation), true);
       else
-        EventLogger.INSTANCE.writeToLogFile(getFormatedLocationString(networkLocation), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(networkLocation), true);
     } else {
       if (gpsLocation != null) {
-        EventLogger.INSTANCE.writeToLogFile(getFormatedLocationString(gpsLocation), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(gpsLocation), true);
       }
       if (networkLocation != null) {
-        EventLogger.INSTANCE.writeToLogFile(getFormatedLocationString(networkLocation), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(networkLocation), true);
       }
     }
   }

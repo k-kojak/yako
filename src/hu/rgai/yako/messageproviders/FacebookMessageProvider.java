@@ -12,10 +12,11 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.tools.IntentParamStrings;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -159,15 +160,16 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                           from = recipients.get(0);
                         }
                         messages.add(new MessageListElement(
-                            msg.getString("thread_id"),
-                            seen,
-                            snippet,
-                            unreadCount,
-                            from,
-                            recipients,
-                            new Date(msg.getLong("updated_time") * 1000),
-                            account,
-                            MessageProvider.Type.FACEBOOK));
+                                msg.getString("thread_id"),
+                                seen,
+                                snippet,
+                                unreadCount,
+                                0,
+                                from,
+                                recipients,
+                                new Date(msg.getLong("updated_time") * 1000),
+                                account,
+                                MessageProvider.Type.FACEBOOK));
                       }
                     } else if (resSetName.equals("friend")) {
                       JSONArray userArr = new JSONArray(resSet);
@@ -197,11 +199,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     }
                   }
                 } catch (Throwable t) {
-                  t.printStackTrace();
+                 Log.d("rgai", "", t);
                 }
               }
-            } else {
-              Log.d("rgai", "RESPONSE IS NULL");
             }
           }
         });
@@ -254,8 +254,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   MainServiceExtraParams eParams = new MainServiceExtraParams();
                   eParams.setAccount(account);
                   eParams.setForceQuery(true);
-
-                  service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+                  service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
                   context.sendBroadcast(service);
 
                 }
@@ -265,13 +264,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         });
 
       } catch (XMPPException e) {
-        Log.d("rgai", "XMPP connection failed:");
+        Log.d("rgai", "XMPP connection failed:", e);
         xmpp.disconnect();
-        e.printStackTrace();
       } catch (Exception k) {
-        k.printStackTrace();
-        System.out.println(k);
-        System.out.println("HIBAA");
+        Log.d("rgai", "XMPP connection failed", k);
       }
     }
   }
@@ -307,81 +303,78 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 
     Session session = Session.getActiveSession();
     Request request = new Request(
-        session,
-        "/fql",
-        params,
-        HttpMethod.GET,
-        new Request.Callback() {
-          @Override
-          public void onCompleted(Response response) {
-            if (response != null) {
-              if (response.getGraphObject() != null) {
-                try {
-                  GraphObject go = response.getGraphObject();
-                  JSONObject jso = go.getInnerJSONObject();
-                  JSONArray arr = jso.getJSONArray("data");
+            session,
+            "/fql",
+            params,
+            HttpMethod.GET,
+            new Request.Callback() {
+              public void onCompleted(Response response) {
+                if (response != null) {
+                  if (response.getGraphObject() != null) {
+                    try {
+                      GraphObject go = response.getGraphObject();
+                      JSONObject jso = go.getInnerJSONObject();
+                      JSONArray arr = jso.getJSONArray("data");
 
-                  // loop through result sets
-                  // TODO: we should first collect the persons, that would more
-                  // efficient
-                  for (int i = 0; i < (arr.length()); i++) {
-                    JSONObject resultSet = arr.getJSONObject(i);
-                    String resSetName = resultSet.getString("name");
-                    String resSet = resultSet.getString("fql_result_set");
-                    if (resSetName.equals("msgs")) {
-                      JSONArray msgArr = new JSONArray(resSet);
+                      // loop through result sets
+                      // TODO: we should first collect the persons, that would more efficient
+                      for (int i = 0; i < (arr.length()); i++) {
+                        JSONObject resultSet = arr.getJSONObject(i);
+                        String resSetName = resultSet.getString("name");
+                        String resSet = resultSet.getString("fql_result_set");
+                        if (resSetName.equals("msgs")) {
+                          JSONArray msgArr = new JSONArray(resSet);
 
-                      // loop through messages
-                      for (int j = 0; j < msgArr.length(); j++) {
-                        JSONObject msg = msgArr.getJSONObject(j);
+                          // loop through messages
+                          for (int j = 0; j < msgArr.length(); j++) {
+                            JSONObject msg = msgArr.getJSONObject(j);
 
-                        // building list item title
-                        // int unreadCount = msg.getInt("unread");
-                        String body = msg.getString("body");
+                            // building list item title
+//                    int unreadCount = msg.getInt("unread");
+                            String body = msg.getString("body");
 
-                        ftm.addMessage(new FullSimpleMessage(
-                            msg.getString("message_id"),
-                            "",
-                            new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
-                            new Date(msg.getLong("created_time") * 1000),
-                            new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
-                            msg.getString("author_id").equals(account.getId()),
-                            MessageProvider.Type.FACEBOOK,
-                            null));
-                      }
-                    } else if (resSetName.equals("friend")) {
-                      JSONArray userArr = new JSONArray(resSet);
-                      // loop through friends
-                      for (int j = 0; j < userArr.length(); j++) {
-                        JSONObject user = userArr.getJSONObject(j);
-                        // matching friend names to messages by id
-                        for (FullSimpleMessage ma : ftm.getMessages()) {
-                          if (ma.getFrom().getId().equals(user.getString("uid"))) {
-                            ma.getFrom().setName(user.getString("name"));
-                            ma.getFrom().setSecondaryName(user.getString("username"));
+                            ftm.addMessage(new FullSimpleMessage(
+                                    -1,
+                                    msg.getString("message_id"),
+                                    "",
+                                    new HtmlContent(body, HtmlContent.ContentType.TEXT_PLAIN),
+                                    new Date(msg.getLong("created_time") * 1000),
+                                    new Person(msg.getString("author_id"), null, MessageProvider.Type.FACEBOOK),
+                                    msg.getString("author_id").equals(account.getId()),
+                                    MessageProvider.Type.FACEBOOK,
+                                    null));
+                          }
+                        } else if (resSetName.equals("friend")) {
+                          JSONArray userArr = new JSONArray(resSet);
+                          // loop through friends
+                          for (int j = 0; j < userArr.length(); j++) {
+                            JSONObject user = userArr.getJSONObject(j);
+                            // matching friend names to messages by id
+                            for (FullSimpleMessage ma : ftm.getMessages()) {
+                              if (ma.getFrom().getId().equals(user.getString("uid"))) {
+                                ma.getFrom().setName(user.getString("name"));
+                                ma.getFrom().setSecondaryName(user.getString("username"));
 
+                              }
+                            }
                           }
                         }
                       }
+                    } catch (Throwable t) {
+                      Log.d("rgai", "", t);
                     }
                   }
-                } catch (Throwable t) {
-                  t.printStackTrace();
                 }
               }
-            } else {
-              Log.d("rgai", "RESPONSE IS NULL");
-            }
-          }
-        });
+            });
     Request.executeAndWait(request);
 
     return ftm;
   }
 
   @Override
-  public void sendMessage(Set<? extends MessageRecipient> to, String content, String subject) throws
-      NoSuchProviderException, MessagingException, IOException {
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
+          String content, String subject) {
 
     ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
 
@@ -390,37 +383,51 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     config.setRosterLoadedAtLogin(true);
     config.setSendPresence(false);
 
+    boolean success = true;
+    
     if (xmpp == null || !xmpp.isConnected()) {
-      // TODO: show notification if connection was unsuccessful and message was
-      // not sent!
+       // TODO: show notification if connection was unsuccessful and message was not sent!
       try {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(account.getUniqueName(), account.getPassword());
       } catch (XMPPException e) {
+        Log.d("rgai", "", e);
         xmpp.disconnect();
-        e.printStackTrace();
-        return;
+        success = false;
       } catch (Exception e) {
-        e.printStackTrace();
-        return;
+        success = false;
       }
     }
 
-    for (MessageRecipient mr : to) {
-      FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
+    if (success) {
+      for (MessageRecipient mr : to) {
+        if (!success) {
+          break;
+        }
+        FacebookMessageRecipient fmr = (FacebookMessageRecipient) mr;
 
-      String toStr = fmr.getId() + "@chat.facebook.com";
-      // Log.d("rgai", "SENDING MESSAGE TO: " + toStr);
-      Chat chat = xmpp.getChatManager().createChat(toStr, null);
-
-      try {
-        chat.sendMessage(content);
-      } catch (XMPPException e) {
-        e.printStackTrace();
+        String toStr = fmr.getId() + "@chat.facebook.com";
+  //      Log.d("rgai", "SENDING MESSAGE TO: " + toStr);
+        Chat chat = xmpp.getChatManager().createChat(toStr, null);
+        
+        try {
+          chat.sendMessage(content);
+        } catch (XMPPException e) {
+          Log.d("rgai", "", e);
+          success = false;
+        } catch (IllegalStateException ex) {
+          Log.d("rgai", "", ex);
+          success = false;
+        }
       }
-
     }
+    
+    
+    
+    MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
+            success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
+    
   }
 
   public void onClickPickQuery() {
@@ -481,10 +488,9 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                 Log.i("FONTOS", "Nincs adat!");
               }
 
-            } catch (JSONException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-            }
+        } catch (JSONException e) {
+          Log.d("rgai", "", e);
+        }
 
           }
         });
@@ -526,11 +532,10 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
 
   @Override
   public String toString() {
-    return "FacebookMessageProvider{" + "account=" + account + '}';
+    return "FacebookMessageProvider{" + "instance=" + account + '}';
   }
 
-  @Override
-  public void dropConnection() {
+  public void dropConnection(Context context) {
     if (isConnectionAlive()) {
       xmpp.disconnect();
       xmpp = null;
@@ -548,6 +553,11 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
+  public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
+    Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
+    return null;
+  }
+
   public void deleteThread(String id) {
     // we cannot delete facebook messages through API
   }

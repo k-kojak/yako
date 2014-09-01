@@ -1,5 +1,7 @@
 package hu.rgai.yako.eventlogger.rsa;
 
+import android.util.Log;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -32,17 +34,13 @@ public enum RSAENCODING {
       cypher = Cipher.getInstance( "RSA/ECB/NoPadding");
       cypher.init( Cipher.ENCRYPT_MODE, publicKey);
     } catch (InvalidKeySpecException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     } catch (NoSuchPaddingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     } catch (InvalidKeyException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
 
   }
@@ -55,14 +53,11 @@ public enum RSAENCODING {
     try {
       return new String( cypher.doFinal( log.getBytes( "utf-8")));
     } catch (IllegalBlockSizeException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     } catch (BadPaddingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
     return null;
   }

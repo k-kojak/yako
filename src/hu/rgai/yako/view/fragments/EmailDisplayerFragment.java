@@ -34,7 +34,7 @@ public class EmailDisplayerFragment extends Fragment {
 
   private FullSimpleMessage mContent = null;
   
-  // account which used to fetch email (if necessary)
+  // instance which used to fetch email (if necessary)
   private Account mAccount;
   
   private MessageListElement mMessage;
@@ -78,8 +78,8 @@ public class EmailDisplayerFragment extends Fragment {
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
         if (url.startsWith("mailto:")) {
           Intent intent = new Intent(EmailDisplayerFragment.this.getActivity(), MessageReplyActivity.class);
-          intent.putExtra("account", (Parcelable) mAccount);
-          intent.putExtra("from", mFrom);
+          intent.putExtra("instance", (Parcelable) mAccount);
+          intent.putExtra("from", (Parcelable)mFrom);
           startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         } else {
           Intent i = new Intent(Intent.ACTION_VIEW);
@@ -99,7 +99,7 @@ public class EmailDisplayerFragment extends Fragment {
    * Displays the message.
    */
   private void displayMessage() {
-    Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom.getContactId()).getBitmap();
+    Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom).getBitmap();
     ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));

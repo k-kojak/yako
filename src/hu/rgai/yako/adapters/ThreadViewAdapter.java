@@ -41,6 +41,13 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 	}
 
   @Override
+  public void clear() {
+    if (messages != null) {
+      messages.clear();
+    }
+  }
+
+  @Override
 	public int getCount() {
 		return this.messages.size();
 	}
@@ -71,7 +78,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
 
 		
-//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, account.getAccountType(), coment.getFrom().getId());
+//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, instance.getAccountType(), coment.getFrom().getId());
 //    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
 		TextView msgBubble = (TextView) row.findViewById(R.id.comment);
@@ -123,7 +130,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
         smallTopPadding = true;
       } else {
         iv.setVisibility(View.VISIBLE);
-        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId()).getBitmap();
+        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom()).getBitmap();
         if (img == null) {
           img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
         }

@@ -128,19 +128,18 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
       constructor = recipientClass.getConstructor(String.class, String.class, String.class, Uri.class, int.class);
       ri = (MessageRecipient) constructor.newInstance(displayData, data, name, photoUri, Integer.parseInt(id));
     } catch (NoSuchMethodException ex) {
-      Log.d("rgai", "NoSuchMethodException");
+      Log.d("rgai", "NoSuchMethodException", ex);
     } catch (InstantiationException ex) {
-      Log.d("rgai", "instantiationException");
+      Log.d("rgai", "instantiationException", ex);
     } catch (IllegalAccessException ex) {
-      Log.d("rgai", "IllegalAccessException");
+      Log.d("rgai", "IllegalAccessException", ex);
     } catch (IllegalArgumentException ex) {
-      Log.d("rgai", "IllegalArgumentException");
+      Log.d("rgai", "IllegalArgumentException", ex);
     } catch (InvocationTargetException ex) {
       if(ri == null) {
         Log.d("rgai", "ri == null");
       }
-      ex.printStackTrace();
-      Log.d("rgai", "InvocationTargetException");
+      Log.d("rgai", "InvocationTargetException", ex);
     }
     if (ri != null) {
       ((AutoCompleteRow)view).setRecipient(ri);
@@ -237,7 +236,8 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 //    String[] projection = null;
     //TODO: Select dataKinds by Settings.java
-    String selection = "UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
+    String selection = " ( UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
+            + " OR " + "UPPER(" + ContactsContract.Data.DATA1 + ") LIKE ? )"
             + " AND LENGTH(" + ContactsContract.Data.DATA1 +") != 0 "
             + " AND ("
             + ContactsContract.Data.MIMETYPE + " = ?"
@@ -253,6 +253,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 
     String[] selectionArgs = new String[] {
+            "%"+ searchString +"%",
             "%"+ searchString +"%",
             ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
             ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,

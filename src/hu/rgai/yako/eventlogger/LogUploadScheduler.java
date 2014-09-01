@@ -1,6 +1,7 @@
 package hu.rgai.yako.eventlogger;
 
 import android.content.Context;
+import android.util.Log;
 import hu.rgai.yako.tools.AndroidUtils;
 
 public enum LogUploadScheduler {
@@ -67,24 +68,22 @@ class LogUploader implements Runnable {
         try {
           Thread.sleep(defaultWaitTimeInMilliSecondum - elapsedTimeSinceLogCreated);
         } catch ( InterruptedException e ) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          Log.d("willrgai", "", e);
         }
       } else {
         if ( !AndroidUtils.isNetworkAvailable(c) ) {
           try {
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch ( InterruptedException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Log.d("willrgai", "", e);
           }
         } else {
           try {
             EventLogger.INSTANCE.uploadLogsAndCreateNewLogfile(c);
+            EventLogger.INSTANCE.zipMessages();
             Thread.sleep(waitTimeAfterDefaultWaitTimeInMilliSecondum);
           } catch ( InterruptedException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Log.d("willrgai", "", e);
           }
         }
 

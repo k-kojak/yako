@@ -2,6 +2,7 @@ package hu.rgai.yako.eventlogger;
 
 import static hu.rgai.yako.eventlogger.Constants.SERVLET_URL;
 import static hu.rgai.yako.eventlogger.Constants.SPACE_STR;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.android.test.R;
 
@@ -81,15 +82,14 @@ class Uploader implements Runnable {
     EventLogger.INSTANCE.lockedToUpload = true;
     try {
       if (uploadLogsToServer(context)) {
-        EventLogger.INSTANCE.deleteLogFileAndCreateNew();
+        EventLogger.INSTANCE.deleteLogFileAndCreateNew( LogFilePaths.FILE_TO_UPLOAD_PATH );
       } else {
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.LOG_UPLOAD.UPLOAD_FAILED_STR, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.LOG_UPLOAD.UPLOAD_FAILED_STR, true);
       }
     } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
     }
-    EventLogger.INSTANCE.saveTempBufferToLogFileAndClear();
+    EventLogger.INSTANCE.saveTempBufferToLogFileAndClear( LogFilePaths.FILE_TO_UPLOAD_PATH );
   }
 
   public synchronized boolean uploadLogsToServer(Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
@@ -123,16 +123,13 @@ class Uploader implements Runnable {
       httpPost.setEntity(httpContactListEntity);
       response = getNewHttpClient().execute(httpPost);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     } catch (ClientProtocolException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      Log.d("willrgai", "", e);
       return false;
     }
 
@@ -252,9 +249,9 @@ class Uploader implements Runnable {
     List<String> logList = new ArrayList<String>();
     BufferedReader br;
     if (EventLogger.INSTANCE.sdCard)
-      br = new BufferedReader(new FileReader(EventLogger.INSTANCE.logFilePath));
+      br = new BufferedReader(new FileReader( LogFilePaths.FILE_TO_UPLOAD_PATH.toString() ));
     else
-      br = new BufferedReader(new InputStreamReader(context.openFileInput(EventLogger.INSTANCE.logFilePath)));
+      br = new BufferedReader(new InputStreamReader(context.openFileInput( LogFilePaths.FILE_TO_UPLOAD_PATH.toString())));
     String readedLine;
     br.readLine();
     while ((readedLine = br.readLine()) != null) {
@@ -284,13 +281,13 @@ class Uploader implements Runnable {
 
       return new DefaultHttpClient(ccm, params);
     } catch (Exception e) {
+      Log.d("willrgai", "", e);
       return new DefaultHttpClient();
     } finally {
       try {
         inputStream.close();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        Log.d("willrgai", "", e);
       }
     }
   }

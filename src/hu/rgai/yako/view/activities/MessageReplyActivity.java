@@ -1,13 +1,16 @@
 package hu.rgai.yako.view.activities;
 
+import static android.app.Activity.RESULT_OK;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
@@ -41,31 +44,34 @@ import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
+import hu.rgai.yako.beens.SimpleSentMessageData;
+import hu.rgai.yako.beens.SentMessageData;
 import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.beens.SmsMessageRecipient;
+import hu.rgai.yako.beens.SmsSentMessageData;
+import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.handlers.MessageSendHandler;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
+import hu.rgai.yako.handlers.TimeoutHandler;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.FullMessageDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.TreeSet;
+import java.util.*;
+
 import net.htmlparser.jericho.Source;
 
 /**
@@ -94,7 +100,7 @@ public class MessageReplyActivity extends ActionBarActivity {
   @Override
   public void onBackPressed() {
     Log.d("willrgai", EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MESSAGE_REPLY.MESSAGE_REPLY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -117,31 +123,35 @@ public class MessageReplyActivity extends ActionBarActivity {
     mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
-    
-    
+
+
     if (getIntent().getExtras() != null) {
-      if (getIntent().getExtras().containsKey(IntentParamStrings.MESSAGE_ID)) {
-        String msgId = getIntent().getExtras().getString(IntentParamStrings.MESSAGE_ID);
-        Account acc = getIntent().getExtras().getParcelable(IntentParamStrings.MESSAGE_ACCOUNT);
-        mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
+//        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+//        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
+        long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
+        TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+        mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
         if (mMessage != null) {
           mAccount = mMessage.getAccount();
         }
-        if (mMessage.getFullMessage() != null && mMessage.getFullMessage() instanceof FullSimpleMessage) {
-          mFullMessage = (FullSimpleMessage) mMessage.getFullMessage();
-          mSubject.setText(mFullMessage.getSubject());
-        }
+        TreeSet<FullSimpleMessage> fullMessage = FullMessageDAO.getInstance(this).getFullSimpleMessages(this,
+                mMessage.getRawId());
+        mFullMessage = fullMessage.first();
+        mSubject.setText(mFullMessage.getSubject());
       }
-      if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)) {
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)) {
         NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notManager.cancel(Settings.NOTIFICATION_NEW_MESSAGE_ID);
-        // mMessage shouldn be null here...
+        // mMessage shouldnt be null here...
         if (mMessage != null) {
-          YakoApp.setMessageSeenAndReadLocally(mMessage);
+          // TODO: check if message is set to read remotely in this case or not
+          MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-          MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider,
-                  new TreeSet<MessageListElement>(Arrays.asList(new MessageListElement[]{mMessage})), true, null);
-          marker.executeTask(null);
+          TreeSet<String> messagesToMark = new TreeSet<String>();
+          messagesToMark.add(mMessage.getId());
+          MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
+          marker.executeTask(this, null);
         }
         
       }
@@ -154,12 +164,10 @@ public class MessageReplyActivity extends ActionBarActivity {
 
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
-        // TODO Auto-generated method stub
       }
 
       @Override
       public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        // TODO Auto-generated method stub
       }
 
       @Override
@@ -167,10 +175,9 @@ public class MessageReplyActivity extends ActionBarActivity {
         if (isCharCountVisible) {
           mCharCount.setText(AndroidUtils.getCharCountStringForSMS(mContent.getText().toString()));
         }
-        // TODO Auto-generated method stub
         Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
                 + "null" + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     });
@@ -259,7 +266,7 @@ public class MessageReplyActivity extends ActionBarActivity {
 
   private void processImplicitIntent(Intent intent) {
     try {
-      EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.OTHER.MESSAGE_WRITE_FROM_CONTACT_LIST, true);
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.OTHER.MESSAGE_WRITE_FROM_CONTACT_LIST, true);
       String uri = URLDecoder.decode(intent.getDataString(), "UTF-8");
       String[] uriParts = uri.split(":");
       if (uriParts.length > 1) {
@@ -275,10 +282,10 @@ public class MessageReplyActivity extends ActionBarActivity {
         }
       }
     } catch (UnsupportedCharsetException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       Toast.makeText(this, getString(R.string.unsupported_encoding), Toast.LENGTH_LONG).show();
     } catch (UnsupportedEncodingException ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
       Toast.makeText(this, getString(R.string.unsupported_charset), Toast.LENGTH_LONG).show();
     }
   }
@@ -347,7 +354,6 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     mChoosenAccountsToSend.add(from);
     
-//    List<MessageRecipient> to = recipients.getRecipients();
     String content = mContent.getText().toString().trim();
     String subject = null;
     if (mSubject.getVisibility() == View.VISIBLE) {
@@ -362,73 +368,71 @@ public class MessageReplyActivity extends ActionBarActivity {
       content += source.getRenderer().toString();
     }
     
-    MessageSendHandler handler = new MessageSendHandler() {
-      public void success(String name) {
-        displayNotification(true, name);
-      }
-
-      public void fail(String name) {
-        displayNotification(false, name);
-      }
-
-      private void displayNotification(boolean success, String to) {
-
-        String ticker = success ? "Message sent" : "Sending failed";
-        String title = success ? "Message sent to" : "Failed to send message to:";
-
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(MessageReplyActivity.this)
-                .setSmallIcon(R.drawable.not_ic_action_email)
-                .setTicker(ticker)
-                .setContentTitle(title)
-                .setContentText(to);
-        mBuilder.setAutoCancel(true);
-        mNotificationManager.notify(Settings.NOTIFICATION_SENT_MESSAGE_ID, mBuilder.build());
-
-        if (success) {
-          new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-              NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-              mNotificationManager.cancel(Settings.NOTIFICATION_SENT_MESSAGE_ID);
-            }
-          }, 5000);
-        }
-      }
-    };
     
-    MessageSender rs = new MessageSender(recipient, from, handler, subject, content, this);
-    rs.executeTask(null);
-      
+    // setting intent data for handling returning result
+    SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(SimpleMessageSentBroadcastReceiver.class,
+            IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    SentMessageData smd = getSentMessageDataToAccount(recipient.getDisplayName(), from);
+    sentMessBroadcD.setMessageData(smd);
+    
+    
+    MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
+            new TimeoutHandler() {
+              @Override
+              public void onTimeout(Context context) {
+                Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+              }
+            },
+            subject, content, this);
+    
+    rs.setTimeout(20000);
+    rs.executeTask(this, null);
     
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
-      // request a message list for the account we sent the message with
-      int threadAccountCount = 0;
-      Account threadAccount = null;
-      for (Account a : mChoosenAccountsToSend) {
-        if (a.isThreadAccount()) {
-          threadAccountCount++;
-          threadAccount = a;
-        }
-      }
-      Log.d("rgai", "thread account count: " + threadAccountCount);
-      Log.d("rgai", "thread account: " + threadAccount);
-      if (!mChoosenAccountsToSend.isEmpty()) {
-        MainServiceExtraParams eParams = new MainServiceExtraParams();
-        if (threadAccountCount == 1) {
-          eParams.setAccount(threadAccount);
-        }
-        eParams.setForceQuery(true);
-        Intent intent = new Intent(this, MainScheduler.class);
-        intent.setAction(Context.ALARM_SERVICE);
-        intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
-        this.sendBroadcast(intent);
-      }
+      // request a message list for the instance we sent the message with
+//      int threadAccountCount = 0;
+//      Account threadAccount = null;
+//      for (Account a : mChoosenAccountsToSend) {
+//        if (a.isThreadAccount()) {
+//          threadAccountCount++;
+//          threadAccount = a;
+//        }
+//      }
+//      Log.d("rgai", "thread instance count: " + threadAccountCount);
+//      Log.d("rgai", "thread instance: " + threadAccount);
+//      if (!mChoosenAccountsToSend.isEmpty()) {
+//        Log.d("rgai", "sending request to get messages");
+//        MainServiceExtraParams eParams = new MainServiceExtraParams();
+//        if (threadAccountCount == 1) {
+//          eParams.setAccount(threadAccount);
+//        }
+//        eParams.setForceQuery(true);
+//        Intent intent = new Intent(this, MainScheduler.class);
+//        intent.setAction(Context.ALARM_SERVICE);
+//        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+//        this.sendBroadcast(intent);
+//      }
       finish();
     } else {
       prepareMessageSending(recipients);
+    }
+  }
+  
+  private SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
+  
+    if (from.getAccountType().equals(MessageProvider.Type.SMS)) {
+      SmsSentMessageData smsData = new SmsSentMessageData(recipientName);
+      if (from.isThreadAccount()) {
+        smsData.setAccountToLoad(from);
+      }
+      return smsData;
+    } else {
+      SimpleSentMessageData simpleData = new SimpleSentMessageData(recipientName);
+      if (from.isThreadAccount()) {
+        simpleData.setAccountToLoad(from);
+      }
+      return simpleData;
     }
   }
 
@@ -436,14 +440,12 @@ public class MessageReplyActivity extends ActionBarActivity {
 
     if (recipients.isEmpty()) return;
     
-    TreeSet<Account> accs = YakoApp.getAccounts(this);
+    TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 
     MessageRecipient ri = recipients.remove(0);
     List<Account> availableAccounts = new LinkedList<Account>();
-    Iterator<Account> accIt = accs.iterator();
 
-    while (accIt.hasNext()) {
-      Account actAcc = accIt.next();
+    for (Account actAcc : accounts) {
       if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
               && (actAcc.getAccountType().equals(MessageProvider.Type.EMAIL)
               || actAcc.getAccountType().equals(MessageProvider.Type.GMAIL)))
@@ -455,7 +457,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
     if (availableAccounts.isEmpty()) {
       Toast.makeText(this,
-              "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " account required for that.",
+              "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " instance required for that.",
               Toast.LENGTH_LONG).show();
     } else if (availableAccounts.size() == 1) {
       sendMessage(ri, availableAccounts.get(0), recipients);

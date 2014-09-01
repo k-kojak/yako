@@ -18,6 +18,9 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,6 +50,8 @@ public class StoreHandler {
   private static final String DATE_FORMAT = "EEE MMM dd kk:mm:ss z yyyy";
   private static final String LAST_NOTIFICATION_DATES_FILENAME = "yako_lastNotDatesFile";
   private static final String SELECTED_FILTER_ACCOUNT = "selected_filter_account";
+  private static final String MAIN_MESSAGE_LIST = "main_message_list";
+  private static final String IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED = "IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED";
   
   public static class SystemSettings {
     
@@ -67,6 +72,21 @@ public class StoreHandler {
       Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_VIBRATION, true);
       return not;
     }
+  }
+  
+  
+  public static TreeSet<MessageListElement> getCurrentMessageList(Context context) {
+    Object o = readObject(context, MAIN_MESSAGE_LIST);
+    if (o != null) {
+      return (TreeSet<MessageListElement>)o;
+    } else {
+      return null;
+    }
+  }
+  
+  
+  public static synchronized void saveCurrentMessageList(Context context, TreeSet<MessageListElement> messages) {
+    writeObject(context, messages, MAIN_MESSAGE_LIST);
   }
   
   
@@ -113,15 +133,15 @@ public class StoreHandler {
         oos.writeObject(object);
         oos.flush();
       } catch (FileNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } finally {
         try {
           oos.close();
           fos.close();
         } catch (IOException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
     }
@@ -130,6 +150,15 @@ public class StoreHandler {
       if (destFile.exists()) {
         destFile.delete();
       }
+    }
+  }
+
+
+  private static void deleteFileIfExists(Context context, String file) {
+    Log.d("rgai3", "DELETING FILE, BECAUSE WE HAD AN EXCEPTION WITH IT: " + file);
+    File destFile = new File(context.getCacheDir(), file);
+    if (destFile.isFile()) {
+      destFile.delete();
     }
   }
   
@@ -149,20 +178,21 @@ public class StoreHandler {
         ois.close();
         fis.close();
       } catch (FileNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (OptionalDataException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } catch (IOException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
+        deleteFileIfExists(context, file);
       } catch (ClassNotFoundException ex) {
-        Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+        Log.d("rgai", "", ex);
       } finally {
         try {
           ois.close();
         } catch (IOException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         } catch (NullPointerException ex) {
-          Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
+          Log.d("rgai", "", ex);
         }
       }
     }
@@ -205,13 +235,35 @@ public class StoreHandler {
         in.close();
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("rgai", "", e);
     }
     
     return data;
   }
-  
-  
+
+
+  /**
+   * At some point, the storage of accounts at shared preferences was replaced by database store, at that point
+   * the accounts were lost. Thats why at this version we display a message about this issue, but only once...
+   *
+   * @param context
+   * @return
+   */
+  public static boolean isMessageForDatabaseSorryDisplayed(Context context) {
+    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
+    boolean displayed = prefs.getBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, false);
+    return displayed;
+  }
+
+
+  public static void setIsMessageForDatabaseSorryDisplayed(Context context) {
+    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.putBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, true);
+    editor.commit();
+  }
+
+
   public static boolean saveByteArrayToDownloadFolder(Context context, byte[] data, String fileName) {
     return saveByteArray(context, data, null, fileName);
   }
@@ -242,7 +294,7 @@ public class StoreHandler {
       outs.write(data);
       outs.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      Log.d("rgai", "", e);
     }
     return true;
   }
@@ -297,152 +349,10 @@ public class StoreHandler {
       token = new SimpleDateFormat(DATE_FORMAT).parse(prefs.getString(context.getString(R.string.settings_fb_access_token_exp_date),
               new Date(token.getTime() + 1000L * 3600L * 24L * 365L).toString()));
     } catch (ParseException ex) {
+      Log.d("rgai", "", ex);
 //      Logger.getLogger(StoreHandler.class.getName()).log(Level.SEVERE, null, ex);
     }
     return token;
   }
-  
-  
-  public static void modifyAccount(Context context, Account oldAccount, Account newAccount) throws Exception {
-    TreeSet<Account> accounts = getAccounts(context);
-    if (accounts.contains(oldAccount)) {
-      accounts.remove(oldAccount);
-      accounts.add(newAccount);
-      saveAccounts(accounts, context);
-    }
-  }
-  
-  
-  public static void removeAccount(Context context, Account account) throws Exception {
-//    Log.d("rgai", "REMOVING ACCOUNT: " + account);
-    TreeSet<Account> accounts = getAccounts(context);
-    if (accounts.contains(account)) {
-      accounts.remove(account);
-      saveAccounts(accounts, context);
-    }
-  }
-  
-  public static void addAccount(Context context, Account account) throws Exception {
-    TreeSet<Account> accounts = getAccounts(context);
-    if (!accounts.contains(account)) {
-      accounts.add(account);
-      saveAccounts(accounts, context);
-    }
-  }
-  
 
-  public static void saveAccounts(TreeSet<Account> accounts, Context context) throws Exception {
-    Log.d("rgai", "save accounts at store: " + accounts);
-    removeAccountSettings(context);
-    int i = 0;
-    SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = prefs.edit();
-    int sms = 0;
-    for (Account a : accounts) {
-      // skip saving SMS account
-      if (a.getAccountType().equals(MessageProvider.Type.SMS)) {
-        sms = 1;
-        continue;
-      }
-      
-      if (a.getAccountType() == MessageProvider.Type.GMAIL) {
-        GmailAccount ga = (GmailAccount) a;
-        editor.putString(context.getString(R.string.settings_accounts_item_type) + "_" + i, context.getString(R.string.account_name_gmail));
-        editor.putString(context.getString(R.string.settings_accounts_item_name) + "_" + i, ga.getEmail());
-        editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, ga.getPassword());
-        editor.putString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, ga.getImapAddress());
-        editor.putString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, ga.getSmtpAddress());
-      } else if (a.getAccountType() == MessageProvider.Type.FACEBOOK) {
-        FacebookAccount fa = (FacebookAccount) a;
-        editor.putString(context.getString(R.string.settings_accounts_item_type) + "_" + i, context.getString(R.string.account_name_facebook));
-        editor.putString(context.getString(R.string.settings_accounts_item_name) + "_" + i, fa.getDisplayName());
-        editor.putString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, fa.getUniqueName());
-        editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, fa.getPassword());
-        editor.putString(context.getString(R.string.settings_accounts_item_id) + "_" + i, fa.getId());
-      } else if (a.getAccountType() == MessageProvider.Type.EMAIL) {
-        EmailAccount ea = (EmailAccount) a;
-        editor.putString(context.getString(R.string.settings_accounts_item_type) + "_" + i, context.getString(R.string.account_name_simplemail));
-        editor.putString(context.getString(R.string.settings_accounts_item_name) + "_" + i, ea.getEmail());
-        editor.putString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, ea.getPassword());
-        editor.putString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, ea.getImapAddress());
-        editor.putString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, ea.getSmtpAddress());
-        editor.putBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, ea.isSsl());
-      } else {
-        throw new Exception("Unsupported account type: " + a.getAccountType());
-      }
-      i++;
-    }
-    editor.putInt(context.getString(R.string.settings_accounts_size), accounts.size() - sms);
-    editor.commit();
-    
-    // reload accounts at application
-    YakoApp.setAccounts(accounts);
-  }
-  
-  
-  private static void removeAccountSettings(Context context) throws Exception {
-    SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
-    int amount = prefs.getInt(context.getString(R.string.settings_accounts_size), -1);
-    SharedPreferences.Editor editor = prefs.edit();
-    for (int i = 0; i < amount; i++) {
-      String type = prefs.getString(context.getString(R.string.settings_accounts_item_type) + "_" + i, null);
-      if (type.equals(context.getString(R.string.account_name_gmail))) {
-        editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_name) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_imap) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_smtp) + "_" + i);
-      } else if (type.equals(context.getString(R.string.account_name_facebook))) {
-        editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_name) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_id) + "_" + i);
-      } else if (type.equals(context.getString(R.string.account_name_simplemail))) {
-        editor.remove(context.getString(R.string.settings_accounts_item_type) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_name) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_pass) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_imap) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_smtp) + "_" + i);
-        editor.remove(context.getString(R.string.settings_accounts_item_ssl) + "_" + i);
-      } else {
-        throw new Exception("Unsupported account type: " + type);
-      }
-    }
-    editor.commit();
-  }
-  
-   
-  public static TreeSet<Account> getAccounts(Context context) {
-    TreeSet<Account> accounts = new TreeSet<Account>();
-    SharedPreferences prefs = context.getSharedPreferences(context.getString(R.string.settings_accounts), Context.MODE_PRIVATE);
-    int amount = prefs.getInt(context.getString(R.string.settings_accounts_size), -1);
-    for (int i = 0; i < amount; i++) {
-      String type = prefs.getString(context.getString(R.string.settings_accounts_item_type) + "_" + i, "");
-      if (type.equals(context.getString(R.string.account_name_gmail))) {
-        String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
-        String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
-        accounts.add(new GmailAccount(email, pass));
-      } else if (type.equals(context.getString(R.string.account_name_facebook))) {
-        String displayName = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
-        String uniqueName = prefs.getString(context.getString(R.string.settings_accounts_item_unique_name) + "_" + i, null);
-        String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
-        String id = prefs.getString(context.getString(R.string.settings_accounts_item_id) + "_" + i, null);
-        accounts.add(new FacebookAccount(displayName, uniqueName, id, pass));
-      } else if (type.equals(context.getString(R.string.account_name_simplemail))) {
-        String email = prefs.getString(context.getString(R.string.settings_accounts_item_name) + "_" + i, null);
-        String pass = prefs.getString(context.getString(R.string.settings_accounts_item_pass) + "_" + i, null);
-        String imap = prefs.getString(context.getString(R.string.settings_accounts_item_imap) + "_" + i, null);
-        String smtp = prefs.getString(context.getString(R.string.settings_accounts_item_smtp) + "_" + i, null);
-        boolean ssl = prefs.getBoolean(context.getString(R.string.settings_accounts_item_ssl) + "_" + i, true);
-        accounts.add(new EmailAccount(email, pass, imap, smtp, ssl));
-      } else {
-        Toast.makeText(context, "Unsupported account type: " + type, Toast.LENGTH_LONG);
-      }
-    }
-    if (YakoApp.isPhone) {
-      accounts.add(SmsAccount.account);
-    }
-    return accounts;
-  }
 }

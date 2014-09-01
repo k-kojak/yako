@@ -29,12 +29,15 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 import com.facebook.widget.ProfilePictureView;
+
 import hu.rgai.yako.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.FacebookAccount;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +67,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -90,7 +93,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
               try {
               setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
               } catch (Exception ex) {
-                Logger.getLogger(FacebookSettingActivity.class.getName()).log(Level.SEVERE, null, ex);
+                Log.d("rgai", "", ex);
               }
             } else {
 //              ErrorLog.dumpLogcat(FacebookSettingActivity.this, ErrorLog.Reason.FB_CONTACT_SYNC, 200, null, "GraphUser IS null, getting friend list");
@@ -137,8 +140,8 @@ public class FacebookSettingActivity extends ActionBarActivity {
     password = (EditText)findViewById(R.id.password);
     
     Bundle b = getIntent().getExtras();
-    if (b != null && b.getParcelable("account") != null) {
-      oldAccount = (FacebookAccount)b.getParcelable("account");
+    if (b != null && b.getParcelable("instance") != null) {
+      oldAccount = (FacebookAccount)b.getParcelable("instance");
       setFieldsByAccount(oldAccount);
     }
     
@@ -253,7 +256,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
       } else {
         Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this);
-        integrator.executeTask(new String[]{user.getId()});
+        integrator.executeTask(this, new String[]{user.getId()});
       }
     } else {
       Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();
@@ -314,12 +317,12 @@ public class FacebookSettingActivity extends ActionBarActivity {
     Intent resultIntent = new Intent();
     resultIntent.putExtra("new_account", (Parcelable)newAccount);
     
-    // If editing account, then old account exists
+    // If editing instance, then old instance exists
     if (oldAccount != null) {
       resultIntent.putExtra("old_account", (Parcelable)oldAccount);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY, resultIntent);
     }
-    // If new account...
+    // If new instance...
     else {
       resultIntent.putExtra("old_account", false);
       setResult(Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW, resultIntent);

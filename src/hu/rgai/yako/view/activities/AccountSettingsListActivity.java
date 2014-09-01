@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
@@ -20,20 +21,25 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+
 import com.facebook.Session;
+
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
+
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -56,7 +62,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
@@ -67,32 +73,23 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 //      stillAddingFacebookAccount = false;
       return;
     }
-//    Log.d("rgai", "ON RESUME");
     setContentView(R.layout.main);
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
-    TreeSet<Account> accounts = null;
-    try {
-      accounts = YakoApp.getAccounts(this);
-      Log.d("rgai", accounts.toString());
-    } catch (Exception ex) {
-      // TODO: handle exception
-      ex.printStackTrace();
-      Log.d("rgai", "TODO: handle exception");
-    }
+    int accountCount = AccountDAO.getInstance(this).getAccountCount();
 
-    if (accounts == null || accounts.isEmpty()) {
+    if (accountCount == 0) {
       showAccountTypeChooser();
     } else {
       ListView lv = (ListView) findViewById(R.id.list);
-      AccountListAdapter adapter = new AccountListAdapter(this, accounts);
+      AccountListAdapter adapter = new AccountListAdapter(this, AccountDAO.getInstance(this).getAllAccountsCursor());
       lv.setAdapter(adapter);
       lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View arg1, int itemIndex, long arg3) {
 
-          Account account = (Account) av.getItemAtPosition(itemIndex);
+          Account account = AccountDAO.cursorToAccount((Cursor) av.getItemAtPosition(itemIndex));
           
           if (account.getAccountType().equals(MessageProvider.Type.SMS)) return;
 
@@ -105,7 +102,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
           }
           Intent i = new Intent(AccountSettingsListActivity.this, classToLoad);
 
-          i.putExtra("account", (Parcelable) account);
+          i.putExtra("instance", (Parcelable) account);
           startActivityForResult(i, Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT);
 
         }
@@ -156,38 +153,40 @@ public class AccountSettingsListActivity extends ActionBarActivity {
       Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
       // thrown when someone else returns here, and not facebook
     } catch (RuntimeException ex) {
-      Log.d("rgai", "catching FB exception");
-      ex.printStackTrace();
+      Log.d("rgai", "catching FB exception", ex);
     }
     
     if (requestCode == Settings.ActivityRequestCodes.ACCOUNT_SETTING_RESULT) {
       stillAddingFacebookAccount = false;
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
-          Account newAccount = (Account) data.getParcelableExtra("new_account");
-          StoreHandler.addAccount(this, newAccount);
+          Account newAccount = data.getParcelableExtra("new_account");
+          AccountDAO.getInstance(this).addAccount(newAccount);
+          Log.d("rgai3", "NEW ACCOUNT SAVED ");
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
-          Account oldAccount = (Account) data.getParcelableExtra("old_account");
-          Account newAccount = (Account) data.getParcelableExtra("new_account");
-          
-          StoreHandler.modifyAccount(this, oldAccount, newAccount);
-          
-          getMessagesToNewAccount(newAccount, this);
+          Account oldAccount = data.getParcelableExtra("old_account");
+          Account newAccount = data.getParcelableExtra("new_account");
+
+          // TODO: only run code below if any change really made on accounts (pass, name, other, etc.)
+
+//          YakoApp.removeMessages(oldAccount);
+          AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
+
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
+          getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
-          StoreHandler.removeAccount(this, (Account) data.getParcelableExtra("old_account"));
-          YakoApp.removeMessagesToAccount(oldAccount);
+          AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
+//          YakoApp.removeMessages(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
           // do nothing
         }
       } catch (Exception ex) {
-        ex.printStackTrace();
         // TODO: handle exception
-        Log.d("rgai", "TODO: handle exception");
+        Log.d("rgai", "Unknown exception", ex);
       }
     }
   }
@@ -199,7 +198,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setAccount(account);
     eParams.setForceQuery(true);
-    service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     
     this.sendBroadcast(service);
   }
@@ -207,10 +206,10 @@ public class AccountSettingsListActivity extends ActionBarActivity {
   private void showAccountTypeChooser() {
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Choose account type");
+    builder.setTitle("Choose instance type");
 
     String[] items;
-    fbAdded = YakoApp.isFacebookAccountAdded(this);
+    fbAdded = AccountDAO.getInstance(this).isFacebookAccountAdded();
     if (fbAdded) {
       items = new String[]{getString(R.string.account_name_gmail), getString(R.string.account_name_infemail),
         getString(R.string.account_name_simplemail)};

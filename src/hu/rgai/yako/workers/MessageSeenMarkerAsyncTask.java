@@ -2,9 +2,9 @@
 package hu.rgai.yako.workers;
 
 import android.util.Log;
-import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,12 +12,12 @@ import java.util.logging.Logger;
 public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Void, Boolean> {
 
   private MessageProvider mProvider = null;
-  private TreeSet<MessageListElement> mMessagesToMark = null;
+  private TreeSet<String> mMessagesToMark = null;
   private final boolean mSeen;
   private MessageSeenMarkerHandler mHandler = null;
   
   
-  public MessageSeenMarkerAsyncTask(MessageProvider messageProvider, TreeSet<MessageListElement> messagesToMark, boolean seen,
+  public MessageSeenMarkerAsyncTask(MessageProvider messageProvider, TreeSet<String> messagesToMark, boolean seen,
           MessageSeenMarkerHandler handler) {
     
     super(handler);
@@ -34,14 +34,14 @@ public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Vo
     
     String[] ids = new String[mMessagesToMark.size()];
     int i = 0;
-    for (MessageListElement mle : mMessagesToMark) {
-      ids[i++] = mle.getId();
+    for (String messageId : mMessagesToMark) {
+      ids[i++] = messageId;
     }
     
     try {
       mProvider.markMessagesAsRead(ids, mSeen);
     } catch (Exception ex) {
-      Logger.getLogger(MessageSeenMarkerAsyncTask.class.getName()).log(Level.SEVERE, null, ex);
+      Log.d("rgai", "", ex);
       return false;
     }
     return true;
@@ -52,7 +52,7 @@ public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Vo
   protected void onBatchedPostExecute(Boolean success) {
     if (mHandler != null) {
       if (success) {
-        mHandler.success(mMessagesToMark, mSeen);
+        mHandler.success();
       } else {
         mHandler.toastMessage("Unable to mark message status.");
       }

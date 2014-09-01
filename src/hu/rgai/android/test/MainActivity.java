@@ -1,12 +1,13 @@
 package hu.rgai.android.test;
 
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.content.res.Configuration;
+import android.database.Cursor;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -17,21 +18,20 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+
+import hu.rgai.yako.eventlogger.AccelerometerListener;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.adapters.MainListDrawerFilterAdapter;
@@ -41,21 +41,27 @@ import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.view.activities.AccountSettingsListActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
+
 import java.util.Date;
+import java.util.TreeMap;
 import java.util.TreeSet;
+
 
 /**
  * @author Tamas Kojedzinszky
@@ -73,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
   private Menu mMenu;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
+  private TreeMap<Long, Account> mAccountsLongKey = null;
   
   
 
@@ -98,13 +105,16 @@ public class MainActivity extends ActionBarActivity {
     setUpAndRegisterScreenReceiver();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
-      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+      EventLogger.INSTANCE.openAllLogFile();
     }
-    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH , APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
     }
+//    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+//    sensorManager.registerListener(new AccelerometerListener(),
+//    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     
     
     
@@ -124,7 +134,7 @@ public class MainActivity extends ActionBarActivity {
     
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    setContent(YakoApp.hasMessages() ? true : null);
+    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
@@ -181,24 +191,26 @@ public class MainActivity extends ActionBarActivity {
     mDrawerLayout.setDrawerListener(mDrawerToggle);
     
   }
-  
- 
+
+
   @Override
   protected void onResume() {
     super.onResume();
     is_activity_visible = true;
     removeNotificationIfExists();
+
+    mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
     
     // setting filter adapter onResume, because it might change at settings panel
-    TreeSet<Account> accounts = YakoApp.getAccounts(this);
+    TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mDrawerList.setAdapter(mDrawerFilterAdapter);
     int indexOfAccount = 0;
     if (actSelectedFilter != null) {
-      // +1 needed because 0th element in adapter is "all account"
+      // +1 needed because 0th element in adapter is "all instance"
       indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
-      // the saved selected account is not available anymore...
+      // the saved selected instance is not available anymore...
       if (indexOfAccount == -1) {
         actSelectedFilter = null;
       }
@@ -211,12 +223,9 @@ public class MainActivity extends ActionBarActivity {
     setTitleByFilter();
     
     
-    // notify the adapter if any change happened
-    if (mFragment != null) {
-      mFragment.notifyAdapterChange();
-    }
-    
-    
+
+
+
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
@@ -241,6 +250,19 @@ public class MainActivity extends ActionBarActivity {
     refreshLoadingIndicatorState();
     
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
+
+
+    if (!StoreHandler.isMessageForDatabaseSorryDisplayed(this)) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+          StoreHandler.setIsMessageForDatabaseSorryDisplayed(MainActivity.this);
+        }
+      });
+      builder.setTitle("Backend changes");
+      builder.setMessage("Due to a bigger code refactor, your account settings are lost.\n" +
+              "Please set them again and apologize for the inconvenience.").show();
+    }
   }
   
   @Override
@@ -273,7 +295,7 @@ public class MainActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -282,19 +304,22 @@ public class MainActivity extends ActionBarActivity {
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT) {
-      if (data != null && data.hasExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION)) {
-        boolean refreshNeeded = data.getBooleanExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, false);
+      if (data != null && data.hasExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED)) {
+        boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
-          Account a = data.getParcelableExtra(Settings.Intents.ACCOUNT);
+          Account a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setForceQuery(true);
           eParams.setAccount(a);
           eParams.setQueryOffset(0);
-          eParams.setQueryLimit(YakoApp.getFilteredMessages(a).size());
-          intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+
+          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
+          long accountId = accountsAccountKey.get(a);
+          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountId));
+          intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
 //          Log.d("rgai", "refresh not .... needed!!!!!");
@@ -310,6 +335,12 @@ public class MainActivity extends ActionBarActivity {
     } else {
       getSupportActionBar().setTitle("Filter on");
     }
+
+    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+    sensorManager.registerListener(new AccelerometerListener(),
+            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+    
+    
   }
   
   
@@ -349,7 +380,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    service.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
   }
   
@@ -456,17 +487,17 @@ public class MainActivity extends ActionBarActivity {
     Intent intent;
     switch (item.getItemId()) {
       case R.id.accounts:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
         intent = new Intent(this, AccountSettingsListActivity.class);
         startActivity(intent);
         return true;
       case R.id.message_send_new:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
         intent = new Intent(this, MessageReplyActivity.class);
         startActivity(intent);
         return true;
       case R.id.refresh_message_list:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
 
         reloadMessages(true);
         return true;
@@ -551,7 +582,7 @@ public class MainActivity extends ActionBarActivity {
   /**
    * Sending request to load messages.
    * 
-   * @param forceQuery true if load every message's account false otherwise
+   * @param forceQuery true if load every message's instance false otherwise
    */
   private void reloadMessages(boolean forceQuery) {
     refreshLoadingIndicatorState();
@@ -564,7 +595,7 @@ public class MainActivity extends ActionBarActivity {
     if (actSelectedFilter != null) {
       eParams.setAccount(actSelectedFilter);
     }
-    intent.putExtra(IntentParamStrings.EXTRA_PARAMS, eParams);
+    intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
   
@@ -582,7 +613,7 @@ public class MainActivity extends ActionBarActivity {
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
-        MainActivity.this.setContent(YakoApp.hasMessages());
+        MainActivity.this.setContent(MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount() != 0);
       }
     }
   }
@@ -606,8 +637,15 @@ public class MainActivity extends ActionBarActivity {
       }
       
       // run query for selected filter only if list is empty OR selected all accounts
+
+      long accountId = -1;
+      if (actSelectedFilter != null) {
+        TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
+        accountId = accountsAccountKey.get(actSelectedFilter);
+      }
+
       if (actSelectedFilter == null
-              || actSelectedFilter != null && YakoApp.getFilteredMessages(actSelectedFilter).isEmpty()) {
+              || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
         reloadMessages(false);
       }
     }
@@ -634,13 +672,14 @@ public class MainActivity extends ActionBarActivity {
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition < lastVisiblePosition; actualVisiblePosition++) {
         if (adapter.getItem(actualVisiblePosition) != null) {
-          builder.append(((MessageListElement) (adapter.getItem(actualVisiblePosition))).getId());
+          Cursor cursor = (Cursor)adapter.getItem(actualVisiblePosition);
+          MessageListElement mle = MessageListDAO.cursorToMessageListElement(cursor, mAccountsLongKey);
+          builder.append(mle.getId());
           builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
         }
       }
     } catch (Exception ex) {
-      Log.d("willrgai", "NULL POINTER EXCEPTION CATCHED");
-      ex.printStackTrace();
+      Log.d("rgai", "NULL POINTER EXCEPTION CATCHED", ex);
     }
 
   }
@@ -653,7 +692,7 @@ public class MainActivity extends ActionBarActivity {
       appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
     }
     Log.d("willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
   }
   
   private void setUpAndRegisterScreenReceiver() {
@@ -665,13 +704,17 @@ public class MainActivity extends ActionBarActivity {
     screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON);
     registerReceiver(screenReceiver, screenIntentFilter);
   }
+
+  private SensorManager sensorManager;
+
+
   
   private static final String APPLICATION_START_STR = "application:start";
   private Thread.UncaughtExceptionHandler defaultUEH;
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
-      EventLogger.INSTANCE.writeToLogFile("uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
       // re-throw critical exception further to the os (important)
       defaultUEH.uncaughtException(thread, ex);
     }

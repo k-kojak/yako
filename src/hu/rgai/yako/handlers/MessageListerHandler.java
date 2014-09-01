@@ -1,6 +1,8 @@
+// TODO: mergeMessages performance issue
+// TODO: tie attachment downloading thread to message item
 package hu.rgai.yako.handlers;
 
-import static hu.rgai.yako.workers.MessageListerAsyncTask.OK;
+import android.util.Log;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -8,22 +10,20 @@ import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
+import hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
+import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.store.StoreHandler;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
-import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
 
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import android.app.KeyguardManager;
 import android.app.NotificationManager;
@@ -50,6 +50,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
   public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
 
+
   public MessageListerHandler(Context context, MainServiceExtraParams extraParams, String accountDisplayName) {
     mContext = context;
     mExtraParams = extraParams;
@@ -57,77 +58,47 @@ public class MessageListerHandler extends TimeoutHandler {
   }
 
   @Override
-  public void timeout() {
+  public void onTimeout(Context context) {
     if (mExtraParams.isForceQuery() || mExtraParams.isLoadMore()) {
-      Toast.makeText(mContext, "Connection timeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
+      Toast.makeText(mContext, "Connection onTimeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
     }
   }
 
-  public void finished(MessageListResult messageResult, boolean loadMore, int result, String errorMessage) {
+
+  public void finished(MessageListResult messageResult, int exceptionCode, String errorMessage) {
     int newMessageCount = 0;
     if (errorMessage != null) {
-      showErrorMessage(result, errorMessage);
+      showErrorMessage(exceptionCode, errorMessage);
     }
-    if (result == OK) {
-      MessageListElement[] newMessages = messageResult.getMessages().toArray(new MessageListElement[messageResult.getMessages().size()]);
+
+    if (messageResult != null) {
       MessageListResult.ResultType resultType = messageResult.getResultType();
 
-      /*
-       * if NO_CHANGE or ERROR, then just return, we do not have to merge
-       * because messages is probably empty anyway...
-       */
-      if (resultType.equals(MessageListResult.ResultType.NO_CHANGE) || resultType.equals(MessageListResult.ResultType.ERROR)) {
+
+      if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
+        notifyUIaboutMessageChange();
         return;
       }
 
-      /*
-       * If new message packet comes from Facebook, and newMessages contains
-       * groupMessages, send a broadcast so the group Facebook chat is notified
-       * about the new messages.
-       */
-      if (newMessages != null) {
-        boolean sendBC = false;
-        for (int i = 0; i < newMessages.length; i++) {
-          MessageListElement m = newMessages[i];
-          if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
-            sendBC = true;
-            break;
-          }
-        }
-        if (sendBC) {
-          Intent i = new Intent(Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE);
-          mContext.sendBroadcast(i);
-        }
-      }
-
-      this.mergeMessages(newMessages, loadMore, resultType);
       MessageListElement lastUnreadMsg = null;
-
       Set<Account> accountsToUpdate = new HashSet<Account>();
 
-      // itt mindig vegig iteral az osszes elemen, az osszes provider
-      // lekerdezesekor, ezert 5x is puttyog ha van 1 olvasatlan uzenet
-      // ES az utolso figyelmeztetes hangja regire van allitva: azaz frissen
-      // inditottuk az alkalmazast
-      // CSAK azokra az accountokra kellene nezni a feltetelt amit eppen
-      // lekerdeztunk
-
-      // csak akkor szivatodik itt meg a rendszer, ha a JOVOBOL kapunk
-      // uzenetet....!!!!!!!!!!!!
-      for (MessageListElement mle : YakoApp.getMessages()) {
-        if (mle.equals(ThreadDisplayerActivity.actViewingMessage)) {
-          mle.setSeen(true);
-          mle.setUnreadCount(0);
-        }
-        Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
-        if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
-          if (lastUnreadMsg == null) {
-            lastUnreadMsg = mle;
+      if (messageResult.getMessages() != null) {
+        for (MessageListElement mle : messageResult.getMessages()) {
+          Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
+          if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
+            if (lastUnreadMsg == null) {
+              lastUnreadMsg = mle;
+            }
+            newMessageCount++;
+            accountsToUpdate.add(mle.getAccount());
           }
-          newMessageCount++;
-          accountsToUpdate.add(mle.getAccount());
         }
+      } else {
+        Log.d("rgai", "messageResult.getMessages() is somehow null here, result type is: " + resultType,
+                new NullPointerException("messageResult.getMessages() is null"));
       }
+
       for (Account a : accountsToUpdate) {
         YakoApp.updateLastNotification(a, mContext);
       }
@@ -135,11 +106,18 @@ public class MessageListerHandler extends TimeoutHandler {
         builNotification(newMessageCount, lastUnreadMsg);
       }
 
-      Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
-      LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
+      notifyUIaboutMessageChange();
+//      Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
     }
-
   }
+
+
+  private void notifyUIaboutMessageChange() {
+    Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
+    LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
+  }
+
+
 
   private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
     YakoApp.setLastNotifiedMessage(lastUnreadMsg);
@@ -164,7 +142,7 @@ public class MessageListerHandler extends TimeoutHandler {
 
         Bitmap largeIcon;
         if (lastUnreadMsg.getFrom() != null) {
-          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom().getContactId()).getBitmap();
+          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom()).getBitmap();
         } else {
           largeIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.group_chat);
         }
@@ -196,21 +174,28 @@ public class MessageListerHandler extends TimeoutHandler {
         if (newMessageCount == 1) {
           Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
           resultIntent = new Intent(mContext, classToLoad);
-          resultIntent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
-          resultIntent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+          resultIntent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
+//          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
           stackBuilder.addParentStack(MainActivity.class);
         } else {
           resultIntent = new Intent(mContext, MainActivity.class);
         }
-        resultIntent.putExtra(IntentParamStrings.FROM_NOTIFIER, true);
+        resultIntent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(resultPendingIntent);
+
+        long msgRawId = -1;
+        if (newMessageCount == 1) {
+          msgRawId = lastUnreadMsg.getRawId();
+        }
+        setDeleteIntent(mContext, mBuilder, lastUnreadMsg.getRawId());
+
         mBuilder.setAutoCancel(true);
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
-            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
+                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
       }
       // if main activity visible: only play sound
       else {
@@ -223,160 +208,27 @@ public class MessageListerHandler extends TimeoutHandler {
     }
   }
 
+
+  private void setDeleteIntent(Context context, NotificationCompat.Builder mBuilder, long msgRawId) {
+    Intent i = new Intent(IntentStrings.Actions.DELETE_INTENT);
+    i.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, msgRawId);
+    PendingIntent pi = PendingIntent.getBroadcast(context, DeleteIntentBroadcastReceiver.DELETE_INTENT_REQ_CODE,
+            i, PendingIntent.FLAG_UPDATE_CURRENT);
+    mBuilder.setDeleteIntent(pi);
+  }
+
+
   private void notificationButtonHandling(MessageListElement lastUnreadMsg,
-      NotificationCompat.Builder mBuilder) {
+                                          NotificationCompat.Builder mBuilder) {
 
     Intent intent = new Intent(mContext, MessageReplyActivity.class);
-    intent.putExtra(IntentParamStrings.MESSAGE_ID, lastUnreadMsg.getId());
-    intent.putExtra(IntentParamStrings.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
-    intent.putExtra(IntentParamStrings.FROM_NOTIFIER, true);
+//    intent.putExtra(IntentStrings.Params.MESSAGE_ID, lastUnreadMsg.getId());
+//    intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
+    intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
+    intent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
     PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     mBuilder.addAction(R.drawable.ic_action_reply, "Reply", pIntent);
 
-  }
-
-  /**
-   * 
-   * @param newMessages
-   *          the list of new messages
-   * @param loadMoreRequest
-   *          true if result of "load more" action, false otherwise, which means
-   *          this is a refresh action
-   */
-  private void mergeMessages(MessageListElement[] newMessages, boolean loadMoreRequest,
-      MessageListResult.ResultType resultType) {
-    // TODO: optimize message merge
-    synchronized (YakoApp.getMessages()) {
-      for (MessageListElement newMessage : newMessages) {
-        boolean contains = false;
-        MessageListElement storedFoundMessage = null;
-        // .contains not work, because the date of new item != date of old item
-        // and
-        // tree search does not return a valid value
-        // causes problem at thread type messages like Facebook
-
-        for (MessageListElement storedMessage : YakoApp.getMessages()) {
-          if (storedMessage.equals(newMessage)) {
-            contains = true;
-            storedFoundMessage = storedMessage;
-          }
-        }
-        if (!contains) {
-
-          YakoApp.getMessages().add(newMessage);
-          if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
-              || (ThreadDisplayerActivity.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
-            loggingNewMessageArrived(newMessage, true);
-          } else {
-            loggingNewMessageArrived(newMessage, false);
-          }
-        } else {
-
-          // only update old messages' flags with the new one, and nothing else
-          if (newMessage.isUpdateFlags()) {
-            // Log.d("rgai3", "update flags..");
-            if (storedFoundMessage != null) {
-              storedFoundMessage.setSeen(newMessage.isSeen());
-              storedFoundMessage.setUnreadCount(newMessage.getUnreadCount());
-            }
-          } else {
-            // Log.d("rgai3", "NOT update flags..");
-            MessageListElement itemToRemove = null;
-            for (MessageListElement oldMessage : YakoApp.getMessages()) {
-              if (newMessage.equals(oldMessage)) {
-                // Log.d("rgai3", "IGEN, equals..");
-                // first updating person info anyway..
-                oldMessage.setFrom(newMessage.getFrom());
-
-                /**
-                 * "Marking" FB message seen here. Do not change info of the
-                 * item, if the date is the same, so the queried data will not
-                 * override the displayed object. Facebook does not mark
-                 * messages as seen when opening them, so we have to handle it
-                 * at client side. OR if we check the message at FB, then turn
-                 * it seen at the app
-                 * 
-                 * plus if newmessage is BEFORE the oldMessage's date, thats ok,
-                 * because if you delete the last element, then the
-                 * "new element" is older than the old one
-                 */
-                if (newMessage.getDate().after(oldMessage.getDate()) || newMessage.isSeen() && !oldMessage.isSeen()
-                    || newMessage.getDate().before(oldMessage.getDate())) {
-                  itemToRemove = oldMessage;
-                  break;
-                }
-              }
-            }
-            if (itemToRemove != null) {
-              YakoApp.getMessages().remove(itemToRemove);
-              YakoApp.getMessages().add(newMessage);
-            }
-          }
-        }
-      }
-
-      // checking for deleted messages here
-      if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
-        deleteMergeMessages(newMessages);
-      }
-
-    }
-
-  }
-
-  private void deleteMergeMessages(MessageListElement[] newMessages) {
-    if (newMessages.length > 0) {
-      TreeSet<MessageListElement> msgs = YakoApp.getFilteredMessages(newMessages[0].getAccount());
-
-      SortedSet<MessageListElement> messagesToRemove;
-      // if (!providerSupportsUID) {
-      // messagesToRemove = new TreeSet<MessageListElement>(new
-      // Comparator<MessageListElement>() {
-      // public int compare(MessageListElement lhs, MessageListElement rhs) {
-      // if (lhs.getFrom().getId().equals(rhs.getFrom().getId()) &&
-      // lhs.getDate().equals(rhs.getDate())) {
-      // return 0;
-      // } else {
-      // return lhs.getDate().compareTo(rhs.getDate());
-      // }
-      // }
-      // });
-      // messagesToRemove.addAll(msgs.headSet(newMessages[newMessages.length -
-      // 1]));
-      // } else {
-      messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
-      // }
-
-      for (int i = 0; i < newMessages.length; i++) {
-        if (messagesToRemove.contains(newMessages[i])) {
-          messagesToRemove.remove(newMessages[i]);
-        }
-      }
-      for (MessageListElement mle : messagesToRemove) {
-        YakoApp.getMessages().remove(mle);
-      }
-    }
-  }
-
-  private void loggingNewMessageArrived(MessageListElement mle, boolean messageIsVisible) {
-    if (mle.getDate().getTime() > EventLogger.INSTANCE.getLogfileCreatedTime()) {
-      String fromID = mle.getFrom() == null ? mle.getRecipientsList() == null ? "NULL" : mle.getRecipientsList().get(0).getId() : mle.getFrom().getId();
-      StringBuilder builder = new StringBuilder();
-      builder.append(mle.getDate().getTime());
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.NEW_MESSAGE_STR);
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(mle.getId());
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(ThreadDisplayerActivity.actViewingMessage == null ? "null" : ThreadDisplayerActivity.actViewingMessage.getId());
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(messageIsVisible);
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(mle.getMessageType());
-      builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-      builder.append(RSAENCODING.INSTANCE.encodingString(fromID));
-      EventLogger.INSTANCE.writeToLogFile(builder.toString(), false);
-    }
   }
 
   private void showErrorMessage(int result, String message) {

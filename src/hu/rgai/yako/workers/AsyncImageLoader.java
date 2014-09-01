@@ -2,19 +2,22 @@
 package hu.rgai.yako.workers;
 
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.AsyncImageLoadProvider;
+import hu.rgai.yako.beens.Person;
+
 import java.lang.ref.WeakReference;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class AsyncImageLoader extends AsyncTask<Long, Void, BitmapResult> {
+public class AsyncImageLoader extends AsyncTask<Person, Void, BitmapResult> {
 
   private WeakReference<ImageView> mImageView;
   private AsyncImageLoadProvider mLoadProvider;
@@ -26,12 +29,19 @@ public class AsyncImageLoader extends AsyncTask<Long, Void, BitmapResult> {
   }
   
   @Override
-  protected BitmapResult doInBackground(Long... ids) {
+  protected BitmapResult doInBackground(Person... person) {
     // if task was stopped while waiting in thread pool
     if (!running) {
       return null;
     }
-    return mLoadProvider.getBitmap(ids[0]);
+    Person p = null;
+    if (person != null && person.length > 0) {
+      p = person[0];
+    }
+    long s = System.currentTimeMillis();
+    BitmapResult bmr = mLoadProvider.getBitmap(p);
+//    Log.d("rgai", "time to get bitmap: " + (System.currentTimeMillis() - s) + " ms");
+    return bmr;
   }
 
   @Override
@@ -44,10 +54,7 @@ public class AsyncImageLoader extends AsyncTask<Long, Void, BitmapResult> {
     running = false;
   }
   
-  public synchronized boolean isRunning() {
-    return running;
-  }
-  
+
   public synchronized void stop() {
     running = false;
   }

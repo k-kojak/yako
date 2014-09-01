@@ -3,9 +3,8 @@ package hu.rgai.yako.tools;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
+
 import org.ocpsoft.prettytime.PrettyTime;
 
 /**
@@ -25,6 +24,30 @@ public class Utils {
     
     
     return sb.toString();
+  }
+
+  public static String joinString(String[] values, String glue) {
+    return joinString(new ArrayList<String>(Arrays.asList(values)), glue);
+  }
+
+  public static String joinString(Collection<String> coll, String glue) {
+    if (coll == null) {
+      return null;
+    } else if (coll.size() == 0) {
+      return "";
+    } else {
+      StringBuilder sb = new StringBuilder();
+      int i = 0;
+      for (String s : coll) {
+        if (i > 0) {
+          sb.append(glue);
+        }
+        sb.append(s);
+        i++;
+      }
+
+      return sb.toString();
+    }
   }
   
   public static String getPrettyFileSize(long bytes) {

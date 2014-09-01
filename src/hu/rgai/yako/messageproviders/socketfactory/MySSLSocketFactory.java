@@ -1,5 +1,7 @@
 package hu.rgai.yako.messageproviders.socketfactory;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -21,7 +23,7 @@ public class MySSLSocketFactory extends SSLSocketFactory {
               new java.security.SecureRandom());
       factory = (SSLSocketFactory) sslcontext.getSocketFactory();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "", ex);
     }
   }
 
@@ -47,6 +49,10 @@ public class MySSLSocketFactory extends SSLSocketFactory {
   public Socket createSocket(String s, int i, InetAddress inaddr, int j)
           throws IOException {
     return factory.createSocket(s, i, inaddr, j);
+  }
+
+  public Socket createSocket( ) throws IOException {
+    return factory.createSocket();
   }
 
   public Socket createSocket(String s, int i) throws IOException {

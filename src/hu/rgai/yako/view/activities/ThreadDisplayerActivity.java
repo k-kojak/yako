@@ -14,11 +14,9 @@ import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
-import hu.rgai.yako.handlers.MessageSendHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.tools.IntentParamStrings;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
@@ -42,19 +40,15 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextMenu;
+import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
@@ -68,6 +62,22 @@ import android.widget.Toast;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
+import hu.rgai.yako.beens.*;
+import hu.rgai.yako.broadcastreceivers.MessageSentBroadcastReceiver;
+import hu.rgai.yako.broadcastreceivers.ThreadMessageSentBroadcastReceiver;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
+import hu.rgai.yako.handlers.TimeoutHandler;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.FullMessageDAO;
+import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.intents.IntentStrings;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 public class ThreadDisplayerActivity extends ActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
@@ -77,10 +87,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private MessageListElement mMessage = null;
   private ListView lv = null;
   private EditText mText = null;
-  private ThreadViewAdapter adapter = null;
+  private ThreadViewAdapter mAdapter = null;
   private final Date lastLoadMoreEvent = null;
   private boolean firstLoad = true;
   private DataUpdateReceiver mDataUpdateReceiver = null;
+  private MessageSentResultReceiver mMessageSentResultReceiver = null;
   private boolean fromNotification = false;
   private TextWatcher mTextWatcher = null;
   private TextView mCharCount = null;
@@ -88,7 +99,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   private static boolean firstResume = true;
 
   private ConnectivityListener mWifiListener = null;
-  private boolean thereWasMessageDeletion = false;
+  private boolean mMessageListChanged = false;
 
   /**
    * This variable holds the ID of the actually displayed thread. That's why if
@@ -98,12 +109,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR
-        + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId());
-    EventLogger.INSTANCE.writeToLogFile(
-        EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR
-            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId(),
-        true);
+    Log.d("willrgai", EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId());
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.THREAD.THREAD_BACKBUTTON_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId(), true);
     super.onBackPressed();
   }
 
@@ -117,20 +124,20 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     t.send(new HitBuilders.AppViewBuilder().build());
 
     // setting variables
-    if (getIntent().getExtras().containsKey(IntentParamStrings.FROM_NOTIFIER)
-        && getIntent().getExtras().getBoolean(IntentParamStrings.FROM_NOTIFIER)) {
+    if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)
+            && getIntent().getExtras().getBoolean(IntentStrings.Params.FROM_NOTIFIER)) {
       fromNotification = true;
     }
-    String msgId = getIntent().getExtras().getString(
-        IntentParamStrings.MESSAGE_ID);
-    Account acc = getIntent().getExtras().getParcelable(
-        IntentParamStrings.MESSAGE_ACCOUNT);
-    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
+//    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
+//    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
+    long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
+    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+    mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
+//    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
-
     // setting action bar
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -146,9 +153,9 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
 
     mText = (EditText) findViewById(R.id.text);
-    mHandler = new ThreadContentGetterHandler(this, mMessage);
-    mCharCount = (TextView) findViewById(R.id.char_count);
-
+    mHandler = new ThreadContentGetterHandler(this);
+    mCharCount = (TextView)findViewById(R.id.char_count);
+    
     // dealing with character counter
     if (mMessage.getMessageType().equals(MessageProvider.Type.SMS)) {
       mText.addTextChangedListener(new TextWatcher() {
@@ -204,14 +211,10 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
       @Override
       public void afterTextChanged(Editable s) {
-        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId()
-            + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
-        EventLogger.INSTANCE.writeToLogFile(
-            EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
-                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId()
-                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(),
-            true);
+        Log.d("willrgai", EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR
+                + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString());
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, EventLogger.LOGGER_STRINGS.OTHER.EDITTEXT_WRITE_STR
+                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + mMessage.getId() + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + s.toString(), true);
       }
     };
 
@@ -229,56 +232,68 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public boolean onContextItemSelected(MenuItem item) {
     final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
     switch (item.getItemId()) {
-    case R.id.discard:
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-          thereWasMessageDeletion = true;
-          FullSimpleMessage simpleMessage = adapter.getItem(info.position);
+      case R.id.discard:
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            final Context c = ThreadDisplayerActivity.this;
+            mMessageListChanged = true;
+            FullSimpleMessage simpleMessage = mAdapter.getItem(info.position);
 
-          MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), ThreadDisplayerActivity.this);
-          MessageDeleteHandler handler = new MessageDeleteHandler(ThreadDisplayerActivity.this) {
-            @Override
-            public void onMainListDelete(MessageListElement messageToDelete) {
-            }
+            MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), c);
+            MessageDeleteHandler handler = new MessageDeleteHandler(c) {
+              @Override
+              public void onMainListDelete(List<MessageListElement> deletedMessage) {}
 
-            @Override
-            public void onThreadListDelete(MessageListElement messageToDelete, FullSimpleMessage simpleMessage) {
-              synchronized (YakoApp.getMessages()) {
-                ((FullThreadMessage) messageToDelete.getFullMessage()).getMessages().remove(simpleMessage);
-              }
-              for (int i = 0; i < adapter.getCount(); i++) {
-                if (adapter.getItem(i).equals(simpleMessage)) {
-                  adapter.removeItem(i);
+              @Override
+              public void onThreadListDelete(long deletedMessageListRawId, String deletedSimpleMessageId,
+                                             boolean isInternetNeededForProvider) {
+                if (isInternetNeededForProvider) {
+                  FullMessageDAO.getInstance(c).removeMessage(deletedSimpleMessageId, deletedMessageListRawId);
+                } else {
+                  Iterator<FullSimpleMessage> msgIterator = ((FullThreadMessage) mMessage.getFullMessage()).getMessages().iterator();
+                  while (msgIterator.hasNext()) {
+                    FullSimpleMessage fsm = msgIterator.next();
+                    if (fsm.getId().equals(deletedSimpleMessageId)) {
+                      msgIterator.remove();
+                      break;
+                    }
+                  }
+                }
+                for (int i = 0; i < mAdapter.getCount(); i++) {
+                  if (mAdapter.getItem(i).getId().equals(deletedSimpleMessageId)) {
+                    mAdapter.removeItem(i);
+                    break;
+                  }
+                }
+                mAdapter.notifyDataSetChanged();
+                if (mAdapter.getCount() == 0) {
+                  try {
+                    List<MessageListElement> deleteMessages = new LinkedList<MessageListElement>();
+                    deleteMessages.add(new MessageListElement(deletedMessageListRawId, deletedSimpleMessageId, null));
+                    MessageListDAO.getInstance(c).removeMessage(c, deleteMessages);
+                  } catch (Exception e) {
+                    Log.d("rgai", "", e);
+                  }
+                  finish();
                 }
               }
-              adapter.notifyDataSetChanged();
-              if (adapter.getCount() == 0) {
-                synchronized (YakoApp.getMessages()) {
-                  YakoApp.getMessages().remove(messageToDelete);
-                }
-                finish();
-              }
-            }
+              @Override
+              public void onComplete() {}
+            };
+            MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage.getRawId(),
+                    simpleMessage.getId(), simpleMessage.getId(), handler, false, false);
+            messageMarker.setTimeout(10000);
+            messageMarker.executeTask(c, null);
+          }
+        });
+        builder.setNegativeButton("No", null);
+        builder.setTitle("Delete message");
+        builder.setMessage("Delete selected message?").show();
 
-            @Override
-            public void onComplete() {
-            }
-          };
-          MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mMessage,
-              simpleMessage, simpleMessage.getId(), handler, false, false);
-          messageMarker.setTimeout(10000);
-          messageMarker.executeTask(null);
-        }
-      });
-      builder.setNegativeButton("No", null);
-      builder.setTitle("Delete message");
-      builder.setMessage("Delete selected message?").show();
-
-      return true;
-    default:
-      return super.onContextItemSelected(item);
+        return true;
+      default:
+        return super.onContextItemSelected(item);
     }
 
   }
@@ -286,16 +301,17 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    thereWasMessageDeletion = false;
-    if (mMessage == null)
-      return;
-
+    mMessageListChanged = false;
+    if (mMessage == null) return;
+    
+    
     actViewingMessage = mMessage;
     removeNotificationIfExists();
-    YakoApp.setMessageSeenAndReadLocally(mMessage);
-
-    // register wifi connection receiver if this acount depends on network, so
-    // after
+    MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
+//    YakoApp.setMessageSeenAndReadLocally(mMessage);
+        
+    
+    // register wifi connection receiver if this acount depends on network, so after
     // wifi reconnect we can download messages immediately
     if (mMessage.getAccount().isInternetNeededForLoad()) {
       mWifiListener = new ConnectivityListener();
@@ -329,8 +345,13 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     iFilter.addAction(Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST);
     registerReceiver(mDataUpdateReceiver, iFilter);
 
-    displayContent();
-
+    mMessageSentResultReceiver = new MessageSentResultReceiver();
+    iFilter = new IntentFilter(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageSentResultReceiver, iFilter);
+    
+    
+    displayContent(mMessage.getAccount().isInternetNeededForLoad());
+    
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_RESUME_STR);
   }
 
@@ -351,17 +372,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   @Override
   public void finish() {
     Intent resultIntent = new Intent();
-    resultIntent.putExtra(Settings.Intents.THERE_WAS_MESSAGE_DELETION, thereWasMessageDeletion);
-    if (thereWasMessageDeletion) {
-      resultIntent.putExtra(Settings.Intents.ACCOUNT, (Parcelable) mMessage.getAccount());
+    resultIntent.putExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, mMessageListChanged);
+    if (mMessageListChanged) {
+      resultIntent.putExtra(IntentStrings.Params.ACCOUNT, (Parcelable)mMessage.getAccount());
     }
     setResult(RESULT_OK, resultIntent);
     super.finish();
-  }
-
-  public void setMessageContent(FullThreadMessage content) {
-    mMessage.setFullMessage(content);
-    YakoApp.setMessageContent(mMessage, content);
   }
 
   public void dismissProgressDialog() {
@@ -370,9 +386,15 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
   }
 
-  public void displayContent() {
-    if (mMessage.getFullMessage() != null) {
-      displayMessage(true);
+  public void displayContent(boolean isInternetNeededForLoad) {
+    int fullMsgCount = 0;
+    // only getting message from database if provider is not local (not SMS), otherwise we have to make the query anyway
+    if (isInternetNeededForLoad) {
+      fullMsgCount = FullMessageDAO.getInstance(this).getFullSimpleMessagesCount(mMessage.getRawId());
+    }
+    Log.d("rgai", "thread msg count: " + fullMsgCount);
+    if (fullMsgCount > 0) {
+      displayMessage(true, isInternetNeededForLoad);
       refreshMessageList();
     } else {
       if (pd == null) {
@@ -409,20 +431,23 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage
           .getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
+    
     // TODO: write a nice handler here!!!
-    MessageSendHandler handler = new MessageSendHandler() {
-      @Override
-      public void success(String name) {
-        refreshMessageList();
-      }
-
-      @Override
-      public void fail(String name) {
-        Toast.makeText(ThreadDisplayerActivity.this, "Failed to send message", Toast.LENGTH_LONG).show();
-      }
-    };
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), handler, "", mText.getText().toString(), this);
-    rs.executeTask(null);
+//    Intent handlerIntent = new Intent(this, ThreadMessageSentBroadcastReceiver.class);
+//    handlerIntent.setAction(IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    
+    SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(ThreadMessageSentBroadcastReceiver.class,
+            IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+      
+    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
+            new TimeoutHandler() {
+              @Override
+              public void onTimeout(Context context) {
+                Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+              }
+            },
+            "", mText.getText().toString(), this);
+    rs.executeTask(this, null);
     mText.setText("");
   }
 
@@ -437,6 +462,11 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     if (mDataUpdateReceiver != null) {
       unregisterReceiver(mDataUpdateReceiver);
     }
+    
+    if (mMessageSentResultReceiver != null) {
+      LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageSentResultReceiver);
+    }
+    
     if (mWifiListener != null) {
       unregisterReceiver(mWifiListener);
     }
@@ -449,8 +479,8 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.thread_message_options_menu, menu);
 
-    if (mMessage.getFrom().getContactId() != -1) {
-
+    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
+    if (contactPerson.getContactId() != -1) {
       menu.findItem(R.id.add_thread_contact).setVisible(false);
     }
 
@@ -476,16 +506,23 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle item selection
     switch (item.getItemId()) {
-    case R.id.load_more:
-      if (lastLoadMoreEvent == null
-          || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
-        if (mMessage.getFullMessage() != null) {
-          FullThreadMessage threadMessage = (FullThreadMessage) mMessage
-              .getFullMessage();
-          refreshMessageList(threadMessage.getMessages().size());
-          Toast.makeText(this, getString(R.string.loading_more_elements),
-              Toast.LENGTH_LONG).show();
-        }
+      case R.id.load_more:
+        if (lastLoadMoreEvent == null || lastLoadMoreEvent.getTime() + 5000 < new Date().getTime()) {
+          int messagesSize = 0;
+
+          // if internetet needed for load that means we store messages at database
+          if (mMessage.getAccount().isInternetNeededForLoad()) {
+            messagesSize = FullMessageDAO.getInstance(this).getFullSimpleMessagesCount(mMessage.getRawId());
+          }
+          // if internet not needed for message load (SMS) than we load the message count from the object in memory
+          else {
+            FullMessage fm = mMessage.getFullMessage();
+            if (fm != null) {
+              messagesSize = ((FullThreadMessage)mMessage.getFullMessage()).getMessages().size();
+            }
+          }
+          refreshMessageList(messagesSize);
+          Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
       } else {
         // Log.d("rgai", "@@@skipping load button press for 5 sec");
       }
@@ -530,48 +567,66 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
   }
 
-  public void appendLoadedMessages(FullThreadMessage fullMessage) {
-    if (mMessage.getFullMessage() == null) {
-      mMessage.setFullMessage(fullMessage);
+  public void appendLoadedMessages(FullThreadMessage fullMessage, boolean saveToDatabase) {
+    if (saveToDatabase) {
+      FullMessageDAO.getInstance(this).insertMessages(this, mMessage.getRawId(), fullMessage);
     } else {
-      FullThreadMessage tm = (FullThreadMessage) mMessage.getFullMessage();
-      tm.getMessages().addAll(fullMessage.getMessages());
+      if (mMessage.getFullMessage() == null) {
+        mMessage.setFullMessage(fullMessage);
+      } else {
+        FullThreadMessage tm = (FullThreadMessage)mMessage.getFullMessage();
+        tm.getMessages().addAll(fullMessage.getMessages());
+      }
     }
-    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
+
+//    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
 
-  public void displayMessage(boolean scrollToBottom) {
+  public void displayMessage(boolean scrollToBottom, boolean isInternetNeededForLoad) {
     int firstVisiblePos = lv.getFirstVisiblePosition();
     int oldItemCount = 0;
-    if (adapter != null) {
-      oldItemCount = adapter.getCount();
+    if (mAdapter != null) {
+      oldItemCount = mAdapter.getCount();
     }
-    if (mMessage.getFullMessage() != null) {
-      FullThreadMessage threadMessage = (FullThreadMessage) mMessage
-          .getFullMessage();
-      adapter = new ThreadViewAdapter(this.getApplicationContext(),
-          R.layout.threadview_list_item);
-      for (FullSimpleMessage m : threadMessage.getMessages()) {
-        adapter.add(m);
+    TreeSet<FullSimpleMessage> messages = null;
+    if (isInternetNeededForLoad) {
+      messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
+    } else {
+      FullMessage fm = mMessage.getFullMessage();
+      if (fm != null) {
+        messages = ((FullThreadMessage)fm).getMessages();
       }
-      lv.setAdapter(adapter);
+    }
+    if (messages != null && !messages.isEmpty()) {
+      if (mAdapter == null) {
+        mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
+      } else {
+        mAdapter.clear();
+      }
+      for (FullSimpleMessage m : messages) {
+        mAdapter.add(m);
+      }
+      mAdapter.notifyDataSetChanged();
+      if (lv.getAdapter() == null) {
+        lv.setAdapter(mAdapter);
+      }
       if (firstLoad || scrollToBottom) {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);
       } else {
-        int newItemCount = adapter.getCount();
-        lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
+//        int newItemCount = mAdapter.getCount();
+//        lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
       }
     }
   }
 
   private void refreshMessageList(int offset) {
-    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler,
-        mMessage.getAccount(), true);
+    Log.d("rgai", "loading messages with offset: " + offset);
+    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset <= 0);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
-    myThread.executeTask(new String[] { mMessage.getId() });
+    myThread.executeTask(this, new String[]{mMessage.getId()});
   }
 
   private void refreshMessageList() {
@@ -583,7 +638,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
 
     for (int actualVisiblePosition = firstVisiblePosition; actualVisiblePosition <= lastVisiblePosition; actualVisiblePosition++) {
-      builder.append((adapter.getItem(actualVisiblePosition)).getId());
+      builder.append((mAdapter.getItem(actualVisiblePosition)).getId());
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     }
   }
@@ -598,7 +653,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
   }
 
   private class ConnectivityListener extends BroadcastReceiver {
@@ -616,8 +671,29 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
 
   }
-
-  private class DataUpdateReceiver extends BroadcastReceiver {
+  public class MessageSentResultReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(IntentStrings.Actions.MESSAGE_SENT_BROADCAST)) {
+        SentMessageBroadcastDescriptor sentMessageData = intent.getParcelableExtra(IntentStrings.Params.MESSAGE_SENT_BROADCAST_DATA);
+        int resultType = sentMessageData.getResultType();
+        switch(resultType) {
+          case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
+            ThreadDisplayerActivity.this.refreshMessageList();
+            mMessageListChanged = true;
+            break;
+          case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
+            Toast.makeText(context, "Unable to send message", Toast.LENGTH_SHORT).show();
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }
+  
+  
+  public class DataUpdateReceiver extends BroadcastReceiver {
 
     private final ThreadDisplayerActivity activity;
 
@@ -647,7 +723,6 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
-      // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
       builder.append(mMessage.getAccount().getAccountType().name());
@@ -663,7 +738,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       }
       appendVisibleElementToStringBuilder(builder);
       Log.d("willrgai", builder.toString());
-      EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
     }
 
   }

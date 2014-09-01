@@ -1,26 +1,34 @@
+/**
+ * TODO:  1) messages DAO table's content column should contain only the preview text
+ *          DONE: 1b) save and load email content to/with FullMessageDAO
+ *        2) when loading email to main list, load only content for preview, be lazy and load content only on request
+ *        3) save attachment info to database
+ *        4) MainListAdapter should display if message has attachment
+ */
+
 package hu.rgai.yako;
-
-import hu.rgai.android.test.BuildConfig;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.FullMessage;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.store.StoreHandler;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeSet;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Build;
+import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-
+import android.widget.Toast;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import hu.rgai.android.test.BuildConfig;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.store.StoreHandler;
+
+
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * 
@@ -30,100 +38,10 @@ public class YakoApp extends Application {
 
   private Tracker tracker = null;
 
-  private volatile static TreeSet<MessageListElement> messages = new TreeSet<MessageListElement>();
   private volatile static HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
-  public volatile static Boolean isPhone = null;
+  public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
-  private volatile static TreeSet<Account> accounts;
-
-  public static TreeSet<MessageListElement> getMessages() {
-    return messages;
-  }
-
-  public static boolean hasMessages() {
-    return messages != null && !messages.isEmpty();
-  }
-
-  public static TreeSet<Account> getAccounts(Context context) {
-    if (accounts == null) {
-      loadAccountsFromStore(context);
-    }
-    return accounts;
-  }
-
-  private static void loadAccountsFromStore(Context context) {
-    accounts = StoreHandler.getAccounts(context);
-  }
-
-  public static void setAccounts(TreeSet<Account> newAccs) {
-    accounts = newAccs;
-  }
-
-  public static boolean isFacebookAccountAdded(Context context) {
-    for (Account a : getAccounts(context)) {
-      if (a.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static MessageListElement getMessageById_Account_Date(String id, Account acc) {
-    MessageListElement compareElement = new MessageListElement(id, acc);
-    for (MessageListElement mle : messages) {
-      if (mle.equals(compareElement)) {
-        return mle;
-      }
-    }
-    return null;
-  }
-
-  public static void setMessageContent(MessageListElement message, FullMessage fullMessage) {
-    for (MessageListElement m : messages) {
-      if (m.equals(message)) {
-        m.setFullMessage(fullMessage);
-        break;
-      }
-    }
-  }
-
-  /**
-   * Removes messages from message list where the account matches with the
-   * parameter.
-   * 
-   * @param account
-   */
-  public static void removeMessagesToAccount(Account account) {
-    Iterator<MessageListElement> it = messages.iterator();
-    while (it.hasNext()) {
-      MessageListElement mle = it.next();
-      if (mle.getAccount().equals(account)) {
-        it.remove();
-      }
-    }
-  }
-
-  /**
-   * Sets the seen status to true, and the unreadCount to 0.
-   * 
-   * @param m
-   *          the message to set
-   * @return true if status changed, false otherwise
-   * 
-   */
-  public static boolean setMessageSeenAndReadLocally(MessageListElement m) {
-    boolean changed = false;
-    for (MessageListElement mlep : messages) {
-      if (mlep.equals(m) && !mlep.isSeen()) {
-        changed = true;
-        mlep.setSeen(true);
-        mlep.setUnreadCount(0);
-        break;
-      }
-    }
-    return changed;
-  }
 
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
@@ -132,17 +50,13 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
-    // Log.d("rgai2", "read in last notification dates: " +
-    // lastNotificationDates);
   }
 
   /**
-   * Updates the last notification date of the given account. Sets all of the
-   * accounts last notification date to the current date if null given.
+   * Updates the last notification date of the given instance.
+   * Sets all of the accounts last notification date to the current date if null given.
    * 
-   * @param acc
-   *          the account to update, or null if update all account's last event
-   *          time
+   * @param acc the instance to update, or null if update all instance's last event time
    * @param c
    */
   public synchronized static void updateLastNotification(Account acc, Context c) {
@@ -158,10 +72,9 @@ public class YakoApp extends Application {
   }
 
   /**
-   * Returns the last notification of the given account.
+   * Returns the last notification of the given instance.
    * 
-   * @param acc
-   *          last notification time will be set to this account
+   * @param acc last notification time will be set to this instance
    * @return
    */
   public static Date getLastNotification(Account acc, Context c) {
@@ -178,10 +91,18 @@ public class YakoApp extends Application {
     return ret;
   }
 
-  private boolean setIsPhone() {
+  // TODO: this is just a quick hack for KitKat SMS handling
+  private boolean isReadyForSmsProviding() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      String thisPackageName = getPackageName();
+      if (!Telephony.Sms.getDefaultSmsPackage(this).equals(thisPackageName)) {
+        Toast.makeText(this, "Yako is not the default SMS provider. Please set as default at default applications.", Toast.LENGTH_LONG).show();
+        return false;
+      }
+    }
     TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     int simState = telMgr.getSimState();
-    if (simState != TelephonyManager.SIM_STATE_ABSENT) {
+    if (simState == TelephonyManager.SIM_STATE_READY) {
       return true;
     } else {
       return false;
@@ -195,23 +116,6 @@ public class YakoApp extends Application {
   public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
-
-  public static TreeSet<MessageListElement> getFilteredMessages(Account filterAcc) {
-    if (filterAcc == null) {
-      return messages;
-    } else {
-      TreeSet<MessageListElement> filterList = new TreeSet<MessageListElement>();
-      synchronized (messages) {
-        for (MessageListElement mlep : messages) {
-          if (mlep.getAccount().equals(filterAcc)) {
-            filterList.add(mlep);
-          }
-        }
-      }
-      return filterList;
-    }
-  }
-
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -241,8 +145,10 @@ public class YakoApp extends Application {
     }
 
     // TODO: we may have to update it on network state change!
-    isPhone = setIsPhone();
+    isRaedyForSms = isReadyForSmsProviding();
 
+    AccountDAO.getInstance(this).checkSMSAccount(this, isRaedyForSms);
+
+    MessageListDAO.getInstance(this).purgeMessageList(this, 100);
   }
-
 }

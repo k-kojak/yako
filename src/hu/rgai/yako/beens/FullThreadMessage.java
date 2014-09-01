@@ -39,11 +39,8 @@ public class FullThreadMessage implements FullMessage {
     messages = new TreeSet<FullSimpleMessage>();
   }
   
-  public FullThreadMessage(TreeSet<FullSimpleMessage> messages) {
-    this.messages = messages;
-  }
-  
-  public Set<FullSimpleMessage> getMessages() {
+
+  public TreeSet<FullSimpleMessage> getMessages() {
     return messages;
   }
 

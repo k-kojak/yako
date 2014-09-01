@@ -2,7 +2,7 @@ package hu.rgai.yako.beens;
 
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -26,7 +26,7 @@ import android.provider.ContactsContract.PhoneLookup;
  * 
  * @author Tamas Kojedzinszky
  */
-public final class Person implements Parcelable {
+public final class Person implements Parcelable, Serializable {
 
   protected String id;
   protected String name;
@@ -37,6 +37,7 @@ public final class Person implements Parcelable {
   private static Map<String, Person> storedPerson = null;
 
   private Map<MessageProvider.Type, Set<String>> idMap = null;
+
 
   public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
     @Override
@@ -49,6 +50,7 @@ public final class Person implements Parcelable {
       return new Person[size];
     }
   };
+
 
   public Person(String id, String name, MessageProvider.Type type) {
     this(-1, id, name, type);
@@ -81,6 +83,10 @@ public final class Person implements Parcelable {
     return secondaryName;
   }
 
+  public void setSecondaryName(String secondaryName) {
+    this.secondaryName = secondaryName;
+  }
+
   public MessageProvider.Type getType() {
     return type;
   }
@@ -91,10 +97,6 @@ public final class Person implements Parcelable {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public void setSecondaryName(String secondaryName) {
-    this.secondaryName = secondaryName;
   }
 
   public void addId(MessageProvider.Type type, String id) {
@@ -189,10 +191,7 @@ public final class Person implements Parcelable {
     if (storedPerson.containsKey(key)) {
       return storedPerson.get(key);
     } else {
-
       long rawContactId = getUid(context, p.getType(), p.getId(), p.getName());
-
-      key = p.getType().toString() + "_" + rawContactId;
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
       } else {
@@ -230,6 +229,21 @@ public final class Person implements Parcelable {
       }
     }
   }
+
+
+  public static boolean isPersonStoredInCache(Person p) {
+    if (p == null) {
+      return false;
+    } else {
+      String key = p.getType().toString() + "_" + p.getId();
+      if (storedPerson != null && storedPerson.containsKey(key)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
 
   private static Person getUserData(Context context, long rawContactId, String userAddrId) {
     Person pa = null;

@@ -1,7 +1,9 @@
 
 package hu.rgai.yako.view.extensions;
 
+import android.util.Log;
 import hu.rgai.yako.beens.AsyncImageLoadProvider;
+import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.workers.AsyncImageLoader;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -31,19 +33,20 @@ public class AsyncImageView extends ImageView {
     super(context, attrs, defStyle);
   }
 
-  public void setImageBitmap(AsyncImageLoadProvider loadProvider, long contactId) {
+  public void setImageBitmap(AsyncImageLoadProvider loadProvider, Person from) {
     // stop current worker thread anyway!
     if (mLoader != null && mLoader.get() != null) {
       mLoader.get().stop();
     }
     // if bitmap in cache, just display it
-    if (loadProvider.isBitmapLoaded(contactId)) {
-      this.setImageBitmap(loadProvider.getBitmap(contactId).getBitmap());
+    boolean storedPexists = Person.isPersonStoredInCache(from);
+    if (storedPexists && loadProvider.isBitmapLoaded(from)) {
+      this.setImageBitmap(loadProvider.getBitmap(from).getBitmap());
     } else {
       this.setImageBitmap(loadProvider.getDefaultBitmap(this.getContext()));
       
       AsyncImageLoader loader = new AsyncImageLoader(this, loadProvider);
-      AndroidUtils.<Long, Void, BitmapResult>startAsyncTask(loader, contactId);
+      AndroidUtils.<Person, Void, BitmapResult>startAsyncTask(loader, from);
       mLoader = new WeakReference<AsyncImageLoader>(loader);
     }
   }

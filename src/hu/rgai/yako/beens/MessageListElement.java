@@ -2,8 +2,10 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider.Type;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -17,13 +19,17 @@ import java.util.Map;
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageListElement implements Parcelable, Comparable<MessageListElement> {
+public class MessageListElement implements Parcelable, Comparable<MessageListElement>, Serializable {
+
+  // this is the database id of the message
+  protected long mRawId;
 
   protected String id;
   protected boolean seen;
   protected String title;
   protected String subTitle;
   protected int unreadCount;
+  protected int attachmentCount;
   protected Person from;
   protected List<Person> recipients;
   protected Date date;
@@ -38,6 +44,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected static Map<MessageProvider.Type, ClassLoader> stringToClassLoader = null;
   protected static Date today = new Date();
   protected static Date thisYear = new Date();
+  static {
+    refreshCurrentDates();
+  }
   
   public static final Parcelable.Creator<MessageListElement> CREATOR = new Parcelable.Creator<MessageListElement>() {
     public MessageListElement createFromParcel(Parcel in) {
@@ -52,7 +61,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   /**
    * Constructor for a message element in a list.
    * 
-   * @param id id of the message
+   * @param messageId messageId of the message
    * @param seen <code>true</code> if the message is seen, <code>false</code> otherwise
    * @param title title of the message, can be <code>null</code>
    * @param subTitle subtitle of the message, can be <code>null</code>
@@ -60,16 +69,19 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param date date of the message
    * @param recipients the list of recipients
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
-  public MessageListElement(String id, boolean seen, String title, String subTitle, int unreadCount, Person from,
-          List<Person> recipients, Date date, Account account, Type messageType, boolean updateFlags) {
-    this.id = id;
+  public MessageListElement(long rawId, String messageId, boolean seen, String title, String subTitle, int unreadCount,
+                            int attachmentCount, Person from, List<Person> recipients, Date date, Account account,
+                            Type messageType, boolean updateFlags) {
+    this.mRawId = rawId;
+    this.id = messageId;
     this.seen = seen;
     this.title = title;
     this.subTitle = subTitle;
     this.unreadCount = unreadCount;
+    this.attachmentCount = attachmentCount;
     this.from = from;
     this.recipients = recipients;
     this.date = date;
@@ -86,6 +98,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.title = in.readString();
     this.subTitle = in.readString();
     this.unreadCount = in.readInt();
+    this.attachmentCount = in.readInt();
     this.from = in.readParcelable(Person.class.getClassLoader());
     
     recipients = new LinkedList<Person>();
@@ -96,9 +109,11 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 //    this.prettyDate = in.readString();
     
     if (!stringToClassLoader.containsKey(messageType)) {
-      // TODO: display error message
+      Log.d("rgai3", "DISPLAY ERROR HERE");
     } else {
-      this.account = (Account)in.readParcelable(stringToClassLoader.get(messageType));
+      Log.d("rgai3", "BEFORE - READ IN ACCOUNT PARCELABLE");
+      this.account = in.readParcelable(stringToClassLoader.get(messageType));
+      Log.d("rgai3", "AFTER - READ IN ACCOUNT PARCELABLE");
     }
   }
   
@@ -109,7 +124,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public MessageListElement(String id, Account account) {
-    this(id, false, null, null, 0, null, null, null, account, account.getAccountType(), false);
+    this(-1, id, false, null, null, 0, 0, null, null, null, account, account.getAccountType(), false);
   }
   
   /**
@@ -122,10 +137,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param recipients the recipients of the message
    * @param date date of the message
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link  hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, int unreadCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, null, unreadCount, from, recipients, date, account, messageType, false);
+  public MessageListElement(String id, boolean seen, String title, int unreadCount, int attachmentCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
+    this(-1, id, seen, title, null, unreadCount, attachmentCount, from, recipients, date, account, messageType, false);
   }
   
   /**
@@ -137,10 +152,11 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param date date of the message
    * @param recipients the original recipients
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, null, -1, from, recipients, date, account, messageType, false);
+  public MessageListElement(long _id, String id, boolean seen, String title, Person from, List<Person> recipients,
+                            Date date, Account account, Type messageType) {
+    this(_id, id, seen, title, null, -1, 0, from, recipients, date, account, messageType, false);
   }
   
    /**
@@ -153,25 +169,41 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param from a Person object, the sender of the message
    * @param recipients the original recipients
    * @param date date of the message
-   * @param messageType type of the message, see {@link hu.uszeged.inf.rgai.messagelog.MessageProvider.Type} for available types
+   * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, String snippet,
+  public MessageListElement(long _id, String id, boolean seen, String title, String snippet, int attachmentCount,
           Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(id, seen, title, snippet, -1, from, recipients, date, account, messageType, false);
+    this(_id, id, seen, title, snippet, -1, attachmentCount, from, recipients, date, account, messageType, false);
   }
-  
-  public MessageListElement(String id, boolean seen, Person from, Date date, Account account, Type messageType, boolean updateFlags) {
-    this(id, seen, null, null, -1, from, null, date, account, messageType, updateFlags);
+
+
+  /**
+   * This is a minimal constructor, used for cases when these datas are enough to make actions.
+   * I.e. marking message to seen at server side.
+   * @param id       message ID
+   * @param account  account to message
+   * @param m_id     database raw id
+   */
+  public MessageListElement(long m_id, String id, Account account) {
+    this.id = id;
+    this.account = account;
+    this.mRawId = m_id;
+  }
+
+
+  public MessageListElement(long rawId, String id, boolean seen, Person from, Date date, Account account, Type messageType,
+                            boolean updateFlags) {
+    this(rawId, id, seen, null, null, -1, 0, from, null, date, account, messageType, updateFlags);
   }
   
   private void initStringToClassLoader() {
 	  if (stringToClassLoader == null) {
-	      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
-	      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccount.class.getClassLoader());
-	      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccount.class.getClassLoader());
-	    }	  
+      stringToClassLoader = new EnumMap<MessageProvider.Type, ClassLoader>(MessageProvider.Type.class);
+      stringToClassLoader.put(MessageProvider.Type.EMAIL, EmailAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.GMAIL, GmailAccount.class.getClassLoader());
+      stringToClassLoader.put(MessageProvider.Type.SMS, SmsAccount.class.getClassLoader());
+    }
   }
   
 
@@ -194,7 +226,20 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public int describeContents() {
     return 0;
   }
-  
+
+  public void setRawId(long rawId) {
+    this.mRawId = rawId;
+  }
+
+
+  /**
+   * Returns the database raw id of this message element.
+   * @return
+   */
+  public long getRawId() {
+    return mRawId;
+  }
+
   public String getPrettyDate() {
     if (prettyDate == null) {
       updatePrettyDateString(new SimpleDateFormat());
@@ -226,7 +271,13 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   public Person getFrom() {
     return from;
   }
-  
+
+
+  /**
+   * Returns the id of the message which was given by the provider.
+   * This id is not equivalent with raw id.
+   * @return
+   */
   public String getId() {
     return id;
   }
@@ -269,9 +320,13 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     return unreadCount;
   }
 
-  public void setUnreadCount(int unreadCount) {
-    this.unreadCount = unreadCount;
+  public int getAttachmentCount() {
+    return attachmentCount;
   }
+
+//  public void setUnreadCount(int unreadCount) {
+//    this.unreadCount = unreadCount;
+//  }
   
   public Type getMessageType() {
     return messageType;
@@ -307,7 +362,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   @Override
   public String toString() {
-    return "MessageListElement{" + "id=" + id + ", account="+ account +", seen=" + seen + ", title=" + title
+    return "MessageListElement{" + "id=" + id + ", instance="+ account +", seen=" + seen + ", title=" + title
             + ", subTitle=" + subTitle + ", from=" + from + ", date=" + date + " ("+ (date != null ? date.getTime() : "-") +"), messageType="
             + messageType + ", updateFlags=" + updateFlags +'}';
   }
@@ -319,11 +374,12 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     out.writeString(title);
     out.writeString(subTitle);
     out.writeInt(unreadCount);
-    out.writeParcelable((Parcelable)from, flags);
+    out.writeInt(attachmentCount);
+    out.writeParcelable(from, flags);
     out.writeList(recipients);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
-    out.writeParcelable((Parcelable)fullMessage, flags);
+    out.writeParcelable(fullMessage, flags);
 //    out.writeString(prettyDate);
     if (!stringToClassLoader.containsKey(messageType)) {
     	
@@ -379,7 +435,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 //        }
       }
     }
-//    if (this.id.equals(o.getId()) && this.account.equals(o.account)) {
+//    if (this.id.equals(o.getId()) && this.instance.equals(o.instance)) {
 //      return 0;
 //    } else {
       // TODO: THIS IS A SOURCE OF UGLY BUGS!

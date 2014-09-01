@@ -7,6 +7,7 @@ package hu.rgai.yako.workers;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,13 +16,14 @@ import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.Utils;
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 
 /**
  *
  * @author k
  */
-public class AttachmentDownloader implements Runnable {
+public class AttachmentDownloader implements Runnable, Serializable {
 
   private final Attachment mAttachment;
   private final Handler mHandler;
@@ -31,6 +33,7 @@ public class AttachmentDownloader implements Runnable {
   private final Context mContext;
   private WeakReference<TextView> mFileSize;
   private volatile boolean running = false;
+  private int mProgressState = 0;
   
   public AttachmentDownloader(Attachment attachment, Handler handler, EmailAccount account,
           String messageId, ProgressBar progressBar, TextView fileSize, Context context) {
@@ -45,6 +48,7 @@ public class AttachmentDownloader implements Runnable {
   
   public void setProgressBarView(ProgressBar progressBar) {
     this.mProgressBar = new WeakReference<ProgressBar>(progressBar);
+    setProgressBarValue(mProgressState, false);
   }
   
   public void setFileSizeView(TextView fileSize) {
@@ -55,14 +59,15 @@ public class AttachmentDownloader implements Runnable {
     running = true;
     mAttachment.setInProgress(true);
     mProgressBar.get().setIndeterminate(true);
-    SimpleEmailMessageProvider semp = new SimpleEmailMessageProvider(mAccount);
-    semp.setAttachmentProgressUpdateListener(new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
-      public void onProgressUpdate(int progress) {
-        setProgressBarValue(progress, false);
-      }
-    });
+    SimpleEmailMessageProvider semp = SimpleEmailMessageProvider.getInstance(mAccount);
     try {
-      byte[] file = semp.getAttachmentOfMessage(mMessageId, mAttachment.getFileName());
+      byte[] file = semp.getAttachmentOfMessage(mMessageId,
+              mAttachment.getFileName(), new SimpleEmailMessageProvider.AttachmentProgressUpdate() {
+                public void onProgressUpdate(int progress) {
+                  setProgressBarValue(progress, false);
+                  mProgressState = progress;
+                }
+              });
       setProgressBarValue(100, false);
       if (StoreHandler.saveByteArrayToDownloadFolder(mContext, file, mAttachment.getFileName())) {
         mAttachment.setSize(file.length);
@@ -82,14 +87,13 @@ public class AttachmentDownloader implements Runnable {
         });
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
+      Log.d("rgai", "Exception at attachment download", ex);
       setProgressBarValue(0, true);
       mHandler.post(new Runnable() {
         public void run() {
           Toast.makeText(mContext, "Failed to download file: " + mAttachment.getFileName(), Toast.LENGTH_LONG).show();
         }
       });
-      
     }
     running = false;
   }

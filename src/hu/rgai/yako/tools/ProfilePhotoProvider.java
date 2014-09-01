@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.provider.ContactsContract;
 import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.beens.Person;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,15 +25,26 @@ public class ProfilePhotoProvider {
   private static Bitmap groupChatPhoto = null;
   private static Set<Long> noImageToTheseUsers;
   private static long noImageCacheTime = System.currentTimeMillis();
-  
+
+
+  public static BitmapResult getImageToUser(Context context, Person from) {
+    from = Person.searchPersonAndr(context, from);
+    long contactId = -1;
+    if (from != null) {
+      contactId = from.getContactId();
+    }
+
+    return getImageToUser(context, contactId);
+  }
+
   /**
    * 
    * @param context
-   * @param contactId android contact id
+   * @param contactId the contact id of the person
    * @return 
    */
   public static BitmapResult getImageToUser(Context context, long contactId) {
-    
+
     boolean isDefaultImage;
     Bitmap img = null;
     long noImageCacheCooldownTime = 600; // seconds
@@ -82,19 +95,25 @@ public class ProfilePhotoProvider {
     Bitmap defaultImg = BitmapFactory.decodeResource(c.getResources(), R.drawable.ic_contact_picture);
     photos.put(-1l, defaultImg);
   }
-  
-  public static boolean isImageToUserInCache(long id) {
+
+
+  public static boolean isImageToUserInCache(Person p) {
+    long contactId = -1;
+    if (p != null) {
+      contactId = p.getContactId();
+    }
     if (photos == null) {
       return false;
-    } else if (photos.containsKey(id)) {
+    } else if (photos.containsKey(contactId)) {
       return true;
-    } else if (noImageToTheseUsers != null && noImageToTheseUsers.contains(id)) {
+    } else if (noImageToTheseUsers != null && noImageToTheseUsers.contains(contactId)) {
       return true;
     }
-    
+
     return false;
   }
-  
+
+
   public static BitmapResult getGroupChatPhoto(Context context) {
     if (groupChatPhoto == null) {
       groupChatPhoto = BitmapFactory.decodeResource(context.getResources(), R.drawable.group_chat);
@@ -102,11 +121,13 @@ public class ProfilePhotoProvider {
     
     return new BitmapResult(groupChatPhoto, true);
   }
-  
+
+
   public static boolean isGroupChatPhotoLoaded() {
     return groupChatPhoto != null;
   }
-  
+
+
   private static Bitmap getImgToUserId(Context context, long uid) {
     Bitmap bm = null;
     

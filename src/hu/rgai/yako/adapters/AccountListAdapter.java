@@ -1,61 +1,56 @@
-//TODO: comparator az account list-nek es legyen treeset-ben
-//ALL-ra kattintva a filter list-ben toltsuk be ujra az uzeneteket
-
 
 package hu.rgai.yako.adapters;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.android.test.R;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeSet;
+import hu.rgai.yako.sql.AccountDAO;
 
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class AccountListAdapter extends BaseAdapter {
+public class AccountListAdapter extends CursorAdapter {
 
-  private final List<Account> accounts;
+//  private final List<Account> accounts;
   private static LayoutInflater inflater = null;
-  
-  public AccountListAdapter(Context context, TreeSet<Account> accounts ) {
-    this.accounts = new LinkedList<Account>(accounts);
+
+
+  public AccountListAdapter(Context context, Cursor c) {
+    super(context, c, false);
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
-  
-  public int getCount() {
-    return accounts.size();
+
+
+  @Override
+  public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    View v = inflater.inflate(R.layout.account_list_item, parent, false);
+    return v;
   }
 
-  public Object getItem(int position) {
-    return accounts.get(position);
-  }
 
-  public long getItemId(int position) {
-    return position;
-  }
+  @Override
+  public void bindView(View view, Context context, Cursor cursor) {
 
-  public View getView(int position, View view, ViewGroup parent) {
     if (view == null) {
-      view = inflater.inflate(R.layout.account_list_item, null);
+      throw new RuntimeException("view is null at " + this.getClass().getSimpleName());
     }
 
     TextView name = (TextView) view.findViewById(R.id.name);
     TextView type = (TextView) view.findViewById(R.id.type);
     ImageView icon = (ImageView) view.findViewById(R.id.img);
 
-    Account account = accounts.get(position);
+    Account account = AccountDAO.cursorToAccount(cursor);
 
     // Setting all values in listview
     name.setText((String)account.getDisplayName());
@@ -77,8 +72,5 @@ public class AccountListAdapter extends BaseAdapter {
       }
       icon.setImageResource(Settings.EmailUtils.getResourceIdToEmailDomain(dom));
     }
-    
-    return view;
   }
-
 }
