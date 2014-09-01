@@ -26,22 +26,22 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 
-import java.util.*;
 
+import java.util.Date;
+import java.util.HashMap;
 
 /**
- *
+ * 
  * @author Tamas Kojedzinszky
  */
 public class YakoApp extends Application {
-  
+
   private Tracker tracker = null;
-  
-  private volatile static  HashMap<Account, Date> lastNotificationDates = null;
+
+  private volatile static HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
-
 
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
@@ -51,8 +51,7 @@ public class YakoApp extends Application {
       }
     }
   }
-  
-  
+
   /**
    * Updates the last notification date of the given instance.
    * Sets all of the accounts last notification date to the current date if null given.
@@ -71,7 +70,6 @@ public class YakoApp extends Application {
     }
     StoreHandler.writeLastNotificationObject(c, lastNotificationDates);
   }
-  
 
   /**
    * Returns the last notification of the given instance.
@@ -92,7 +90,6 @@ public class YakoApp extends Application {
     }
     return ret;
   }
-  
 
   // TODO: this is just a quick hack for KitKat SMS handling
   private boolean isReadyForSmsProviding() {
@@ -111,18 +108,14 @@ public class YakoApp extends Application {
       return false;
     }
   }
-  
-  
+
   public static void setLastNotifiedMessage(MessageListElement lastNotifiedMessage) {
     mLastNotifiedMessage = lastNotifiedMessage;
   }
 
-  
   public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
-  
-  
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -130,13 +123,13 @@ public class YakoApp extends Application {
     }
     return tracker;
   }
-  
+
   public void sendAnalyticsError(int code) {
-     Tracker t = getTracker();
-     t.send(new HitBuilders.ExceptionBuilder()
-             .setDescription("Custom, own catched error. Error code: " + code)
-             .setFatal(false)
-             .build());
+    Tracker t = getTracker();
+    t.send(new HitBuilders.ExceptionBuilder()
+        .setDescription("Custom, own catched error. Error code: " + code)
+        .setFatal(false)
+        .build());
   }
 
   @Override
@@ -150,7 +143,7 @@ public class YakoApp extends Application {
     } else {
       Log.d("rgai", "#DO NOT TURN GOOGLE ANALYTICS OFF: WE ARE IN PRODUCTION MODE");
     }
-    
+
     // TODO: we may have to update it on network state change!
     isRaedyForSms = isReadyForSmsProviding();
 

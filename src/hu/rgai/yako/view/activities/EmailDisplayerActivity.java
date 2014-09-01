@@ -1,10 +1,26 @@
 package hu.rgai.yako.view.activities;
 
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.FullSimpleMessage;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.config.ErrorCodes;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
+import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
+import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
+import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
+
+import java.util.TreeSet;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.*;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -13,28 +29,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.config.ErrorCodes;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.messageproviders.MessageProvider;
+
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
-import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
-import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
-import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
-import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
-import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
-import java.util.Arrays;
+
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class EmailDisplayerActivity extends ActionBarActivity {
 
@@ -42,19 +47,19 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private boolean mFromNotification = false;
   private FullSimpleMessage mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
-  
+
   private NonSwipeableViewPager mPager;
   private PagerAdapter mPagerAdapter;
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d("rgai", "email dsplayer oncreate");
-    Tracker t = ((YakoApp)getApplication()).getTracker();
+    Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
-    
+
     setContentView(R.layout.activity_email_displayer);
     long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
 
@@ -62,11 +67,6 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
 
 
-//    String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-//    Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
-//    Log.d("rgai", "email displayer account: " + acc);
-//    mMessage = MessageListDAO.getInstance(this).getMessageById(msgId, acc);
-//    mMessage = YakoApp.getMessageById_Account_Date(msgId, acc);
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
@@ -81,11 +81,9 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     }
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //    YakoApp.setMessageSeenAndReadLocally(mMessage);
-    
-    
+
     getSupportActionBar().setTitle(mContent.getSubject());
 
-    
     // marking message as read
     MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     TreeSet<String> messagesToMark = new TreeSet<String>();
@@ -93,41 +91,41 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
     marker.executeTask(this, null);
 
-
     // handling if we came from notifier
     if (getIntent().getExtras().containsKey(IntentStrings.Params.FROM_NOTIFIER)
             && getIntent().getExtras().getBoolean(IntentStrings.Params.FROM_NOTIFIER)) {
       mFromNotification = true;
     }
 
-    
     // Instantiate a ViewPager and a PagerAdapter.
     mPager = (NonSwipeableViewPager) findViewById(R.id.pager);
     mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(),
-            mContent.getAttachments() != null && !mContent.getAttachments().isEmpty());
+        mContent.getAttachments() != null
+            && !mContent.getAttachments().isEmpty());
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
   }
 
-  
   private void finish(int code) {
-    ((YakoApp)getApplication()).sendAnalyticsError(code);
+    ((YakoApp) getApplication()).sendAnalyticsError(code);
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+      @Override
       public void onClick(DialogInterface dialog, int which) {
         finish();
       }
     });
     builder.setTitle("Error");
-    builder.setMessage("Connection error, please try later.\n(Error " + code + ")").show();
+    builder.setMessage(
+        "Connection error, please try later.\n(Error " + code + ")").show();
   }
 
-  
   @Override
   protected void onPause() {
-    super.onPause(); //To change body of generated methods, choose Tools | Templates.
-    Tracker t = ((YakoApp)getApplication()).getTracker();
+    super.onPause(); // To change body of generated methods, choose Tools |
+                     // Templates.
+    Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
   }
@@ -139,9 +137,16 @@ public class EmailDisplayerActivity extends ActionBarActivity {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.email_message_options_menu, menu);
 
-    if (mContent.getAttachments() == null || mContent.getAttachments().isEmpty()) {
+    if (mContent.getAttachments() == null
+        || mContent.getAttachments().isEmpty()) {
       menu.findItem(R.id.attachments).setVisible(false);
     }
+
+    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
+    if (contactPerson.getContactId() != -1) {
+      menu.findItem(R.id.add_email_contact).setVisible(false);
+    }
+
     return true;
   }
 
@@ -176,6 +181,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
 
     }
 
+    // //
+
+    mMessage.getMessageType().toString();
+
+    // //
+
     return super.onOptionsItemSelected(item);
   }
 
@@ -194,20 +205,21 @@ public class EmailDisplayerActivity extends ActionBarActivity {
   private class MyPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
 
     int mPosition;
-    
+
     @Override
     public void onPageSelected(int position) {
       mPosition = position;
     }
+
     public int getSelectedPosition() {
       return mPosition;
     }
   }
-  
+
   private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
 
     private boolean mIsAttachmentPresent = false;
-    
+
     public ScreenSlidePagerAdapter(FragmentManager fm, boolean attachmentPresent) {
       super(fm);
       this.mIsAttachmentPresent = attachmentPresent;
@@ -229,12 +241,12 @@ public class EmailDisplayerActivity extends ActionBarActivity {
       return (mIsAttachmentPresent ? 2 : 1);
     }
   }
-  
+
   @Override
   public void onBackPressed() {
     Log.d("willrgai", EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR);
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
-  
+
 }

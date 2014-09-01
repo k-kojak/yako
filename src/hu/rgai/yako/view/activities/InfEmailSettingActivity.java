@@ -19,9 +19,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.GmailAccount;
 import hu.rgai.android.test.R;
+
 import java.util.regex.Pattern;
 
 /**
@@ -74,7 +76,7 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
 
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.INFMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.INFMAIL_SETTING_ACTIVITY_BACKBUTTON_STR, true );
     super.onBackPressed();
   }
 

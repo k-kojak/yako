@@ -2,6 +2,29 @@
 // TODO: tie attachment downloading thread to message item
 package hu.rgai.yako.handlers;
 
+import android.util.Log;
+import hu.rgai.android.test.MainActivity;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.MainServiceExtraParams;
+import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.MessageListResult;
+import hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver;
+import hu.rgai.yako.config.Settings;
+import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
+import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.store.StoreHandler;
+import hu.rgai.yako.tools.ProfilePhotoProvider;
+import hu.rgai.yako.view.activities.MessageReplyActivity;
+import hu.rgai.yako.workers.MessageListerAsyncTask;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -17,28 +40,7 @@ import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
-import hu.rgai.android.test.MainActivity;
-import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.MainServiceExtraParams;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.beens.MessageListResult;
-import hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver;
-import hu.rgai.yako.config.Settings;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.intents.IntentStrings;
-import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.store.StoreHandler;
-import hu.rgai.yako.tools.ProfilePhotoProvider;
-import hu.rgai.yako.view.activities.MessageReplyActivity;
-import hu.rgai.yako.workers.MessageListerAsyncTask;
-
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 public class MessageListerHandler extends TimeoutHandler {
 
@@ -77,7 +79,6 @@ public class MessageListerHandler extends TimeoutHandler {
         notifyUIaboutMessageChange();
         return;
       }
-
 
       MessageListElement lastUnreadMsg = null;
       Set<Account> accountsToUpdate = new HashSet<Account>();
@@ -147,15 +148,15 @@ public class MessageListerHandler extends TimeoutHandler {
         }
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext)
-                .setLargeIcon(largeIcon)
-                .setSmallIcon(R.drawable.not_ic_action_email)
-                .setWhen(lastUnreadMsg.getDate().getTime())
-                .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
-                .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
-                .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
+            .setLargeIcon(largeIcon)
+            .setSmallIcon(R.drawable.not_ic_action_email)
+            .setWhen(lastUnreadMsg.getDate().getTime())
+            .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
+            .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
+            .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-                && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)) {
+            && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)) {
           notificationButtonHandling(lastUnreadMsg, mBuilder);
         }
 
@@ -165,7 +166,7 @@ public class MessageListerHandler extends TimeoutHandler {
         }
 
         if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext)) {
-          mBuilder.setVibrate(new long[]{100, 150, 100, 150, 500, 150, 100, 150});
+          mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
         }
 
         Intent resultIntent;
@@ -193,7 +194,7 @@ public class MessageListerHandler extends TimeoutHandler {
         mBuilder.setAutoCancel(true);
         KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, mBuilder.build());
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
                 + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
       }
       // if main activity visible: only play sound
@@ -230,30 +231,29 @@ public class MessageListerHandler extends TimeoutHandler {
 
   }
 
-
   private void showErrorMessage(int result, String message) {
     String msg;
     switch (result) {
-      case MessageListerAsyncTask.AUTHENTICATION_FAILED_EXCEPTION:
-        msg = "Authentication failed: " + message;
-        break;
-      case MessageListerAsyncTask.UNKNOWN_HOST_EXCEPTION:
-      case MessageListerAsyncTask.IOEXCEPTION:
-      case MessageListerAsyncTask.CONNECT_EXCEPTION:
-      case MessageListerAsyncTask.NO_SUCH_PROVIDER_EXCEPTION:
-      case MessageListerAsyncTask.MESSAGING_EXCEPTION:
-      case MessageListerAsyncTask.SSL_HANDSHAKE_EXCEPTION:
-        msg = message;
-        break;
-      case MessageListerAsyncTask.NO_INTERNET_ACCESS:
-        msg = mContext.getString(R.string.no_internet_access);
-        break;
-      case MessageListerAsyncTask.NO_ACCOUNT_SET:
-        msg = mContext.getString(R.string.no_account_set);
-        break;
-      default:
-        msg = mContext.getString(R.string.exception_unknown);
-        break;
+    case MessageListerAsyncTask.AUTHENTICATION_FAILED_EXCEPTION:
+      msg = "Authentication failed: " + message;
+      break;
+    case MessageListerAsyncTask.UNKNOWN_HOST_EXCEPTION:
+    case MessageListerAsyncTask.IOEXCEPTION:
+    case MessageListerAsyncTask.CONNECT_EXCEPTION:
+    case MessageListerAsyncTask.NO_SUCH_PROVIDER_EXCEPTION:
+    case MessageListerAsyncTask.MESSAGING_EXCEPTION:
+    case MessageListerAsyncTask.SSL_HANDSHAKE_EXCEPTION:
+      msg = message;
+      break;
+    case MessageListerAsyncTask.NO_INTERNET_ACCESS:
+      msg = mContext.getString(R.string.no_internet_access);
+      break;
+    case MessageListerAsyncTask.NO_ACCOUNT_SET:
+      msg = mContext.getString(R.string.no_account_set);
+      break;
+    default:
+      msg = mContext.getString(R.string.exception_unknown);
+      break;
     }
     if (MainActivity.isMainActivityVisible()) {
       Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();

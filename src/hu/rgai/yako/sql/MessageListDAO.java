@@ -92,8 +92,8 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void removeMessages(Context context, long accountId, List<Long> messageListRawIds) throws Exception {
-    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageListRawIds);
+  public synchronized void removeMessages(Context context, long accountId, List<MessageListElement> messageList) throws Exception {
+    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageList);
 
     AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
     FullMessageDAO.getInstance(context).removeMessagesToAccount(fullMessageIds);
@@ -106,13 +106,13 @@ public class MessageListDAO  {
       whereArgs = new String[]{Long.toString(accountId)};
     }
 
-    if (messageListRawIds != null && !messageListRawIds.isEmpty()) {
+    if (messageList != null && !messageList.isEmpty()) {
       if (where == null) {
         where = "";
       } else {
         where += " AND ";
       }
-      where += COL_ID + " IN " + SQLHelper.Utils.getInClosure(messageListRawIds);
+      where += COL_ID + " IN " + SQLHelper.Utils.getInClosureFromListElement(messageList);
     }
     if (where == null) {
       throw new Exception("where condition cannot be null: at least one condition should have a valid value");
@@ -301,10 +301,8 @@ public class MessageListDAO  {
   }
 
 
-  public void removeMessage(Context context, long rawMessageId) throws Exception {
-    List<Long> ids = new ArrayList<Long>(1);
-    ids.add(rawMessageId);
-    removeMessages(context, -1, ids);
+  public void removeMessage(Context context, List<MessageListElement> deletedMessages) throws Exception {
+    removeMessages(context, -1, deletedMessages);
   }
 
 
@@ -471,14 +469,14 @@ public class MessageListDAO  {
     int cnt = getAllMessagesCount();
     Log.d("rgai", "total msg count: " + cnt);
     if (cnt > messagesToRemain) {
-      List<Long> msgRawIds = new LinkedList<Long>();
+      List<MessageListElement> msgRawIds = new LinkedList<MessageListElement>();
       int top = cnt - messagesToRemain;
       Log.d("rgai", "removing " + top + " msgs");
-              Cursor c = mDbHelper.getDatabase().rawQuery("SELECT " + COL_ID
+              Cursor c = mDbHelper.getDatabase().rawQuery("SELECT " + COL_ID + ", " + COL_MSG_ID 
                       + " FROM " + TABLE_MESSAGES + " ORDER BY " + COL_DATE + " ASC LIMIT ?", new String[]{Integer.toString(top)});
       c.moveToFirst();
       while (!c.isAfterLast()) {
-        msgRawIds.add(c.getLong(0));
+        msgRawIds.add(new MessageListElement(c.getLong(0),c.getString(1),null));
         c.moveToNext();
       }
       try {

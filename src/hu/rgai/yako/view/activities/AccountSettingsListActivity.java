@@ -21,25 +21,23 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
+
 import com.facebook.Session;
+
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,7 +58,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile( EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.ACCOUNT_SETTINGS_LIST_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   

@@ -24,12 +24,14 @@ import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+
 import hu.rgai.yako.eventlogger.AccelerometerListener;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
@@ -40,6 +42,7 @@ import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
@@ -104,9 +107,9 @@ public class MainActivity extends ActionBarActivity {
     setUpAndRegisterScreenReceiver();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
-      EventLogger.INSTANCE.openLogFile("logFile.txt", false);
+      EventLogger.INSTANCE.openAllLogFile();
     }
-    EventLogger.INSTANCE.writeToLogFile(APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH , APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
@@ -311,7 +314,7 @@ public class MainActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -506,17 +509,17 @@ public class MainActivity extends ActionBarActivity {
     Intent intent;
     switch (item.getItemId()) {
       case R.id.accounts:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_ACCOUNT_BTN, true);
         intent = new Intent(this, AccountSettingsListActivity.class);
         startActivity(intent);
         return true;
       case R.id.message_send_new:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_MESSAGE_SEND_BTN, true);
         intent = new Intent(this, MessageReplyActivity.class);
         startActivity(intent);
         return true;
       case R.id.refresh_message_list:
-        EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
+        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
 
         reloadMessages(true);
         return true;
@@ -736,7 +739,7 @@ public class MainActivity extends ActionBarActivity {
       appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
     }
     Log.d("willrgai", builder.toString());
-    EventLogger.INSTANCE.writeToLogFile(builder.toString(), true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
   }
   
   private void setUpAndRegisterScreenReceiver() {
@@ -758,7 +761,7 @@ public class MainActivity extends ActionBarActivity {
   private final Thread.UncaughtExceptionHandler _unCaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
-      EventLogger.INSTANCE.writeToLogFile("uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, "uncaughtException : " + ex.getMessage() + " " + ex.getLocalizedMessage(), true);
       // re-throw critical exception further to the os (important)
       defaultUEH.uncaughtException(thread, ex);
     }

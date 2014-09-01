@@ -29,12 +29,15 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 import com.facebook.widget.ProfilePictureView;
+
 import hu.rgai.yako.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.FacebookAccount;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +67,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.ACCOUNTSETTING.FACEBOOK_SETTING_ACTIVITY_BACKBUTTON_STR, true);
     super.onBackPressed();
   }
   
