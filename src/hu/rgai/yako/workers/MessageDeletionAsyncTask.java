@@ -40,7 +40,7 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
     mDeleteAtMainList = deleteAtMainList;
   }
   
-  public MessageDeletionAsyncTask( LinkedList<MessageListElement> deletemessages, String fullSimpleMessageIdToDelete, MessageDeleteHandler handler,
+  public MessageDeletionAsyncTask(LinkedList<MessageListElement> deletemessages, String fullSimpleMessageIdToDelete, MessageDeleteHandler handler,
           boolean deleteAtMainList, Context context) {
 
     super(handler);
@@ -54,12 +54,10 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
   
   @Override
   protected Boolean doInBackground(Void... params) {
-    try {      
+    try {   
       
-      if(mFullSimpleMessageIdToDelete == null){
-        
-        for (MessageListElement mle : mDeleteMessages){
-          
+      if (mFullSimpleMessageIdToDelete == null) {       
+        for (MessageListElement mle : mDeleteMessages) {          
           mProvider= AndroidUtils.getMessageProviderInstanceByAccount(mle.getAccount(), mContext);
           
           if (mle.getAccount().isThreadAccount() && mProvider instanceof ThreadMessageProvider) {
@@ -87,8 +85,7 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
     if (mHandler != null) {
       if (success) {       
         if (mDeleteAtMainList) {
-            mHandler.onMainListDelete(mDeleteMessages);
-          
+            mHandler.onMainListDelete(mDeleteMessages);          
         } else {
             mHandler.onThreadListDelete(mMessageListRawIdToDelete, mFullSimpleMessageIdToDelete,
                     mProvider.getAccount().isInternetNeededForLoad());
