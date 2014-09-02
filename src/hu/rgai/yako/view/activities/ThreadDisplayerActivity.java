@@ -438,6 +438,13 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(ThreadMessageSentBroadcastReceiver.class,
             IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    
+    if (mMessage.getAccount().getAccountType()
+        .equals(MessageProvider.Type.SMS)) {
+      sentMessBroadcD.setMessageData(new SmsSentMessageData(ri.getDisplayName()));
+    } else {
+      sentMessBroadcD.setMessageData(new SimpleSentMessageData(ri.getDisplayName()));
+    }
       
     MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
             new TimeoutHandler() {
