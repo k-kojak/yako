@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Message;
 import android.util.Log;
 import hu.rgai.yako.beens.FullSimpleMessage;
+import hu.rgai.yako.beens.MessageListElement;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -99,6 +100,27 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   public static class Utils {
 
+    public static String getInClosureFromListElement(Collection<MessageListElement> collection, boolean isString) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("(");
+      int i = 0;
+      for (MessageListElement s : collection) {
+        if (i > 0) {
+          sb.append(",");
+        }
+        if (isString) {
+          sb.append("\"");
+        }
+        sb.append(s.getRawId());
+        if (isString) {
+          sb.append("\"");
+        }
+        i++;
+      }
+      sb.append(")");
+      return sb.toString();
+    }
+    
     public static String getInClosure(Collection<Long> collection, boolean isString) {
       StringBuilder sb = new StringBuilder();
       sb.append("(");
@@ -120,6 +142,10 @@ public class SQLHelper extends SQLiteOpenHelper {
       return sb.toString();
     }
 
+    public static String getInClosureFromListElement(Collection<MessageListElement> collection) {
+      return getInClosureFromListElement(collection, false);
+    }
+    
     public static String getInClosure(Collection<Long> collection) {
       return getInClosure(collection, false);
     }

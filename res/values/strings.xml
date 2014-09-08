@@ -117,6 +117,7 @@
   
   <string name="mainlist_open_drawer">Open drawer</string>
   <string name="mainlist_close_drawer">Close drawer</string>
+  <string name="add_contact">Add to contacts</string>
     
     
 </resources>

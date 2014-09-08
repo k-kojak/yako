@@ -113,7 +113,7 @@ public class MainActivityFragment extends Fragment {
             }
           } else {
             mode.getMenu().findItem(R.id.reply).setVisible(false);
-            mode.getMenu().findItem(R.id.discard).setVisible(false);
+            mode.getMenu().findItem(R.id.discard).setVisible(true);
           }
         } else {
           mode.finish();
@@ -279,16 +279,20 @@ public class MainActivityFragment extends Fragment {
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
       Log.d("rgai", "contextSelectedElements: " + contextSelectedElements);
-      long idOfFirst = contextSelectedElements.first();
-      MessageListElement mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(idOfFirst, mAccounts);
-      Account acc = mle.getAccount();
-      MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(acc, getActivity());
-
+      
+      LinkedList<MessageListElement> deletemessages = new LinkedList<MessageListElement>();
+      MessageListElement mle;
+      
+      for (Long idx : contextSelectedElements) {        
+        mle = MessageListDAO.getInstance(getActivity()).getMessageByRawId(idx, mAccounts);
+        deletemessages.add(mle);        
+      }
+     
       MessageDeleteHandler handler = new MessageDeleteHandler(getActivity()) {
         @Override
-        public void onMainListDelete(long deletedMessageListRawId) {
+        public void onMainListDelete(List<MessageListElement> deletedMessageList) {
           try {
-            MessageListDAO.getInstance(getActivity()).removeMessage(getActivity(), deletedMessageListRawId);
+            MessageListDAO.getInstance(getActivity()).removeMessage(getActivity(), deletedMessageList);
           } catch (Exception e) {
             Log.d("rgai", "", e);
           }
@@ -309,9 +313,10 @@ public class MainActivityFragment extends Fragment {
           Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
           mTopProgressBar.setVisibility(View.GONE);
         }
-      };
-      MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(mp, mle.getRawId(), null,
-              mle.getId(), handler, acc.isThreadAccount(), true);
+      };      
+      
+      MessageDeletionAsyncTask messageMarker = new MessageDeletionAsyncTask(deletemessages, null,
+           handler, true, getActivity().getApplicationContext());
       messageMarker.setTimeout(10000);
       messageMarker.executeTask(MainActivityFragment.this.getActivity(), null);
 
@@ -326,7 +331,7 @@ public class MainActivityFragment extends Fragment {
       }
     }); 
     builder.setTitle("Delete message");
-    builder.setMessage("Delete selected message?").show();
+    builder.setMessage("Delete selected message"+ (contextSelectedElements.size() == 1 ? "" : "s") +"?").show();
     
   }
   

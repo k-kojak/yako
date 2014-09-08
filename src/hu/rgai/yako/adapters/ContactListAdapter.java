@@ -236,7 +236,8 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 //    String[] projection = null;
     //TODO: Select dataKinds by Settings.java
-    String selection = "UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
+    String selection = " ( UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
+            + " OR " + "UPPER(" + ContactsContract.Data.DATA1 + ") LIKE ? )"
             + " AND LENGTH(" + ContactsContract.Data.DATA1 +") != 0 "
             + " AND ("
             + ContactsContract.Data.MIMETYPE + " = ?"
@@ -252,6 +253,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 
     String[] selectionArgs = new String[] {
+            "%"+ searchString +"%",
             "%"+ searchString +"%",
             ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE,
             ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
