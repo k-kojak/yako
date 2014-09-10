@@ -209,6 +209,7 @@ public class MainActivity extends ActionBarActivity {
     TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mDrawerList.setAdapter(mDrawerFilterAdapter);
+    mDrawerList.clearChoices();
     
     LinkedList<Integer> indexOfAccounts = null;
     if (!selectedAccounts.isEmpty()) {
