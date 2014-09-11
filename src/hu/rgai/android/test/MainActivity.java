@@ -584,7 +584,7 @@ public class MainActivity extends ActionBarActivity {
    * 
    * @param forceQuery true if load every message's instance false otherwise
    */
-  private void reloadMessages(boolean forceQuery) {
+  public void reloadMessages(boolean forceQuery) {
     refreshLoadingIndicatorState();
     Intent intent = new Intent(this, MainScheduler.class);
     intent.setAction(Context.ALARM_SERVICE);
