@@ -439,9 +439,11 @@ public class MainActivityFragment extends Fragment {
     if (loadMoreButton != null) {
       if (refreshing) {
         mSwipeRefreshLayout.setRefreshing(true);
+        mSwipeRefreshLayout.setEnabled(false);
         loadMoreButton.setEnabled(false);
       } else {
         mSwipeRefreshLayout.setRefreshing(false);
+        mSwipeRefreshLayout.setEnabled(true);
         loadMoreButton.setEnabled(true);
       }
     }
@@ -503,16 +505,8 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onRefresh() {
-      //mSwipeRefreshLayout.setRefreshing(true);
       EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
       mMainActivity.reloadMessages(true);
-      
-      new Handler().postDelayed(new Runnable() {
-        @Override 
-        public void run() {
-          //mSwipeRefreshLayout.setRefreshing(false);
-        }
-      }, 15000);
     }
   }
   
