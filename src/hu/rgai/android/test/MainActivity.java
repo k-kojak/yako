@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -19,10 +20,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.*;
-import android.widget.AdapterView;
-import android.widget.FrameLayout;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.*;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
@@ -36,7 +34,6 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.adapters.MainListDrawerFilterAdapter;
 import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
@@ -46,6 +43,7 @@ import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.location.LocationChangeListener;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
@@ -58,9 +56,7 @@ import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 
-import java.util.Date;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 
 /**
@@ -76,6 +72,7 @@ public class MainActivity extends ActionBarActivity {
   private boolean mDrawerIsVisible = false;
   private ProgressDialog pd = null;
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
+  private LocationChangeReceiver mLocationChangeReceiver = null;
   private Menu mMenu;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
@@ -115,7 +112,7 @@ public class MainActivity extends ActionBarActivity {
 //    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 //    sensorManager.registerListener(new AccelerometerListener(),
 //    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-    
+    mLocationChangeReceiver = new LocationChangeReceiver();
     
     
     setContentView(R.layout.mainlist_navigation_drawer);
@@ -224,14 +221,19 @@ public class MainActivity extends ActionBarActivity {
     
     
 
-
-
     // register broadcast receiver for new message load
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
     filter.addAction(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
     filter.addAction(MainService.NO_TASK_AVAILABLE_TO_PROCESS);
     LocalBroadcastManager.getInstance(this).registerReceiver(mMessageLoadedReceiver, filter);
+
+
+
+    // register broadcast for receive location change pending intents
+    IntentFilter locFilter = new IntentFilter(LocationChangeListener.ACTION_LOCATION_CHANGED);
+    registerReceiver(mLocationChangeReceiver, locFilter);
+    LocationChangeListener.INSTANCE.initLocationManager(this);
     
     
     // loading messages
@@ -272,6 +274,7 @@ public class MainActivity extends ActionBarActivity {
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
     
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
+    unregisterReceiver(mLocationChangeReceiver);
     
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
@@ -611,6 +614,60 @@ public class MainActivity extends ActionBarActivity {
         MainActivity.this.setContent(MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount() != 0);
       }
     }
+  }
+
+
+  private class LocationChangeReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      // this one is responsible for GUI loading indicator update
+      if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
+//        Log.d("yako", "location -> " + intent.getExtras().get("location"));
+        float radius = 100.0f;
+        Location myLocation = (Location) intent.getExtras().get("location");
+        if (myLocation != null) {
+          Log.d("yako", "lat, long: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+
+          List<String> insideList = new LinkedList<String>();
+          List<String> outsideList = new LinkedList<String>();
+          boolean workInside = isInside(LocationChangeListener.WORK_COORDINATES[0], LocationChangeListener.WORK_COORDINATES[1],
+                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude(), radius);
+          boolean homeInside = isInside(LocationChangeListener.HOME_COORDINATES[0], LocationChangeListener.HOME_COORDINATES[1],
+                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude(), radius);
+
+          if (homeInside) {
+            insideList.add("Home");
+          } else {
+            outsideList.add("Home");
+          }
+
+          if (workInside) {
+            insideList.add("Work");
+          } else {
+            outsideList.add("Work");
+          }
+
+          String text = "Acc/radius: " + myLocation.getAccuracy() + "/" + radius + "\n"
+                  + "Inside: " + Arrays.toString(insideList.toArray()) + "\n"
+                  + "Outside: " + Arrays.toString(outsideList.toArray());
+
+          Toast.makeText(MainActivity.this, text, Toast.LENGTH_LONG).show();
+        } else {
+          Toast.makeText(MainActivity.this, "My location is null...", Toast.LENGTH_LONG).show();
+        }
+      }
+    }
+
+    private boolean isInside(float x1, float y1, float x2, float y2, float radius) {
+      float[] dist = new float[2];
+      Location.distanceBetween(x1, y1, x2, y2, dist);
+      if (dist[0] > radius || dist[1] > radius) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
   }
 
   
