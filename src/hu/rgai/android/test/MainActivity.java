@@ -193,6 +193,9 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+    float[] f = new float[3];
+    Location.distanceBetween(0.0000f, 0.00000f, 1.00000f, 0.5f, f);
+    Log.d("yako", Arrays.toString(f));
     is_activity_visible = true;
     removeNotificationIfExists();
 
@@ -623,31 +626,44 @@ public class MainActivity extends ActionBarActivity {
       // this one is responsible for GUI loading indicator update
       if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
 //        Log.d("yako", "location -> " + intent.getExtras().get("location"));
-        float radius = 100.0f;
+        float radius = 350.0f;
         Location myLocation = (Location) intent.getExtras().get("location");
+        String bestProvider = intent.getExtras().getString("best_provider");
         if (myLocation != null) {
           Log.d("yako", "lat, long: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+          Log.d("yako", "time: " + new Date(myLocation.getTime()));
 
           List<String> insideList = new LinkedList<String>();
           List<String> outsideList = new LinkedList<String>();
-          boolean workInside = isInside(LocationChangeListener.WORK_COORDINATES[0], LocationChangeListener.WORK_COORDINATES[1],
-                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude(), radius);
-          boolean homeInside = isInside(LocationChangeListener.HOME_COORDINATES[0], LocationChangeListener.HOME_COORDINATES[1],
-                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude(), radius);
+          Map<String, Float> distances = new TreeMap<String, Float>();
 
-          if (homeInside) {
-            insideList.add("Home");
-          } else {
-            outsideList.add("Home");
+          distances.put("Work", getDist(LocationChangeListener.WORK_COORDINATES[0], LocationChangeListener.WORK_COORDINATES[1],
+                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
+          distances.put("Home", getDist(LocationChangeListener.HOME_COORDINATES[0], LocationChangeListener.HOME_COORDINATES[1],
+                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
+          distances.put("Béke", getDist(LocationChangeListener.BEKE_COORDINATES[0], LocationChangeListener.BEKE_COORDINATES[1],
+                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
+
+          String closestLoc = null;
+          float closest = Float.MAX_VALUE;
+          for (Map.Entry<String, Float> entry : distances.entrySet()) {
+            Log.d("yako", "entry -> " + entry);
+            if (entry.getValue() <= radius && entry.getValue() < closest) {
+              closest = entry.getValue();
+              closestLoc = entry.getKey();
+            }
           }
 
-          if (workInside) {
-            insideList.add("Work");
-          } else {
-            outsideList.add("Work");
+          for (Map.Entry<String, Float> entry : distances.entrySet()) {
+            if (entry.getKey().equals(closestLoc)) {
+              insideList.add(closestLoc);
+            } else {
+              outsideList.add(entry.getKey());
+            }
           }
-
+          
           String text = "Acc/radius: " + myLocation.getAccuracy() + "/" + radius + "\n"
+                  + "Best Provider: " + bestProvider + "\n"
                   + "Inside: " + Arrays.toString(insideList.toArray()) + "\n"
                   + "Outside: " + Arrays.toString(outsideList.toArray());
 
@@ -658,16 +674,11 @@ public class MainActivity extends ActionBarActivity {
       }
     }
 
-    private boolean isInside(float x1, float y1, float x2, float y2, float radius) {
+    private float getDist(float x1, float y1, float x2, float y2) {
       float[] dist = new float[2];
       Location.distanceBetween(x1, y1, x2, y2, dist);
-      if (dist[0] > radius || dist[1] > radius) {
-        return false;
-      } else {
-        return true;
-      }
+      return dist[0];
     }
-
   }
 
   
