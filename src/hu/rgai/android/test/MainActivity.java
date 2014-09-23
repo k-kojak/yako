@@ -29,6 +29,7 @@ import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
+import hu.rgai.yako.adapters.ZoneListAdapter;
 import hu.rgai.yako.eventlogger.AccelerometerListener;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
@@ -47,10 +48,12 @@ import hu.rgai.yako.location.LocationChangeListener;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.activities.AccountSettingsListActivity;
+import hu.rgai.yako.view.activities.GoogleMapsActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
@@ -66,6 +69,9 @@ public class MainActivity extends ActionBarActivity {
 
   private DrawerLayout mDrawerLayout;
   private ListView mDrawerList;
+  private ListView mZoneList;
+  private TextView mAddGpsZone;
+  private View mDrawerWrapper;
   private ActionBarDrawerToggle mDrawerToggle;
   private MainActivityFragment mFragment = null;
   private MainListDrawerFilterAdapter mDrawerFilterAdapter = null;
@@ -84,7 +90,9 @@ public class MainActivity extends ActionBarActivity {
   public static Account actSelectedFilter = null;
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
+
   public static final int PREFERENCES_REQUEST_CODE = 1;
+  public static final int G_MAPS_ACTIVITY_REQUEST_CODE = 2;
   
   
   
@@ -129,13 +137,23 @@ public class MainActivity extends ActionBarActivity {
     
     actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
     
+    mDrawerWrapper = findViewById(R.id.drawer_wrapper);
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
+    mZoneList = (ListView) findViewById(R.id.zone_list);
+    mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+    mAddGpsZone.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        startActivityForResult(new Intent(MainActivity.this, GoogleMapsActivity.class), G_MAPS_ACTIVITY_REQUEST_CODE);
+      }
+    });
 
     
 
@@ -201,7 +219,11 @@ public class MainActivity extends ActionBarActivity {
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
-    
+
+    // setting zone list
+    loadZoneListAdapter();
+
+
     // setting filter adapter onResume, because it might change at settings panel
     TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
@@ -269,7 +291,12 @@ public class MainActivity extends ActionBarActivity {
               "Please set them again and apologize for the inconvenience.").show();
     }
   }
-  
+
+  public void loadZoneListAdapter() {
+    ZoneListAdapter zoneAdapter = new ZoneListAdapter(this, GpsZoneDAO.getInstance(this).getAllZonesCursor());
+    mZoneList.setAdapter(zoneAdapter);
+  }
+
   @Override
   protected void onPause() {
     
@@ -691,7 +718,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
       mDrawerList.setItemChecked(position, true);
-      mDrawerLayout.closeDrawer(mDrawerList);
+      mDrawerLayout.closeDrawer(mDrawerWrapper);
       actSelectedFilter = (Account)parent.getItemAtPosition(position);
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
       if (mFragment != null) {
@@ -713,8 +740,7 @@ public class MainActivity extends ActionBarActivity {
       }
     }
   }
-  
-  
+
   
   // LOGGING EVENTS
   public void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, MainListAdapter adapter) {

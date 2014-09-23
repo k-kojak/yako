@@ -35,10 +35,10 @@ import android.util.Log;
 
 public enum EventLogger {
   INSTANCE;
-  
+
   private static final int GPS_AND_PROCCES_LOGGING_WAIT_TIME = 60 * 1000;
 
-  
+
   public enum LogFilePaths {
     FILE_TO_UPLOAD_PATH(getFullPathToFile("upload_logfile.txt")),
     FILE_TO_MESSAGES_PATH(getFullPathToFile("messages_logfile.txt"));
@@ -303,7 +303,7 @@ public enum EventLogger {
     
   }
   
-  public void zipFile(String inputFilePath, String outputFilePath) throws IOException{
+  public void zipFile(String inputFilePath, String outputFilePath) throws IOException {
     FileOutputStream fileOutputStream;
     if (!sdCard)
       fileOutputStream = context.openFileOutput(outputFilePath, Context.MODE_PRIVATE);

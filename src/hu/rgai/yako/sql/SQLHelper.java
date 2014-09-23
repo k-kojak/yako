@@ -25,7 +25,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase;
 
   private static final String DATABASE_NAME = "yako_messages";
-  private static final int DATABASE_VERSION = 1;
+  private static final int DATABASE_VERSION = 2;
 
 
   public static synchronized SQLHelper getInstance(Context context) {
@@ -64,6 +64,7 @@ public class SQLHelper extends SQLiteOpenHelper {
     db.execSQL(PersonSenderDAO.TABLE_CREATE);
     db.execSQL(FullMessageDAO.TABLE_CREATE);
     db.execSQL(AttachmentDAO.TABLE_CREATE);
+    db.execSQL(GpsZoneDAO.TABLE_CREATE);
 
 
     db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
@@ -80,9 +81,23 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    Log.d("rgai", "onUpgrade");
-    dropAll(db);
-    onCreate(db);
+    Log.d("yako", "onUpgrade");
+    /**
+     * TODO: a map should be a nice solution here...to map DAOs to version IDs and automatically perform the proper
+     * update or insert...
+     */
+    // first upgrade
+    if (oldVersion == 1 && newVersion > 1) {
+      createTableMapZones(db);
+    } else {
+      dropAll(db);
+      onCreate(db);
+    }
+  }
+
+
+  private void createTableMapZones(SQLiteDatabase db) {
+    db.execSQL(GpsZoneDAO.TABLE_CREATE);
   }
 
   private void dropAll(SQLiteDatabase db) {
@@ -96,6 +111,7 @@ public class SQLHelper extends SQLiteOpenHelper {
     db.execSQL("DROP TABLE IF EXISTS " + PersonSenderDAO.TABLE_PERSON);
     db.execSQL("DROP TABLE IF EXISTS " + MessageListDAO.TABLE_MESSAGES);
     db.execSQL("DROP TABLE IF EXISTS " + AccountDAO.TABLE_ACCOUNTS);
+    db.execSQL("DROP TABLE IF EXISTS " + GpsZoneDAO.TABLE_GPS_ZONES);
   }
 
   public static class Utils {
