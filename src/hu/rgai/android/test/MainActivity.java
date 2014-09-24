@@ -768,26 +768,29 @@ public class MainActivity extends ActionBarActivity {
       Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
       Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
 
+      Set<String> nearLocationList = new TreeSet<String>();
       String closestLoc = null;
       float closest = Float.MAX_VALUE;
       for (GpsZone zone : mGpsZones) {
         float distance = getDist((float) zone.getLat(), (float) zone.getLong(),
                 (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude());
-        zone.setActive(false);
-        if (distance <= zone.getRadius() && distance < closest) {
-          closest = distance;
-          closestLoc = zone.getAlias();
+        zone.setProximity(GpsZone.Proximity.FAR);
+        if (distance <= zone.getRadius()) {
+          nearLocationList.add(zone.getAlias());
+          if (distance < closest) {
+            closest = distance;
+            closestLoc = zone.getAlias();
+          }
         }
       }
 
       for (GpsZone zone : mGpsZones) {
         if (zone.getAlias().equals(closestLoc)) {
-          zone.setActive(true);
-          break;
+          zone.setProximity(GpsZone.Proximity.CLOSEST);
+        } else if (nearLocationList.contains(zone.getAlias())) {
+          zone.setProximity(GpsZone.Proximity.NEAR);
         }
       }
-
-//      loadZoneListAdapter(false);
     }
   }
 

@@ -69,7 +69,15 @@ public class ZoneListAdapter extends BaseAdapter {
     // Setting all values in listview
     alias.setText(zone.getAlias());
     radius.setText("(" + String.valueOf(zone.getRadius()) + "m)");
-    circle.setBackgroundResource(zone.isActive() ? R.drawable.ic_green_circle_on : R.drawable.ic_green_circle_off);
+    int drawable;
+    if (zone.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
+      drawable = R.drawable.ic_green_circle_on;
+    } else if (zone.getProximity().equals(GpsZone.Proximity.NEAR)) {
+      drawable = R.drawable.ic_green_circle_half_on;
+    } else {
+      drawable = R.drawable.ic_green_circle_off;
+    }
+    circle.setBackgroundResource(drawable);
 
     discard.setOnClickListener(new View.OnClickListener() {
       @Override

@@ -5,11 +5,13 @@ package hu.rgai.yako.beens;
  */
 public class GpsZone {
 
+  public enum Proximity {CLOSEST, NEAR, FAR};
+
   private final String mAlias;
   private final double mLat;
   private final double mLong;
   private final int mRadius;
-  private boolean mActive = false;
+  private Proximity mProximity = Proximity.FAR;
 
   public GpsZone(String mAlias, double mLat, double mLong, int mRadius) {
     this.mAlias = mAlias;
@@ -34,11 +36,11 @@ public class GpsZone {
     return mRadius;
   }
 
-  public boolean isActive() {
-    return mActive;
+  public Proximity getProximity() {
+    return mProximity;
   }
 
-  public void setActive(boolean active) {
-    this.mActive = active;
+  public void setProximity(Proximity proximity) {
+    this.mProximity = proximity;
   }
 }
