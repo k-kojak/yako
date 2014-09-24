@@ -21,17 +21,6 @@ public enum LocationChangeListener {
   }
 
   private LocationManager locationManager = null;
-  public static final float[] WORK_COORDINATES = new float[2];
-  public static final float[] HOME_COORDINATES = new float[2];
-  public static final float[] BEKE_COORDINATES = new float[2];
-  static {
-    WORK_COORDINATES[0] = 46.246755f;
-    WORK_COORDINATES[1] = 20.146554f;
-    HOME_COORDINATES[0] = 46.26704f;
-    HOME_COORDINATES[1] = 20.143075f;
-    BEKE_COORDINATES[0] = 46.246061f;
-    BEKE_COORDINATES[1] = 20.145406f;
-  }
 
 
   public synchronized void initLocationManager(Context context) {
@@ -39,16 +28,14 @@ public enum LocationChangeListener {
       locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
       PendingIntent pi = getLocationPendingIntent(context);
       locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, REQUEST_INTERVAL, 0.0f, pi);
-    } else {
+    }
       String bestProvider = locationManager.getBestProvider(REQUEST_CRITERIA, false);
-//      String bestProvider = locationManager.getProvider(LocationManager.PASSIVE_PROVIDER).getName();
       Location loc = locationManager.getLastKnownLocation(bestProvider);
       Intent i = new Intent(ACTION_LOCATION_CHANGED);
       i.putExtra("location", loc);
       i.putExtra("best_provider", bestProvider);
       context.sendBroadcast(i);
       Log.d("yako", "send location broadcast...");
-    }
   }
 
   private PendingIntent getLocationPendingIntent(Context context) {

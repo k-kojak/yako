@@ -4,8 +4,6 @@ package hu.rgai.yako.adapters;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.GpsZone;
-import hu.rgai.yako.config.Settings;
-import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 
 import java.util.List;
@@ -60,7 +53,7 @@ public class ZoneListAdapter extends BaseAdapter {
     view = inflater.inflate(R.layout.zone_list_item, parent, false);
 
     TextView alias = (TextView) view.findViewById(R.id.alias);
-    TextView radius = (TextView) view.findViewById(R.id.radius);
+    TextView distance = (TextView) view.findViewById(R.id.distance);
     ImageView discard = (ImageView) view.findViewById(R.id.discard);
     ImageView circle = (ImageView) view.findViewById(R.id.active_status);
 
@@ -68,7 +61,10 @@ public class ZoneListAdapter extends BaseAdapter {
 
     // Setting all values in listview
     alias.setText(zone.getAlias());
-    radius.setText("(" + String.valueOf(zone.getRadius()) + "m)");
+    if (zone.getDistance() >= 0) {
+      distance.setText("(" + formatDistance(zone.getDistance()) + ")");
+    }
+
     int drawable;
     if (zone.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
       drawable = R.drawable.ic_green_circle_on;
@@ -104,4 +100,18 @@ public class ZoneListAdapter extends BaseAdapter {
     return view;
 
   }
+
+  private String formatDistance(int meters) {
+    String s;
+    if (meters < 1000) {
+      s = meters + "m";
+    } else if (meters < 10 * 1000) {
+      s = String.format("%.1f", meters / 1000.0) + "km";
+    } else {
+      s = Math.round(meters / 1000.0) + "km";
+    }
+
+    return s;
+  }
+
 }

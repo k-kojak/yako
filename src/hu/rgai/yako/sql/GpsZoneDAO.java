@@ -56,13 +56,13 @@ public class GpsZoneDAO {
   }
 
   public void saveZone(GpsZone zone) {
-    ContentValues cv = new ContentValues();
-    cv.put(COL_ALIAS, zone.getAlias());
-    cv.put(COL_LAT, zone.getLat());
-    cv.put(COL_LONG, zone.getLong());
-    cv.put(COL_RADIUS, zone.getRadius());
-
+    ContentValues cv = buildContentValues(zone);
     mDbHelper.getDatabase().insert(TABLE_GPS_ZONES, null, cv);
+  }
+
+  public void updateZone(String aliasToUpdate, GpsZone zone) {
+    ContentValues cv = buildContentValues(zone);
+    mDbHelper.getDatabase().update(TABLE_GPS_ZONES, cv, COL_ALIAS + " = ?", new String[]{aliasToUpdate});
   }
 
   public void removeZoneByAlias(String alias) {
@@ -85,6 +85,16 @@ public class GpsZoneDAO {
     c.close();
 
     return zones;
+  }
+
+  private static ContentValues buildContentValues(GpsZone zone) {
+    ContentValues cv = new ContentValues();
+    cv.put(COL_ALIAS, zone.getAlias());
+    cv.put(COL_LAT, zone.getLat());
+    cv.put(COL_LONG, zone.getLong());
+    cv.put(COL_RADIUS, zone.getRadius());
+
+    return cv;
   }
 
   public static GpsZone cursorToGpsZone(Cursor cursor) {

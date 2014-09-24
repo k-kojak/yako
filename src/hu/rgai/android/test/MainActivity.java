@@ -156,12 +156,13 @@ public class MainActivity extends ActionBarActivity {
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
     
     
-    mAccountHolder.setOnItemClickListener(new DrawerItemClickListener());
+    mAccountHolder.setOnItemClickListener(new AccountFilterClickListener());
+    mZoneHolder.setOnItemClickListener(new ZoneListClickListener());
 
     mAddGpsZone.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        startActivityForResult(new Intent(MainActivity.this, GoogleMapsActivity.class), G_MAPS_ACTIVITY_REQUEST_CODE);
+        startMapActivity(null);
       }
     });
 
@@ -653,8 +654,9 @@ public class MainActivity extends ActionBarActivity {
       String closestLoc = null;
       float closest = Float.MAX_VALUE;
       for (GpsZone zone : mGpsZones) {
-        float distance = getDist((float) zone.getLat(), (float) zone.getLong(),
-                (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude());
+        int distance = Math.round(getDist((float) zone.getLat(), (float) zone.getLong(),
+                (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude()));
+        zone.setDistance(distance);
         zone.setProximity(GpsZone.Proximity.FAR);
         if (distance <= zone.getRadius()) {
           nearLocationList.add(zone.getAlias());
@@ -679,6 +681,14 @@ public class MainActivity extends ActionBarActivity {
     float[] dist = new float[2];
     Location.distanceBetween(x1, y1, x2, y2, dist);
     return dist[0];
+  }
+
+  private void startMapActivity(GpsZone zone) {
+    Intent i = new Intent(MainActivity.this, GoogleMapsActivity.class);
+    if (zone != null) {
+      i.putExtra(GoogleMapsActivity.EXTRA_GPS_ZONE_DATA, zone);
+    }
+    startActivityForResult(i, G_MAPS_ACTIVITY_REQUEST_CODE);
   }
   
   
@@ -715,7 +725,7 @@ public class MainActivity extends ActionBarActivity {
 
 
 
-  private class DrawerItemClickListener implements LinearListView.OnItemClickListener {
+  private class AccountFilterClickListener implements LinearListView.OnItemClickListener {
 
     @Override
     public void onItemClick(Object item, int position) {
@@ -740,6 +750,15 @@ public class MainActivity extends ActionBarActivity {
               || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
         reloadMessages(false);
       }
+    }
+  }
+
+  private class ZoneListClickListener implements LinearListView.OnItemClickListener {
+
+    @Override
+    public void onItemClick(Object item, int position) {
+      GpsZone zone = (GpsZone)item;
+      startMapActivity(zone);
     }
   }
 
