@@ -5,6 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import hu.rgai.yako.beens.GpsZone;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Created by kojak on 9/23/2014.
  */
@@ -69,6 +72,19 @@ public class GpsZoneDAO {
   public Cursor getAllZonesCursor() {
     return mDbHelper.getDatabase().query(TABLE_GPS_ZONES, allColumns, null, null, null, null,
             COL_ALIAS + " ASC");
+  }
+
+  public List<GpsZone> getAllZones() {
+    List<GpsZone> zones = new LinkedList<GpsZone>();
+    Cursor c = getAllZonesCursor();
+    c.moveToFirst();
+    while (!c.isAfterLast()) {
+      zones.add(cursorToGpsZone(c));
+      c.moveToNext();
+    }
+    c.close();
+
+    return zones;
   }
 
   public static GpsZone cursorToGpsZone(Cursor cursor) {

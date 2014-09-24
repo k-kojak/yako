@@ -8,8 +8,32 @@
         android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/buttons_row"
+        android:layout_above="@+id/radius_row"
         />
+
+    <LinearLayout
+        android:id="@+id/radius_row"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttons_row">
+
+        <TextView
+            android:id="@+id/radius_text"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:textSize="14sp"
+            android:text="Accuracy: "
+            android:layout_gravity="center_vertical"/>
+
+        <SeekBar
+            android:id="@+id/radius_seekbar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:max="48" />
+    </LinearLayout>
 
     <TableRow
         android:id="@+id/buttons_row"

@@ -9,6 +9,7 @@ public class GpsZone {
   private final double mLat;
   private final double mLong;
   private final int mRadius;
+  private boolean mActive = false;
 
   public GpsZone(String mAlias, double mLat, double mLong, int mRadius) {
     this.mAlias = mAlias;
@@ -31,5 +32,13 @@ public class GpsZone {
 
   public int getRadius() {
     return mRadius;
+  }
+
+  public boolean isActive() {
+    return mActive;
+  }
+
+  public void setActive(boolean active) {
+    this.mActive = active;
   }
 }
