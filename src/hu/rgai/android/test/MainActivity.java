@@ -176,8 +176,6 @@ public class MainActivity extends ActionBarActivity {
             R.string.mainlist_open_drawer, /* "open drawer" description for accessibility */
             R.string.mainlist_close_drawer /* "close drawer" description for accessibility */) {
               
-      float mPreviousOffset = 0f;
-              
       @Override
       public void onDrawerClosed(View view) {
         super.onDrawerClosed(view);
@@ -237,22 +235,8 @@ public class MainActivity extends ActionBarActivity {
 
 //    // setting filter adapter onResume, because it might change at settings panel
     setAccountList();
-//    TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
-//    mAccountFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
-//    mAccountHolder.setAdapter(mAccountFilterAdapter);
-//    int indexOfAccount = 0;
-//    if (actSelectedFilter != null) {
-//      // +1 needed because 0th element in adapter is "all instance"
-//      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
-//      // the saved selected instance is not available anymore...
-//      if (indexOfAccount == -1) {
-//        actSelectedFilter = null;
-//      }
-//      indexOfAccount++;
-//    }
-//    mAccountHolder.setItemChecked(indexOfAccount, true);
-    
-    
+
+
     // setting title
     setTitleByFilter();
     
@@ -321,73 +305,6 @@ public class MainActivity extends ActionBarActivity {
     mAccountHolder.setItemChecked(indexOfAccount, true);
   }
 
-//  private View getRowForAccountList(ViewGroup parent, Account account) {
-//
-//    View view = mInflater.inflate(R.layout.mainlist_navigation_drawer_list_item, parent, false);
-//    view.setOnClickListener(new View.OnClickListener() {
-//      @Override
-//      public void onClick(View v) {
-//        mAccountHolder.setItemChecked(position, true);
-//        mDrawerLayout.closeDrawer(mDrawerWrapper);
-//        actSelectedFilter = (Account)parent.getItemAtPosition(position);
-//        StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
-//        if (mFragment != null) {
-//          mFragment.hideContextualActionbar();
-//          mFragment.notifyAdapterChange();
-//        }
-//
-//        // run query for selected filter only if list is empty OR selected all accounts
-//
-//        long accountId = -1;
-//        if (actSelectedFilter != null) {
-//          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
-//          accountId = accountsAccountKey.get(actSelectedFilter);
-//        }
-//
-//        if (actSelectedFilter == null
-//                || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
-//          reloadMessages(false);
-//        }
-//      }
-//    });
-//
-//    TextView name = (TextView) view.findViewById(R.id.name);
-//    TextView type = (TextView) view.findViewById(R.id.type);
-//    ImageView icon = (ImageView) view.findViewById(R.id.img);
-//
-//    if (account == null) {
-//      name.setText(R.string.all);
-//      type.setVisibility(View.GONE);
-//      icon.setVisibility(View.INVISIBLE);
-//    } else {
-//      type.setVisibility(View.VISIBLE);
-//      icon.setVisibility(View.VISIBLE);
-//
-//      // Setting all values in listview
-//      name.setText(account.getDisplayName());
-//      type.setText(account.getAccountType().toString());
-//      if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-//        icon.setImageResource(R.drawable.fb);
-//      } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {
-//        icon.setImageResource(R.drawable.gmail_icon);
-//      } else if (account.getAccountType().equals(MessageProvider.Type.SMS)) {
-//        icon.setImageResource(R.drawable.ic_sms3);
-//      } else if (account.getAccountType().equals(MessageProvider.Type.EMAIL)) {
-//        EmailAccount eacc = (EmailAccount)account;
-//        String dom = eacc.getEmail().substring(eacc.getEmail().indexOf("@") + 1);
-//        int dotIndex = dom.indexOf(".");
-//        if (dotIndex == -1) {
-//          dom = "";
-//        } else {
-//          dom = dom.substring(0, dotIndex);
-//        }
-//        icon.setImageResource(Settings.EmailUtils.getResourceIdToEmailDomain(dom));
-//      }
-//    }
-//
-//    return view;
-// }
-
   public void loadZoneListAdapter(boolean refreshFromDatabase) {
     if (refreshFromDatabase) {
       mGpsZones = GpsZoneDAO.getInstance(this).getAllZones();
@@ -396,42 +313,6 @@ public class MainActivity extends ActionBarActivity {
     mZoneListAdapter = new ZoneListAdapter(this, mGpsZones);
     mZoneHolder.setAdapter(mZoneListAdapter);
   }
-
-//  private View getRowForZoneList(ViewGroup parent, final GpsZone zone) {
-//
-//    View view = mInflater.inflate(R.layout.zone_list_item, parent, false);
-//
-//    TextView alias = (TextView) view.findViewById(R.id.alias);
-//    TextView radius = (TextView) view.findViewById(R.id.radius);
-//    ImageView discard = (ImageView) view.findViewById(R.id.discard);
-//
-//    // Setting all values in listview
-//    alias.setText(zone.getAlias());
-//    radius.setText("(" + String.valueOf(zone.getRadius()) + "m)");
-//    discard.setOnClickListener(new View.OnClickListener() {
-//      @Override
-//      public void onClick(View v) {
-//        new AlertDialog.Builder(MainActivity.this)
-//                .setTitle("Delete zone")
-//                .setMessage("Are you sure want to delete zone "+ zone.getAlias() +"?")
-//                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-//                  @Override
-//                  public void onClick(DialogInterface dialog, int which) {
-//                    GpsZoneDAO.getInstance(MainActivity.this).removeZoneByAlias(zone.getAlias());
-//                    loadZoneListAdapter();
-//                  }
-//                })
-//                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-//                  public void onClick(DialogInterface dialog, int whichButton) {
-//                    dialog.dismiss();
-//                  }
-//                })
-//                .show();
-//      }
-//    });
-//
-//    return view;
-//  }
 
   @Override
   protected void onPause() {
@@ -825,83 +706,11 @@ public class MainActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       // this one is responsible for GUI loading indicator update
       if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
-//        Log.d("yako", "location -> " + intent.getExtras().get("location"));
-//        float radius = 350.0f;
         mMyLastLocation = (Location) intent.getExtras().get("location");
         loadZoneListAdapter(false);
-//        String bestProvider = intent.getExtras().getString("best_provider");
-//        if (mMyLastLocation != null) {
-
-//          Log.d("yako", "lat, long: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
-//          Log.d("yako", "time: " + new Date(myLocation.getTime()));
-//
-//          String closestLoc = null;
-//          float closest = Float.MAX_VALUE;
-//          for (GpsZone zone : mGpsZones) {
-//            float distance = getDist((float)zone.getLat(), (float)zone.getLong(),
-//                    (float) myLocation.getLatitude(), (float) myLocation.getLongitude());
-//            zone.setActive(false);
-//            if (distance <= radius && distance < closest) {
-//              closest = distance;
-//              closestLoc = zone.getAlias();
-//            }
-//          }
-//
-//          for (GpsZone zone : mGpsZones) {
-//            if (zone.getAlias().equals(closestLoc)) {
-//              zone.setActive(true);
-//              break;
-//            }
-//          }
-//
-//          loadZoneListAdapter();
-
-//          List<String> insideList = new LinkedList<String>();
-//          List<String> outsideList = new LinkedList<String>();
-//          Map<String, Float> distances = new TreeMap<String, Float>();
-//
-//          distances.put("Work", getDist(LocationChangeListener.WORK_COORDINATES[0], LocationChangeListener.WORK_COORDINATES[1],
-//                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
-//          distances.put("Home", getDist(LocationChangeListener.HOME_COORDINATES[0], LocationChangeListener.HOME_COORDINATES[1],
-//                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
-//          distances.put("Béke", getDist(LocationChangeListener.BEKE_COORDINATES[0], LocationChangeListener.BEKE_COORDINATES[1],
-//                  (float) myLocation.getLatitude(), (float) myLocation.getLongitude()));
-//
-//          String closestLoc = null;
-//          float closest = Float.MAX_VALUE;
-//          for (Map.Entry<String, Float> entry : distances.entrySet()) {
-//            Log.d("yako", "entry -> " + entry);
-//            if (entry.getValue() <= radius && entry.getValue() < closest) {
-//              closest = entry.getValue();
-//              closestLoc = entry.getKey();
-//            }
-//          }
-//
-//          for (Map.Entry<String, Float> entry : distances.entrySet()) {
-//            if (entry.getKey().equals(closestLoc)) {
-//              insideList.add(closestLoc);
-//            } else {
-//              outsideList.add(entry.getKey());
-//            }
-//          }
-//
-//          String text = "Acc/radius: " + myLocation.getAccuracy() + "/" + radius + "\n"
-//                  + "Best Provider: " + bestProvider + "\n"
-//                  + "Inside: " + Arrays.toString(insideList.toArray()) + "\n"
-//                  + "Outside: " + Arrays.toString(outsideList.toArray());
-
-//          Toast.makeText(MainActivity.this, text, Toast.LENGTH_LONG).show();
-//        } else {
-//          Toast.makeText(MainActivity.this, "My location is null...", Toast.LENGTH_LONG).show();
-//        }
       }
     }
 
-//    private float getDist(float x1, float y1, float x2, float y2) {
-//      float[] dist = new float[2];
-//      Location.distanceBetween(x1, y1, x2, y2, dist);
-//      return dist[0];
-//    }
   }
 
 
