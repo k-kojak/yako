@@ -82,10 +82,10 @@ public class MainActivityFragment extends Fragment {
     mSwipeRefreshLayout = (SwipeRefreshLayout) mRootView.findViewById(R.id.SwipeRefreshLayout);
     mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshListener());
     mSwipeRefreshLayout.setColorSchemeColors(
-        Color.BLUE, 
-        Color.GREEN, 
-        Color.YELLOW, 
-        Color.RED);
+            Color.parseColor("#373737"),
+            Color.parseColor("#717171"),
+            Color.parseColor("#A1A1A1"),
+            Color.parseColor("#F1F1F1"));
     mTopProgressBar = (ProgressBar) mRootView.findViewById(R.id.progressbar);
     mListView = (ListView) mRootView.findViewById(R.id.list);
     
