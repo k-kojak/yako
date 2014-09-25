@@ -233,7 +233,7 @@ public class MainActivity extends ActionBarActivity {
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
     // setting zone list
-    loadZoneListAdapter(true);
+//    loadZoneListAdapter(true);
 //    setZoneActivityStates();
 
 

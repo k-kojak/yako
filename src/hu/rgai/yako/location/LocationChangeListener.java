@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.util.Log;
 
 public enum LocationChangeListener {
   INSTANCE;
@@ -24,6 +25,7 @@ public enum LocationChangeListener {
 
 
   public synchronized void initLocationManager(Context context) {
+    Log.d("yako", "initLocationManager: " + locationManager);
     if (locationManager == null) {
       locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
       PendingIntent pi = getLocationPendingIntent(context);

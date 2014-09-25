@@ -20,7 +20,7 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
      */
     List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(context);
     for (GpsZone zone : gpsZones) {
-      Log.d("yako", zone.toString());
+//      Log.d("yako", zone.toString());
     }
     return Math.random();
   }
