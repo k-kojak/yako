@@ -29,6 +29,7 @@ import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
+import com.google.android.gms.maps.model.LatLng;
 import hu.rgai.yako.adapters.ZoneListAdapter;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.eventlogger.AccelerometerListener;
@@ -687,6 +688,10 @@ public class MainActivity extends ActionBarActivity {
     Intent i = new Intent(MainActivity.this, GoogleMapsActivity.class);
     if (zone != null) {
       i.putExtra(GoogleMapsActivity.EXTRA_GPS_ZONE_DATA, zone);
+    } else {
+      LatLng latLng = mMyLastLocation != null
+              ? new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()) : null;
+      i.putExtra(GoogleMapsActivity.EXTRA_START_LOC, latLng);
     }
     startActivityForResult(i, G_MAPS_ACTIVITY_REQUEST_CODE);
   }

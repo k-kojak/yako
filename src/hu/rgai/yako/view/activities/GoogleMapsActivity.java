@@ -23,6 +23,7 @@ import hu.rgai.yako.sql.GpsZoneDAO;
 public class GoogleMapsActivity extends FragmentActivity {
 
   public static final String EXTRA_GPS_ZONE_DATA = "hu.rgai.yako.extra_gps_zone_data";
+  public static final String EXTRA_START_LOC = "hu.rgai.yako.extra_start_loc";
 
   private GoogleMap mMap;
   private MapFragment mMapFragment;
@@ -36,6 +37,7 @@ public class GoogleMapsActivity extends FragmentActivity {
   private SeekBar mSeekBar;
 
   private GpsZone mZoneToEdit = null;
+  private LatLng mInitLatLng = null;
   private boolean mUpdating = false;
 
   @Override
@@ -49,6 +51,8 @@ public class GoogleMapsActivity extends FragmentActivity {
       if (extras.containsKey(EXTRA_GPS_ZONE_DATA)) {
         mZoneToEdit = extras.getParcelable(EXTRA_GPS_ZONE_DATA);
         mUpdating = true;
+      } else if (extras.containsKey(EXTRA_START_LOC)) {
+        mInitLatLng = extras.getParcelable(EXTRA_START_LOC);
       }
     }
 
@@ -109,6 +113,8 @@ public class GoogleMapsActivity extends FragmentActivity {
       mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
               new LatLng(mZoneToEdit.getLat(), mZoneToEdit.getLong()),
               16.0f));
+    } else if (mInitLatLng != null) {
+      mMap.animateCamera (CameraUpdateFactory.newLatLngZoom (mInitLatLng, 13.0f));
     }
     mSeekBar.setProgress((mRadiusValue - 20) / 10);
     setRadiusText(mRadiusValue);
