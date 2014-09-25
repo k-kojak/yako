@@ -6,14 +6,14 @@ import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.util.Log;
 
 public enum LocationChangeListener {
   INSTANCE;
 
-  public static final String ACTION_LOCATION_CHANGED = "action_location_changed";
+  public static final String EXTRA_LOCATION = "location";
+  public static final String ACTION_LOCATION_CHANGED = "hu.rgai.yako.action_location_changed";
   public static final int REQ_CODE_LOCATION_CHANGED = 1;
-  private static final long REQUEST_INTERVAL = 2 * 10 * 1000;
+  private static final long REQUEST_INTERVAL = 1 * 60 * 1000;
   private static final Criteria REQUEST_CRITERIA = new Criteria();
   static {
     REQUEST_CRITERIA.setCostAllowed(false);
@@ -29,13 +29,11 @@ public enum LocationChangeListener {
       PendingIntent pi = getLocationPendingIntent(context);
       locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, REQUEST_INTERVAL, 0.0f, pi);
     }
-      String bestProvider = locationManager.getBestProvider(REQUEST_CRITERIA, false);
-      Location loc = locationManager.getLastKnownLocation(bestProvider);
-      Intent i = new Intent(ACTION_LOCATION_CHANGED);
-      i.putExtra("location", loc);
-      i.putExtra("best_provider", bestProvider);
-      context.sendBroadcast(i);
-      Log.d("yako", "send location broadcast...");
+    String bestProvider = locationManager.getBestProvider(REQUEST_CRITERIA, false);
+    Location loc = locationManager.getLastKnownLocation(bestProvider);
+    Intent i = new Intent(ACTION_LOCATION_CHANGED);
+    i.putExtra(EXTRA_LOCATION, loc);
+    context.sendBroadcast(i);
   }
 
   private PendingIntent getLocationPendingIntent(Context context) {

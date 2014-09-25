@@ -721,7 +721,7 @@ public class MainActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       // this one is responsible for GUI loading indicator update
       if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
-        mMyLastLocation = (Location) intent.getExtras().get("location");
+        mMyLastLocation = (Location) intent.getExtras().get(LocationChangeListener.EXTRA_LOCATION);
         loadZoneListAdapter(false);
       }
     }
