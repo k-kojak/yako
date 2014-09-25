@@ -33,15 +33,11 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
 
-import java.util.List;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,7 +69,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 //      stillAddingFacebookAccount = false;
       return;
     }
-    setContentView(R.layout.main);
+    setContentView(R.layout.account_list_layout);
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -196,7 +192,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     
     MainServiceExtraParams eParams = new MainServiceExtraParams();
-    eParams.setAccount(account);
+    eParams.addAccount(account);
     eParams.setForceQuery(true);
     service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     

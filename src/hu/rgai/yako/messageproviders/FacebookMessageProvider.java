@@ -249,10 +249,11 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   context.sendBroadcast(res);
 
                   // always run MainService, so new messages can be stored
+                  
                   Intent service = new Intent(context, MainScheduler.class);
                   service.setAction(Context.ALARM_SERVICE);
                   MainServiceExtraParams eParams = new MainServiceExtraParams();
-                  eParams.setAccount(account);
+                  eParams.addAccount(account);
                   eParams.setForceQuery(true);
                   service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
                   context.sendBroadcast(service);

@@ -34,7 +34,7 @@ public class FullMessageDAO {
   public static final String COL_MESSAGE_LIST_ID = MessageListDAO.TABLE_MESSAGES + MessageListDAO.COL_ID;
   private static final String COL_MSG_TYPE = "message_type";
 
-  public static final String TABLE_CREATE = "create table " + TABLE_MESSAGE_CONTENT + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_MESSAGE_CONTENT + "("
           + COL_ID + " integer primary key autoincrement, "
           + COL_MSG_ID + " text NOT NULL, "
           + COL_SUBJECT + " text, "

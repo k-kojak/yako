@@ -46,11 +46,31 @@ public class LinearListView extends LinearLayout {
 
   public void setItemChecked(int position, boolean checked) {
     if (mSingleSelect) {
-      for (int i = 0; i < getChildCount(); i++) {
-        getChildAt(i).setActivated(false);
-      }
+      clearChoices();
     }
     getChildAt(position).setActivated(checked);
+  }
+
+  public int getCheckedItemCount() {
+    int count = 0;
+    for (int i = 0; i < getChildCount(); i++) {
+      if (getChildAt(i).isActivated()) count++;
+    }
+    return count;
+  }
+
+  public boolean isItemChecked(int pos) {
+    return getChildAt(pos).isActivated();
+  }
+
+  public void clearChoices() {
+    for (int i = 0; i < getChildCount(); i++) {
+      getChildAt(i).setActivated(false);
+    }
+  }
+
+  public int getCount() {
+    return getChildCount();
   }
 
   public void setOnItemClickListener(OnItemClickListener listener) {

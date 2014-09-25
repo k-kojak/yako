@@ -131,7 +131,7 @@ public class MainService extends Service {
 
           for (Account acc : accounts) {
             
-            if (extraParams.getAccount() == null || acc.equals(extraParams.getAccount())) {
+            if (extraParams.isAccountsEmpty() || extraParams.accountsContains(acc)) {
               MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
 
               
@@ -144,7 +144,7 @@ public class MainService extends Service {
                       || MainActivity.isMainActivityVisible()) {
                 
                 if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
-                  if (extraParams.getAccount() == null) {
+                  if (extraParams.isAccountsEmpty()) {
                     wasAnyFullUpdateCheck = true;
                   }
                   

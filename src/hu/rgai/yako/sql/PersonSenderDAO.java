@@ -30,7 +30,7 @@ public class PersonSenderDAO {
 
 
 
-  public static final String TABLE_CREATE = "create table " + TABLE_PERSON + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_PERSON + "("
           + COL_ID + " integer primary key autoincrement, "
           + COL_KEY + " text not null, "
           + COL_NAME + " text, "

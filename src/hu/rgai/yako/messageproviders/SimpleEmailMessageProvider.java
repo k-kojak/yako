@@ -963,14 +963,14 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
   
   private void initMessageListener(final Context context) {
-    if (messageListener == null) {
+    if (messageListener == null) {    
       messageListener = new MessageCallback() {
         public void messageAdded(Message[] messages) {
           Intent service = new Intent(context, MainScheduler.class);
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setAccount(account);
+          eParams.addAccount(account);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(messages.length);
           eParams.setForceQuery(true);
@@ -985,7 +985,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
-          eParams.setAccount(account);
+          eParams.addAccount(account);
           eParams.setForceQuery(true);
           eParams.setMessagesRemovedAtServer(true);
           service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);

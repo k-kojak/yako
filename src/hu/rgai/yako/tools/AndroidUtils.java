@@ -14,6 +14,7 @@ import hu.rgai.yako.workers.ActiveConnectionConnector;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.TreeSet;
 
 import android.content.ContentValues;
@@ -42,15 +43,22 @@ public class AndroidUtils {
     return text.length() + "/" + size;
   }
 
-  public static int getIndexOfAccount(TreeSet<Account> accounts, Account account) {
+  public static LinkedList<Integer> getIndexOfAccount(TreeSet<Account> accounts, LinkedList<Account> selectedAccounts) {
+    
+    LinkedList<Integer> indexs = new LinkedList<Integer>();
     int index = 0;
+    
     for (Account a : accounts) {
-      if (a.equals(account)) {
-        return index;
+      for (Account b : selectedAccounts) {
+        if (a.equals(b)) {
+          indexs.add(index);
+          break;
+          //return index;
+        }
       }
       index++;
     }
-    return -1;
+    return indexs;
   }
 
   public static void checkAndConnectMessageProviderIfConnectable(MessageProvider mp, boolean isConnectionAlive, Context context) {

@@ -25,7 +25,7 @@ public class AttachmentDAO {
   private static final String COL_SIZE = "size";
   public static final String COL_MESSAGE_ID = FullMessageDAO.TABLE_MESSAGE_CONTENT + FullMessageDAO.COL_ID;
 
-  public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_ATTACHMENTS + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_ATTACHMENTS + "("
           + COL_ID + " integer primary key autoincrement, "
           + COL_FILENAME + " text not null, "
           + COL_SIZE + " integer, "

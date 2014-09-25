@@ -19,6 +19,7 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -109,7 +110,7 @@ public class SimpleMessageSentBroadcastReceiver extends BroadcastReceiver {
       // if message was sent succesfully, and we have an instance to refresh, then refresh it at main list
       if (resultType == MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS && accountToLoad != null) {
         MainServiceExtraParams eParams = new MainServiceExtraParams();
-        eParams.setAccount(accountToLoad);
+        eParams.addAccount(accountToLoad);
         eParams.setForceQuery(true);
         Intent i = new Intent(context, MainScheduler.class);
         i.setAction(Context.ALARM_SERVICE);

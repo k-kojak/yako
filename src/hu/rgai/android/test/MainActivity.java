@@ -93,9 +93,8 @@ public class MainActivity extends ActionBarActivity {
   private TreeMap<Long, Account> mAccountsLongKey = null;
   
   
-
+  public static LinkedList<Account> selectedAccounts = null ;
   private static volatile String fbToken = null;
-  public static Account actSelectedFilter = null;
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
 
@@ -146,19 +145,23 @@ public class MainActivity extends ActionBarActivity {
     getSupportActionBar().setHomeButtonEnabled(true);
 
     
-    actSelectedFilter = StoreHandler.getSelectedFilterAccount(this);
+    selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
+    
+    if (selectedAccounts == null) {
+      selectedAccounts = new LinkedList<Account>();
+    }
     
     mDrawerWrapper = findViewById(R.id.drawer_wrapper);
     mAccountHolder = (LinearListView) findViewById(R.id.account_holder);
-    mAccountHolder.setIsSingleSelect(true);
+    mAccountHolder.setIsSingleSelect(false);
 
     mZoneHolder = (LinearListView) findViewById(R.id.zone_holder);
     mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-    
-    
+
+
     mAccountHolder.setOnItemClickListener(new AccountFilterClickListener());
     mZoneHolder.setOnItemClickListener(new ZoneListClickListener());
 
@@ -168,8 +171,6 @@ public class MainActivity extends ActionBarActivity {
         startMapActivity(null);
       }
     });
-
-    
 
     // ActionBarDrawerToggle ties together the proper interactions
     // between the sliding drawer and the action bar app icon
@@ -231,10 +232,9 @@ public class MainActivity extends ActionBarActivity {
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
-
     // setting zone list
     loadZoneListAdapter(true);
-    setActiveLocation();
+    setZoneActivityStates();
 
 
 //    // setting filter adapter onResume, because it might change at settings panel
@@ -243,7 +243,6 @@ public class MainActivity extends ActionBarActivity {
 
     // setting title
     setTitleByFilter();
-    
     
 
     // register broadcast receiver for new message load
@@ -266,7 +265,7 @@ public class MainActivity extends ActionBarActivity {
       reloadMessages(true);
     } else {
       long now = System.currentTimeMillis();
-      if (actSelectedFilter == null
+      if (selectedAccounts.isEmpty()
               && (YakoApp.lastFullMessageUpdate == null || YakoApp.lastFullMessageUpdate.getTime() + 1000l * Settings.MESSAGE_LOAD_INTERVAL < now)) {
         reloadMessages(false);
       }
@@ -296,24 +295,33 @@ public class MainActivity extends ActionBarActivity {
     TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
     mAccountFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mAccountHolder.setAdapter(mAccountFilterAdapter);
-    int indexOfAccount = 0;
-    if (actSelectedFilter != null) {
-      // +1 needed because 0th element in adapter is "all instance"
-      indexOfAccount = AndroidUtils.getIndexOfAccount(accounts, actSelectedFilter);
+//    mAccountHolder.clearChoices();
+
+    LinkedList<Integer> indexOfAccounts = null;
+    if (!selectedAccounts.isEmpty()) {
+
+      indexOfAccounts = AndroidUtils.getIndexOfAccount(accounts, selectedAccounts);
       // the saved selected instance is not available anymore...
-      if (indexOfAccount == -1) {
-        actSelectedFilter = null;
+      if (indexOfAccounts.isEmpty()) {
+        selectedAccounts.clear();
       }
-      indexOfAccount++;
     }
-    mAccountHolder.setItemChecked(indexOfAccount, true);
+
+    if (selectedAccounts.isEmpty()) {
+      mAccountHolder.setItemChecked(0, true);
+    } else {
+      for (int i=0; i < indexOfAccounts.size(); i++) {
+        // +1 needed because 0th element in adapter is "all instance"
+        mAccountHolder.setItemChecked(indexOfAccounts.get(i) + 1, true);
+      }
+    }
   }
 
   public void loadZoneListAdapter(boolean refreshFromDatabase) {
     if (refreshFromDatabase) {
       mGpsZones = GpsZoneDAO.getInstance(this).getAllZones();
     }
-    setActiveLocation();
+    setZoneActivityStates();
     mZoneListAdapter = new ZoneListAdapter(this, mGpsZones);
     mZoneHolder.setAdapter(mZoneListAdapter);
   }
@@ -349,7 +357,7 @@ public class MainActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
+    EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
     super.onBackPressed();
   }
 
@@ -363,16 +371,22 @@ public class MainActivity extends ActionBarActivity {
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
           Account a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
+          List<Account> accounts = new LinkedList<Account>();
+          accounts.add(a);
+
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setForceQuery(true);
-          eParams.setAccount(a);
+          eParams.setAccounts(accounts);
           eParams.setQueryOffset(0);
 
-          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
-          long accountId = accountsAccountKey.get(a);
-          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountId));
+          LinkedList<Long> accountIds = new LinkedList<Long>();
+          TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();          
+          for (Account acc: selectedAccounts) {
+            accountIds.add(accountsAccountKey.get(acc));
+          }
+          eParams.setQueryLimit(MessageListDAO.getInstance(this).getAllMessagesCount(accountIds));
           intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
           this.sendBroadcast(intent);
         } else {
@@ -384,15 +398,15 @@ public class MainActivity extends ActionBarActivity {
   
   
   private void setTitleByFilter() {
-    if (actSelectedFilter == null) {
+    if (selectedAccounts.isEmpty()) {
       getSupportActionBar().setTitle("");
     } else {
       getSupportActionBar().setTitle("Filter on");
     }
 
-    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-    sensorManager.registerListener(new AccelerometerListener(),
-            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+//    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+//    sensorManager.registerListener(new AccelerometerListener(),
+//            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     
     
   }
@@ -431,8 +445,8 @@ public class MainActivity extends ActionBarActivity {
     service.setAction(Context.ALARM_SERVICE);
     MainServiceExtraParams eParams = new MainServiceExtraParams();
     eParams.setLoadMore(true);
-    if (actSelectedFilter != null) {
-      eParams.setAccount(actSelectedFilter);
+    if (!selectedAccounts.isEmpty()) {
+        eParams.setAccounts(selectedAccounts);
     }
     service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     sendBroadcast(service);
@@ -641,14 +655,14 @@ public class MainActivity extends ActionBarActivity {
     if (forceQuery) {
       eParams.setForceQuery(true);
     }
-    if (actSelectedFilter != null) {
-      eParams.setAccount(actSelectedFilter);
+    if (!selectedAccounts.isEmpty()) {
+      eParams.setAccounts(selectedAccounts);
     }
     intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
 
-  private void setActiveLocation() {
+  private void setZoneActivityStates() {
     if (mMyLastLocation != null) {
       Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
       Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
@@ -743,26 +757,58 @@ public class MainActivity extends ActionBarActivity {
   private class AccountFilterClickListener implements LinearListView.OnItemClickListener {
 
     @Override
+//<<<<<<< HEAD
     public void onItemClick(Object item, int position) {
-      mAccountHolder.setItemChecked(position, true);
-      mDrawerLayout.closeDrawer(mDrawerWrapper);
-      actSelectedFilter = (Account)item;
-      StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
+//      mAccountHolder.setItemChecked(position, true);
+      Account a = (Account)item;
+      mAccountHolder.setItemChecked(position, !mAccountHolder.isItemChecked(position));
+//      mDrawerLayout.closeDrawer(mDrawerWrapper);
+//      actSelectedFilter = (Account)item;
+//      StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
+//=======
+
+
+        if (position == 0 || mAccountHolder.getCheckedItemCount() == 0
+            || mAccountHolder.getCheckedItemCount() == mAccountHolder.getCount() - 1
+            && !mAccountHolder.isItemChecked(0)) {
+
+          mAccountHolder.clearChoices();
+          //mDrawerList.requestLayout();
+          mAccountHolder.setItemChecked(0, true);
+          selectedAccounts.clear();
+
+        } else {
+          mAccountHolder.setItemChecked(0, false);
+          if (mAccountHolder.isItemChecked(position)) {
+            selectedAccounts.add(a);
+          } else {
+            selectedAccounts.remove(a);
+          }
+        }
+
+      //actSelectedFilter = (Account)parent.getItemAtPosition(position);
+
+      StoreHandler.saveSelectedFilterAccount(MainActivity.this, selectedAccounts);
+//>>>>>>> master
       if (mFragment != null) {
         mFragment.hideContextualActionbar();
         mFragment.notifyAdapterChange();
       }
 
-      // run query for selected filter only if list is empty OR selected all accounts
 
-      long accountId = -1;
-      if (actSelectedFilter != null) {
+      LinkedList<Long> accountIds = new LinkedList<Long>();
+
+      if (!selectedAccounts.isEmpty()) {
         TreeMap<Account, Long> accountsAccountKey = AccountDAO.getInstance(MainActivity.this).getAccountToIdMap();
-        accountId = accountsAccountKey.get(actSelectedFilter);
+       
+        for (Account acc: selectedAccounts) {
+          accountIds.add(accountsAccountKey.get(acc));
+        }
       }
 
-      if (actSelectedFilter == null
-              || actSelectedFilter != null && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountId) == 0) {
+      // run query for selected filter only if list is empty OR all accounts are selected
+      if (selectedAccounts.isEmpty()
+              || !selectedAccounts.isEmpty() && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountIds) == 0) {
         reloadMessages(false);
       }
     }
@@ -788,10 +834,12 @@ public class MainActivity extends ActionBarActivity {
     int lastVisiblePosition = lv.getLastVisiblePosition();
     // TODO: null pointer exception occures here....
     try {
-      if (actSelectedFilter == null) {
+      if (selectedAccounts.isEmpty()) {
         builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.ALL_STR);
-      } else {
-        builder.append(actSelectedFilter.getDisplayName());
+      } else {        
+        for (int i=0; i<selectedAccounts.size(); i++ ) {
+          builder.append(selectedAccounts.get(i).getDisplayName());
+        }
       }
 
       builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);

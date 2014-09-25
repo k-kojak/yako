@@ -199,9 +199,7 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
   @Override
   public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
     if (constraint == null || constraint.length() < 2) return null;
-    String searchString = constraint.toString().toUpperCase();
-//    if (searchString.length() < 2) return null;
-    
+    String searchString = constraint.toString().toUpperCase().replaceAll(" ", "");
     String[] projection = null;
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -236,8 +234,8 @@ public class ContactListAdapter extends CursorAdapter implements Filterable {
     
 //    String[] projection = null;
     //TODO: Select dataKinds by Settings.java
-    String selection = " ( UPPER(" + Settings.CONTACT_DISPLAY_NAME + ") LIKE ? "
-            + " OR " + "UPPER(" + ContactsContract.Data.DATA1 + ") LIKE ? )"
+    String selection = " ( REPLACE(UPPER(" + Settings.CONTACT_DISPLAY_NAME + "),' ','') LIKE ? "
+            + " OR " + "REPLACE(UPPER(" + ContactsContract.Data.DATA1 + "),' ','') LIKE ? )"
             + " AND LENGTH(" + ContactsContract.Data.DATA1 +") != 0 "
             + " AND ("
             + ContactsContract.Data.MIMETYPE + " = ?"

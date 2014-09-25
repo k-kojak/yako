@@ -1,6 +1,10 @@
 
 package hu.rgai.yako.beens;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -24,7 +28,7 @@ public class MainServiceExtraParams implements Parcelable {
   private int mQueryLimit = -1;
   private int mQueryOffset = -1;
   private boolean mLoadMore = false;
-  private Account mAccount = null;
+  private List<Account> mAccounts = new LinkedList<Account>();
   private boolean mForceQuery = false;
   private int mResult = -1;
   private boolean mMessagesRemovedAtServer = false;
@@ -36,7 +40,7 @@ public class MainServiceExtraParams implements Parcelable {
     mQueryLimit = in.readInt();
     mQueryOffset = in.readInt();
     mLoadMore = in.readByte() == 1;
-    mAccount = in.readParcelable(Account.class.getClassLoader());
+    in.readList(mAccounts,Account.class.getClassLoader());
     mForceQuery = in.readByte() == 1;
     mResult = in.readInt();
     mMessagesRemovedAtServer = in.readByte() == 1;
@@ -51,7 +55,7 @@ public class MainServiceExtraParams implements Parcelable {
     dest.writeInt(mQueryLimit);
     dest.writeInt(mQueryOffset);
     dest.writeByte((byte) (mLoadMore ? 1 : 0));
-    dest.writeParcelable(mAccount, flags);
+    dest.writeList(mAccounts);
     dest.writeByte((byte) (mForceQuery ? 1 : 0));
     dest.writeInt(mResult);
     dest.writeByte((byte) (mMessagesRemovedAtServer ? 1 : 0));
@@ -88,13 +92,25 @@ public class MainServiceExtraParams implements Parcelable {
   public void setLoadMore(boolean mLoadMore) {
     this.mLoadMore = mLoadMore;
   }
-
-  public Account getAccount() {
-    return mAccount;
+  
+  public boolean isAccountsEmpty() {
+    return mAccounts.isEmpty();
+  }
+  
+  public boolean accountsContains(Account acc) {
+    return mAccounts.contains(acc);
+  }
+  
+  public List<Account> getAccounts() {
+    return Collections.unmodifiableList(mAccounts) ;
   }
 
-  public void setAccount(Account mTtype) {
-    this.mAccount = mTtype;
+  public void addAccount(Account acc) {
+    this.mAccounts.add(acc);
+  }
+  
+  public void setAccounts(List<Account> accounts) {
+    this.mAccounts = accounts;
   }
 
   public boolean isForceQuery() {
@@ -123,7 +139,12 @@ public class MainServiceExtraParams implements Parcelable {
 
   @Override
   public String toString() {
-    return "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccount=" + mAccount + ", mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
+    String ToString = "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccounts=";
+    for (int i = 0; i < mAccounts.size(); i++) {
+      ToString += mAccounts.get(i) + ", ";
+    }
+    ToString += "mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
+    return  ToString;
   }
 
 }

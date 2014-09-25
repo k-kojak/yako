@@ -35,6 +35,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,15 +92,17 @@ public class StoreHandler {
   }
   
   
-  public static void saveSelectedFilterAccount(Context context, Account acc) {
+  public static void saveSelectedFilterAccount(Context context, LinkedList<Account> acc) {
     writeObject(context, acc, SELECTED_FILTER_ACCOUNT);
   }
   
   
-  public static Account getSelectedFilterAccount(Context context) {
-    Object o = readObject(context, SELECTED_FILTER_ACCOUNT);
+  public static LinkedList<Account> getSelectedFilterAccount(Context context) {
+  //  LinkedList<Account> accounts = (LinkedList<Account>)readObject(context, SELECTED_FILTER_ACCOUNT);
+  Object o = readObject(context, SELECTED_FILTER_ACCOUNT);
+  
     if (o != null) {
-      return (Account)o;
+      return (LinkedList<Account>)o;
     } else {
       return null;
     }

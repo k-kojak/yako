@@ -27,7 +27,7 @@ public class GpsZoneDAO {
   private static final String COL_RADIUS = "radius";
 
 
-  public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_GPS_ZONES + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_GPS_ZONES + "("
           + COL_ID + " INTEGER primary key autoincrement, "
           + COL_ALIAS + " TEXT not null, "
           + COL_LAT + " REAL not null, "

@@ -34,7 +34,7 @@ public class AccountDAO  {
   private static final String COL_FB_UNIQUE_NAME = "fb_unique_name";
 
 
-  public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_ACCOUNTS + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_ACCOUNTS + "("
           + COL_ID + " integer primary key autoincrement, "
           + COL_TYPE + " text not null, "
           + COL_UNIQUE_NAME + " text, "
