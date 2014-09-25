@@ -13,10 +13,10 @@
 
         <ImageView
             android:id="@+id/active_status"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:background="@drawable/ic_green_circle_off"
-            android:layout_marginRight="4dp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:background="@drawable/ic_offline"
+            android:layout_marginRight="6dp"
             android:layout_gravity="center_vertical"/>
 
         <TextView

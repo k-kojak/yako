@@ -63,14 +63,10 @@ public class GoogleMapsActivity extends FragmentActivity {
       }
 
       @Override
-      public void onStartTrackingTouch(SeekBar seekBar) {
-
-      }
+      public void onStartTrackingTouch(SeekBar seekBar) {}
 
       @Override
-      public void onStopTrackingTouch(SeekBar seekBar) {
-
-      }
+      public void onStopTrackingTouch(SeekBar seekBar) {}
     });
 
 
@@ -199,7 +195,7 @@ public class GoogleMapsActivity extends FragmentActivity {
       } else {
         boolean aliasExists = GpsZoneDAO.getInstance(GoogleMapsActivity.this).isZoneAliasExists(value);
         if ((!mUpdating && aliasExists)
-                || (mUpdating && !mInput.getText().toString().equals(mZoneToEdit.getAlias()))) {
+                || (mUpdating && aliasExists && !mInput.getText().toString().equals(mZoneToEdit.getAlias()))) {
           Toast.makeText(GoogleMapsActivity.this, "Alias already exists: " + value,
                   Toast.LENGTH_SHORT).show();
         } else {

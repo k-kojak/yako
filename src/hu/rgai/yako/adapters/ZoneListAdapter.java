@@ -67,11 +67,11 @@ public class ZoneListAdapter extends BaseAdapter {
 
     int drawable;
     if (zone.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
-      drawable = R.drawable.ic_green_circle_on;
+      drawable = R.drawable.ic_online;
     } else if (zone.getProximity().equals(GpsZone.Proximity.NEAR)) {
-      drawable = R.drawable.ic_green_circle_half_on;
+      drawable = R.drawable.ic_nearby;
     } else {
-      drawable = R.drawable.ic_green_circle_off;
+      drawable = R.drawable.ic_offline;
     }
     circle.setBackgroundResource(drawable);
 
