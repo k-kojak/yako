@@ -27,7 +27,9 @@ public class DeleteIntentBroadcastReceiver extends BroadcastReceiver {
       if (rawId != -1) {
         TreeMap<Long, Account> accountsLongKey = AccountDAO.getInstance(context).getIdToAccountsMap();
         MessageListElement mle = MessageListDAO.getInstance(context).getMessageByRawId(rawId, accountsLongKey);
-        Log.d("rgai", mle.toString());
+        if (mle != null) {
+          Log.d("rgai", mle.toString());
+        }
       }
     }
   }

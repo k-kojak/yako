@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
@@ -50,6 +52,7 @@ public class MainActivityFragment extends Fragment {
   private Button loadMoreButton = null;
   private boolean loadMoreButtonVisible = false;
   private ProgressBar mTopProgressBar;
+  private SwipeRefreshLayout mSwipeRefreshLayout;
   
   private Handler mContextBarTimerHandler = null;
   private final Runnable mContextBarTimerCallback = new Runnable() {
@@ -76,7 +79,13 @@ public class MainActivityFragment extends Fragment {
 
     View mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
-    
+    mSwipeRefreshLayout = (SwipeRefreshLayout) mRootView.findViewById(R.id.SwipeRefreshLayout);
+    mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshListener());
+    mSwipeRefreshLayout.setColorSchemeColors(
+        Color.BLUE, 
+        Color.GREEN, 
+        Color.YELLOW, 
+        Color.RED);
     mTopProgressBar = (ProgressBar) mRootView.findViewById(R.id.progressbar);
     mListView = (ListView) mRootView.findViewById(R.id.list);
     
@@ -393,6 +402,13 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+      
+      mSwipeRefreshLayout.setEnabled(false);
+      if (lv != null && lv.getChildCount() > 0) {
+        if (lv.getChildAt(0).getTop() == 0) {
+          mSwipeRefreshLayout.setEnabled(true);
+        }
+      }
     }
 
     @Override
@@ -422,8 +438,12 @@ public class MainActivityFragment extends Fragment {
   public void loadStateChanged(boolean refreshing) {
     if (loadMoreButton != null) {
       if (refreshing) {
+        mSwipeRefreshLayout.setRefreshing(true);
+        mSwipeRefreshLayout.setEnabled(false);
         loadMoreButton.setEnabled(false);
       } else {
+        mSwipeRefreshLayout.setRefreshing(false);
+        mSwipeRefreshLayout.setEnabled(true);
         loadMoreButton.setEnabled(true);
       }
     }
@@ -485,4 +505,13 @@ public class MainActivityFragment extends Fragment {
     }
   }
 
+  private class SwipeRefreshListener implements SwipeRefreshLayout.OnRefreshListener {
+
+    @Override
+    public void onRefresh() {
+      EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.CLICK.CLICK_REFRESH_BTN, true);
+      mMainActivity.reloadMessages(true);
+    }
+  }
+  
 }

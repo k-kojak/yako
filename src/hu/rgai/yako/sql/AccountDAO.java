@@ -89,7 +89,7 @@ public class AccountDAO  {
     // OR instance is not in the db and device is not a phone
     if (_id != -1 && readyForSms || _id == -1 && !readyForSms) {
       Log.d("rgai", "case 1");
-      SmsAccount.setInstance(_id);
+      SmsAccount.getInstance().setId(_id);
     }
     // sms instance is in the db, but this is not a phone anymore (SIM card is removed?) so we have to remove that
     // instance and the messages to it
@@ -99,9 +99,8 @@ public class AccountDAO  {
     // SMS instance is not in DB, but the device is a phone, let's put SMS instance to DB
     else if (_id == -1 && readyForSms) {
       Log.d("rgai", "case 3");
-      SmsAccount.setInstance(-1);
       long rawId = addAccount(SmsAccount.getInstance());
-      SmsAccount.setInstance(rawId);
+      SmsAccount.getInstance().setId(rawId);
     }
   }
 

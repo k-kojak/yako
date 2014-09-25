@@ -69,7 +69,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 //      stillAddingFacebookAccount = false;
       return;
     }
-    setContentView(R.layout.main);
+    setContentView(R.layout.account_list_layout);
     
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);

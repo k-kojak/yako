@@ -24,7 +24,9 @@ import hu.rgai.yako.tools.Utils;
 
 public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
 
-//	private TextView msgBubble;
+  public static final int MY_MESSAGE = 0;
+  public static final int FRIEND_MESSAGE = 1;
+  public static final int MESSAGE_TYPE_COUNT = 2;
 	private List<FullSimpleMessage> messages = new ArrayList<FullSimpleMessage>();
 	private LinearLayout wrapper;
   private Context context;
@@ -60,6 +62,21 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
   public void removeItem(int index) {
     this.messages.remove(index);
   }
+  
+  @Override
+  public int getViewTypeCount() {
+   return MESSAGE_TYPE_COUNT;
+  }
+  
+  @Override
+  public int getItemViewType(int position) {
+    FullSimpleMessage item = getItem(position);
+    if (item.isIsMe()) {
+      return MY_MESSAGE;
+    } else {
+      return FRIEND_MESSAGE; 
+    } 
+  }
 
   @Override
 	public View getView(int position, View convertView, ViewGroup parent) {
@@ -68,90 +85,28 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
     LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		if (row == null) {
       if (coment.isIsMe()) {
-        row = inflater.inflate(R.layout.threadview_list_item, parent, false);
+        row = inflater.inflate(R.layout.threadview_list_item_me, parent, false);
       } else {
-        // TODO: display different view when showing partner's message
-        row = inflater.inflate(R.layout.threadview_list_item, parent, false);
+        row = inflater.inflate(R.layout.threadview_list_item_friend, parent, false);
       }
 		}
     
 		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
-
-		
-//    Bitmap img = ProfilePhotoProvider.getImageToUser(context, instance.getAccountType(), coment.getFrom().getId());
-//    Bitmap meImg = StoreHandler.getUserFbImage(context);
     
 		TextView msgBubble = (TextView) row.findViewById(R.id.comment);
-
 		msgBubble.setText(coment.getContent().getContent().toString());
-    
-		msgBubble.setBackgroundResource(!coment.isIsMe() ? R.drawable.bubble_yellow : R.drawable.bubble_green);
-    
-//    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
-//    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-//              LinearLayout.LayoutParams.WRAP_CONTENT,
-//              LinearLayout.LayoutParams.WRAP_CONTENT);
-//    if (coment.isIsMe()) {
-//      params.setMargins(75, 10, 10, 10);
-//      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
-//    } else {
-//      params.setMargins(10, 30, 75, 10);
-//      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
-//    }
-//    msgBubble.setLayoutParams(params);
-    
-//    wrapper.setLayoutParams(wrapperParams);
-		wrapper.setGravity(!coment.isIsMe() ? Gravity.LEFT : Gravity.RIGHT);
-    
+
     ImageView iv = (ImageView)row.findViewById(R.id.img);
-//    Bitmap img;
-//    if (coment.isIsMe()) {
-//      img = StoreHandler.getUserFbImage(context);
-//    } else {
-//      img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom().getContactId());
-//    }
-//    if (img == null) {
-//      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
-//    }
-//    iv.setImageBitmap(img);
+    iv.setVisibility(View.GONE);
 
     FullSimpleMessage prevMsg = null;
     if (position - 1 >= 0) {
       prevMsg = getItem(position - 1);
     }
-    boolean smallTopPadding;
-    if (coment.isIsMe()) {
-      iv.setVisibility(View.GONE);
-      smallTopPadding = true;
-    } else {
-//      iv.setVisibility(View.VISIBLE);
-      if (prevMsg != null && !prevMsg.isIsMe()) {
-        iv.setVisibility(View.GONE);
-        smallTopPadding = true;
-      } else {
-        iv.setVisibility(View.VISIBLE);
-        Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom()).getBitmap();
-        if (img == null) {
-          img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
-        }
-        iv.setImageBitmap(img);
-        smallTopPadding = false;
-      }
-    }
     
-    RelativeLayout.LayoutParams wrapperParams = (RelativeLayout.LayoutParams)wrapper.getLayoutParams();
-    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-              LinearLayout.LayoutParams.WRAP_CONTENT,
-              LinearLayout.LayoutParams.WRAP_CONTENT);
-    if (coment.isIsMe()) {
-      params.setMargins(75, smallTopPadding ? 10 : 30, 10, 5);
-      wrapperParams.addRule(RelativeLayout.ALIGN_RIGHT, R.id.wrapper);
-    } else {
-      params.setMargins(10, smallTopPadding ? 0 : 30, 75, 5);
-      wrapperParams.addRule(RelativeLayout.ALIGN_LEFT, R.id.wrapper);
+    if(!coment.isIsMe() && (prevMsg == null || prevMsg.isIsMe())) {
+      showImageOfUser(coment, msgBubble, iv);
     }
-    msgBubble.setLayoutParams(params);
-    wrapper.setLayoutParams(wrapperParams);
     
     if (prevMsg != null) {
       // dealing with timestamps
@@ -163,13 +118,25 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
         ts.setText(Utils.getSimplifiedTime(coment.getDate()));
       }
     }
-    
-    
-//    TextView ts = (TextView)row.findViewById(R.id.timestamp);
-//    ts.setText("kecske");
-    
 		return row;
 	}
+  
+  private void showImageOfUser(FullSimpleMessage coment, TextView msgBubble, ImageView iv) {
+
+    Bitmap img = ProfilePhotoProvider.getImageToUser(context, coment.getFrom()).getBitmap();
+    if (img == null) {
+      img = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_contact_picture);
+    }
+    iv.setImageBitmap(img);
+
+    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+      LinearLayout.LayoutParams.WRAP_CONTENT,
+      LinearLayout.LayoutParams.WRAP_CONTENT);
+
+    params.setMargins(10, 30, 75, 5);    
+    msgBubble.setLayoutParams(params);
+    iv.setVisibility(View.VISIBLE);
+  } 
 
 	public Bitmap decodeToBitmap(byte[] decodedByte) {
 		return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
