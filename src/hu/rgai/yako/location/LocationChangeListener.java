@@ -32,6 +32,9 @@ public enum LocationChangeListener {
     String bestProvider = locationManager.getBestProvider(REQUEST_CRITERIA, false);
     Location loc = locationManager.getLastKnownLocation(bestProvider);
     Intent i = new Intent(ACTION_LOCATION_CHANGED);
+    if (Math.random() < 0.8) {
+      loc = null;
+    }
     i.putExtra(EXTRA_LOCATION, loc);
     context.sendBroadcast(i);
   }

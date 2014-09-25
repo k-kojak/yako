@@ -67,6 +67,8 @@ import java.util.*;
  */
 public class MainActivity extends ActionBarActivity {
 
+  private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
+
   private List<GpsZone> mGpsZones = null;
   private Location mMyLastLocation = null;
 
@@ -721,7 +723,15 @@ public class MainActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       // this one is responsible for GUI loading indicator update
       if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
-        mMyLastLocation = (Location) intent.getExtras().get(LocationChangeListener.EXTRA_LOCATION);
+        Location newLocation = (Location) intent.getExtras().get(LocationChangeListener.EXTRA_LOCATION);
+        if (newLocation != null
+                || mMyLastLocation == null
+                || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
+          mMyLastLocation = newLocation;
+          Log.d("yako", "updating with new location...");
+        } else {
+          Log.d("yako", "skipping update...");
+        }
         loadZoneListAdapter(false);
       }
     }
