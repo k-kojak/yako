@@ -15,6 +15,7 @@ import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 import android.app.AlertDialog;
@@ -29,6 +30,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.QuickContactBadge;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -169,6 +171,13 @@ public class EmailDisplayerActivity extends ActionBarActivity {
         } else {
           finish();
         }
+        return true;
+        
+      case R.id.add_email_contact:
+        ArrayList<String> contactDatas = new ArrayList<String>();
+        contactDatas.add(mMessage.getFrom().getId());
+        QuickContactBadge badgeSmall = AndroidUtils.addToContact(mMessage.getMessageType(), this, contactDatas);
+        badgeSmall.onClick(item.getActionView());
         return true;
 
       case R.id.attachments:

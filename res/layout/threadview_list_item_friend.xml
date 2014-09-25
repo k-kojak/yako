@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+
+  
+    <RelativeLayout
+      android:id="@+id/wrapper"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content" >
+      
+      <LinearLayout
+        android:id="@+id/hr"
+        android:layout_width="fill_parent"
+        android:layout_height="20px"
+        android:layout_marginLeft="15px"
+        android:layout_marginRight="15px"
+        android:layout_marginBottom="5px"
+      >
+        <View
+          android:id="@+id/hr_view"
+          android:layout_width="40px"
+          android:layout_height="2px"
+          android:layout_marginTop="8px"
+          android:layout_marginRight="3px"
+          android:layout_marginBottom="10px"
+          android:background="#11000000"
+        />
+        <TextView
+              android:id="@+id/timestamp"
+              android:layout_width="fill_parent"
+              android:layout_height="25px"
+              android:textColor="#aaaaaa"
+              android:text=""
+              android:textSize="14px"
+        />
+              
+      </LinearLayout>
+      
+      <LinearLayout android:id="@+id/content_wrap"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/hr"
+          android:layout_gravity="left"
+          android:layout_alignParentLeft="true"
+      >
+        
+        <LinearLayout android:id="@+id/img_wrap"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:padding="2dip"
+          android:layout_alignParentLeft="true"
+          android:layout_marginRight="4dip">
+
+          <ImageView
+              android:id="@+id/img"
+              android:layout_width="28dip"
+              android:layout_height="wrap_content"
+              android:src="@drawable/gmail_icon"
+              android:visibility="gone"/>
+
+        
+
+        <TextView
+              android:id="@+id/comment"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="center"
+              android:layout_alignTop="@+id/img_wrap"
+              android:layout_toRightOf="@+id/img_wrap"
+              android:layout_margin="5dip"
+              android:background="@drawable/bubble_yellow"
+              android:paddingLeft="10dip"
+              android:textColor="@android:color/primary_text_light"
+              android:layout_marginLeft="10dip"
+              android:layout_marginTop="0dip"
+              android:layout_marginRight="75dip"
+              android:layout_marginBottom="5dip" />
+        
+        </LinearLayout>
+      </LinearLayout>
+    </RelativeLayout>
+
+</LinearLayout>

@@ -384,6 +384,8 @@ public final class Person implements Parcelable, Serializable {
       return false;
     if (obj == this)
       return true;
-    return (this.contactId == ((Person) obj).contactId) && (this.id.equals(((Person) obj).id)) && (this.name.equals(((Person) obj).name)) && (this.type == ((Person) obj).type);
+    return (this.contactId == ((Person) obj).contactId) && (this.id.equals(((Person) obj).id))
+            && (this.name != null && ((Person) obj).name != null ? this.name.equals(((Person) obj).name) : true)
+            && (this.type == ((Person) obj).type);
   }
 }

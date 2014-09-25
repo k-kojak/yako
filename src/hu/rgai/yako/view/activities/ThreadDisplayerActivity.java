@@ -438,6 +438,13 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(ThreadMessageSentBroadcastReceiver.class,
             IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
+    
+    if (mMessage.getAccount().getAccountType()
+        .equals(MessageProvider.Type.SMS)) {
+      sentMessBroadcD.setMessageData(new SmsSentMessageData(ri.getDisplayName()));
+    } else {
+      sentMessBroadcD.setMessageData(new SimpleSentMessageData(ri.getDisplayName()));
+    }
       
     MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
             new TimeoutHandler() {
@@ -599,7 +606,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
     }
     if (messages != null && !messages.isEmpty()) {
       if (mAdapter == null) {
-        mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item);
+        mAdapter = new ThreadViewAdapter(this.getApplicationContext(), R.layout.threadview_list_item_me);
       } else {
         mAdapter.clear();
       }
