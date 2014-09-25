@@ -21,14 +21,17 @@ import com.google.android.gms.analytics.Tracker;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 
@@ -42,6 +45,7 @@ public class YakoApp extends Application {
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
+  public static volatile List<GpsZone> gpsZones = null;
 
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
@@ -116,6 +120,7 @@ public class YakoApp extends Application {
   public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
+
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -130,6 +135,30 @@ public class YakoApp extends Application {
         .setDescription("Custom, own catched error. Error code: " + code)
         .setFatal(false)
         .build());
+  }
+
+
+  /**
+   * Returns all of the gps zones with distance and proximity information (if have).
+   * @param context
+   * @return
+   */
+  public static List<GpsZone> getSavedGpsZones (Context context) {
+    return getSavedGpsZones(context, false);
+  }
+
+
+  /**
+   * Returns all of the gps zones with distance and proximity information (if have).
+   * @param context
+   * @param forceLoadFromDatabase if true, function will load zone values from database
+   * @return
+   */
+  public static List<GpsZone> getSavedGpsZones (Context context, boolean forceLoadFromDatabase) {
+    if (gpsZones == null || forceLoadFromDatabase) {
+      gpsZones = GpsZoneDAO.getInstance(context).getAllZones();
+    }
+    return gpsZones;
   }
 
   @Override

@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
-import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -32,7 +31,6 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.maps.model.LatLng;
 import hu.rgai.yako.adapters.ZoneListAdapter;
 import hu.rgai.yako.beens.*;
-import hu.rgai.yako.eventlogger.AccelerometerListener;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.adapters.MainListDrawerFilterAdapter;
@@ -46,6 +44,7 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.location.LocationChangeListener;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.smarttools.DummyMessagePredictionProvider;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
@@ -69,7 +68,7 @@ public class MainActivity extends ActionBarActivity {
 
   private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
 
-  private List<GpsZone> mGpsZones = null;
+//  private static List<GpsZone> mGpsZones = null;
   private Location mMyLastLocation = null;
 
   private DrawerLayout mDrawerLayout;
@@ -234,7 +233,7 @@ public class MainActivity extends ActionBarActivity {
     
     // setting zone list
     loadZoneListAdapter(true);
-    setZoneActivityStates();
+//    setZoneActivityStates();
 
 
 //    // setting filter adapter onResume, because it might change at settings panel
@@ -318,11 +317,9 @@ public class MainActivity extends ActionBarActivity {
   }
 
   public void loadZoneListAdapter(boolean refreshFromDatabase) {
-    if (refreshFromDatabase) {
-      mGpsZones = GpsZoneDAO.getInstance(this).getAllZones();
-    }
+    List<GpsZone> zones = YakoApp.getSavedGpsZones(this, refreshFromDatabase);
     setZoneActivityStates();
-    mZoneListAdapter = new ZoneListAdapter(this, mGpsZones);
+    mZoneListAdapter = new ZoneListAdapter(this, zones);
     mZoneHolder.setAdapter(mZoneListAdapter);
   }
 
@@ -461,8 +458,7 @@ public class MainActivity extends ActionBarActivity {
   public static boolean isMainActivityVisible() {
     return is_activity_visible;
   }
-  
-  
+
   /**
    * Removes the notification from statusbar if exists.
    */
@@ -663,6 +659,7 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void setZoneActivityStates() {
+    boolean zoneChanged = true;
     if (mMyLastLocation != null) {
       Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
       Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
@@ -670,11 +667,11 @@ public class MainActivity extends ActionBarActivity {
       Set<String> nearLocationList = new TreeSet<String>();
       String closestLoc = null;
       float closest = Float.MAX_VALUE;
-      for (GpsZone zone : mGpsZones) {
+      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
         int distance = Math.round(getDist((float) zone.getLat(), (float) zone.getLong(),
                 (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude()));
         zone.setDistance(distance);
-        zone.setProximity(GpsZone.Proximity.FAR);
+        zone.setProximity(GpsZone.Proximity.UNKNOWN);
         if (distance <= zone.getRadius()) {
           nearLocationList.add(zone.getAlias());
           if (distance < closest) {
@@ -684,13 +681,27 @@ public class MainActivity extends ActionBarActivity {
         }
       }
 
-      for (GpsZone zone : mGpsZones) {
+      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
         if (zone.getAlias().equals(closestLoc)) {
           zone.setProximity(GpsZone.Proximity.CLOSEST);
         } else if (nearLocationList.contains(zone.getAlias())) {
           zone.setProximity(GpsZone.Proximity.NEAR);
+        } else {
+          zone.setProximity(GpsZone.Proximity.FAR);
         }
       }
+    }
+    if (zoneChanged) {
+      predictMessages();
+    }
+  }
+
+  private void predictMessages() {
+    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+    TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(this).getAllMessages(accounts);
+    if (msgs != null && !msgs.isEmpty()) {
+      double val = new DummyMessagePredictionProvider().predictMessage(this, msgs.first());
+      Toast.makeText(this, "predicted dummy value: " + val, Toast.LENGTH_LONG).show();
     }
   }
 
@@ -757,15 +768,9 @@ public class MainActivity extends ActionBarActivity {
   private class AccountFilterClickListener implements LinearListView.OnItemClickListener {
 
     @Override
-//<<<<<<< HEAD
     public void onItemClick(Object item, int position) {
-//      mAccountHolder.setItemChecked(position, true);
       Account a = (Account)item;
       mAccountHolder.setItemChecked(position, !mAccountHolder.isItemChecked(position));
-//      mDrawerLayout.closeDrawer(mDrawerWrapper);
-//      actSelectedFilter = (Account)item;
-//      StoreHandler.saveSelectedFilterAccount(MainActivity.this, actSelectedFilter);
-//=======
 
 
         if (position == 0 || mAccountHolder.getCheckedItemCount() == 0
@@ -786,10 +791,8 @@ public class MainActivity extends ActionBarActivity {
           }
         }
 
-      //actSelectedFilter = (Account)parent.getItemAtPosition(position);
 
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, selectedAccounts);
-//>>>>>>> master
       if (mFragment != null) {
         mFragment.hideContextualActionbar();
         mFragment.notifyAdapterChange();

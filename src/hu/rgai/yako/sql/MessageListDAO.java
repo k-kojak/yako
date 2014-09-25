@@ -226,7 +226,7 @@ public class MessageListDAO  {
 
   /**
    *
-   * @param accountId
+   * @param accountIds
    * @param messageId
    * @param isRawId if true, than messageId is a RAW id of the database, if false the id is the message id
    * @return
