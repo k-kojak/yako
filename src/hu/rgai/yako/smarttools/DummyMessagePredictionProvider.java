@@ -2,7 +2,6 @@ package hu.rgai.yako.smarttools;
 
 import android.content.Context;
 import android.util.Log;
-import hu.rgai.android.test.MainActivity;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
