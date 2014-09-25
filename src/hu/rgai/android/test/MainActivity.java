@@ -45,6 +45,7 @@ import hu.rgai.yako.location.LocationChangeListener;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.smarttools.DummyMessagePredictionProvider;
+import hu.rgai.yako.smarttools.MessagePredictionProvider;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
@@ -700,7 +701,8 @@ public class MainActivity extends ActionBarActivity {
     TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
     TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(this).getAllMessages(accounts);
     if (msgs != null && !msgs.isEmpty()) {
-      double val = new DummyMessagePredictionProvider().predictMessage(this, msgs.first());
+      MessagePredictionProvider msgPredProvider = new DummyMessagePredictionProvider();
+      double val = msgPredProvider.predictMessage(this, msgs.first());
       Toast.makeText(this, "predicted dummy value: " + val, Toast.LENGTH_LONG).show();
     }
   }
