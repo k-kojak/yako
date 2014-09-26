@@ -41,13 +41,12 @@ import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.intents.IntentStrings;
-import hu.rgai.yako.location.LocationChangeListener;
+import hu.rgai.yako.services.LocationService;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.smarttools.DummyMessagePredictionProvider;
 import hu.rgai.yako.smarttools.MessagePredictionProvider;
 import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
@@ -70,7 +69,7 @@ public class MainActivity extends ActionBarActivity {
   private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
 
 //  private static List<GpsZone> mGpsZones = null;
-  private Location mMyLastLocation = null;
+//  private Location mMyLastLocation = null;
 
   private DrawerLayout mDrawerLayout;
   private LinearListView mAccountHolder;
@@ -86,7 +85,7 @@ public class MainActivity extends ActionBarActivity {
   private boolean mDrawerIsVisible = false;
   private ProgressDialog pd = null;
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
-  private LocationChangeReceiver mLocationChangeReceiver = null;
+  private ZoneListChangedReceiver mLocationChangeReceiver = null;
   private Menu mMenu;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
@@ -128,7 +127,7 @@ public class MainActivity extends ActionBarActivity {
 //    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 //    sensorManager.registerListener(new AccelerometerListener(),
 //    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-    mLocationChangeReceiver = new LocationChangeReceiver();
+    mLocationChangeReceiver = new ZoneListChangedReceiver();
     
     
     setContentView(R.layout.mainlist_navigation_drawer);
@@ -222,16 +221,13 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    float[] f = new float[3];
-    Location.distanceBetween(0.0000f, 0.00000f, 1.00000f, 0.5f, f);
-    Log.d("yako", Arrays.toString(f));
     is_activity_visible = true;
     removeNotificationIfExists();
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
     
     // setting zone list
-//    loadZoneListAdapter(true);
+    loadZoneListAdapter(false);
 //    setZoneActivityStates();
 
 
@@ -244,19 +240,20 @@ public class MainActivity extends ActionBarActivity {
     
 
     // register broadcast receiver for new message load
+    LocalBroadcastManager localManager = LocalBroadcastManager.getInstance(this);
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
     filter.addAction(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
     filter.addAction(MainService.NO_TASK_AVAILABLE_TO_PROCESS);
-    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageLoadedReceiver, filter);
+    localManager.registerReceiver(mMessageLoadedReceiver, filter);
 
 
 
     // register broadcast for receive location change pending intents
-    IntentFilter locFilter = new IntentFilter(LocationChangeListener.ACTION_LOCATION_CHANGED);
-    registerReceiver(mLocationChangeReceiver, locFilter);
-    LocationChangeListener.INSTANCE.initLocationManager(this);
-    
+    IntentFilter locFilter = new IntentFilter(LocationService.ACTION_ZONE_LIST_MUST_REFRESH);
+    localManager.registerReceiver(mLocationChangeReceiver, locFilter);
+    startLocationService(false);
+
     
     // loading messages
     if (!MainService.RUNNING) {
@@ -317,9 +314,16 @@ public class MainActivity extends ActionBarActivity {
 
   public void loadZoneListAdapter(boolean refreshFromDatabase) {
     List<GpsZone> zones = YakoApp.getSavedGpsZones(this, refreshFromDatabase);
-    setZoneActivityStates();
     mZoneListAdapter = new ZoneListAdapter(this, zones);
     mZoneHolder.setAdapter(mZoneListAdapter);
+  }
+
+  public void startLocationService(boolean forceUpdateZones) {
+    Intent i = new Intent(this, LocationService.class);
+    if (forceUpdateZones) {
+      i.putExtra(LocationService.EXTRA_FORCE_UPDATE_ZONES, true);
+    }
+    startService(i);
   }
 
   @Override
@@ -327,10 +331,11 @@ public class MainActivity extends ActionBarActivity {
     
     is_activity_visible = false;
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
-    
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
-    unregisterReceiver(mLocationChangeReceiver);
-    
+
+    LocalBroadcastManager localManager = LocalBroadcastManager.getInstance(this);
+    localManager.unregisterReceiver(mMessageLoadedReceiver);
+    localManager.unregisterReceiver(mLocationChangeReceiver);
+
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
@@ -393,6 +398,7 @@ public class MainActivity extends ActionBarActivity {
       if (data != null && data.getAction() != null) {
         if (data.getAction().equals(GoogleMapsActivity.ACTION_REFRESH_ZONE_LIST)) {
           loadZoneListAdapter(true);
+          startLocationService(true);
         }
       }
     }
@@ -663,43 +669,43 @@ public class MainActivity extends ActionBarActivity {
     this.sendBroadcast(intent);
   }
 
-  private void setZoneActivityStates() {
-    boolean zoneChanged = true;
-    if (mMyLastLocation != null) {
-      Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
-      Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
-
-      Set<String> nearLocationList = new TreeSet<String>();
-      String closestLoc = null;
-      float closest = Float.MAX_VALUE;
-      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
-        int distance = Math.round(getDist((float) zone.getLat(), (float) zone.getLong(),
-                (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude()));
-        zone.setDistance(distance);
-        zone.setProximity(GpsZone.Proximity.UNKNOWN);
-        if (distance <= zone.getRadius()) {
-          nearLocationList.add(zone.getAlias());
-          if (distance < closest) {
-            closest = distance;
-            closestLoc = zone.getAlias();
-          }
-        }
-      }
-
-      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
-        if (zone.getAlias().equals(closestLoc)) {
-          zone.setProximity(GpsZone.Proximity.CLOSEST);
-        } else if (nearLocationList.contains(zone.getAlias())) {
-          zone.setProximity(GpsZone.Proximity.NEAR);
-        } else {
-          zone.setProximity(GpsZone.Proximity.FAR);
-        }
-      }
-    }
-    if (zoneChanged) {
-      predictMessages();
-    }
-  }
+//  private void setZoneActivityStates() {
+//    boolean zoneChanged = true;
+//    if (mMyLastLocation != null) {
+//      Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
+//      Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
+//
+//      Set<String> nearLocationList = new TreeSet<String>();
+//      String closestLoc = null;
+//      float closest = Float.MAX_VALUE;
+//      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
+//        int distance = Math.round(getDist((float) zone.getLat(), (float) zone.getLong(),
+//                (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude()));
+//        zone.setDistance(distance);
+//        zone.setProximity(GpsZone.Proximity.UNKNOWN);
+//        if (distance <= zone.getRadius()) {
+//          nearLocationList.add(zone.getAlias());
+//          if (distance < closest) {
+//            closest = distance;
+//            closestLoc = zone.getAlias();
+//          }
+//        }
+//      }
+//
+//      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
+//        if (zone.getAlias().equals(closestLoc)) {
+//          zone.setProximity(GpsZone.Proximity.CLOSEST);
+//        } else if (nearLocationList.contains(zone.getAlias())) {
+//          zone.setProximity(GpsZone.Proximity.NEAR);
+//        } else {
+//          zone.setProximity(GpsZone.Proximity.FAR);
+//        }
+//      }
+//    }
+//    if (zoneChanged) {
+//      predictMessages();
+//    }
+//  }
 
   private void predictMessages() {
     TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
@@ -722,8 +728,8 @@ public class MainActivity extends ActionBarActivity {
     if (zone != null) {
       i.putExtra(GoogleMapsActivity.EXTRA_GPS_ZONE_DATA, zone);
     } else {
-      LatLng latLng = mMyLastLocation != null
-              ? new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()) : null;
+      LatLng latLng = LocationService.mMyLastLocation != null
+              ? new LatLng(LocationService.mMyLastLocation.getLatitude(), LocationService.mMyLastLocation.getLongitude()) : null;
       i.putExtra(GoogleMapsActivity.EXTRA_START_LOC, latLng);
     }
     startActivityForResult(i, Settings.ActivityRequestCodes.GOOGLE_MAPS_ACTIVITY_RESULT);
@@ -749,24 +755,13 @@ public class MainActivity extends ActionBarActivity {
   }
 
 
-  private class LocationChangeReceiver extends BroadcastReceiver {
+  private class ZoneListChangedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-      // this one is responsible for GUI loading indicator update
-      if (intent.getAction().equals(LocationChangeListener.ACTION_LOCATION_CHANGED)) {
-        Location newLocation = (Location) intent.getExtras().get(LocationChangeListener.EXTRA_LOCATION);
-        if (newLocation != null
-                || mMyLastLocation == null
-                || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
-          mMyLastLocation = newLocation;
-          Log.d("yako", "updating with new location...");
-        } else {
-          Log.d("yako", "skipping update...");
-        }
+      if (intent.getAction().equals(LocationService.ACTION_ZONE_LIST_MUST_REFRESH)) {
         loadZoneListAdapter(false);
       }
     }
-
   }
 
 

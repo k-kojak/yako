@@ -3,20 +3,35 @@ package hu.rgai.yako.beens;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * Created by kojak on 9/23/2014.
- */
-public class GpsZone implements Parcelable {
+public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
   public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
+  public enum ZoneType {
+    WORK("Work"),
+    HOME("Home"),
+    SILENT("Silent")
+    ;
+
+    private final String mDisplayName;
+
+    private ZoneType(String displayName) {
+      mDisplayName = displayName;
+    }
+
+    public String getDisplayName() {
+      return mDisplayName;
+    }
+  };
 
   private final String mAlias;
   private final double mLat;
   private final double mLong;
   private final int mRadius;
+  private final ZoneType mZoneType;
 
   private int mDistance = -1;
   private Proximity mProximity = Proximity.UNKNOWN;
+
 
   public static final Parcelable.Creator<GpsZone> CREATOR = new Parcelable.Creator<GpsZone>() {
     public GpsZone createFromParcel(Parcel in) {
@@ -29,17 +44,18 @@ public class GpsZone implements Parcelable {
   };
 
   public GpsZone(Parcel in) {
-    this(in.readString(), in.readDouble(), in.readDouble(), in.readInt());
+    this(in.readString(), in.readDouble(), in.readDouble(), in.readInt(), ZoneType.valueOf(in.readString()));
 
     mDistance = in.readInt();
     mProximity = Proximity.valueOf(in.readString());
   }
 
-  public GpsZone(String mAlias, double mLat, double mLong, int mRadius) {
+  public GpsZone(String mAlias, double mLat, double mLong, int mRadius, ZoneType zoneType) {
     this.mAlias = mAlias;
     this.mLat = mLat;
     this.mLong = mLong;
     this.mRadius = mRadius;
+    this.mZoneType = zoneType;
   }
 
   /**
@@ -96,6 +112,23 @@ public class GpsZone implements Parcelable {
     this.mDistance = distance;
   }
 
+  /**
+   * Returns the zone type of this gps zone.
+   * Zone types can be: WORK, HOME, SILENT.
+   * Of course it should be editable and 1 location should be able to own multiple zone types ...
+   * probably in a later release...
+   * @return the zone type of the saved GpsZone
+   */
+  public ZoneType getZoneType() {
+    return mZoneType;
+  }
+
+  @Override
+  public int compareTo(GpsZone another) {
+    return mAlias.compareTo(another.getAlias());
+
+  }
+
   @Override
   public int describeContents() {
     return 0;
@@ -107,6 +140,7 @@ public class GpsZone implements Parcelable {
     dest.writeDouble(mLat);
     dest.writeDouble(mLong);
     dest.writeInt(mRadius);
+    dest.writeString(mZoneType.toString());
     dest.writeInt(mDistance);
     dest.writeString(mProximity.toString());
   }

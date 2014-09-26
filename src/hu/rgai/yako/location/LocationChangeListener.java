@@ -9,10 +9,10 @@ import android.location.LocationManager;
 import android.util.Log;
 
 public enum LocationChangeListener {
-  INSTANCE;
+  /*INSTANCE;
 
   public static final String EXTRA_LOCATION = "location";
-  public static final String ACTION_LOCATION_CHANGED = "hu.rgai.yako.action_location_changed";
+  public static final String ACTION_NEW_LOCATION_ARRIVED = "hu.rgai.yako.action_location_changed";
   public static final int REQ_CODE_LOCATION_CHANGED = 1;
   private static final long REQUEST_INTERVAL = 1 * 60 * 1000;
   private static final Criteria REQUEST_CRITERIA = new Criteria();
@@ -33,15 +33,15 @@ public enum LocationChangeListener {
     }
     String bestProvider = locationManager.getBestProvider(REQUEST_CRITERIA, false);
     Location loc = locationManager.getLastKnownLocation(bestProvider);
-    Intent i = new Intent(ACTION_LOCATION_CHANGED);
+    Intent i = new Intent(ACTION_NEW_LOCATION_ARRIVED);
     i.putExtra(EXTRA_LOCATION, loc);
     context.sendBroadcast(i);
   }
 
   private PendingIntent getLocationPendingIntent(Context context) {
-    Intent i = new Intent(ACTION_LOCATION_CHANGED);
+    Intent i = new Intent(ACTION_NEW_LOCATION_ARRIVED);
     PendingIntent pi = PendingIntent.getBroadcast(context, REQ_CODE_LOCATION_CHANGED, i, PendingIntent.FLAG_UPDATE_CURRENT);
     return pi;
-  }
+  }*/
 
 }

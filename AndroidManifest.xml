@@ -188,6 +188,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="hu.rgai.yako.services.schedulestarters.LocationScheduler">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
 
         <receiver android:name="hu.rgai.yako.messageproviders.SmsMessageProvider"
                   android:permission="android.permission.BROADCAST_SMS">
@@ -221,6 +227,8 @@
                 <data android:scheme="mmsto"/>
             </intent-filter>
         </service>
+
+        <service android:name="hu.rgai.yako.services.LocationService" />
 
 
         <receiver android:name="hu.rgai.yako.broadcastreceivers.GlobalBroadcastReceiver">

@@ -98,7 +98,8 @@ public class GpsZoneDAO {
   }
 
   public static GpsZone cursorToGpsZone(Cursor cursor) {
-    GpsZone zone = new GpsZone(cursor.getString(1), cursor.getDouble(2), cursor.getDouble(3), cursor.getInt(4));
+    GpsZone zone = new GpsZone(cursor.getString(1), cursor.getDouble(2), cursor.getDouble(3), cursor.getInt(4),
+            GpsZone.ZoneType.HOME);
     return zone;
   }
 

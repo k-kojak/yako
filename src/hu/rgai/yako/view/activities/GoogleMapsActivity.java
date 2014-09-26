@@ -212,13 +212,16 @@ public class GoogleMapsActivity extends FragmentActivity {
                     new GpsZone(value,
                             mMarker.getPosition().latitude,
                             mMarker.getPosition().longitude,
-                            mRadiusValue));
+                            mRadiusValue,
+                            GpsZone.ZoneType.HOME
+                    ));
           } else {
             GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(),
                     new GpsZone(value,
                             mMarker.getPosition().latitude,
                             mMarker.getPosition().longitude,
-                            mRadiusValue));
+                            mRadiusValue,
+                            GpsZone.ZoneType.HOME));
           }
           mDialog.dismiss();
           setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
@@ -226,7 +229,5 @@ public class GoogleMapsActivity extends FragmentActivity {
         }
       }
     }
-
   }
-
 }
