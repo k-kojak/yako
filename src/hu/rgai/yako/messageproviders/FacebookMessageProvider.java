@@ -106,12 +106,12 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         + " FROM user"
         + " WHERE uid IN (SELECT recipients FROM #msgs)'"
         + "}";
-    params.putString("q", fqlQuery);
+    params.putString("fields", "id,to,unread,unseen,subject,updated_time");
 
     Session session = Session.getActiveSession();
     Request request = new Request(
         session,
-        "/fql",
+        "/me/inbox",
         params,
         HttpMethod.GET,
         new Request.Callback() {
@@ -123,54 +123,57 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                   GraphObject go = response.getGraphObject();
                   JSONObject jso = go.getInnerJSONObject();
                   JSONArray arr = jso.getJSONArray("data");
+                  
+                  for (int i = 0; i < (arr.length()); i++) {
+                    JSONObject resultSet = arr.getJSONObject(i);
+                    String thread_id = resultSet.getString("id");
+                    boolean seen = resultSet.getInt("unseen") == 0;
+                    int unreadCount = resultSet.getInt("unread");
+                    
+                    JSONObject recipientsObject = resultSet.getJSONObject("to");
+                    JSONArray recipientsArr = new JSONArray(recipientsObject.getString("data"));
+                    List<String> recipIds = new LinkedList<String>();
+                    List<Person> recipients = new LinkedList<Person>();
+                    
+                    for (int l = 0; l < recipientsArr.length(); l++) {
+                      String id = recipientsArr.getString(l);
+                      if (!account.getId().equals(id)) {
+                        recipIds.add(id);
+                        recipients.add(new Person(id, null, Type.FACEBOOK));
+                      }
+                    }
+                    
+                    // recipipIds MUST contain an id which is not mine
+                    assert !recipIds.isEmpty();
+                   
+                    Person from = null;
+                    if (recipients.size() == 1) {
+                      from = recipients.get(0);
+                    }
+                    messages.add(new MessageListElement(
+                            thread_id,
+                            seen,
+                            null,
+                            unreadCount,
+                            0,
+                            from,
+                            recipients,
+                            new Date(resultSet.getLong("updated_time") * 1000),
+                            account,
+                            MessageProvider.Type.FACEBOOK));
+                    
+                  }
+                  
 
                   // loop through result sets
                   for (int i = 0; i < (arr.length()); i++) {
                     JSONObject resultSet = arr.getJSONObject(i);
                     String resSetName = resultSet.getString("name");
                     String resSet = resultSet.getString("fql_result_set");
+                    
+                    
                     if (resSetName.equals("msgs")) {
-                      JSONArray msgArr = new JSONArray(resSet);
 
-                      // loop through messages
-                      for (int j = 0; j < msgArr.length(); j++) {
-                        JSONObject msg = msgArr.getJSONObject(j);
-
-                        // fetching recipients
-                        JSONArray recipientsArr = new JSONArray(msg.getString("recipients"));
-                        List<String> recipIds = new LinkedList<String>();
-                        List<Person> recipients = new LinkedList<Person>();
-                        for (int l = 0; l < recipientsArr.length(); l++) {
-                          String id = recipientsArr.getString(l);
-                          if (!account.getId().equals(id)) {
-                            recipIds.add(id);
-                            recipients.add(new Person(id, null, Type.FACEBOOK));
-                          }
-                        }
-
-                        // recipipIds MUST contain an id which is not mine
-                        assert !recipIds.isEmpty();
-
-                        // building list item title
-                        boolean seen = msg.getInt("unseen") == 0;
-                        int unreadCount = msg.getInt("unread");
-                        String snippet = msg.getString("snippet");
-                        Person from = null;
-                        if (recipients.size() == 1) {
-                          from = recipients.get(0);
-                        }
-                        messages.add(new MessageListElement(
-                                msg.getString("thread_id"),
-                                seen,
-                                snippet,
-                                unreadCount,
-                                0,
-                                from,
-                                recipients,
-                                new Date(msg.getLong("updated_time") * 1000),
-                                account,
-                                MessageProvider.Type.FACEBOOK));
-                      }
                     } else if (resSetName.equals("friend")) {
                       JSONArray userArr = new JSONArray(resSet);
                       // loop through friends
@@ -232,7 +235,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       try {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
-        xmpp.login(fba.getUniqueName(), fba.getPassword());
+        xmpp.login(fba.getId(), fba.getPassword());
         // Log.d("rgai", "connected to XMPP");
 
         xmpp.getChatManager().addChatListener(new ChatManagerListener() {
@@ -391,7 +394,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       try {
         xmpp.connect();
         SmackConfiguration.setPacketReplyTimeout(10000);
-        xmpp.login(account.getUniqueName(), account.getPassword());
+        xmpp.login(account.getId(), account.getPassword());
       } catch (XMPPException e) {
         Log.d("rgai", "", e);
         xmpp.disconnect();
