@@ -98,8 +98,6 @@ public class MainActivity extends ActionBarActivity {
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
 
-  public static final int PREFERENCES_REQUEST_CODE = 1;
-  public static final int G_MAPS_ACTIVITY_REQUEST_CODE = 2;
   private LayoutInflater mInflater;
   
   
@@ -391,6 +389,12 @@ public class MainActivity extends ActionBarActivity {
 //          Log.d("rgai", "refresh not .... needed!!!!!");
         }
       }
+    } else if (requestCode == Settings.ActivityRequestCodes.GOOGLE_MAPS_ACTIVITY_RESULT) {
+      if (data != null && data.getAction() != null) {
+        if (data.getAction().equals(GoogleMapsActivity.ACTION_REFRESH_ZONE_LIST)) {
+          loadZoneListAdapter(true);
+        }
+      }
     }
   }
   
@@ -563,7 +567,7 @@ public class MainActivity extends ActionBarActivity {
         return true;
       case R.id.system_preferences:
         Intent i = new Intent(this, SystemPreferences.class);
-        startActivityForResult(i, PREFERENCES_REQUEST_CODE);
+        startActivityForResult(i, Settings.ActivityRequestCodes.PREFERENCES_REQUEST_CODE);
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -722,7 +726,7 @@ public class MainActivity extends ActionBarActivity {
               ? new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude()) : null;
       i.putExtra(GoogleMapsActivity.EXTRA_START_LOC, latLng);
     }
-    startActivityForResult(i, G_MAPS_ACTIVITY_REQUEST_CODE);
+    startActivityForResult(i, Settings.ActivityRequestCodes.GOOGLE_MAPS_ACTIVITY_RESULT);
   }
   
   

@@ -231,6 +231,8 @@ public final class Settings {
   public static final class ActivityRequestCodes {
     public static final int ACCOUNT_SETTING_RESULT = 1;
     public static final int FULL_MESSAGE_RESULT = 2;
+    public static final int GOOGLE_MAPS_ACTIVITY_RESULT = 3;
+    public static final int PREFERENCES_REQUEST_CODE = 4;
   }
   
   public static final class ActivityResultCodes {

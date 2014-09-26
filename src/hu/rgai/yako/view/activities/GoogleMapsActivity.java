@@ -2,6 +2,7 @@ package hu.rgai.yako.view.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -22,6 +23,7 @@ import hu.rgai.yako.sql.GpsZoneDAO;
  */
 public class GoogleMapsActivity extends FragmentActivity {
 
+  public static final String ACTION_REFRESH_ZONE_LIST = "hu.rgai.yako.extra_refresh_zone_list";
   public static final String EXTRA_GPS_ZONE_DATA = "hu.rgai.yako.extra_gps_zone_data";
   public static final String EXTRA_START_LOC = "hu.rgai.yako.extra_start_loc";
 
@@ -211,7 +213,6 @@ public class GoogleMapsActivity extends FragmentActivity {
                             mMarker.getPosition().latitude,
                             mMarker.getPosition().longitude,
                             mRadiusValue));
-
           } else {
             GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(),
                     new GpsZone(value,
@@ -220,6 +221,7 @@ public class GoogleMapsActivity extends FragmentActivity {
                             mRadiusValue));
           }
           mDialog.dismiss();
+          setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
           finish();
         }
       }
