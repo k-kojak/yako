@@ -61,13 +61,11 @@ public class FacebookFriendProvider {
   public void insertFriends(final Activity activity, final FacebookSettingActivity.ToastHelper th) {
     final Set<String> facebookIds = getContactsFacebookIds(activity);
     
-    String fql = "SELECT uid, name, username, pic, pic_big FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
-
     Bundle params = new Bundle();
-    params.putString("q", fql);
+    params.putString("fields", "id, name, picture");
     final FacebookIdSaver fbs = new FacebookIdSaver();
     Session session = Session.getActiveSession();
-    Request request = new Request(session, "/fql", params, HttpMethod.GET,
+    Request request = new Request(session, "/me/friends", params, HttpMethod.GET,
             new Request.Callback() {
               public void onCompleted(Response response) {
                 try {
@@ -98,19 +96,19 @@ public class FacebookFriendProvider {
                       timeleftStr = (timeLeftInMin > 0 ? timeLeftInMin + " min" + (timeLeftInMin > 1 ? "s " : " ") : "") + timeLeftInSec + " sec" + (timeLeftInSec > 1 ? "s" : "");
                       String toastStr = "Still updating, " + timeleftStr + " left";
                       th.showToast(toastStr);
-//              Toast.makeText(activity, timeleftStr + , Toast.LENGTH_LONG).show();
                       nextToast += toastInterval * 1000;
                     }
                     JSONObject json_obj = arr.getJSONObject(i);
 
-                    if (!(facebookIds.contains(json_obj.getString("uid")))) {
+                    if (!(facebookIds.contains(json_obj.getString("id")))) {
 
                       //ezek adják vissza a szükséges adatokat
-                      String uid = json_obj.getString("uid");
+                      String uid = json_obj.getString("id");
                       String name = json_obj.getString("name");
-                      String username = json_obj.getString("username");
+                      JSONObject picture_obj = json_obj.getJSONObject("picture").getJSONObject("data");
+                      String picture = picture_obj.getString("url");
 
-                      FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, username, uid, json_obj.getString("pic"), json_obj.getString("pic_big"));
+                      FacebookIntegrateItem fbii = new FacebookIntegrateItem(name, null, uid, picture, null);
                       fbs.integrate(activity, fbii);
 
                     } else {
