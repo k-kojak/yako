@@ -21,10 +21,12 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javax.mail.AuthenticationFailedException;
@@ -93,7 +95,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     Bundle params = new Bundle();
 
     final List<MessageListElement> messages = new LinkedList<MessageListElement>();
-
+    final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
     String fqlQuery = "{"
         + "'msgs':"
         + "'SELECT thread_id, originator, recipients, unread, unseen, subject, snippet, updated_time "
@@ -106,8 +109,8 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         + " FROM user"
         + " WHERE uid IN (SELECT recipients FROM #msgs)'"
         + "}";
-    params.putString("fields", "id,to,unread,unseen,subject,updated_time");
-
+    params.putString("fields", "id, to, unread, unseen, subject, updated_time,comments.limit(1){message}");
+    
     Session session = Session.getActiveSession();
     Request request = new Request(
         session,
@@ -129,6 +132,11 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     String thread_id = resultSet.getString("id");
                     boolean seen = resultSet.getInt("unseen") == 0;
                     int unreadCount = resultSet.getInt("unread");
+                    Date date = sdf.parse(resultSet.getString("updated_time"));
+                    
+                    JSONArray commentsArray = resultSet.getJSONObject("comments").getJSONArray("data");
+                    JSONObject commentsObject = commentsArray.getJSONObject(0);
+                    String snippet = commentsObject.getString("message");
                     
                     JSONObject recipientsObject = resultSet.getJSONObject("to");
                     JSONArray recipientsArr = new JSONArray(recipientsObject.getString("data"));
@@ -136,10 +144,11 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     List<Person> recipients = new LinkedList<Person>();
                     
                     for (int l = 0; l < recipientsArr.length(); l++) {
-                      String id = recipientsArr.getString(l);
+                      String id = recipientsArr.getJSONObject(l).getString("id");
+                      String name = recipientsArr.getJSONObject(l).getString("name");
                       if (!account.getId().equals(id)) {
                         recipIds.add(id);
-                        recipients.add(new Person(id, null, Type.FACEBOOK));
+                        recipients.add(new Person(id, name, Type.FACEBOOK));
                       }
                     }
                     
@@ -153,12 +162,12 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
                     messages.add(new MessageListElement(
                             thread_id,
                             seen,
-                            null,
+                            snippet,
                             unreadCount,
                             0,
                             from,
                             recipients,
-                            new Date(resultSet.getLong("updated_time") * 1000),
+                            new Date(date.getTime() * 1000),
                             account,
                             MessageProvider.Type.FACEBOOK));
                     
