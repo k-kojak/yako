@@ -22,6 +22,7 @@ public class GpsZoneDAO {
 
   public static final String COL_ID = "_id";
   private static final String COL_ALIAS = "alias";
+  private static final String COL_ZONE_TYPE = "zone_type";
   private static final String COL_LAT = "lat";
   private static final String COL_LONG = "long";
   private static final String COL_RADIUS = "radius";
@@ -30,12 +31,13 @@ public class GpsZoneDAO {
   public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_GPS_ZONES + "("
           + COL_ID + " INTEGER primary key autoincrement, "
           + COL_ALIAS + " TEXT not null, "
+          + COL_ZONE_TYPE + " TEXT not null, "
           + COL_LAT + " REAL not null, "
           + COL_LONG + " REAL not null, "
           + COL_RADIUS + " INTEGER not null, "
           + "UNIQUE ("+ COL_ALIAS +"));";
 
-  private String[] allColumns = { COL_ID, COL_ALIAS, COL_LAT, COL_LONG, COL_RADIUS };
+  private String[] allColumns = { COL_ID, COL_ALIAS, COL_LAT, COL_LONG, COL_RADIUS, COL_ZONE_TYPE };
 
 
   public static synchronized GpsZoneDAO getInstance(Context context) {
@@ -90,6 +92,7 @@ public class GpsZoneDAO {
   private static ContentValues buildContentValues(GpsZone zone) {
     ContentValues cv = new ContentValues();
     cv.put(COL_ALIAS, zone.getAlias());
+    cv.put(COL_ZONE_TYPE, zone.getZoneType().toString());
     cv.put(COL_LAT, zone.getLat());
     cv.put(COL_LONG, zone.getLong());
     cv.put(COL_RADIUS, zone.getRadius());
@@ -99,7 +102,7 @@ public class GpsZoneDAO {
 
   public static GpsZone cursorToGpsZone(Cursor cursor) {
     GpsZone zone = new GpsZone(cursor.getString(1), cursor.getDouble(2), cursor.getDouble(3), cursor.getInt(4),
-            GpsZone.ZoneType.HOME);
+            GpsZone.ZoneType.valueOf(cursor.getString(5)));
     return zone;
   }
 
