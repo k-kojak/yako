@@ -41,6 +41,7 @@ public class MessageListDAO  {
   public static final String COL_DATE = "date";
   public static final String COL_MSG_TYPE = "message_type";
   public static final String COL_ACCOUNT_ID = "account_id";
+  public static final String COL_IS_IMPORTANT = "is_important"; // 1 if yes, 0 if no, -1 is default
 
 
 
@@ -59,19 +60,22 @@ public class MessageListDAO  {
           + COL_DATE + " text, "
           + COL_MSG_TYPE + " text, "
           + COL_ACCOUNT_ID + " integer not null,"
+          + COL_IS_IMPORTANT + " integer not null default -1,"
           + " FOREIGN KEY (" + COL_ACCOUNT_ID + ")"
             + " REFERENCES " + AccountDAO.TABLE_ACCOUNTS + "(" + AccountDAO.COL_ID + "),"
           + " FOREIGN KEY (" + COL_FROM_ID + ")"
             + " REFERENCES " + PersonSenderDAO.TABLE_PERSON + "(" + PersonSenderDAO.COL_ID + ")"
           + ");";
 
+  public static final String ALTER_TABLE_PREDICTION = "ALTER TABLE " + TABLE_MESSAGES
+          + " ADD " + COL_IS_IMPORTANT + " integer not null default -1";
 
   public static final String INDEX_ON_MSG_TYPE = TABLE_MESSAGES + "__" + COL_MSG_TYPE + "__idx";
 
   public static final String CREATE_INDEX_ON_MSG_TYPE = "CREATE INDEX " + INDEX_ON_MSG_TYPE + " ON " + TABLE_MESSAGES + "(" + COL_ID + ");";
 
   private static String[] allColumns = { TABLE_MESSAGES + "." + COL_ID, COL_MSG_ID, COL_SEEN, COL_TITLE, COL_SUBTITLE,
-          COL_UNREAD_CNT, COL_FROM_ID, COL_DATE, COL_MSG_TYPE, COL_ACCOUNT_ID, COL_CONTENT};
+          COL_UNREAD_CNT, COL_FROM_ID, COL_DATE, COL_MSG_TYPE, COL_ACCOUNT_ID, COL_CONTENT, COL_IS_IMPORTANT};
 
 
   public static synchronized MessageListDAO getInstance(Context context) {
@@ -185,6 +189,7 @@ public class MessageListDAO  {
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());
       cv.put(COL_MSG_TYPE, mle.getMessageType().toString());
       cv.put(COL_ACCOUNT_ID, accounts.get(mle.getAccount()));
+      cv.put(COL_IS_IMPORTANT, mle.isImportant() ? 1 : 0);
 //      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
 //        cv.put(COL_CONTENT, ((FullSimpleMessage) mle.getFullMessage()).getContent().getContent().toString());
 //      }
@@ -289,7 +294,8 @@ public class MessageListDAO  {
             + PersonSenderDAO.COL_TYPE + " AS from_type" + attachmentQuerySel
             + " FROM " + PersonSenderDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
             + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
-            + accountQuery + messageIdQuery + attachmentQueryGroup + " ORDER BY " + COL_DATE + " DESC";
+            + accountQuery + messageIdQuery + attachmentQueryGroup
+            + " ORDER BY " + COL_IS_IMPORTANT + " DESC, " + COL_DATE + " DESC";
 
     String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
     return mDbHelper.getDatabase().rawQuery(query, selectionArgsArray);
@@ -300,6 +306,11 @@ public class MessageListDAO  {
     return getAllMessages(accounts, -1);
   }
 
+  public void setMessageAsImportant(long msgId, boolean important) {
+    ContentValues cv = new ContentValues();
+    cv.put(COL_IS_IMPORTANT, important);
+    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{String.valueOf(msgId)});
+  }
 
   public void removeMessage(Context context, List<MessageListElement> deletedMessages) throws Exception {
     removeMessages(context, -1, deletedMessages);
@@ -506,13 +517,15 @@ public class MessageListDAO  {
         Date date = SQLHelper.Utils.parseSQLdateString(cursor.getString(cursor.getColumnIndex(COL_DATE)));
         Account account = accounts.get(cursor.getLong(cursor.getColumnIndex(COL_ACCOUNT_ID)));
         MessageProvider.Type msgType = MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(COL_MSG_TYPE)));
+        boolean isImportant = cursor.getInt(cursor.getColumnIndex(COL_IS_IMPORTANT)) == 1;
 
         int attachmentCount = 0;
         if (cursor.getColumnIndex("sum") != -1) {
           attachmentCount = cursor.getInt(cursor.getColumnIndex("sum"));
         }
 
-        mle = new MessageListElement(rawId, messageId, seen, title, subTitle, attachmentCount, from, null, date, account, msgType);
+        mle = new MessageListElement(rawId, messageId, seen, title, subTitle, attachmentCount, from, null, date, account,
+                msgType, isImportant);
       } catch (ParseException e) {
         Log.d("rgai", "", e);
       }

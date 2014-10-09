@@ -35,6 +35,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected Date date;
   protected Type messageType;
   protected boolean updateFlags;
+  protected boolean mIsImportant;
   
   protected FullMessage fullMessage;
 
@@ -74,7 +75,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    */
   public MessageListElement(long rawId, String messageId, boolean seen, String title, String subTitle, int unreadCount,
                             int attachmentCount, Person from, List<Person> recipients, Date date, Account account,
-                            Type messageType, boolean updateFlags) {
+                            Type messageType, boolean updateFlags, boolean isImportant) {
     this.mRawId = rawId;
     this.id = messageId;
     this.seen = seen;
@@ -88,6 +89,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.account = account;
     this.messageType = messageType;
     this.updateFlags = updateFlags;
+    this.mIsImportant = isImportant;
   }
   
   public MessageListElement(Parcel in) {
@@ -124,7 +126,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public MessageListElement(String id, Account account) {
-    this(-1, id, false, null, null, 0, 0, null, null, null, account, account.getAccountType(), false);
+    this(-1, id, false, null, null, 0, 0, null, null, null, account, account.getAccountType(), false, false);
   }
   
   /**
@@ -139,8 +141,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param date date of the message
    * @param messageType type of the message, see {@link  hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, int unreadCount, int attachmentCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(-1, id, seen, title, null, unreadCount, attachmentCount, from, recipients, date, account, messageType, false);
+  public MessageListElement(String id, boolean seen, String title, int unreadCount, int attachmentCount, Person from,
+                            List<Person> recipients, Date date, Account account, Type messageType) {
+    this(-1, id, seen, title, null, unreadCount, attachmentCount, from, recipients, date, account, messageType, false, false);
   }
   
   /**
@@ -156,7 +159,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    */
   public MessageListElement(long _id, String id, boolean seen, String title, Person from, List<Person> recipients,
                             Date date, Account account, Type messageType) {
-    this(_id, id, seen, title, null, -1, 0, from, recipients, date, account, messageType, false);
+    this(_id, id, seen, title, null, -1, 0, from, recipients, date, account, messageType, false, false);
   }
   
    /**
@@ -172,8 +175,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
   public MessageListElement(long _id, String id, boolean seen, String title, String snippet, int attachmentCount,
-          Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(_id, id, seen, title, snippet, -1, attachmentCount, from, recipients, date, account, messageType, false);
+          Person from, List<Person> recipients, Date date, Account account, Type messageType, boolean isImportant) {
+    this(_id, id, seen, title, snippet, -1, attachmentCount, from, recipients, date, account, messageType, false, isImportant);
   }
 
 
@@ -193,7 +196,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   public MessageListElement(long rawId, String id, boolean seen, Person from, Date date, Account account, Type messageType,
                             boolean updateFlags) {
-    this(rawId, id, seen, null, null, -1, 0, from, null, date, account, messageType, updateFlags);
+    this(rawId, id, seen, null, null, -1, 0, from, null, date, account, messageType, updateFlags, false);
   }
   
   private void initStringToClassLoader() {
@@ -334,6 +337,14 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   public boolean isUpdateFlags() {
     return updateFlags;
+  }
+
+  public boolean isImportant() {
+    return mIsImportant;
+  }
+
+  public void setIsImportant(boolean isImportant) {
+    mIsImportant = isImportant;
   }
 
   public FullMessage getFullMessage() {

@@ -33,6 +33,8 @@ import java.util.Map;
  */
 public final class Settings {
 
+  public static final double IMPORTANT_LIMIT = 0.88;
+
   public static final boolean DEBUG = false;
   public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
   public static final String FACEBOOK_ME_IMG_NAME = "me.png";

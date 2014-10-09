@@ -14,6 +14,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
+import hu.rgai.yako.handlers.MessageListerHandler;
+import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.workers.SmartPredictionAsyncTask;
 
 import java.util.*;
 
@@ -80,67 +83,6 @@ public class LocationService extends Service {
     return null;
   }
 
-  private class LocationUpdateReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      if (intent != null && intent.getAction() != null) {
-        if (intent.getAction().equals(ACTION_NEW_LOCATION_ARRIVED)) {
-          // saving MyLocation...
-          Log.d("yako", "## new location");
-          Location newLocation = (Location) intent.getExtras().get(LocationService.EXTRA_LOCATION);
-          if (newLocation != null) {
-            double birizgaLat = Math.random() / 100000;
-            double birizgaLong = Math.random() / 100000;
-            Log.d("yako", " #birizga: "+birizgaLat + " , " + birizgaLong);
-            newLocation.setLatitude(newLocation.getLatitude() + birizgaLat);
-            newLocation.setLongitude(newLocation.getLongitude() + birizgaLong);
-          }
-          if (newLocation != null
-                  || mMyLastLocation == null
-                  || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
-
-            boolean locationChanged = false;
-            if ((mMyLastLocation != null && newLocation == null)
-                    || (mMyLastLocation == null && newLocation != null)
-                    || (mMyLastLocation != null && newLocation != null
-                      && (mMyLastLocation.getLatitude() != newLocation.getLatitude()
-                      || mMyLastLocation.getLongitude() != newLocation.getLongitude() ) ) ) {
-              locationChanged = true;
-            }
-            Log.d("yako", " # new loc: " + newLocation);
-            Log.d("yako", " # old loc: " + mMyLastLocation);
-            mMyLastLocation = newLocation;
-            if (locationChanged) {
-              Log.d("yako", " # location changed");
-              locationChanged(context);
-            } else {
-              Log.d("yako", " # location not changed");
-            }
-          }
-        }
-      }
-    }
-
-    private void locationChanged(Context context) {
-      List<GpsZone> zones = YakoApp.getSavedGpsZones(context);
-      ZoneActivityCalcResult zoneActivityStateResult = calcActivityState(zones);
-      Log.d("yako", " # zone act calc result: " + zoneActivityStateResult.toString());
-      if (zoneActivityStateResult.zoneActivityChanged) {
-        /**
-         * TODO: run prediction to all messages;
-         * TODO: send a broadcast about new message order AFTER prediction;
-         * TODO: refresh zone list
-         */
-        sendZoneListRefreshBroadcast(context);
-      } else if (zoneActivityStateResult.distanceChanged) {
-        // Just refresh zone list
-        sendZoneListRefreshBroadcast(context);
-      }
-    }
-
-  }
-
   private void sendZoneListRefreshBroadcast(Context context) {
     LocalBroadcastManager bcManager = LocalBroadcastManager.getInstance(context);
     bcManager.sendBroadcast(new Intent(ACTION_ZONE_LIST_MUST_REFRESH));
@@ -204,6 +146,69 @@ public class LocationService extends Service {
     float[] dist = new float[2];
     Location.distanceBetween(x1, y1, x2, y2, dist);
     return dist[0];
+  }
+
+  private class LocationUpdateReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent != null && intent.getAction() != null) {
+        if (intent.getAction().equals(ACTION_NEW_LOCATION_ARRIVED)) {
+          // saving MyLocation...
+          Log.d("yako", "## new location");
+          Location newLocation = (Location) intent.getExtras().get(LocationService.EXTRA_LOCATION);
+          if (newLocation != null) {
+            double birizgaLat = Math.random() / 100000;
+            double birizgaLong = Math.random() / 100000;
+            Log.d("yako", " #birizga: "+birizgaLat + " , " + birizgaLong);
+            newLocation.setLatitude(newLocation.getLatitude() + birizgaLat);
+            newLocation.setLongitude(newLocation.getLongitude() + birizgaLong);
+          }
+          if (newLocation != null
+                  || mMyLastLocation == null
+                  || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
+
+            boolean locationChanged = false;
+            if ((mMyLastLocation != null && newLocation == null)
+                    || (mMyLastLocation == null && newLocation != null)
+                    || (mMyLastLocation != null && newLocation != null
+                    && (mMyLastLocation.getLatitude() != newLocation.getLatitude()
+                    || mMyLastLocation.getLongitude() != newLocation.getLongitude() ) ) ) {
+              locationChanged = true;
+            }
+            Log.d("yako", " # new loc: " + newLocation);
+            Log.d("yako", " # old loc: " + mMyLastLocation);
+            mMyLastLocation = newLocation;
+            if (locationChanged) {
+              Log.d("yako", " # location changed");
+              locationChanged(context);
+            } else {
+              Log.d("yako", " # location not changed");
+            }
+          }
+        }
+      }
+    }
+
+    private void locationChanged(Context context) {
+      List<GpsZone> zones = YakoApp.getSavedGpsZones(context);
+      ZoneActivityCalcResult zoneActivityStateResult = calcActivityState(zones);
+      Log.d("yako", " # zone act calc result: " + zoneActivityStateResult.toString());
+      if (zoneActivityStateResult.zoneActivityChanged) {
+        Log.d("yako", "ZONE LOCATION CHANGED");
+        /**
+         * TODO: run prediction to all messages;
+         * TODO: send a broadcast about new message order AFTER prediction;
+         */
+        SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(context, false);
+        AndroidUtils.startTimeoutAsyncTask(smartPred);
+
+        sendZoneListRefreshBroadcast(context);
+      } else if (zoneActivityStateResult.distanceChanged) {
+        // Just refresh zone list
+        sendZoneListRefreshBroadcast(context);
+      }
+    }
   }
 
   private class ZoneActivityCalcResult {

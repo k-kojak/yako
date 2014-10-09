@@ -11,6 +11,8 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.smarttools.DummyMessagePredictionProvider;
+import hu.rgai.yako.smarttools.MessagePredictionProvider;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 
@@ -251,6 +253,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private void mergeMessages(MessageListElement[] newMessages, TreeMap<Long, MessageListElement> storedMessages,
                              boolean loadMoreRequest, MessageListResult.ResultType resultType) {
     // TODO: optimize message merge
+    MessagePredictionProvider mpp = new DummyMessagePredictionProvider();
     for (MessageListElement newMessage : newMessages) {
 //        MessageListElement storedFoundMessage = null;
       // .contains not work, because the date of new item != date of old item
@@ -262,6 +265,9 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
       // if message is not stored in database
       if (storedMessageRawId == -1) {
+
+        boolean isImportant = MessagePredictionProvider.Helper.isImportant(mpp.predictMessage(mContext, newMessage));
+        newMessage.setIsImportant(isImportant);
         MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
 
         if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))

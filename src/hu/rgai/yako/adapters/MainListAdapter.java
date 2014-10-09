@@ -84,7 +84,11 @@ public class MainListAdapter extends CursorAdapter {
 
       holder.subject.setText(subjectText);
 
-
+      if (message.isImportant()) {
+        holder.important.setVisibility(View.VISIBLE);
+      } else {
+        holder.important.setVisibility(View.GONE);
+      }
 
 
 
@@ -185,6 +189,7 @@ public class MainListAdapter extends CursorAdapter {
     holder.msgType = (ImageView) view.findViewById(R.id.list_acc_type);
     holder.attachment = (ImageView) view.findViewById(R.id.attachment);
     holder.accountName = (TextView) view.findViewById(R.id.account_name);
+    holder.important = (ImageView) view.findViewById(R.id.important);
 
     view.setTag(holder);
 
@@ -260,6 +265,7 @@ public class MainListAdapter extends CursorAdapter {
     ImageView msgType;
     ImageView attachment;
     TextView accountName;
+    ImageView important;
   }
   
 }

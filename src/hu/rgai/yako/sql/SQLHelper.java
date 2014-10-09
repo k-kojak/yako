@@ -3,9 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Message;
 import android.util.Log;
-import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 
 import java.text.ParseException;
@@ -88,7 +86,9 @@ public class SQLHelper extends SQLiteOpenHelper {
      */
     // first upgrade
     if (oldVersion == 1 && newVersion > 1) {
+      Log.d("rgai", "first upgrade..");
       createTableMapZones(db);
+      alterTableMessageListElement_predictionVal(db);
     } else {
       dropAll(db);
       onCreate(db);
@@ -98,6 +98,11 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   private void createTableMapZones(SQLiteDatabase db) {
     db.execSQL(GpsZoneDAO.TABLE_CREATE);
+  }
+
+  private void alterTableMessageListElement_predictionVal(SQLiteDatabase db) {
+    Log.d("rgai", "alterTableMessageListElement_predictionVal");
+    db.execSQL(MessageListDAO.ALTER_TABLE_PREDICTION);
   }
 
   private void dropAll(SQLiteDatabase db) {

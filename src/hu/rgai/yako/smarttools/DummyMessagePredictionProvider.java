@@ -22,6 +22,11 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
     for (GpsZone zone : gpsZones) {
 //      Log.d("yako", zone.toString());
     }
-    return Math.random();
+//    if (message.getTitle().contains("i")) {
+//      return 0.9;
+//    } else {
+      return Math.random();
+//    }
+
   }
 }

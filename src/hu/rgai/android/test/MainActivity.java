@@ -746,6 +746,7 @@ public class MainActivity extends ActionBarActivity {
       // this one is responsible for list/data updates
       else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
         MainActivity.this.messegasArrivedToDisplay();
+        Log.d("yako", "notify data set changed...");
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
