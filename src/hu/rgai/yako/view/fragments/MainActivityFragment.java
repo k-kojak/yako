@@ -32,6 +32,7 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
@@ -489,12 +490,15 @@ public class MainActivityFragment extends Fragment {
       }
     }
     long s = System.currentTimeMillis();
+    boolean zoneActivated = StoreHandler.isZoneStateActivated(getActivity());
     if (mAdapter == null) {
-      mAdapter = new MainListAdapter(mMainActivity,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true), mAccounts);
+      mAdapter = new MainListAdapter(mMainActivity, zoneActivated,
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated), mAccounts);
 
     } else {
-      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true));
+      Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated);
+      mAdapter.changeCursor(newCursor);
+      mAdapter.setZoneActivity(zoneActivated);
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }

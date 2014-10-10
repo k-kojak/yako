@@ -73,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
 
   private DrawerLayout mDrawerLayout;
   private LinearListView mAccountHolder;
+  private CompoundButton mZonesToggle;
   private LinearListView mZoneHolder;
   private MainListDrawerFilterAdapter mAccountFilterAdapter = null;
   private ZoneListAdapter mZoneListAdapter = null;
@@ -152,6 +153,7 @@ public class MainActivity extends ActionBarActivity {
     mAccountHolder = (LinearListView) findViewById(R.id.account_holder);
     mAccountHolder.setIsSingleSelect(false);
 
+    mZonesToggle = (CompoundButton) findViewById(R.id.zone_on_off);
     mZoneHolder = (LinearListView) findViewById(R.id.zone_holder);
     mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -161,6 +163,24 @@ public class MainActivity extends ActionBarActivity {
 
     mAccountHolder.setOnItemClickListener(new AccountFilterClickListener());
     mZoneHolder.setOnItemClickListener(new ZoneListClickListener());
+
+    mZonesToggle.setChecked(StoreHandler.isZoneStateActivated(this));
+    mZonesToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        boolean on = mZonesToggle.isChecked();
+        StoreHandler.setZoneActivityState(MainActivity.this, on);
+        redisplayMessages();
+      }
+    });
+    mZonesToggle.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+//        boolean on = mZonesToggle.isChecked();
+//        StoreHandler.setZoneActivityState(MainActivity.this, on);
+//        redisplayMessages();
+      }
+    });
 
     mAddGpsZone.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -642,7 +662,7 @@ public class MainActivity extends ActionBarActivity {
   }
   
   
-  private void messegasArrivedToDisplay() {
+  private void redisplayMessages() {
     setContent(true);
     toggleProgressDialog(false);
     mFragment.notifyAdapterChange();
@@ -745,7 +765,7 @@ public class MainActivity extends ActionBarActivity {
       }
       // this one is responsible for list/data updates
       else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
-        MainActivity.this.messegasArrivedToDisplay();
+        MainActivity.this.redisplayMessages();
         Log.d("yako", "notify data set changed...");
       }
       // if no task available to do at service

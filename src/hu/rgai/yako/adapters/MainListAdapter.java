@@ -27,12 +27,13 @@ public class MainListAdapter extends CursorAdapter {
   private final Context mContext;
   private static LayoutInflater inflater = null;
   private TreeMap<Long, Account> mAccounts = null;
+  private boolean mIsZonesActivated = false;
 
 
-
-  public MainListAdapter(Context context, Cursor cursor, TreeMap<Long, Account> accounts) {
+  public MainListAdapter(Context context, boolean isZonesActivated, Cursor cursor, TreeMap<Long, Account> accounts) {
     super(context, cursor, false);
     mContext = context;
+    mIsZonesActivated = isZonesActivated;
     inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     mAccounts = accounts;
   }
@@ -84,7 +85,7 @@ public class MainListAdapter extends CursorAdapter {
 
       holder.subject.setText(subjectText);
 
-      if (message.isImportant()) {
+      if (message.isImportant() && mIsZonesActivated) {
         holder.important.setVisibility(View.VISIBLE);
       } else {
         holder.important.setVisibility(View.GONE);
@@ -245,6 +246,10 @@ public class MainListAdapter extends CursorAdapter {
 
   public void setAccounts(TreeMap<Long, Account> mAccounts) {
     this.mAccounts = mAccounts;
+  }
+
+  public void setZoneActivity(boolean isZonesActivated) {
+    mIsZonesActivated = isZonesActivated;
   }
 
   public static int getSimpleMailIcon(EmailAccount acc) {

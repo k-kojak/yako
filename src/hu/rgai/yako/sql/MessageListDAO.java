@@ -208,8 +208,8 @@ public class MessageListDAO  {
   }
 
 
-  public Cursor getAllMessagesCursor(LinkedList<Long> accountIds, boolean getAttachments) {
-    return getMessagesCursor(accountIds, null, false, getAttachments);
+  public Cursor getAllMessagesCursor(LinkedList<Long> accountIds, boolean getAttachments, boolean orderByImportant) {
+    return getMessagesCursor(accountIds, null, false, getAttachments, orderByImportant);
 //    String selection = null;
 //    String[] selectionArgs = null;
 //    if (accountId != -1) {
@@ -236,7 +236,8 @@ public class MessageListDAO  {
    * @param isRawId if true, than messageId is a RAW id of the database, if false the id is the message id
    * @return
    */
-  private Cursor getMessagesCursor(LinkedList<Long> accountIds, String messageId, boolean isRawId, boolean getAttachments) {
+  private Cursor getMessagesCursor(LinkedList<Long> accountIds, String messageId, boolean isRawId,
+                                   boolean getAttachments, boolean orderByImportant) {
     List<String> selectionArgs = new LinkedList<String>();
 
 
@@ -288,6 +289,12 @@ public class MessageListDAO  {
       selectionArgs.add(messageId);
     }
 
+    String orderBy = " ORDER BY ";
+    if (orderByImportant) {
+      orderBy +=  COL_IS_IMPORTANT + " DESC, ";
+    }
+    orderBy += COL_DATE + " DESC";
+
 
     String query = "SELECT " + cols + ", " + PersonSenderDAO.COL_KEY + " AS from_key, "
             + PersonSenderDAO.COL_NAME + " AS from_name, " + PersonSenderDAO.COL_SECONDARY_NAME + " AS from_sec_name, "
@@ -295,7 +302,7 @@ public class MessageListDAO  {
             + " FROM " + PersonSenderDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
             + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
             + accountQuery + messageIdQuery + attachmentQueryGroup
-            + " ORDER BY " + COL_IS_IMPORTANT + " DESC, " + COL_DATE + " DESC";
+            + orderBy;
 
     String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
     return mDbHelper.getDatabase().rawQuery(query, selectionArgsArray);
@@ -392,7 +399,7 @@ public class MessageListDAO  {
     if (accountId != -1)
       accountIds.add(accountId);
     
-    Cursor cursor = getAllMessagesCursor(accountIds, false);
+    Cursor cursor = getAllMessagesCursor(accountIds, false, false);
 
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -445,7 +452,7 @@ public class MessageListDAO  {
    * @return
    */
   private MessageListElement getMessageById(String id, TreeMap<Long, Account> accounts, boolean rawId) {
-    Cursor cursor = getMessagesCursor(new LinkedList<Long>(), id, rawId, false);
+    Cursor cursor = getMessagesCursor(new LinkedList<Long>(), id, rawId, false, false);
     cursor.moveToFirst();
     MessageListElement mle = cursorToMessageListElement(cursor, accounts);
     cursor.close();
