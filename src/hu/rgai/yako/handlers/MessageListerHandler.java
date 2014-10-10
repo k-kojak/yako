@@ -36,7 +36,6 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -103,7 +102,7 @@ public class MessageListerHandler extends TimeoutHandler {
         YakoApp.updateLastNotification(a, mContext);
       }
       if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
-        builNotification(newMessageCount, lastUnreadMsg);
+        buildNotification(newMessageCount, lastUnreadMsg);
       }
 
       notifyUIaboutMessageChange();
@@ -119,11 +118,13 @@ public class MessageListerHandler extends TimeoutHandler {
 
 
 
-  private void builNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
+  private void buildNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
     YakoApp.setLastNotifiedMessage(lastUnreadMsg);
     NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
     if (lastUnreadMsg != null) {
       boolean soundNotification = StoreHandler.SystemSettings.isNotificationSoundTurnedOn(mContext);
+      boolean zoneActivated = StoreHandler.isZoneStateActivated(mContext);
+      boolean vibrateNotification = StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext);
       if (!MainActivity.isMainActivityVisible()) {
         String fromNameText = "?";
         if (lastUnreadMsg.getFrom() != null) {
@@ -160,12 +161,14 @@ public class MessageListerHandler extends TimeoutHandler {
           notificationButtonHandling(lastUnreadMsg, mBuilder);
         }
 
-        if (soundNotification) {
+        if ((zoneActivated && lastUnreadMsg.isImportant() && soundNotification)
+                || (!zoneActivated && soundNotification)) {
           Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
           mBuilder.setSound(soundURI);
         }
 
-        if (StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext)) {
+        if ((zoneActivated && lastUnreadMsg.isImportant() && vibrateNotification)
+                || (!zoneActivated) && vibrateNotification) {
           mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
         }
 
