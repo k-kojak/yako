@@ -157,13 +157,6 @@ public class LocationService extends Service {
           // saving MyLocation...
           Log.d("yako", "## new location");
           Location newLocation = (Location) intent.getExtras().get(LocationService.EXTRA_LOCATION);
-          if (newLocation != null) {
-            double birizgaLat = Math.random() / 100000;
-            double birizgaLong = Math.random() / 100000;
-            Log.d("yako", " #birizga: "+birizgaLat + " , " + birizgaLong);
-            newLocation.setLatitude(newLocation.getLatitude() + birizgaLat);
-            newLocation.setLongitude(newLocation.getLongitude() + birizgaLong);
-          }
           if (newLocation != null
                   || mMyLastLocation == null
                   || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
