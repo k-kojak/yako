@@ -14,7 +14,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
-import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.SmartPredictionAsyncTask;
 
@@ -155,7 +154,6 @@ public class LocationService extends Service {
       if (intent != null && intent.getAction() != null) {
         if (intent.getAction().equals(ACTION_NEW_LOCATION_ARRIVED)) {
           // saving MyLocation...
-          Log.d("yako", "## new location");
           Location newLocation = (Location) intent.getExtras().get(LocationService.EXTRA_LOCATION);
           if (newLocation != null
                   || mMyLastLocation == null
@@ -169,14 +167,9 @@ public class LocationService extends Service {
                     || mMyLastLocation.getLongitude() != newLocation.getLongitude() ) ) ) {
               locationChanged = true;
             }
-            Log.d("yako", " # new loc: " + newLocation);
-            Log.d("yako", " # old loc: " + mMyLastLocation);
             mMyLastLocation = newLocation;
             if (locationChanged) {
-              Log.d("yako", " # location changed");
               locationChanged(context);
-            } else {
-              Log.d("yako", " # location not changed");
             }
           }
         }
@@ -186,9 +179,7 @@ public class LocationService extends Service {
     private void locationChanged(Context context) {
       List<GpsZone> zones = YakoApp.getSavedGpsZones(context);
       ZoneActivityCalcResult zoneActivityStateResult = calcActivityState(zones);
-      Log.d("yako", " # zone act calc result: " + zoneActivityStateResult.toString());
       if (zoneActivityStateResult.zoneActivityChanged) {
-        Log.d("yako", "ZONE LOCATION CHANGED");
         /**
          * TODO: run prediction to all messages;
          * TODO: send a broadcast about new message order AFTER prediction;

@@ -24,14 +24,17 @@ import java.util.List;
 public class ZoneListAdapter extends BaseAdapter {
 
   private static LayoutInflater inflater = null;
-  private List<GpsZone> mGpsZones = null;
-  private MainActivity mActivity;
+  private final List<GpsZone> mGpsZones;
+  private final MainActivity mActivity;
+  private final boolean mIsZoneActivated;
 
 
-  public ZoneListAdapter(MainActivity context, List<GpsZone> gpsZones) {
+  public ZoneListAdapter(MainActivity context, List<GpsZone> gpsZones, boolean zoneActivated) {
     mActivity = context;
     mGpsZones = gpsZones;
+    mIsZoneActivated = zoneActivated;
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
   }
 
   @Override
@@ -61,17 +64,25 @@ public class ZoneListAdapter extends BaseAdapter {
 
     // Setting all values in listview
     alias.setText(zone.getAlias());
-    if (zone.getDistance() >= 0) {
+    if (zone.getDistance() >= 0 && mIsZoneActivated) {
       distance.setText("(" + formatDistance(zone.getDistance()) + ")");
+    } else {
+      distance.setText("");
     }
 
     int drawable;
-    if (zone.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
-      drawable = R.drawable.ic_online;
-    } else if (zone.getProximity().equals(GpsZone.Proximity.NEAR)) {
-      drawable = R.drawable.ic_nearby;
+    if (!mIsZoneActivated) {
+      drawable = R.drawable.ic_unavailable;
     } else {
-      drawable = R.drawable.ic_offline;
+      if (zone.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
+        drawable = R.drawable.ic_online;
+      } else if (zone.getProximity().equals(GpsZone.Proximity.NEAR)) {
+        drawable = R.drawable.ic_nearby;
+      } else if (zone.getProximity().equals(GpsZone.Proximity.FAR)) {
+        drawable = R.drawable.ic_offline;
+      } else {
+        drawable = R.drawable.ic_unavailable;
+      }
     }
     circle.setBackgroundResource(drawable);
 

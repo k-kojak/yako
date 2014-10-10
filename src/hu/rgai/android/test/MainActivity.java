@@ -168,9 +168,10 @@ public class MainActivity extends ActionBarActivity {
     mZonesToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        boolean on = mZonesToggle.isChecked();
-        StoreHandler.setZoneActivityState(MainActivity.this, on);
+        boolean isOn = mZonesToggle.isChecked();
+        StoreHandler.setZoneActivityState(MainActivity.this, isOn);
         redisplayMessages();
+        loadZoneListAdapter(false);
       }
     });
     mZonesToggle.setOnClickListener(new View.OnClickListener() {
@@ -334,7 +335,8 @@ public class MainActivity extends ActionBarActivity {
 
   public void loadZoneListAdapter(boolean refreshFromDatabase) {
     List<GpsZone> zones = YakoApp.getSavedGpsZones(this, refreshFromDatabase);
-    mZoneListAdapter = new ZoneListAdapter(this, zones);
+    boolean zoneActivated = StoreHandler.isZoneStateActivated(this);
+    mZoneListAdapter = new ZoneListAdapter(this, zones, zoneActivated);
     mZoneHolder.setAdapter(mZoneListAdapter);
   }
 
