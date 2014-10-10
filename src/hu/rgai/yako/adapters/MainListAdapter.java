@@ -28,14 +28,19 @@ public class MainListAdapter extends CursorAdapter {
   private static LayoutInflater inflater = null;
   private TreeMap<Long, Account> mAccounts = null;
   private boolean mIsZonesActivated = false;
+  private int mImportantDrawable = R.drawable.ic_important;
+  private GpsZone mClosestZone;
 
 
-  public MainListAdapter(Context context, boolean isZonesActivated, Cursor cursor, TreeMap<Long, Account> accounts) {
+  public MainListAdapter(Context context, int importantDrawable, boolean isZonesActivated,
+                         GpsZone closestZone, Cursor cursor, TreeMap<Long, Account> accounts) {
     super(context, cursor, false);
     mContext = context;
+    mImportantDrawable = importantDrawable;
     mIsZonesActivated = isZonesActivated;
-    inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    mClosestZone = closestZone;
     mAccounts = accounts;
+    inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
 
 
@@ -85,8 +90,9 @@ public class MainListAdapter extends CursorAdapter {
 
       holder.subject.setText(subjectText);
 
-      if (message.isImportant() && mIsZonesActivated) {
+      if (message.isImportant() && mIsZonesActivated && mClosestZone != null) {
         holder.important.setVisibility(View.VISIBLE);
+        holder.important.setImageDrawable(mContext.getResources().getDrawable(mImportantDrawable));
       } else {
         holder.important.setVisibility(View.GONE);
       }
@@ -250,6 +256,14 @@ public class MainListAdapter extends CursorAdapter {
 
   public void setZoneActivity(boolean isZonesActivated) {
     mIsZonesActivated = isZonesActivated;
+  }
+
+  public void setImportantDrawable(int drawable) {
+    mImportantDrawable = drawable;
+  }
+
+  public void setClosestZone(GpsZone closestZone) {
+    mClosestZone = closestZone;
   }
 
   public static int getSimpleMailIcon(EmailAccount acc) {

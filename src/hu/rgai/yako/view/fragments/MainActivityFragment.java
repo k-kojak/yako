@@ -17,9 +17,11 @@ import android.widget.*;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -491,14 +493,18 @@ public class MainActivityFragment extends Fragment {
     }
     long s = System.currentTimeMillis();
     boolean zoneActivated = StoreHandler.isZoneStateActivated(getActivity());
+    GpsZone closestZone = GpsZone.getClosest(YakoApp.getSavedGpsZones(getActivity()));
+    int importantDrawable = closestZone != null ? closestZone.getZoneType().getDrawable() : R.drawable.ic_important;
     if (mAdapter == null) {
-      mAdapter = new MainListAdapter(mMainActivity, zoneActivated,
+      mAdapter = new MainListAdapter(mMainActivity, importantDrawable, zoneActivated, closestZone,
               MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated), mAccounts);
 
     } else {
-      Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated);
+      Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null);
       mAdapter.changeCursor(newCursor);
+      mAdapter.setImportantDrawable(importantDrawable);
       mAdapter.setZoneActivity(zoneActivated);
+      mAdapter.setClosestZone(closestZone);
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }

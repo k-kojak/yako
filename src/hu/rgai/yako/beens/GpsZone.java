@@ -2,24 +2,33 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import hu.rgai.android.test.R;
+
+import java.util.List;
 
 public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
   public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
   public enum ZoneType {
-    WORK("Work"),
-    HOME("Home"),
-    SILENT("Silent")
+    WORK("Work", R.drawable.ic_important_work),
+    HOME("Home", R.drawable.ic_important_home),
+    SILENT("Silent", R.drawable.ic_important_silence)
     ;
 
     private final String mDisplayName;
+    private final int mDrawable;
 
-    private ZoneType(String displayName) {
+    private ZoneType(String displayName, int drawable) {
       mDisplayName = displayName;
+      mDrawable = drawable;
     }
 
     public String getDisplayName() {
       return mDisplayName;
+    }
+
+    public int getDrawable() {
+      return mDrawable;
     }
   };
 
@@ -156,4 +165,16 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
             ", mProximity=" + mProximity +
             '}';
   }
+
+  public static GpsZone getClosest(List<GpsZone> zones) {
+    GpsZone closest = null;
+    for (GpsZone z : zones) {
+      if (z.getProximity().equals(GpsZone.Proximity.CLOSEST)) {
+        closest = z;
+        break;
+      }
+    }
+    return closest;
+  }
+
 }

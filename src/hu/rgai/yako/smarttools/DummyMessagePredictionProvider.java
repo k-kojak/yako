@@ -19,14 +19,26 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
      * That means location cannot be set, so there will be no active (NEAR, CLOSEST) locations.
      */
     List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(context);
+    GpsZone closest = GpsZone.getClosest(gpsZones);
     for (GpsZone zone : gpsZones) {
 //      Log.d("yako", zone.toString());
     }
-//    if (message.getTitle().contains("i")) {
-//      return 0.9;
-//    } else {
-      return Math.random();
-//    }
-
+    if (closest != null) {
+      String s = "";
+      if (closest.getZoneType().equals(GpsZone.ZoneType.HOME)) {
+        s = "cs";
+      } else if (closest.getZoneType().equals(GpsZone.ZoneType.WORK)) {
+        s = "sc";
+      } else if (closest.getZoneType().equals(GpsZone.ZoneType.SILENT)) {
+        s = "k";
+      }
+      if (message.getTitle().contains(s)) {
+        return 0.99;
+      } else {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
   }
 }

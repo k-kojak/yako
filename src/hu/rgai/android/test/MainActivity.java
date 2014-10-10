@@ -50,6 +50,7 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.Utils;
 import hu.rgai.yako.view.activities.AccountSettingsListActivity;
 import hu.rgai.yako.view.activities.GoogleMapsActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
@@ -57,6 +58,7 @@ import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.extensions.LinearListView;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
+import hu.rgai.yako.workers.SmartPredictionAsyncTask;
 
 import java.util.*;
 
@@ -224,11 +226,11 @@ public class MainActivity extends ActionBarActivity {
       private void showHideMenuBarIcons(boolean hide) {
         if (hide) {
           mDrawerIsVisible = true;
-          getSupportActionBar().setTitle(getString(R.string.filter_list));
+//          getSupportActionBar().setTitle(getString(R.string.filter_list));
           invalidateOptionsMenu();
         } else {
           mDrawerIsVisible = false;
-          setTitleByFilter();
+//          setActionbarTitle();
           invalidateOptionsMenu();
         }
       }
@@ -257,7 +259,7 @@ public class MainActivity extends ActionBarActivity {
 
 
     // setting title
-    setTitleByFilter();
+    setActionbarTitle();
     
 
     // register broadcast receiver for new message load
@@ -338,6 +340,7 @@ public class MainActivity extends ActionBarActivity {
     boolean zoneActivated = StoreHandler.isZoneStateActivated(this);
     mZoneListAdapter = new ZoneListAdapter(this, zones, zoneActivated);
     mZoneHolder.setAdapter(mZoneListAdapter);
+    setActionbarTitle();
   }
 
   public void startLocationService(boolean forceUpdateZones) {
@@ -421,24 +424,27 @@ public class MainActivity extends ActionBarActivity {
         if (data.getAction().equals(GoogleMapsActivity.ACTION_REFRESH_ZONE_LIST)) {
           loadZoneListAdapter(true);
           startLocationService(true);
+
+          // run prediction again, since the zone type might changed...and need to recategorize messages...
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
         }
       }
     }
   }
   
   
-  private void setTitleByFilter() {
-    if (selectedAccounts.isEmpty()) {
-      getSupportActionBar().setTitle("");
-    } else {
-      getSupportActionBar().setTitle("Filter on");
-    }
+  private void setActionbarTitle() {
+    String title = "";
+    if (StoreHandler.isZoneStateActivated(this)) {
+      List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(this, false);
+      GpsZone closest = GpsZone.getClosest(gpsZones);
 
-//    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-//    sensorManager.registerListener(new AccelerometerListener(),
-//            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-    
-    
+      if (closest != null) {
+        title = "At " + closest.getAlias() + " ("+ closest.getZoneType().getDisplayName() +")";
+      }
+    }
+    getSupportActionBar().setTitle(title);
   }
   
   
@@ -729,15 +735,15 @@ public class MainActivity extends ActionBarActivity {
 //    }
 //  }
 
-  private void predictMessages() {
-    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
-    TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(this).getAllMessages(accounts);
-    if (msgs != null && !msgs.isEmpty()) {
-      MessagePredictionProvider msgPredProvider = new DummyMessagePredictionProvider();
-      double val = msgPredProvider.predictMessage(this, msgs.first());
-      Toast.makeText(this, "predicted dummy value: " + val, Toast.LENGTH_LONG).show();
-    }
-  }
+//  private void predictMessages() {
+//    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+//    TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(this).getAllMessages(accounts);
+//    if (msgs != null && !msgs.isEmpty()) {
+//      MessagePredictionProvider msgPredProvider = new DummyMessagePredictionProvider();
+//      double val = msgPredProvider.predictMessage(this, msgs.first());
+//      Toast.makeText(this, "predicted dummy value: " + val, Toast.LENGTH_LONG).show();
+//    }
+//  }
 
   private float getDist(float x1, float y1, float x2, float y2) {
     float[] dist = new float[2];
@@ -783,6 +789,7 @@ public class MainActivity extends ActionBarActivity {
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(LocationService.ACTION_ZONE_LIST_MUST_REFRESH)) {
         loadZoneListAdapter(false);
+        MainActivity.this.redisplayMessages();
       }
     }
   }
