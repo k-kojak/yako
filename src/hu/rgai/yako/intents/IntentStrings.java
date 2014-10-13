@@ -19,6 +19,7 @@ public class IntentStrings {
     
     public static final String EXTRA_PARAMS = "extra_params";
     public static final String FROM_NOTIFIER = "from_notifier";
+    public static final String QUICK_ANSWER_OPTION = "quick_answer_option";
     public static final String QUERY_LIMIT = "query_limit";
     public static final String QUERY_OFFSET = "query_offset";
     public static final String LOAD_MORE = "load_more";

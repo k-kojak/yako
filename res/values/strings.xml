@@ -119,6 +119,8 @@
   <string name="mainlist_close_drawer">Close drawer</string>
   <string name="add_contact">Add to contacts</string>
     <string name="alias_of_zone">Alias of zone</string>
+    <string name="notif_replace_service">Notification replace service</string>
+    <string name="quick_reply_service">Quick reply service</string>
 
 
 </resources>

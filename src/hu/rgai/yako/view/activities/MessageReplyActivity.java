@@ -292,24 +292,11 @@ public class MessageReplyActivity extends ActionBarActivity {
 
   private void searchUserAndInsertAsRecipient(MessageProvider.Type type, String id) {
     Person pa = Person.searchPersonAndr(this, new Person(id, id, type));
-
     if (pa != null) {
-      MessageRecipient ri = null;
-      switch (type) {
-        case FACEBOOK:
-          ri = new FacebookMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        case SMS:
-          ri = new SmsMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        case EMAIL:
-        case GMAIL:
-          ri = new EmailMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        default:
-          break;
+      MessageRecipient ri = MessageRecipient.Helper.personToRecipient(pa);
+      if (ri != null) {
+        recipients.addRecipient(ri);
       }
-      recipients.addRecipient(ri);
     }
   }
 
@@ -419,7 +406,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
   }
   
-  private SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
+  public static SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
   
     if (from.getAccountType().equals(MessageProvider.Type.SMS)) {
       SmsSentMessageData smsData = new SmsSentMessageData(recipientName);

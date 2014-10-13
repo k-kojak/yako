@@ -181,6 +181,14 @@
                  android:label="@string/service_name">
         </service>
 
+        <service android:name="hu.rgai.yako.services.NotificationReplaceService"
+                 android:icon="@drawable/yako"
+                 android:label="@string/notif_replace_service"/>
+
+        <service android:name="hu.rgai.yako.services.QuickReplyService"
+                 android:icon="@drawable/yako"
+                 android:label="@string/quick_reply_service"/>
+
 
         <receiver android:name="hu.rgai.yako.services.schedulestarters.MainScheduler">
             <intent-filter>
