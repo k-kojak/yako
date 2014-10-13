@@ -165,56 +165,6 @@ public class MessageListerHandler extends TimeoutHandler {
                 zoneActivated, soundNotification, vibrateNotification, false, hasQuickAnswers, answers,
                 quickAnserNotification);
 
-//        Bitmap largeIcon;
-//        if (lastUnreadMsg.getFrom() != null) {
-//          largeIcon = ProfilePhotoProvider.getImageToUser(mContext, lastUnreadMsg.getFrom()).getBitmap();
-//        } else {
-//          largeIcon = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.group_chat);
-//        }
-//
-//        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext)
-//            .setLargeIcon(largeIcon)
-//            .setSmallIcon(R.drawable.not_ic_action_email)
-//            .setWhen(lastUnreadMsg.getDate().getTime())
-//            .setTicker(fromNameText + ": " + lastUnreadMsg.getTitle())
-//            .setContentInfo(lastUnreadMsg.getAccount().getDisplayName())
-//            .setContentTitle(fromNameText).setContentText(lastUnreadMsg.getTitle());
-//
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-//            && lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)) {
-//          simpleButtonHandling(lastUnreadMsg, mBuilder);
-//        }
-//
-//        if ((zoneActivated && lastUnreadMsg.isImportant() && soundNotification)
-//                || (!zoneActivated && soundNotification)) {
-//          Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
-//          mBuilder.setSound(soundURI);
-//        }
-//
-//        if ((zoneActivated && lastUnreadMsg.isImportant() && vibrateNotification)
-//                || (!zoneActivated) && vibrateNotification) {
-//          mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
-//        }
-//
-//        Intent resultIntent;
-//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
-//        if (newMessageCount == 1) {
-//          Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
-//          resultIntent = new Intent(mContext, classToLoad);
-//          resultIntent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
-////          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
-//          stackBuilder.addParentStack(MainActivity.class);
-//        } else {
-//          resultIntent = new Intent(mContext, MainActivity.class);
-//        }
-//        resultIntent.putExtra(IntentStrings.Params.FROM_NOTIFIER, true);
-//        stackBuilder.addNextIntent(resultIntent);
-//        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-//        mBuilder.setContentIntent(resultPendingIntent);
-//
-//        setDeleteIntent(mContext, mBuilder, lastUnreadMsg.getRawId());
-//
-//        mBuilder.setAutoCancel(true);
         mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, simpleNotif);
 
         // logging...
@@ -285,7 +235,6 @@ public class MessageListerHandler extends TimeoutHandler {
       Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(lastUnreadMsg.getAccount().getAccountType());
       resultIntent = new Intent(mContext, classToLoad);
       resultIntent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, lastUnreadMsg.getRawId());
-//          resultIntent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable) lastUnreadMsg.getAccount());
       stackBuilder.addParentStack(MainActivity.class);
     } else {
       resultIntent = new Intent(mContext, MainActivity.class);
