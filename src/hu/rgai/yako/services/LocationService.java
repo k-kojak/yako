@@ -24,6 +24,7 @@ public class LocationService extends Service {
   private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
   public static final String EXTRA_LOCATION = "location";
   public static final String EXTRA_FORCE_UPDATE_ZONES = "hu.rgai.yako.force_update_zones";
+  public static final String EXTRA_RELOAD_MAINLIST = "hu.rgai.yako.reload_mainlist";
   public static final String ACTION_NEW_LOCATION_ARRIVED = "hu.rgai.yako.action_new_location_arrived";
   public static final String ACTION_ZONE_LIST_MUST_REFRESH = "hu.rgai.yako.action_zone_list_must_refresh";
   public static final int REQ_CODE_LOCATION_CHANGED = 1;
@@ -51,7 +52,7 @@ public class LocationService extends Service {
             && intent.getBooleanExtra(EXTRA_FORCE_UPDATE_ZONES, false)) {
       List<GpsZone> zones = YakoApp.getSavedGpsZones(this);
       calcActivityState(zones);
-      sendZoneListRefreshBroadcast(this);
+      sendZoneListRefreshBroadcast(this, true);
     } else {
       initLocationManager(this);
     }
@@ -82,14 +83,17 @@ public class LocationService extends Service {
     return null;
   }
 
-  private void sendZoneListRefreshBroadcast(Context context) {
+  private void sendZoneListRefreshBroadcast(Context context, boolean reloadMainList) {
     LocalBroadcastManager bcManager = LocalBroadcastManager.getInstance(context);
-    bcManager.sendBroadcast(new Intent(ACTION_ZONE_LIST_MUST_REFRESH));
+    Intent intent = new Intent(ACTION_ZONE_LIST_MUST_REFRESH);
+    intent.putExtra(EXTRA_RELOAD_MAINLIST, reloadMainList);
+    bcManager.sendBroadcast(intent);
   }
 
   private ZoneActivityCalcResult calcActivityState(List<GpsZone> zones) {
     boolean distanceChanged = true;
     boolean zoneActivityChanged = true;
+    GpsZone currentClosest = GpsZone.getClosest(zones);
 
     if (mMyLastLocation != null) {
       distanceChanged = false;
@@ -119,21 +123,22 @@ public class LocationService extends Service {
         }
       }
 
-
-
       for (GpsZone zone : zones) {
         GpsZone.Proximity newProximity;
         if (zone.getAlias().equals(closestLoc)) {
           newProximity = GpsZone.Proximity.CLOSEST;
+          if (currentClosest == null || !currentClosest.getZoneType().equals(zone.getZoneType())) {
+            zoneActivityChanged = true;
+          }
         } else if (nearLocationList.contains(zone)) {
           newProximity = GpsZone.Proximity.NEAR;
         } else {
           newProximity = GpsZone.Proximity.FAR;
         }
 
-        if (!zone.getProximity().equals(newProximity)) {
-          zoneActivityChanged = true;
-        }
+//        if (!zone.getProximity().equals(newProximity)) {
+//          zoneActivityChanged = true;
+//        }
         zone.setProximity(newProximity);
       }
     }
@@ -179,18 +184,16 @@ public class LocationService extends Service {
     private void locationChanged(Context context) {
       List<GpsZone> zones = YakoApp.getSavedGpsZones(context);
       ZoneActivityCalcResult zoneActivityStateResult = calcActivityState(zones);
+      Log.d("yako", "RECALCULATE MESSAGES -> " + zoneActivityStateResult.zoneActivityChanged);
       if (zoneActivityStateResult.zoneActivityChanged) {
-        /**
-         * TODO: run prediction to all messages;
-         * TODO: send a broadcast about new message order AFTER prediction;
-         */
+
         SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(context, false);
         AndroidUtils.startTimeoutAsyncTask(smartPred);
 
-        sendZoneListRefreshBroadcast(context);
+        sendZoneListRefreshBroadcast(context, false);
       } else if (zoneActivityStateResult.distanceChanged) {
         // Just refresh zone list
-        sendZoneListRefreshBroadcast(context);
+        sendZoneListRefreshBroadcast(context, true);
       }
     }
   }

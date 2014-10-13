@@ -49,7 +49,6 @@ public class SmartPredictionAsyncTask extends TimeoutAsyncTask<Void, Void, Void>
       double ratio = predictionProvider.predictMessage(mContext, mle);
       MessageListDAO.getInstance(mContext).setMessageAsImportant(mle.getRawId(),
               MessagePredictionProvider.Helper.isImportant(ratio));
-      Log.d("yako", "ratio calculated for message -> " + ratio);
     }
 
     return null;
@@ -57,7 +56,6 @@ public class SmartPredictionAsyncTask extends TimeoutAsyncTask<Void, Void, Void>
 
   @Override
   protected void onPostExecute(Void aVoid) {
-    Log.d("yako", "On prediction post execute...");
     Intent i = new Intent(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
     LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
   }

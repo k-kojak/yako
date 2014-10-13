@@ -774,7 +774,6 @@ public class MainActivity extends ActionBarActivity {
       // this one is responsible for list/data updates
       else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
         MainActivity.this.redisplayMessages();
-        Log.d("yako", "notify data set changed...");
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
@@ -788,8 +787,17 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public void onReceive(Context context, Intent intent) {
       if (intent.getAction().equals(LocationService.ACTION_ZONE_LIST_MUST_REFRESH)) {
+        boolean reloadMainList = intent.getBooleanExtra(LocationService.EXTRA_RELOAD_MAINLIST, true);
         loadZoneListAdapter(false);
-        MainActivity.this.redisplayMessages();
+        Log.d("yako", "reloadMainList now? -> " + reloadMainList);
+        if (reloadMainList) {
+          MainActivity.this.redisplayMessages();
+        } else {
+          // skipping main list load, because with this change we started a new prediction to messages, so
+          // the end of that process will result a list reload anyway...
+
+          // do nothing...wait for async task to finish and refresh message list at the end of that process
+        }
       }
     }
   }
