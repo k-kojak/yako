@@ -1,7 +1,6 @@
 package hu.rgai.yako.smarttools;
 
 import android.content.Context;
-import android.util.Log;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
@@ -25,7 +24,7 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
     }
     if (closest != null) {
       String s = "";
-      if (closest.getZoneType().equals(GpsZone.ZoneType.HOME)) {
+      if (closest.getZoneType().equals(GpsZone.ZoneType.REST)) {
         s = "cs";
       } else if (closest.getZoneType().equals(GpsZone.ZoneType.WORK)) {
         s = "sc";

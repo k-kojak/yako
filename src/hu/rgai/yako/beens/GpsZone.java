@@ -11,7 +11,7 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
   public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
   public enum ZoneType {
     WORK("Work", R.drawable.ic_important_work),
-    HOME("Home", R.drawable.ic_important_home),
+    REST("Rest", R.drawable.ic_important_home),
     SILENT("Silent", R.drawable.ic_important_silence)
     ;
 
@@ -123,7 +123,7 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
   /**
    * Returns the zone type of this gps zone.
-   * Zone types can be: WORK, HOME, SILENT.
+   * Zone types can be: WORK, REST, SILENT.
    * Of course it should be editable and 1 location should be able to own multiple zone types ...
    * probably in a later release...
    * @return the zone type of the saved GpsZone
