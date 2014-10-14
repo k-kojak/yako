@@ -2,8 +2,8 @@ package hu.rgai.yako.smarttools;
 
 import android.content.Context;
 import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.beens.GpsZone;
-import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.beens.*;
+import hu.rgai.yako.messageproviders.MessageProvider;
 
 import java.util.List;
 
@@ -13,6 +13,18 @@ import java.util.List;
 public class DummyMessagePredictionProvider implements MessagePredictionProvider {
   @Override
   public double predictMessage(Context context, MessageListElement message) {
+    FullMessage fullMessage;
+    // this is how you can get the actual content...
+    if (message.getMessageType().equals(MessageProvider.Type.EMAIL)
+            || message.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+      // this case the fullMessage is a single FullSimple message with infos you need
+      fullMessage = (FullSimpleMessage) message.getFullMessage();
+    }
+    // SMS or Facebook
+    else {
+      // this case the fullMessage is a TreeSet of FullSimple messages with infos you need (thread items)
+      fullMessage = (FullThreadMessage) message.getFullMessage();
+    }
     /**
      * GpsZone might have an unitialized, default <code>distance</code> and <code>proximity</code> values.
      * That means location cannot be set, so there will be no active (NEAR, CLOSEST) locations.
