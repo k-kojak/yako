@@ -3,7 +3,7 @@ package hu.rgai.yako.beens;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import java.util.Set;
+
 import java.util.TreeSet;
 
 /**
@@ -12,7 +12,7 @@ import java.util.TreeSet;
  */
 public class FullThreadMessage implements FullMessage {
   
-  private TreeSet<FullSimpleMessage> messages = null;
+  private TreeSet<FullSimpleMessage> mMessages = null;
 
   public static final Parcelable.Creator<FullThreadMessage> CREATOR = new Parcelable.Creator<FullThreadMessage>() {
     public FullThreadMessage createFromParcel(Parcel in) {
@@ -25,27 +25,31 @@ public class FullThreadMessage implements FullMessage {
   };
   
   public FullThreadMessage(Parcel in) {
-    messages = new TreeSet<FullSimpleMessage>();
+    mMessages = new TreeSet<FullSimpleMessage>();
     Parcelable[] pArr = in.readParcelableArray(FullSimpleMessage.class.getClassLoader());
     for (Parcelable msga : pArr) {
-      messages.add((FullSimpleMessage)msga);
+      mMessages.add((FullSimpleMessage) msga);
     }
+  }
+
+  public FullThreadMessage(TreeSet<FullSimpleMessage> messages) {
+    this.mMessages = messages;
   }
   
   /**
    * Default constructor.
    */
   public FullThreadMessage() {
-    messages = new TreeSet<FullSimpleMessage>();
+    mMessages = new TreeSet<FullSimpleMessage>();
   }
   
 
   public TreeSet<FullSimpleMessage> getMessages() {
-    return messages;
+    return mMessages;
   }
 
   public void addMessage(FullSimpleMessage ma) {
-    messages.add(ma);
+    mMessages.add(ma);
   }
   
   public int describeContents() {
@@ -53,17 +57,17 @@ public class FullThreadMessage implements FullMessage {
   }
 
   public void writeToParcel(Parcel out, int flags) {
-    Parcelable[] pMessages = new Parcelable[messages.size()];
+    Parcelable[] pMessages = new Parcelable[mMessages.size()];
     int i = 0;
-    for (FullSimpleMessage ma : messages) {
-      pMessages[i++] = (FullSimpleMessage)ma;
+    for (FullSimpleMessage ma : mMessages) {
+      pMessages[i++] = ma;
     }
     out.writeParcelableArray(pMessages, flags);
   }
 
   @Override
   public String toString() {
-    return "FullThreadMessage{" + "messages=" + messages + '}';
+    return "FullThreadMessage{" + "mMessages=" + mMessages + '}';
   }
   
 }

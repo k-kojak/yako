@@ -7,10 +7,7 @@ import android.util.Log;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.MainServiceExtraParams;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.beens.MessageListResult;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.DeleteIntentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -21,15 +18,13 @@ import hu.rgai.yako.services.NotificationReplaceService;
 import hu.rgai.yako.services.QuickReplyService;
 import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
 import hu.rgai.yako.smarttools.QuickAnswerProvider;
+import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import android.app.KeyguardManager;
 import android.app.NotificationManager;
@@ -146,6 +141,16 @@ public class MessageListerHandler extends TimeoutHandler {
               fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
             }
           }
+        }
+
+
+        TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
+                lastUnreadMsg.getRawId());
+        if (lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)
+                || lastUnreadMsg.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+          lastUnreadMsg.setFullMessage(contents.first());
+        } else {
+          lastUnreadMsg.setFullMessage(new FullThreadMessage(contents));
         }
 
         QuickAnswerProvider qap = new DummyQuickAnswerProvider();
