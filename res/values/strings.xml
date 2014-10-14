@@ -121,6 +121,7 @@
     <string name="alias_of_zone">Alias of zone</string>
     <string name="notif_replace_service">Notification replace service</string>
     <string name="quick_reply_service">Quick reply service</string>
+    <string name="quick_answer">Quick answer</string>
 
 
 </resources>
