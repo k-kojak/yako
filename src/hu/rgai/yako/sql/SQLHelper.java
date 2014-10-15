@@ -25,7 +25,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase;
 
   private static final String DATABASE_NAME = "yako_messages";
-  private static final int DATABASE_VERSION = 1;
+  private static final int DATABASE_VERSION = 2;
 
 
   public static synchronized SQLHelper getInstance(Context context) {
@@ -81,8 +81,32 @@ public class SQLHelper extends SQLiteOpenHelper {
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     Log.d("rgai", "onUpgrade");
-    dropAll(db);
-    onCreate(db);
+    if (oldVersion == 1) {
+      // dropping indexes, tables...
+      db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
+      db.execSQL("DROP INDEX IF EXISTS " + PersonSenderDAO.INDEX_ON_KEY_TYPE);
+      db.execSQL("DROP INDEX IF EXISTS " + AttachmentDAO.INDEX_ON_FILENAME);
+
+      db.execSQL("DROP TABLE IF EXISTS " + AttachmentDAO.TABLE_ATTACHMENTS);
+      db.execSQL("DROP TABLE IF EXISTS " + FullMessageDAO.TABLE_MESSAGE_CONTENT);
+      db.execSQL("DROP TABLE IF EXISTS " + MessageListDAO.TABLE_MESSAGES);
+      db.execSQL("DROP TABLE IF EXISTS " + PersonSenderDAO.TABLE_PERSON);
+
+
+
+      // recreating them...
+      db.execSQL(PersonSenderDAO.TABLE_CREATE);
+      db.execSQL(FullMessageDAO.TABLE_CREATE);
+      db.execSQL(MessageListDAO.TABLE_CREATE);
+      db.execSQL(AttachmentDAO.TABLE_CREATE);
+
+      db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
+      db.execSQL(PersonSenderDAO.CREATE_INDEX_ON_KEY_TYPE);
+      db.execSQL(AttachmentDAO.CREATE_INDEX_ON_FILENAME);
+    } else {
+      dropAll(db);
+      onCreate(db);
+    }
   }
 
   private void dropAll(SQLiteDatabase db) {
