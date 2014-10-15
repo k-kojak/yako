@@ -268,6 +268,10 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
         boolean isImportant = MessagePredictionProvider.Helper.isImportant(mpp.predictMessage(mContext, newMessage));
         newMessage.setIsImportant(isImportant);
+        Person searchedFrom = Person.searchPersonAndr(mContext, newMessage.getFrom());
+        if (searchedFrom != null && !searchedFrom.equals(newMessage.getFrom())) {
+          newMessage.setFrom(searchedFrom);
+        }
         MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
 
         if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
