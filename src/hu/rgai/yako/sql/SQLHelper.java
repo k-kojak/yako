@@ -80,7 +80,7 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    Log.d("rgai", "onUpgrade");
+    Log.d("yako", "onUpgrade");
     if (oldVersion == 1) {
       // dropping indexes, tables...
       db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
