@@ -316,7 +316,7 @@ public class MainActivity extends ActionBarActivity {
         boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
-          List<Account> a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
+          List<Account> a = data.getParcelableArrayListExtra(IntentStrings.Params.ACCOUNT);
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
