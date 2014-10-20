@@ -377,7 +377,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             try {
               Source source = new Source(content.getContent().getContent());
               String decoded = source.getRenderer().toString();
-              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
+//              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
+              String snippet = decoded;
               subject = snippet;
             } catch (StackOverflowError so) {
               Log.d("rgai", "", so);

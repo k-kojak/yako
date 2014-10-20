@@ -49,7 +49,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="100"
-                android:text=""
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:text="Subject"
                 android:textColor="#040404"
                 android:typeface="sans"
                 android:textSize="16sp"
@@ -58,36 +61,54 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minWidth="70dip"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="right"
-                android:layout_marginTop="3dp"
-                >
+                android:orientation="vertical"
+                android:gravity="right" >
 
-                <TextView
-                    android:id="@+id/date"
+
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
+                    android:minWidth="70dip"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
                     android:gravity="right"
-                    android:text=""
-                    android:layout_marginRight="5dip"
-                    android:textSize="12sp"
-                    android:textColor="#10bcc9"
-                    android:textStyle="bold"
-                    />
+                    android:layout_marginTop="3dp"
+                    >
+
+                    <TextView
+                        android:id="@+id/date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:text="Jan 01"
+                        android:layout_marginRight="5dip"
+                        android:textSize="12sp"
+                        android:textColor="#10bcc9"
+                        android:textStyle="bold"
+                        />
+
+                    <ImageView
+                        android:id="@+id/important"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_important"
+                        android:visibility="visible"/>
+
+                </LinearLayout>
 
                 <ImageView
-                    android:id="@+id/important"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_important"
-                    android:visibility="visible"/>
+                    android:id="@+id/attachment"
+                    android:layout_width="16dip"
+                    android:layout_height="16dip"
+                    android:src="@drawable/ic_attachment"
+                    android:layout_marginRight="5dip"
+                    android:visibility="gone"
+                    />
 
             </LinearLayout>
 
-
         </TableRow>
+
 
         <TextView
             android:id="@+id/from"
@@ -97,32 +118,24 @@
             android:textSize="12sp"
             android:typeface="sans"
             android:layout_marginTop="1dip"
-            android:layout_toRightOf="@+id/thumbnail"
+            android:layout_marginBottom="3dip"
             android:layout_below="@id/first_row"
-            android:text=""/>
+            android:text="From" />
 
-
-        <ImageView
-            android:id="@+id/attachment"
-            android:layout_width="16dip"
-            android:layout_height="16dip"
-            android:src="@drawable/ic_attachment"
-            android:layout_below="@id/first_row"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="5dip"
-            android:visibility="gone"
-            />
 
         <TextView
             android:id="@+id/account_name"
+            android:text="Account"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/attachment"
+            android:layout_below="@id/first_row"
             android:layout_alignParentRight="true"
-            android:layout_marginBottom="4dip"
+            android:layout_marginTop="1dip"
+            android:layout_marginBottom="3dip"
             android:layout_marginRight="5dip"
-            android:textSize="10sp"
+            android:textSize="12sp"
             />
+
     </RelativeLayout>
 
 </RelativeLayout>

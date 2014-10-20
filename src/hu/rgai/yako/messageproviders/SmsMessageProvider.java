@@ -116,9 +116,6 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     if (cur != null) {
       while (cur.moveToNext()) {
         String title = cur.getString(1);
-        if (title.length() > Settings.MAX_SNIPPET_LENGTH) {
-          title = title.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
-        }
         boolean seen = cur.getInt(3) == 1;
         boolean isMe = cur.getInt(6) == 2;
         MessageItem ti = new MessageItem(cur.getString(0), title, seen, isMe, cur.getLong(4),

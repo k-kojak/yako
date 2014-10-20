@@ -81,9 +81,6 @@ public class MainListAdapter extends CursorAdapter {
         subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
       }
 
-      if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
-        subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
-      }
       if (message.getUnreadCount() > 0) {
         subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
       }

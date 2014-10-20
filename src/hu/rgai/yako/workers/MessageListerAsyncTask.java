@@ -121,7 +121,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
           }
           messageResult = messageProvider.getUIDListForMerge(Long.toString(minUID));
         } else {
-          messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
+          messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages);
         }
       }
     } catch (AuthenticationFailedException ex) {
