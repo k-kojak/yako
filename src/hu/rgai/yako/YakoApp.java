@@ -10,6 +10,7 @@ package hu.rgai.yako;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
@@ -27,8 +28,12 @@ import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.HashMap;
+
+
+import java.util.concurrent.Executor;
 
 /**
  * 
@@ -135,6 +140,19 @@ public class YakoApp extends Application {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    try {
+      AsyncTask.class.getMethod("setDefaultExecutor", Executor.class).invoke(null, AsyncTask.SERIAL_EXECUTOR);
+    } catch (IllegalAccessException e) {
+      Log.d("yako", "", e);
+    } catch (InvocationTargetException e) {
+      Log.d("yako", "", e);
+    } catch (NoSuchMethodException e) {
+      Log.d("yako", "", e);
+    } catch (Exception e) {
+      Log.d("yako", "", e);
+    }
+
     // IMPORTANT: SPEND AS LESS TIME HERE AS POSSIBLE
     if (BuildConfig.DEBUG) {
       Log.d("rgai", "#TURNING OFF GOOGLE ANALYTICS: WE ARE IN DEVELOPE MODE");
