@@ -396,15 +396,13 @@ public class MainActivity extends ActionBarActivity {
         boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
-          Account a = data.getParcelableExtra(IntentStrings.Params.ACCOUNT);
-          List<Account> accounts = new LinkedList<Account>();
-          accounts.add(a);
+          List<Account> a = data.getParcelableArrayListExtra(IntentStrings.Params.ACCOUNT);
 
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
           eParams.setForceQuery(true);
-          eParams.setAccounts(accounts);
+          eParams.setAccounts(a);
           eParams.setQueryOffset(0);
 
           LinkedList<Long> accountIds = new LinkedList<Long>();

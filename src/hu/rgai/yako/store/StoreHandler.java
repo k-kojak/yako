@@ -116,7 +116,14 @@ public class StoreHandler {
   Object o = readObject(context, SELECTED_FILTER_ACCOUNT);
   
     if (o != null) {
-      return (LinkedList<Account>)o;
+      LinkedList<Account> list = new LinkedList<Account>();
+      if (o instanceof Account) {
+        Account a = (Account)o;
+        list.add(a);
+      } else {
+        list = (LinkedList<Account>) o;
+      }
+      return list;
     } else {
       return null;
     }

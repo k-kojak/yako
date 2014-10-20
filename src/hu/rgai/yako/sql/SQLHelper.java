@@ -79,7 +79,6 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
     if (oldVersion == 1) {
       dropAllExceptAccounts(db);
       createTableMapZones(db);
