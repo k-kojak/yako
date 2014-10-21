@@ -787,7 +787,6 @@ public class MainActivity extends ActionBarActivity {
       if (intent.getAction().equals(LocationService.ACTION_ZONE_LIST_MUST_REFRESH)) {
         boolean reloadMainList = intent.getBooleanExtra(LocationService.EXTRA_RELOAD_MAINLIST, true);
         loadZoneListAdapter(false);
-        Log.d("yako", "reloadMainList now? -> " + reloadMainList);
         if (reloadMainList) {
           MainActivity.this.redisplayMessages();
         } else {

@@ -40,6 +40,7 @@ public class SmartPredictionAsyncTask extends TimeoutAsyncTask<Void, Void, Void>
 
   @Override
   protected Void doInBackground(Void... params) {
+    long s = System.currentTimeMillis();
     Collection<MessageListElement> messages;
     if (mSingleRun) {
       messages = new ArrayList<MessageListElement>(1);
@@ -62,7 +63,7 @@ public class SmartPredictionAsyncTask extends TimeoutAsyncTask<Void, Void, Void>
       MessageListDAO.getInstance(mContext).setMessageAsImportant(mle.getRawId(),
               MessagePredictionProvider.Helper.isImportant(ratio));
     }
-
+    Log.d("yako", "time to predict importance: " + (System.currentTimeMillis() - s) + "ms");
     return null;
   }
 

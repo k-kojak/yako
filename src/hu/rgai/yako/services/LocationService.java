@@ -38,6 +38,7 @@ public class LocationService extends Service {
   private LocationManager mLocationManager = null;
   private LocationUpdateReceiver mLocationReceiver;
   public static Location mMyLastLocation = null;
+  public static float mMyLastLocationAccuracy = 0.0f;
 
   @Override
   public void onCreate() {
@@ -160,6 +161,15 @@ public class LocationService extends Service {
         if (intent.getAction().equals(ACTION_NEW_LOCATION_ARRIVED)) {
           // saving MyLocation...
           Location newLocation = (Location) intent.getExtras().get(LocationService.EXTRA_LOCATION);
+
+          // Skip location update, because the new location accuracy is not accurate enough
+          // (and we are still in location life limit)
+          if (newLocation != null && mMyLastLocation != null
+                  && newLocation.getAccuracy() > 300.0f
+                  && mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH > System.currentTimeMillis()) {
+            return;
+          }
+
           if (newLocation != null
                   || mMyLastLocation == null
                   || (mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH < System.currentTimeMillis())) {
@@ -168,8 +178,8 @@ public class LocationService extends Service {
             if ((mMyLastLocation != null && newLocation == null)
                     || (mMyLastLocation == null && newLocation != null)
                     || (mMyLastLocation != null && newLocation != null
-                    && (mMyLastLocation.getLatitude() != newLocation.getLatitude()
-                    || mMyLastLocation.getLongitude() != newLocation.getLongitude() ) ) ) {
+                      && (mMyLastLocation.getLatitude() != newLocation.getLatitude()
+                      || mMyLastLocation.getLongitude() != newLocation.getLongitude() ) ) ) {
               locationChanged = true;
             }
             mMyLastLocation = newLocation;
@@ -184,7 +194,6 @@ public class LocationService extends Service {
     private void locationChanged(Context context) {
       List<GpsZone> zones = YakoApp.getSavedGpsZones(context);
       ZoneActivityCalcResult zoneActivityStateResult = calcActivityState(zones);
-      Log.d("yako", "RECALCULATE MESSAGES -> " + zoneActivityStateResult.zoneActivityChanged);
       if (zoneActivityStateResult.zoneActivityChanged) {
 
         SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(context, false);
