@@ -23,7 +23,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase;
 
   private static final String DATABASE_NAME = "yako_messages";
-  private static final int DATABASE_VERSION = 3;
+  private static final int DATABASE_VERSION = 4;
 
 
   public static synchronized SQLHelper getInstance(Context context) {
@@ -62,12 +62,13 @@ public class SQLHelper extends SQLiteOpenHelper {
     db.execSQL(PersonSenderDAO.TABLE_CREATE);
     db.execSQL(FullMessageDAO.TABLE_CREATE);
     db.execSQL(AttachmentDAO.TABLE_CREATE);
-    db.execSQL(GpsZoneDAO.TABLE_CREATE);
 
 
     db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
     db.execSQL(AttachmentDAO.CREATE_INDEX_ON_FILENAME);
     db.execSQL(PersonSenderDAO.CREATE_INDEX_ON_KEY_TYPE);
+
+    createTableMapZones(db);
   }
 
   @Override
@@ -79,11 +80,13 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    if (oldVersion == 1) {
-      dropAllExceptAccounts(db);
+    if (oldVersion == 1 || oldVersion == 2) {
+      dropAllAndCreateExceptAccounts(db);
       createTableMapZones(db);
-      alterTableMessageListElement_predictionVal(db);
-    } else if (oldVersion == 2) {
+
+      // we dont need this step here, because tables are recreated anyway...
+      // alterTableMessageListElement_predictionVal(db);
+    } else if (oldVersion == 3) {
       createTableMapZones(db);
       alterTableMessageListElement_predictionVal(db);
     } else {
@@ -92,7 +95,7 @@ public class SQLHelper extends SQLiteOpenHelper {
     }
   }
 
-  private void dropAllExceptAccounts(SQLiteDatabase db) {
+  private void dropAllAndCreateExceptAccounts(SQLiteDatabase db) {
     // dropping indexes, tables...
     db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
     db.execSQL("DROP INDEX IF EXISTS " + PersonSenderDAO.INDEX_ON_KEY_TYPE);
