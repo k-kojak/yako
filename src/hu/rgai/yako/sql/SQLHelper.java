@@ -25,7 +25,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase;
 
   private static final String DATABASE_NAME = "yako_messages";
-  private static final int DATABASE_VERSION = 2;
+  private static final int DATABASE_VERSION = 3;
 
 
   public static synchronized SQLHelper getInstance(Context context) {
@@ -81,7 +81,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     Log.d("yako", "onUpgrade");
-    if (oldVersion == 1) {
+    if (oldVersion == 1 || oldVersion == 2) {
       // dropping indexes, tables...
       db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
       db.execSQL("DROP INDEX IF EXISTS " + PersonSenderDAO.INDEX_ON_KEY_TYPE);

@@ -36,14 +36,14 @@ public class PersonSenderDAO {
           + COL_NAME + " text, "
           + COL_SECONDARY_NAME + " text, "
           + COL_TYPE + " text not null,"
-          + " UNIQUE ("+ COL_KEY +", "+ COL_TYPE +")" +
+          + " UNIQUE ("+ COL_KEY +", "+ COL_TYPE +", "+ COL_NAME +")" +
           ");";
 
 
   public static final String INDEX_ON_KEY_TYPE = TABLE_PERSON + "__" + COL_KEY + "_" + COL_TYPE + "__idx";
 
   public static final String CREATE_INDEX_ON_KEY_TYPE = "CREATE INDEX " + INDEX_ON_KEY_TYPE
-          + " ON " + TABLE_PERSON + "(" + COL_KEY + "," + COL_TYPE + ");";
+          + " ON " + TABLE_PERSON + "(" + COL_KEY + "," + COL_TYPE + ","+ COL_NAME +");";
 
   private String[] allColumns = { COL_ID, COL_KEY, COL_NAME, COL_SECONDARY_NAME, COL_TYPE };
 
@@ -97,7 +97,8 @@ public class PersonSenderDAO {
   public long getPersonRawId(Person person) {
     long _id = -1;
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_PERSON, new String[] {COL_ID},
-            COL_KEY + " = ? AND " + COL_TYPE + " = ?", new String[]{person.getId(), person.getType().toString()},
+            COL_KEY + " = ? AND " + COL_TYPE + " = ? AND " + COL_NAME + " = ?",
+            new String[]{person.getId(), person.getType().toString(), person.getName()},
             null, null, null);
     cursor.moveToFirst();
     if (!cursor.isAfterLast()) {
