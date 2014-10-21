@@ -32,13 +32,12 @@ public class LocationService extends Service {
   private static final Criteria REQUEST_CRITERIA = new Criteria();
   static {
     REQUEST_CRITERIA.setCostAllowed(false);
-    REQUEST_CRITERIA.setPowerRequirement(Criteria.POWER_HIGH);
+    REQUEST_CRITERIA.setPowerRequirement(Criteria.POWER_LOW);
   }
 
   private LocationManager mLocationManager = null;
   private LocationUpdateReceiver mLocationReceiver;
   public static Location mMyLastLocation = null;
-  public static float mMyLastLocationAccuracy = 0.0f;
 
   @Override
   public void onCreate() {
@@ -67,6 +66,7 @@ public class LocationService extends Service {
       mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, REQUEST_INTERVAL, 0.0f, pi);
     }
     String bestProvider = mLocationManager.getBestProvider(REQUEST_CRITERIA, false);
+    Log.d("yako", "best provider by hand: " + bestProvider);
     Location loc = mLocationManager.getLastKnownLocation(bestProvider);
     Intent i = new Intent(ACTION_NEW_LOCATION_ARRIVED);
     i.putExtra(EXTRA_LOCATION, loc);
@@ -164,9 +164,11 @@ public class LocationService extends Service {
 
           // Skip location update, because the new location accuracy is not accurate enough
           // (and we are still in location life limit)
+          Log.d("yako", "newLocation's accuracy: " + (newLocation != null ? newLocation.getAccuracy() : "null"));
           if (newLocation != null && mMyLastLocation != null
                   && newLocation.getAccuracy() > 300.0f
                   && mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH > System.currentTimeMillis()) {
+            Log.d("yako", "skipping newLocation...");
             return;
           }
 
