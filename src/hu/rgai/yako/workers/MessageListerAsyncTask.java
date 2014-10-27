@@ -261,11 +261,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       long storedMessageRawId = MessageListDAO.getInstance(mContext).getMessageRawId(newMessage, accountId);
 
       // if message is not stored in database
+      Person searchedFrom = Person.searchPersonAndr(mContext, newMessage.getFrom());
+      if (searchedFrom != null && !searchedFrom.equals(newMessage.getFrom())) {
+        newMessage.setFrom(searchedFrom);
+      }
       if (storedMessageRawId == -1) {
-        Person searchedFrom = Person.searchPersonAndr(mContext, newMessage.getFrom());
-        if (searchedFrom != null && !searchedFrom.equals(newMessage.getFrom())) {
-          newMessage.setFrom(searchedFrom);
-        }
         MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
 
         if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
