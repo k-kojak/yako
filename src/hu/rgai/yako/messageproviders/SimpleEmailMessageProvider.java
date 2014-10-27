@@ -214,7 +214,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       Store store = getStore(account);
       if (store != null) {
         if (store.isConnected()) {
-          folder = (IMAPFolder)store.getFolder(accountFolder.folder);
+          try {
+            folder = (IMAPFolder) store.getFolder(accountFolder.folder);
+          } catch (IllegalStateException e) {
+            return null;
+          }
         } else {
           return null;
         }
