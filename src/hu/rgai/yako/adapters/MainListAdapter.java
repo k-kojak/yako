@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -23,7 +24,7 @@ import java.util.*;
 public class MainListAdapter extends CursorAdapter {
 
 
-
+  private final YakoApp mYakoApp;
   private final Context mContext;
   private static LayoutInflater inflater = null;
   private TreeMap<Long, Account> mAccounts = null;
@@ -32,9 +33,10 @@ public class MainListAdapter extends CursorAdapter {
   private GpsZone mClosestZone;
 
 
-  public MainListAdapter(Context context, int importantDrawable, boolean isZonesActivated,
+  public MainListAdapter(YakoApp yakoApp, Context context, int importantDrawable, boolean isZonesActivated,
                          GpsZone closestZone, Cursor cursor, TreeMap<Long, Account> accounts) {
     super(context, cursor, false);
+    mYakoApp = yakoApp;
     mContext = context;
     mImportantDrawable = importantDrawable;
     mIsZonesActivated = isZonesActivated;
@@ -124,7 +126,7 @@ public class MainListAdapter extends CursorAdapter {
 
 
       if (message.getFrom() != null) {
-        holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
+        holder.icon.setImageBitmap(mYakoApp, new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(Person p) {
             return ProfilePhotoProvider.getImageToUser(mContext, p);
           }
@@ -137,7 +139,7 @@ public class MainListAdapter extends CursorAdapter {
         }, message.getFrom());
   //      img = ProfilePhotoProvider.getImageToUser(activity, message.getFrom().getContactId());
       } else {
-        holder.icon.setImageBitmap(new AsyncImageLoadProvider() {
+        holder.icon.setImageBitmap(mYakoApp, new AsyncImageLoadProvider() {
           public BitmapResult getBitmap(Person p) {
             return ProfilePhotoProvider.getGroupChatPhoto(mContext);
           }
@@ -151,7 +153,7 @@ public class MainListAdapter extends CursorAdapter {
         }, null);
       }
 
-
+    YakoApp.printAsyncTasks(true);
 
 
       if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {

@@ -1,15 +1,15 @@
 
 package hu.rgai.yako.view.extensions;
 
-import android.util.Log;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.AsyncImageLoadProvider;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.workers.AsyncImageLoader;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.ImageView;
-import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.yako.tools.AndroidUtils;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -33,7 +33,7 @@ public class AsyncImageView extends ImageView {
     super(context, attrs, defStyle);
   }
 
-  public void setImageBitmap(AsyncImageLoadProvider loadProvider, Person from) {
+  public void setImageBitmap(YakoApp yApp, AsyncImageLoadProvider loadProvider, Person from) {
     // stop current worker thread anyway!
     if (mLoader != null && mLoader.get() != null) {
       mLoader.get().stop();
@@ -46,7 +46,7 @@ public class AsyncImageView extends ImageView {
       this.setImageBitmap(loadProvider.getDefaultBitmap(this.getContext()));
       
       AsyncImageLoader loader = new AsyncImageLoader(this, loadProvider);
-      AndroidUtils.<Person, Void, BitmapResult>startAsyncTask(loader, from);
+      AndroidUtils.startAsyncTask(yApp, loader, from);
       mLoader = new WeakReference<AsyncImageLoader>(loader);
     }
   }

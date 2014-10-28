@@ -76,7 +76,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
       } else if (mRecipient.getType().equals(MessageProvider.Type.SMS)) {
         mp = new SmsMessageProvider(mContext);
         recipients = new HashSet<MessageRecipient>();
-        recipients.add((MessageRecipient) mRecipient);
+        recipients.add(mRecipient);
       }
       if (mp != null && recipients != null) {
         mp.sendMessage(mContext, mSentMessageData, recipients, mContent, mSubject);

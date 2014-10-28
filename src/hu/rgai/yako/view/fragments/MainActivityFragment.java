@@ -491,14 +491,14 @@ public class MainActivityFragment extends Fragment {
         accountIds.add(MainActivity.selectedAccounts.get(i).getDatabaseId());
       }
     }
-    long s = System.currentTimeMillis();
+
     boolean zoneActivated = StoreHandler.isZoneStateActivated(getActivity());
     GpsZone closestZone = GpsZone.getClosest(YakoApp.getSavedGpsZones(getActivity()));
     int importantDrawable = closestZone != null ? closestZone.getZoneType().getDrawable() : R.drawable.ic_important;
     if (mAdapter == null) {
-      mAdapter = new MainListAdapter(mMainActivity, importantDrawable, zoneActivated, closestZone,
+      mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity, importantDrawable,
+              zoneActivated, closestZone,
               MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated), mAccounts);
-
     } else {
       Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null);
       mAdapter.changeCursor(newCursor);
@@ -508,8 +508,7 @@ public class MainActivityFragment extends Fragment {
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }
-    long e = System.currentTimeMillis();
-//    Log.d("rgai", "time to query the main list: " + (e - s) + " ms");
+
     if (mListView.getAdapter() == null) {
       mListView.setAdapter(mAdapter);
     }

@@ -422,14 +422,12 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
       return;
     }
 
-    MessageRecipient ri = null;
-    if (mMessage.getAccount().getAccountType()
-        .equals(MessageProvider.Type.FACEBOOK)) {
-      ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(),
-          mMessage.getFrom().getName(), null, 1);
+    MessageRecipient ri;
+    if (mMessage.getAccount().getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+      ri = new FacebookMessageRecipient("", mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     } else {
-      ri = new SmsMessageRecipient(mMessage.getFrom().getId(), mMessage
-          .getFrom().getId(), mMessage.getFrom().getName(), null, 1);
+      ri = new SmsMessageRecipient(mMessage.getFrom().getId(),
+              mMessage.getFrom().getId(), mMessage.getFrom().getName(), null, 1);
     }
     
     // TODO: write a nice handler here!!!
