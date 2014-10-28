@@ -245,6 +245,9 @@ public class MainActivity extends ActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+
+    YakoApp.printAsyncTasks(false);
+
     is_activity_visible = true;
     removeNotificationIfExists();
 
