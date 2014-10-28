@@ -1,5 +1,8 @@
 package hu.rgai.yako.tools;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.FacebookAccount;
@@ -11,11 +14,15 @@ import hu.rgai.yako.messageproviders.MessageProvider.Type;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
 import hu.rgai.yako.workers.ActiveConnectionConnector;
+import hu.rgai.yako.workers.MyAsyncTask;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -105,9 +112,28 @@ public class AndroidUtils {
     return mp;
   }
 
-  public static <T, U, V> void startAsyncTask(AsyncTask<T, U, V> at, T... args) {
+  public static <T, U, V> void startAsyncTask(YakoApp yApp, MyAsyncTask<T, U, V> at, T... args) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
+      try {
+        at.executeOnExecutor(MyAsyncTask.THREAD_POOL_EXECUTOR, args);
+      } catch (RejectedExecutionException re) {
+
+        ThreadPoolExecutor tpe = (ThreadPoolExecutor) MyAsyncTask.THREAD_POOL_EXECUTOR;
+        BlockingQueue<Runnable> rq = tpe.getQueue();
+        StringBuilder sb = new StringBuilder();
+        for (Runnable r : rq) {
+          sb.append(r.toString()+ "\n");
+        }
+
+        Tracker t = yApp.getTracker();
+        t.send(new HitBuilders.ExceptionBuilder()
+                .setDescription("Async task rejected: " + sb.toString())
+                .setFatal(true)
+                .build());
+
+        throw re;
+
+      }
     } else {
       at.execute(args);
     }

@@ -26,6 +26,7 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
+import hu.rgai.yako.workers.MyAsyncTask;
 
 
 import java.lang.reflect.InvocationTargetException;
@@ -33,7 +34,9 @@ import java.util.Date;
 import java.util.HashMap;
 
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 
@@ -132,9 +135,21 @@ public class YakoApp extends Application {
   public void sendAnalyticsError(int code) {
     Tracker t = getTracker();
     t.send(new HitBuilders.ExceptionBuilder()
-        .setDescription("Custom, own catched error. Error code: " + code)
-        .setFatal(false)
-        .build());
+            .setDescription("Custom, own catched error. Error code: " + code)
+            .setFatal(false)
+            .build());
+  }
+
+  public static void printAsyncTasks(boolean printTasks) {
+    ThreadPoolExecutor tpe = (ThreadPoolExecutor)MyAsyncTask.THREAD_POOL_EXECUTOR;
+    Log.d("yako", tpe.toString());
+    if (printTasks) {
+      BlockingQueue<Runnable> rq = tpe.getQueue();
+      for (Runnable r : rq) {
+        Log.d("yako", r.toString());
+      }
+      Log.d("yako", " - - - - - - - ");
+    }
   }
 
   @Override

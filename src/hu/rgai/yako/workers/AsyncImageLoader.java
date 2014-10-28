@@ -1,8 +1,6 @@
 
 package hu.rgai.yako.workers;
 
-import android.os.AsyncTask;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -17,13 +15,14 @@ import java.lang.ref.WeakReference;
  *
  * @author Tamas Kojedzinszky
  */
-public class AsyncImageLoader extends AsyncTask<Person, Void, BitmapResult> {
+public class AsyncImageLoader extends MyAsyncTask<Person, Void, BitmapResult> {
 
   private WeakReference<ImageView> mImageView;
   private AsyncImageLoadProvider mLoadProvider;
   private volatile boolean running = true;
 
   public AsyncImageLoader(ImageView imageView, AsyncImageLoadProvider loadProvider) {
+    super("Asyn image loader");
     this.mImageView = new WeakReference<ImageView>(imageView);
     this.mLoadProvider = loadProvider;
   }
@@ -38,9 +37,7 @@ public class AsyncImageLoader extends AsyncTask<Person, Void, BitmapResult> {
     if (person != null && person.length > 0) {
       p = person[0];
     }
-    long s = System.currentTimeMillis();
     BitmapResult bmr = mLoadProvider.getBitmap(p);
-//    Log.d("rgai", "time to get bitmap: " + (System.currentTimeMillis() - s) + " ms");
     return bmr;
   }
 

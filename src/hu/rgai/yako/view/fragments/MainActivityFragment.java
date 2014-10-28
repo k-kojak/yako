@@ -17,6 +17,7 @@ import android.widget.*;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
@@ -488,9 +489,8 @@ public class MainActivityFragment extends Fragment {
         accountIds.add(MainActivity.selectedAccounts.get(i).getDatabaseId());
       }
     }
-    long s = System.currentTimeMillis();
     if (mAdapter == null) {
-      mAdapter = new MainListAdapter(mMainActivity,
+      mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity,
               MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true), mAccounts);
 
     } else {

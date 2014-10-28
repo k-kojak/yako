@@ -18,7 +18,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.*;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
@@ -37,7 +36,6 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.adapters.MainListDrawerFilterAdapter;
 import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.BatchedProcessState;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
@@ -679,9 +677,9 @@ public class MainActivity extends ActionBarActivity {
       }
     }
   }
-  
-  
-  
+
+
+
   // LOGGING EVENTS
   public void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, MainListAdapter adapter) {
     if (lv == null || adapter == null) {
