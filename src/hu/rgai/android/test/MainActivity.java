@@ -6,8 +6,8 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.SensorManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
@@ -231,7 +231,7 @@ public class MainActivity extends ActionBarActivity {
           invalidateOptionsMenu();
         } else {
           mDrawerIsVisible = false;
-//          setActionbarTitle();
+//          setActionbar();
           invalidateOptionsMenu();
         }
       }
@@ -263,7 +263,7 @@ public class MainActivity extends ActionBarActivity {
 
 
     // setting title
-    setActionbarTitle();
+    setActionbar();
     
 
     // register broadcast receiver for new message load
@@ -344,7 +344,7 @@ public class MainActivity extends ActionBarActivity {
     boolean zoneActivated = StoreHandler.isZoneStateActivated(this);
     mZoneListAdapter = new ZoneListAdapter(this, zones, zoneActivated);
     mZoneHolder.setAdapter(mZoneListAdapter);
-    setActionbarTitle();
+    setActionbar();
   }
 
   public void startLocationService(boolean forceUpdateZones) {
@@ -436,15 +436,49 @@ public class MainActivity extends ActionBarActivity {
   }
   
   
-  private void setActionbarTitle() {
-    String title = "";
+  private void setActionbar() {
+    GpsZone closest = null;
+
     if (StoreHandler.isZoneStateActivated(this)) {
       List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(this, false);
-      GpsZone closest = GpsZone.getClosest(gpsZones);
+      closest = GpsZone.getClosest(gpsZones);
+    }
 
-      if (closest != null) {
-        title = "At " + closest.getAlias() + " ("+ closest.getZoneType().getDisplayName() +")";
-      }
+    setActionBarColor(closest);
+    setActionBarTitle(closest);
+  }
+
+  private void setActionBarColor(GpsZone closest) {
+    if (closest != null) {
+      int titleColor = 0xff << 24 | closest.getZoneType().getColor();
+      int drawerColor = 0xff << 24 | divideColor(closest.getZoneType().getColor());
+      getSupportActionBar().setBackgroundDrawable(new ColorDrawable(titleColor));
+      mDrawerWrapper.setBackgroundColor(drawerColor);
+    } else {
+      int defaultColor = 0xff222222;
+      ColorDrawable defColor = new ColorDrawable(defaultColor);
+      getSupportActionBar().setBackgroundDrawable(defColor);
+      mDrawerWrapper.setBackgroundColor(defaultColor);
+    }
+  }
+
+  private static int divideColor(int c) {
+    int redMask   = 0xff0000;
+    int greenMask = 0x00ff00;
+    int blueMask  = 0x0000ff;
+    int shift = 1;
+
+    int r = ((c & redMask) >> shift) & redMask;
+    int g = ((c & greenMask) >> shift) & greenMask;
+    int b = ((c & blueMask) >> shift) & blueMask;
+
+    return r | g | b;
+  }
+
+  private void setActionBarTitle(GpsZone closest) {
+    String title = "";
+    if (closest != null) {
+      title = "At " + closest.getAlias() + " ("+ closest.getZoneType().getDisplayName() +")";
     }
     getSupportActionBar().setTitle(title);
   }
@@ -747,11 +781,11 @@ public class MainActivity extends ActionBarActivity {
 //    }
 //  }
 
-  private float getDist(float x1, float y1, float x2, float y2) {
-    float[] dist = new float[2];
-    Location.distanceBetween(x1, y1, x2, y2, dist);
-    return dist[0];
-  }
+//  private float getDist(float x1, float y1, float x2, float y2) {
+//    float[] dist = new float[2];
+//    Location.distanceBetween(x1, y1, x2, y2, dist);
+//    return dist[0];
+//  }
 
   private void startMapActivity(GpsZone zone) {
     Intent i = new Intent(MainActivity.this, GoogleMapsActivity.class);

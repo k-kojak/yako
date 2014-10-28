@@ -73,7 +73,7 @@ public final class Settings {
   private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
-  
+
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
     if (contactDataTypeToRecipientClass == null) {
