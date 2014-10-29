@@ -20,10 +20,6 @@ public class ZoneDisplayActionBarActivity extends ActionBarActivity {
     mOverrideSubtitle = overrideSubtitle;
   }
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
 
   @Override
   protected void onResume() {
@@ -31,6 +27,7 @@ public class ZoneDisplayActionBarActivity extends ActionBarActivity {
     setActionBar();
   }
 
+  
   protected void setActionBar() {
     if (mChangeColor || mOverrideTitle || mOverrideSubtitle) {
       GpsZone closest = YakoApp.getClosestZone(this, false);
