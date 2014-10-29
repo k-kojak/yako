@@ -19,6 +19,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.*;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.*;
 
 import com.facebook.AccessToken;
@@ -77,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
   private DrawerLayout mDrawerLayout;
   private LinearListView mAccountHolder;
   private CompoundButton mZonesToggle;
+  private View mZonesContainer;
   private LinearListView mZoneHolder;
   private MainListDrawerFilterAdapter mAccountFilterAdapter = null;
   private ZoneListAdapter mZoneListAdapter = null;
@@ -158,6 +161,7 @@ public class MainActivity extends ActionBarActivity {
 
     mZonesToggle = (CompoundButton) findViewById(R.id.zone_on_off);
     mZoneHolder = (LinearListView) findViewById(R.id.zone_holder);
+    mZonesContainer = findViewById(R.id.zones_container);
     mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
@@ -167,22 +171,19 @@ public class MainActivity extends ActionBarActivity {
     mAccountHolder.setOnItemClickListener(new AccountFilterClickListener());
     mZoneHolder.setOnItemClickListener(new ZoneListClickListener());
 
-    mZonesToggle.setChecked(StoreHandler.isZoneStateActivated(this));
+    boolean isZonesActivated = StoreHandler.isZoneStateActivated(this);
+    if (!isZonesActivated) {
+      mZonesContainer.setVisibility(View.GONE);
+    }
+    mZonesToggle.setChecked(isZonesActivated);
     mZonesToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        animateZoneList(isChecked);
         boolean isOn = mZonesToggle.isChecked();
         StoreHandler.setZoneActivityState(MainActivity.this, isOn);
         redisplayMessages();
         loadZoneListAdapter(false);
-      }
-    });
-    mZonesToggle.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-//        boolean on = mZonesToggle.isChecked();
-//        StoreHandler.setZoneActivityState(MainActivity.this, on);
-//        redisplayMessages();
       }
     });
 
@@ -239,6 +240,30 @@ public class MainActivity extends ActionBarActivity {
 
     mDrawerLayout.setDrawerListener(mDrawerToggle);
     
+  }
+
+  private void animateZoneList(final boolean isActivated) {
+    Animation fadeAnim = AnimationUtils.loadAnimation(this, isActivated ? R.anim.fade_in : R.anim.fade_out);
+    fadeAnim.setAnimationListener(new Animation.AnimationListener() {
+      @Override
+      public void onAnimationStart(Animation animation) {
+        if (isActivated) {
+          mZonesContainer.setVisibility(View.VISIBLE);
+        }
+      }
+
+      @Override
+      public void onAnimationEnd(Animation animation) {
+        if (!isActivated) {
+          mZonesContainer.setVisibility(View.GONE);
+        }
+      }
+
+      @Override
+      public void onAnimationRepeat(Animation animation) {
+      }
+    });
+    mZonesContainer.startAnimation(fadeAnim);
   }
 
 

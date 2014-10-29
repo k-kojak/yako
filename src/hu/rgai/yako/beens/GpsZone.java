@@ -11,7 +11,7 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
   public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
   public enum ZoneType {
-    WORK("Work", R.drawable.ic_important_work, 0x630000),
+    WORK("Work", R.drawable.ic_important_work, 0x152C1B),
     REST("Rest", R.drawable.ic_important_home, 0x635241),
     SILENT("Silent", R.drawable.ic_important_silence, 0x003340)
     ;

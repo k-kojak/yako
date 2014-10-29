@@ -52,6 +52,8 @@
                 android:layout_height="wrap_content"
                 android:textColor="#777777"
                 android:layout_marginLeft="5dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
                 android:textSize="12sp"
                 android:text="FILTER" />
 
@@ -61,7 +63,15 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <LinearLayout
+            <View
+
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="#3a3a3a"
+                android:layout_marginBottom="4dp"
+                android:layout_marginTop="4dp"/>
+
+            <RelativeLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -71,6 +81,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
                     android:textColor="#777777"
                     android:layout_marginLeft="5dp"
                     android:textSize="12sp"
@@ -81,27 +92,37 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="12dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="5dp"
                     android:textOn="On"
                     android:textOff="Off" />
 
-            </LinearLayout>
+            </RelativeLayout>
 
-            <hu.rgai.yako.view.extensions.LinearListView
-                android:id="@+id/zone_holder"
+            <LinearLayout
+                android:id="@+id/zones_container"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/add_gps_zone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#77dd77"
-                android:layout_marginLeft="33dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="6dp"
-                android:clickable="true"
-                android:text="Add zone" />
+                <hu.rgai.yako.view.extensions.LinearListView
+                    android:id="@+id/zone_holder"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/add_gps_zone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#77dd77"
+                    android:layout_marginLeft="33dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="6dp"
+                    android:clickable="true"
+                    android:text="Add zone" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

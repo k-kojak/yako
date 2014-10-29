@@ -33,7 +33,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
-            android:textColor="#343434"
+            android:textColor="#464646"
             android:textSize="12sp"
             android:textStyle="italic" />
 
