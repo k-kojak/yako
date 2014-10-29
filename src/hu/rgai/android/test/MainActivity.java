@@ -7,6 +7,8 @@ import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -75,6 +77,9 @@ public class MainActivity extends ActionBarActivity {
 
 //  private static List<GpsZone> mGpsZones = null;
 //  private Location mMyLastLocation = null;
+
+  private int mPreviousActionbarColor = Settings.DEFAULT_ACTIONBAR_COLOR;
+  private int mPreviousDrawerColor = Settings.DEFAULT_ACTIONBAR_COLOR;
 
   private DrawerLayout mDrawerLayout;
   private LinearListView mAccountHolder;
@@ -474,20 +479,33 @@ public class MainActivity extends ActionBarActivity {
   }
 
   private void setActionBarColor(GpsZone closest) {
+    int titleColor;
+    int drawerBgColor;
+
     if (closest != null) {
-      int titleColor = 0xff << 24 | closest.getZoneType().getColor();
-      int drawerColor = 0xff << 24 | divideColor(closest.getZoneType().getColor());
-      getSupportActionBar().setBackgroundDrawable(new ColorDrawable(titleColor));
-      mDrawerWrapper.setBackgroundColor(drawerColor);
+      titleColor = 0xff << 24 | closest.getZoneType().getColor();
+      drawerBgColor = 0xff << 24 | halfOfColor(titleColor);
     } else {
-      int defaultColor = 0xff222222;
-      ColorDrawable defColor = new ColorDrawable(defaultColor);
-      getSupportActionBar().setBackgroundDrawable(defColor);
-      mDrawerWrapper.setBackgroundColor(defaultColor);
+      titleColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
+      drawerBgColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
     }
+
+    TransitionDrawable titleAnimation = new TransitionDrawable(
+            new Drawable[]{new ColorDrawable(mPreviousActionbarColor), new ColorDrawable(titleColor)});
+    getSupportActionBar().setBackgroundDrawable(titleAnimation);
+    titleAnimation.startTransition(1000);
+
+    TransitionDrawable drawerAnimation = new TransitionDrawable(
+            new Drawable[]{new ColorDrawable(mPreviousDrawerColor), new ColorDrawable(drawerBgColor)});
+    mDrawerWrapper.setBackground(drawerAnimation);
+    drawerAnimation.startTransition(1000);
+
+
+    mPreviousActionbarColor = titleColor;
+    mPreviousDrawerColor = drawerBgColor;
   }
 
-  private static int divideColor(int c) {
+  private static int halfOfColor(int c) {
     int redMask   = 0xff0000;
     int greenMask = 0x00ff00;
     int blueMask  = 0x0000ff;
