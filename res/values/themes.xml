@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the theme applied to the application or activity -->
+    <style name="CustomActionBarTheme"
+           parent="@style/Theme.AppCompat.Light.DarkActionBar">
+
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+    </style>
+
+    <style name="MyActionBar"
+           parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:titleTextStyle">@style/MyTitleActionBar</item>
+        <item name="android:subtitleTextStyle">@style/MySubtitleActionBar</item>
+    </style>
+
+
+    <style name="MyTitleActionBar"
+           parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title.Inverse">
+        <!--<item name="android:textSize">28sp</item>-->
+    </style>
+
+
+    <style name="MySubtitleActionBar"
+           parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Subtitle.Inverse">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+</resources>

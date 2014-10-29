@@ -520,10 +520,13 @@ public class MainActivity extends ActionBarActivity {
 
   private void setActionBarTitle(GpsZone closest) {
     String title = "";
+    String subTitle = "";
     if (closest != null) {
-      title = "At " + closest.getAlias() + " ("+ closest.getZoneType().getDisplayName() +")";
+      title = "@ " + closest.getAlias();
+      subTitle = closest.getZoneType().getDisplayName();
     }
     getSupportActionBar().setTitle(title);
+    getSupportActionBar().setSubtitle(subTitle.toUpperCase());
   }
   
   
