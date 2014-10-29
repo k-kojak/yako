@@ -599,8 +599,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 //    System.setProperty("javax.activation.debug", "true");
     HtmlContent content = new HtmlContent();
     List<Attachment> attachments = null;
-    
-    Object msg = fullMessage.getContent();
+
+    Object msg;
+    try {
+      msg = fullMessage.getContent();
+    } catch (UnsupportedEncodingException e) {
+      Log.d("yako", "", e);
+      HtmlContent hc = new HtmlContent("<span style='color: red;'>Unsupported content encoding</span>",
+              HtmlContent.ContentType.TEXT_HTML);
+      return new EmailContent(hc, null);
+    }
     
     if (fullMessage.isMimeType("text/*")) {
       
