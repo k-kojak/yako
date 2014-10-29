@@ -30,6 +30,7 @@ import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 import com.facebook.widget.ProfilePictureView;
 
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
  * @author Tamas Kojedzinszky
  
  */
-public class FacebookSettingActivity extends ActionBarActivity {
+public class FacebookSettingActivity extends ZoneDisplayActionBarActivity {
 
   private Menu menu;
   private ProfilePictureView profilePictureView;
@@ -124,7 +125,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    super.onCreate(savedInstanceState, true, false, false);
     setContentView(R.layout.account_settings_facebook_layout);
 
     

@@ -24,8 +24,10 @@ import android.widget.TextView;
 
 import com.facebook.Session;
 
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -37,6 +39,7 @@ import hu.rgai.android.test.R;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +48,7 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class AccountSettingsListActivity extends ActionBarActivity {
+public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
@@ -53,7 +56,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    super.onCreate(savedInstanceState, true, false, false);
   }
 
   @Override

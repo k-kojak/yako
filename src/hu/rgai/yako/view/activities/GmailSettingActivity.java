@@ -23,6 +23,7 @@ import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.GmailAccount;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.regex.Pattern;
 
@@ -30,7 +31,7 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class GmailSettingActivity extends ActionBarActivity implements TextWatcher {
+public class GmailSettingActivity extends ZoneDisplayActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;
@@ -38,7 +39,7 @@ public class GmailSettingActivity extends ActionBarActivity implements TextWatch
 
   @Override
   public void onCreate(Bundle bundle) {
-    super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
+    super.onCreate(bundle, true, false, false); //To change body of generated methods, choose Tools | Templates.
   
     setContentView(R.layout.account_settings_gmail_layout);
     

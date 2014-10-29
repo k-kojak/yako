@@ -61,6 +61,7 @@ import hu.rgai.yako.view.activities.GoogleMapsActivity;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.view.extensions.LinearListView;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.SmartPredictionAsyncTask;
@@ -71,14 +72,13 @@ import java.util.*;
 /**
  * @author Tamas Kojedzinszky
  */
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ZoneDisplayActionBarActivity {
 
   private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
 
 //  private static List<GpsZone> mGpsZones = null;
 //  private Location mMyLastLocation = null;
 
-  private int mPreviousActionbarColor = Settings.DEFAULT_ACTIONBAR_COLOR;
   private int mPreviousDrawerColor = Settings.DEFAULT_ACTIONBAR_COLOR;
 
   private DrawerLayout mDrawerLayout;
@@ -116,7 +116,7 @@ public class MainActivity extends ActionBarActivity {
 
   @Override
   public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
+    super.onCreate(icicle, true, true, true);
     
     Tracker t = ((YakoApp)getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
@@ -293,7 +293,7 @@ public class MainActivity extends ActionBarActivity {
 
 
     // setting title
-    setActionbar();
+    setActionBar();
     
 
     // register broadcast receiver for new message load
@@ -374,7 +374,7 @@ public class MainActivity extends ActionBarActivity {
     boolean zoneActivated = StoreHandler.isZoneStateActivated(this);
     mZoneListAdapter = new ZoneListAdapter(this, zones, zoneActivated);
     mZoneHolder.setAdapter(mZoneListAdapter);
-    setActionbar();
+    setActionBar();
   }
 
   public void startLocationService(boolean forceUpdateZones) {
@@ -466,42 +466,28 @@ public class MainActivity extends ActionBarActivity {
   }
   
   
-  private void setActionbar() {
-    GpsZone closest = null;
+  protected void setActionBar() {
+    super.setActionBar();
 
-    if (StoreHandler.isZoneStateActivated(this)) {
-      List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(this, false);
-      closest = GpsZone.getClosest(gpsZones);
-    }
-
-    setActionBarColor(closest);
-    setActionBarTitle(closest);
+    GpsZone closest = YakoApp.getClosestZone(this, false);
+    setNavigationDrawerColor(closest);
   }
 
-  private void setActionBarColor(GpsZone closest) {
-    int titleColor;
+
+  private void setNavigationDrawerColor(GpsZone closest) {
     int drawerBgColor;
 
     if (closest != null) {
-      titleColor = 0xff << 24 | closest.getZoneType().getColor();
-      drawerBgColor = 0xff << 24 | halfOfColor(titleColor);
+      drawerBgColor = 0xff << 24 | halfOfColor(closest.getZoneType().getColor());
     } else {
-      titleColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
       drawerBgColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
     }
-
-    TransitionDrawable titleAnimation = new TransitionDrawable(
-            new Drawable[]{new ColorDrawable(mPreviousActionbarColor), new ColorDrawable(titleColor)});
-    getSupportActionBar().setBackgroundDrawable(titleAnimation);
-    titleAnimation.startTransition(1000);
 
     TransitionDrawable drawerAnimation = new TransitionDrawable(
             new Drawable[]{new ColorDrawable(mPreviousDrawerColor), new ColorDrawable(drawerBgColor)});
     mDrawerWrapper.setBackground(drawerAnimation);
     drawerAnimation.startTransition(1000);
 
-
-    mPreviousActionbarColor = titleColor;
     mPreviousDrawerColor = drawerBgColor;
   }
 
@@ -518,18 +504,6 @@ public class MainActivity extends ActionBarActivity {
     return r | g | b;
   }
 
-  private void setActionBarTitle(GpsZone closest) {
-    String title = "";
-    String subTitle = "";
-    if (closest != null) {
-      title = "@ " + closest.getAlias();
-      subTitle = closest.getZoneType().getDisplayName();
-    }
-    getSupportActionBar().setTitle(title);
-    getSupportActionBar().setSubtitle(subTitle.toUpperCase());
-  }
-  
-  
   private void setContent(Boolean hasData) {
     // null means we dont know yet: called on onCreate
     if (hasData == null) {

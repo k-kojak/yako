@@ -22,6 +22,7 @@ import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.Map;
  *
  * @author Tamas Kojedzinszky
  */
-public class SimpleEmailSettingActivity extends ActionBarActivity implements TextWatcher {
+public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;
@@ -48,7 +49,7 @@ public class SimpleEmailSettingActivity extends ActionBarActivity implements Tex
   
   @Override
   protected void onCreate(Bundle bundle) {
-    super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
+    super.onCreate(bundle, true, false, false); //To change body of generated methods, choose Tools | Templates.
 
     domainMap = new HashMap<String, String>();
     domainMap.put("vipmail.hu", "indamail.hu");

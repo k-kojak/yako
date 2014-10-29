@@ -17,6 +17,7 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
@@ -78,7 +79,7 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class ThreadDisplayerActivity extends ActionBarActivity {
+public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
@@ -116,7 +117,7 @@ public class ThreadDisplayerActivity extends ActionBarActivity {
 
   @Override
   public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
+    super.onCreate(icicle, true, false, true);
 
     // setting google analytics
     Tracker t = ((YakoApp) getApplication()).getTracker();

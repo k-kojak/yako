@@ -36,20 +36,7 @@ import android.widget.Toast;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.ContactListAdapter;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.EmailMessageRecipient;
-import hu.rgai.yako.beens.FacebookMessageRecipient;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.MainServiceExtraParams;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.beens.MessageRecipient;
-import hu.rgai.yako.beens.Person;
-import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
-import hu.rgai.yako.beens.SimpleSentMessageData;
-import hu.rgai.yako.beens.SentMessageData;
-import hu.rgai.yako.beens.SmsAccount;
-import hu.rgai.yako.beens.SmsMessageRecipient;
-import hu.rgai.yako.beens.SmsSentMessageData;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -64,6 +51,7 @@ import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 
@@ -78,7 +66,7 @@ import net.htmlparser.jericho.Source;
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageReplyActivity extends ActionBarActivity {
+public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_SENT_OK = 1;
 
@@ -109,14 +97,14 @@ public class MessageReplyActivity extends ActionBarActivity {
    */
   @Override
   public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
+    super.onCreate(icicle, true, true, true);
 
     ActionBar actionBar = getSupportActionBar();
-    actionBar.setDisplayShowTitleEnabled(false);
+    actionBar.setDisplayShowTitleEnabled(true);
     actionBar.setDisplayHomeAsUpEnabled(true);
 
     setContentView(R.layout.message_reply);
-    
+
     
     mSubject = (EditText) findViewById(R.id.subject);
     mCharCount = (TextView) findViewById(R.id.char_count);

@@ -15,6 +15,7 @@ import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
 import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.view.fragments.EmailAttachmentFragment;
 import hu.rgai.yako.view.fragments.EmailDisplayerFragment;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
@@ -47,7 +48,7 @@ import net.htmlparser.jericho.Source;
 
 import java.util.TreeMap;
 
-public class EmailDisplayerActivity extends ActionBarActivity {
+public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   private MessageListElement mMessage = null;
   private boolean mFromNotification = false;
@@ -61,8 +62,8 @@ public class EmailDisplayerActivity extends ActionBarActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    Log.d("rgai", "email dsplayer oncreate");
+    super.onCreate(savedInstanceState, true, false, true);
+
     Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
