@@ -275,7 +275,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
-    YakoApp.printAsyncTasks(false);
+//    YakoApp.printAsyncTasks(false);
 
     is_activity_visible = true;
     removeNotificationIfExists();

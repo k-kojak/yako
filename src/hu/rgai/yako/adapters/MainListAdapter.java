@@ -153,7 +153,7 @@ public class MainListAdapter extends CursorAdapter {
         }, null);
       }
 
-    YakoApp.printAsyncTasks(true);
+//    YakoApp.printAsyncTasks(true);
 
 
       if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {

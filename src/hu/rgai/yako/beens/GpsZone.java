@@ -142,7 +142,35 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
   @Override
   public int compareTo(GpsZone another) {
     return mAlias.compareTo(another.getAlias());
+  }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    GpsZone gpsZone = (GpsZone) o;
+
+    if (Double.compare(gpsZone.mLat, mLat) != 0) return false;
+    if (Double.compare(gpsZone.mLong, mLong) != 0) return false;
+    if (gpsZone.mRadius != mRadius) return false;
+    if (!mAlias.equals(gpsZone.mAlias)) return false;
+    if (mZoneType != gpsZone.mZoneType) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result;
+    long temp;
+    result = mAlias.hashCode();
+    temp = Double.doubleToLongBits(mLat);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(mLong);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    result = 31 * result + mZoneType.hashCode();
+    return result;
   }
 
   @Override

@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -158,16 +159,23 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
   private void saveZoneAndFinish() {
     GpsZone newZone = new GpsZone(mNewZoneAlias,
-                            mMarker.getPosition().latitude,
-                            mMarker.getPosition().longitude,
-                            mRadiusValue,
-                            mNewZoneType);
+            mMarker.getPosition().latitude,
+            mMarker.getPosition().longitude,
+            mRadiusValue,
+            mNewZoneType);
+    boolean refreshNeeded = true;
     if (!mUpdating) {
-            GpsZoneDAO.getInstance(GoogleMapsActivity.this).saveZone(newZone);
+      GpsZoneDAO.getInstance(GoogleMapsActivity.this).saveZone(newZone);
     } else {
-            GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(), newZone);
+      if (!mZoneToEdit.equals(newZone)) {
+        GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(), newZone);
+      } else {
+        refreshNeeded = false;
+      }
     }
-    setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
+    if (refreshNeeded) {
+      setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
+    }
     finish();
   }
 
