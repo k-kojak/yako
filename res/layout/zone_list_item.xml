@@ -19,7 +19,8 @@
         android:layout_toRightOf="@id/active_status"
         android:layout_toLeftOf="@+id/discard"
         android:orientation="horizontal"
-        android:padding="5dip" >
+        android:padding="5dip"
+        android:background="@drawable/zone_list_selector">
 
         <TextView
             android:id="@+id/alias"
@@ -50,12 +51,14 @@
 
     <ImageView
         android:id="@+id/discard"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:padding="4dp"
         android:layout_marginRight="6dp"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:clickable="true"
-        android:background="@drawable/ic_action_discard"/>
+        android:src="@drawable/ic_action_discard"
+        android:background="@drawable/zone_list_selector"/>
 
 </RelativeLayout>
