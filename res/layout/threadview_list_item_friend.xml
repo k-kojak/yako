@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical" >
 
     <View
         android:id="@+id/padding"
@@ -15,19 +15,22 @@
     <RelativeLayout
         android:id="@+id/img_wrap"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="6dp">
 
 
         <hu.kojak.android.circularimageview.CircularImageView
             android:id="@+id/img"
-            android:layout_width="38dip"
-            android:layout_height="38dp"
+            android:layout_width="46dip"
+            android:layout_height="46dp"
             app:border="true"
             app:border_color="#eeeeee"
             app:border_width="1dp"
             app:shadow="true"
-            app:shadow_radius="4dp"
-            android:src="@drawable/gmail_icon"
+            app:shadow_radius="2dp"
+            app:shadow_x_offset="1dp"
+            app:shadow_y_offset="2dp"
+            app:shadow_color="#88000000"
             android:visibility="visible"/>
 
 
