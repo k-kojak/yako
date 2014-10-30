@@ -459,6 +459,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
           // run prediction again, since the zone type might changed...and need to recategorize messages...
           SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(this, false);
           AndroidUtils.startTimeoutAsyncTask(smartPred);
+
+          Toast.makeText(this, "Zone saved.", Toast.LENGTH_SHORT).show();
         }
       }
     }
