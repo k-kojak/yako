@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:messagelogger="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/save"
+          android:icon="@drawable/ic_action_accept"
+          android:title="@string/save"
+          messagelogger:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/settings"
+        messagelogger:showAsAction="ifRoom" />
+
+</menu>

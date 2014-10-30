@@ -15,7 +15,7 @@
         android:id="@+id/radius_row"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/buttons_row">
+        android:layout_alignParentBottom="true" >
 
         <TextView
             android:id="@+id/radius_text"
@@ -35,27 +35,6 @@
             android:max="48" />
     </LinearLayout>
 
-    <TableRow
-        android:id="@+id/buttons_row"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
-
-        <Button
-            android:id="@+id/cancel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cancel" />
-
-        <Button
-            android:id="@+id/save"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save" />
-
-    </TableRow>
 
 </RelativeLayout>
 

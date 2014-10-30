@@ -98,7 +98,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private ProgressDialog pd = null;
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
   private ZoneListChangedReceiver mLocationChangeReceiver = null;
-  private Menu mMenu;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
   private TreeMap<Long, Account> mAccountsLongKey = null;
@@ -615,7 +614,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
-    mMenu = menu;
     refreshLoadingIndicatorState();
     return true;
   }

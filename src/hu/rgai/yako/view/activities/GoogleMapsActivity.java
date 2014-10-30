@@ -4,15 +4,11 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.util.TypedValue;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
+import android.view.*;
 import android.widget.*;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -21,16 +17,16 @@ import com.google.android.gms.maps.model.*;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.sql.GpsZoneDAO;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.zip.Inflater;
 
 
 /**
  * Created by kojak on 9/23/2014.
  */
-public class GoogleMapsActivity extends FragmentActivity {
+public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
   public static final String ACTION_REFRESH_ZONE_LIST = "hu.rgai.yako.extra_refresh_zone_list";
   public static final String EXTRA_GPS_ZONE_DATA = "hu.rgai.yako.extra_gps_zone_data";
@@ -40,21 +36,24 @@ public class GoogleMapsActivity extends FragmentActivity {
   private MapFragment mMapFragment;
   private Marker mMarker = null;
   private Circle mCircle = null;
-  private Button mCancel;
-  private Button mSave;
 
   private int mRadiusValue = 50;
   private TextView mRadiusText;
   private SeekBar mSeekBar;
 
   private GpsZone mZoneToEdit = null;
+
+  private String mNewZoneAlias = null;
+  private GpsZone.ZoneType mNewZoneType = null;
   private LatLng mInitLatLng = null;
   private boolean mUpdating = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    requestWindowFeature(Window.FEATURE_NO_TITLE);
+    super.onCreate(savedInstanceState, true, false, true);
+
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
     setContentView(R.layout.google_maps_layout);
 
     Bundle extras = getIntent().getExtras();
@@ -62,10 +61,19 @@ public class GoogleMapsActivity extends FragmentActivity {
       if (extras.containsKey(EXTRA_GPS_ZONE_DATA)) {
         mZoneToEdit = extras.getParcelable(EXTRA_GPS_ZONE_DATA);
         mUpdating = true;
+        mNewZoneAlias = mZoneToEdit.getAlias();
+        mNewZoneType = mZoneToEdit.getZoneType();
       } else if (extras.containsKey(EXTRA_START_LOC)) {
         mInitLatLng = extras.getParcelable(EXTRA_START_LOC);
       }
     }
+    String title;
+    if (mUpdating) {
+      title = "Updating " + mZoneToEdit.getAlias();
+    } else {
+      title = "Adding new zone";
+    }
+    getSupportActionBar().setTitle(title);
 
     mRadiusText = (TextView)findViewById(R.id.radius_text);
     mSeekBar = (SeekBar)findViewById(R.id.radius_seekbar);
@@ -85,28 +93,9 @@ public class GoogleMapsActivity extends FragmentActivity {
     });
 
 
-    mCancel = (Button)findViewById(R.id.cancel);
-    mSave = (Button)findViewById(R.id.save);
     mMapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
     mMap = mMapFragment.getMap();
 
-    mCancel.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        finish();
-      }
-    });
-
-    mSave.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if (mMarker == null || !mMarker.isVisible()) {
-          Toast.makeText(GoogleMapsActivity.this, "Select a location first", Toast.LENGTH_SHORT).show();
-        } else {
-          showAliasDialog();
-        }
-      }
-    });
 
     mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
       @Override
@@ -116,9 +105,7 @@ public class GoogleMapsActivity extends FragmentActivity {
     });
 
 
-
     if (mUpdating) {
-      mSave.setText("Update");
       mRadiusValue = mZoneToEdit.getRadius();
       placeMarkerOnMap(new LatLng(mZoneToEdit.getLat(), mZoneToEdit.getLong()));
       mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -131,28 +118,60 @@ public class GoogleMapsActivity extends FragmentActivity {
     setRadiusText(mRadiusValue);
   }
 
-  private void showAliasDialog() {
-    View dialogView = LayoutInflater.from(this).inflate(R.layout.gmaps_zone_adder, null, false);
-    EditText input = (EditText)dialogView.findViewById(R.id.alias_edit);
-    Spinner spinner = (Spinner)dialogView.findViewById(R.id.zone_category);
-    setZoneTypeSpinner(spinner, mUpdating ? mZoneToEdit.getZoneType() : null);
-    if (mUpdating) {
-      input.setText(mZoneToEdit.getAlias());
-    }
-    AlertDialog alertD = new AlertDialog.Builder(GoogleMapsActivity.this)
-            .setTitle("Zone alias")
-//            .setMessage("Alias of Please set an alias for selected zone")
-            .setView(dialogView)
-            .setPositiveButton(android.R.string.ok, null)
-            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int whichButton) {
-                dialog.dismiss();
-              }
-            })
-            .create();
-    alertD.setOnShowListener(new OnAliasShowListener(alertD, input, spinner));
-    alertD.show();
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.google_maps_menu, menu);
+    return true;
   }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.save:
+        saveZone();
+        return true;
+      case R.id.settings:
+        showSettingsDialog(false);
+        return true;
+      case android.R.id.home:
+        finish();
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+
+  private void saveZone() {
+    if (mMarker == null || !mMarker.isVisible()) {
+      Toast.makeText(GoogleMapsActivity.this, "Select a location first", Toast.LENGTH_SHORT).show();
+    } else {
+      if (mUpdating) {
+        saveZoneAndFinish();
+      } else {
+        if (mNewZoneType == null || mNewZoneAlias == null) {
+          showSettingsDialog(true);
+        }
+      }
+    }
+  }
+
+  private void saveZoneAndFinish() {
+    GpsZone newZone = new GpsZone(mNewZoneAlias,
+                            mMarker.getPosition().latitude,
+                            mMarker.getPosition().longitude,
+                            mRadiusValue,
+                            mNewZoneType);
+    if (!mUpdating) {
+            GpsZoneDAO.getInstance(GoogleMapsActivity.this).saveZone(newZone);
+    } else {
+            GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(), newZone);
+    }
+    setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
+    finish();
+  }
+
+
 
   private void setZoneTypeSpinner(Spinner spinner, GpsZone.ZoneType zoneType) {
     int i = 0;
@@ -242,16 +261,40 @@ public class GoogleMapsActivity extends FragmentActivity {
     }
   }
 
+  private void showSettingsDialog(boolean finishAfterOk) {
+    View dialogView = LayoutInflater.from(this).inflate(R.layout.gmaps_zone_adder, null, false);
+    EditText input = (EditText)dialogView.findViewById(R.id.alias_edit);
+    Spinner spinner = (Spinner)dialogView.findViewById(R.id.zone_category);
+    setZoneTypeSpinner(spinner, mUpdating ? mNewZoneType : null);
+    if (mUpdating) {
+      input.setText(mNewZoneAlias);
+    }
+    AlertDialog alertD = new AlertDialog.Builder(GoogleMapsActivity.this)
+            .setTitle("Zone settings")
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+              public void onClick(DialogInterface dialog, int whichButton) {
+                dialog.dismiss();
+              }
+            })
+            .create();
+    alertD.setOnShowListener(new OnAliasShowListener(alertD, input, spinner, finishAfterOk));
+    alertD.show();
+  }
+
   public class OnAliasShowListener implements DialogInterface.OnShowListener {
 
     private AlertDialog mDialog;
     private EditText mInput;
     private Spinner mZoneCategory;
+    private boolean mFinishAfterOk;
 
-    public OnAliasShowListener(AlertDialog dialog, EditText input, Spinner zoneCategory) {
+    public OnAliasShowListener(AlertDialog dialog, EditText input, Spinner zoneCategory, boolean finishAfterOk) {
       mDialog = dialog;
       mInput = input;
       mZoneCategory = zoneCategory;
+      mFinishAfterOk = finishAfterOk;
     }
 
     @Override
@@ -279,25 +322,14 @@ public class GoogleMapsActivity extends FragmentActivity {
           Toast.makeText(GoogleMapsActivity.this, "Alias already exists: " + value,
                   Toast.LENGTH_SHORT).show();
         } else {
-          if (!mUpdating) {
-            GpsZoneDAO.getInstance(GoogleMapsActivity.this).saveZone(
-                    new GpsZone(value,
-                            mMarker.getPosition().latitude,
-                            mMarker.getPosition().longitude,
-                            mRadiusValue,
-                            zoneType
-                    ));
+          mNewZoneAlias = value;
+          mNewZoneType = zoneType;
+          if (mFinishAfterOk) {
+            saveZoneAndFinish();
           } else {
-            GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(),
-                    new GpsZone(value,
-                            mMarker.getPosition().latitude,
-                            mMarker.getPosition().longitude,
-                            mRadiusValue,
-                            zoneType));
+            mDialog.dismiss();
           }
-          mDialog.dismiss();
-          setResult(RESULT_OK, new Intent(ACTION_REFRESH_ZONE_LIST));
-          finish();
+
         }
       }
     }
