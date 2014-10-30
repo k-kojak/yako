@@ -104,7 +104,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
     }
 
     if (iv != null) {
-      if (!coment.isIsMe() && (prevMsg == null || prevMsg.isIsMe())) {
+      if (!coment.isIsMe()) {
         showImageOfUser(coment, msgBubble, iv);
       } else {
         iv.setVisibility(View.GONE);
