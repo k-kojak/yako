@@ -28,7 +28,6 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
   public static final int FRIEND_MESSAGE = 1;
   public static final int MESSAGE_TYPE_COUNT = 2;
 	private List<FullSimpleMessage> messages = new ArrayList<FullSimpleMessage>();
-	private LinearLayout wrapper;
   private Context context;
 
 	@Override
@@ -91,33 +90,33 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
       }
 		}
     
-		wrapper = (LinearLayout) row.findViewById(R.id.content_wrap);
-    
 		TextView msgBubble = (TextView) row.findViewById(R.id.comment);
-		msgBubble.setText(coment.getContent().getContent().toString());
-
+    TextView time = (TextView) row.findViewById(R.id.timestamp);
     ImageView iv = (ImageView)row.findViewById(R.id.img);
-    iv.setVisibility(View.GONE);
+    View padding = row.findViewById(R.id.padding);
+
+		msgBubble.setText(coment.getContent().getContent().toString());
+    time.setText(Utils.getSimplifiedTime(coment.getDate()));
 
     FullSimpleMessage prevMsg = null;
     if (position - 1 >= 0) {
       prevMsg = getItem(position - 1);
     }
-    
-    if(!coment.isIsMe() && (prevMsg == null || prevMsg.isIsMe())) {
-      showImageOfUser(coment, msgBubble, iv);
-    }
-    
-    if (prevMsg != null) {
-      // dealing with timestamps
-      if (coment.getDate().getTime() - prevMsg.getDate().getTime() < 60000) {
-        row.findViewById(R.id.hr).setVisibility(View.GONE);
+
+    if (iv != null) {
+      if (!coment.isIsMe() && (prevMsg == null || prevMsg.isIsMe())) {
+        showImageOfUser(coment, msgBubble, iv);
       } else {
-        row.findViewById(R.id.hr).setVisibility(View.VISIBLE);
-        TextView ts = (TextView)row.findViewById(R.id.timestamp);
-        ts.setText(Utils.getSimplifiedTime(coment.getDate()));
+        iv.setVisibility(View.GONE);
       }
     }
+
+    if (prevMsg == null || prevMsg.isIsMe() != coment.isIsMe()) {
+      padding.setVisibility(View.VISIBLE);
+    } else {
+      padding.setVisibility(View.GONE);
+    }
+
 		return row;
 	}
   
@@ -129,12 +128,6 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
     }
     iv.setImageBitmap(img);
 
-    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT);
-
-    params.setMargins(10, 30, 75, 5);    
-    msgBubble.setLayoutParams(params);
     iv.setVisibility(View.VISIBLE);
   } 
 

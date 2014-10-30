@@ -27,7 +27,7 @@ public class ZoneDisplayActionBarActivity extends ActionBarActivity {
     setActionBar();
   }
 
-  
+
   protected void setActionBar() {
     if (mChangeColor || mOverrideTitle || mOverrideSubtitle) {
       GpsZone closest = YakoApp.getClosestZone(this, false);
