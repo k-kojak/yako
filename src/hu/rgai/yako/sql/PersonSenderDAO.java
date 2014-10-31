@@ -72,6 +72,9 @@ public class PersonSenderDAO {
    * @return
    */
   public long getOrInsertPerson(Person person) {
+    if (person.getName() == null) {
+      person.setName("<Unknown name>");
+    }
     SQLiteDatabase db = mDbHelper.getDatabase();
     db.beginTransaction();
     long _id = getPersonRawId(person);
