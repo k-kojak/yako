@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:messagelogger="http://schemas.android.com/apk/res-auto">
-  <item android:id="@+id/edit_account_save"
-          android:title="@string/save"
-          messagelogger:showAsAction="ifRoom"
+  <item
+      android:id="@+id/edit_account_save"
+      android:icon="@drawable/ic_action_accept"
+      android:title="@string/save"
+      messagelogger:showAsAction="ifRoom"
           />
-  <item android:id="@+id/edit_account_delete"
-          android:title="@string/delete"
-          messagelogger:showAsAction="ifRoom"
+  <item
+      android:id="@+id/edit_account_delete"
+      android:icon="@drawable/ic_action_discard"
+      android:title="@string/delete"
+      messagelogger:showAsAction="ifRoom"
           />
-  <item android:id="@+id/edit_account_cancel"
-          android:title="@string/cancel"
-          messagelogger:showAsAction="ifRoom"
+  <item
+      android:id="@+id/edit_account_cancel"
+      android:icon="@drawable/ic_action_cancel"
+      android:title="@string/cancel"
+      messagelogger:showAsAction="ifRoom"
           />
 </menu>

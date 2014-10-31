@@ -69,10 +69,7 @@
         <activity android:name="hu.rgai.yako.view.activities.SimpleEmailSettingActivity"
                   android:label="@string/setup_simple_email_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
-            <meta-data android:name="android.support.UI_OPTIONS"
-                       android:value="splitActionBarWhenNarrow"/>
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
         </activity>
@@ -81,10 +78,7 @@
         <activity android:name="hu.rgai.yako.view.activities.InfEmailSettingActivity"
                   android:label="@string/setup_inf_email_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
-            <meta-data android:name="android.support.UI_OPTIONS"
-                       android:value="splitActionBarWhenNarrow"/>
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
         </activity>
@@ -93,10 +87,7 @@
         <activity android:name="hu.rgai.yako.view.activities.GmailSettingActivity"
                   android:label="@string/setup_gmail_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
-            <meta-data android:name="android.support.UI_OPTIONS"
-                       android:value="splitActionBarWhenNarrow"/>
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
         </activity>
@@ -117,10 +108,7 @@
         <activity android:name="hu.rgai.yako.view.activities.FacebookSettingActivity"
                   android:label="@string/setup_fb_account"
                   android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-                  android:uiOptions="splitActionBarWhenNarrow"
                   android:parentActivityName="hu.rgai.yako.view.activities.AccountSettingsListActivity">
-            <meta-data android:name="android.support.UI_OPTIONS"
-                       android:value="splitActionBarWhenNarrow"/>
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value="hu.rgai.yako.view.activities.AccountSettingsListActivity"/>
         </activity>
