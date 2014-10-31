@@ -279,25 +279,38 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
     return getMessageList(offset, limit, loadedMessages, 20);
   }
-  
+
+  private void putTime(HashMap<String, Long> map, String s, long startTime) {
+    if (!map.containsKey(s)) {
+      map.put(s, 0l);
+    }
+    map.put(s, map.get(s) + (System.currentTimeMillis() - startTime));
+  }
+
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
           UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
-    
+    long s1 = System.currentTimeMillis();
+    HashMap<String, Long> times = new HashMap<String, Long>();
     try {
       List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-      IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
+      long s3 = System.currentTimeMillis();
+      IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+      putTime(times, "getStoreGetFolder", s3);
       if (imapFolder == null) {
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
       
-      
+      long s4 = System.currentTimeMillis();
       imapFolder.open(Folder.READ_ONLY);
       UIDFolder uidImapFolder = imapFolder;
       int messageCount = imapFolder.getMessageCount();
+      putTime(times, "openFolderGetMsgCount", s4);
+      long s5 = System.currentTimeMillis();
       long nextUID = getNextUID(imapFolder, uidImapFolder, messageCount);
+      putTime(times, "getNextUID", s5);
       if (offset == 0 && !hasNewMail(nextUID, messageCount) && !loadedMessages.isEmpty()) {
         Log.d("rgai", "NO NEW MAIL AND NO DELETION AND VALID KEY");
         if (MainActivity.isMainActivityVisible()) {
@@ -315,15 +328,25 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       Message[] messages;
       List<MessageListElement> flagMessages = null;
       if (offset == 0 && !loadedMessages.isEmpty()) {
+        long s6 = System.currentTimeMillis();
         messages = uidImapFolder.getMessagesByUID(getSmallestUID(loadedMessages), UIDFolder.LASTUID);
+        putTime(times, "getMessagesByUid", s6);
+        s6 = System.currentTimeMillis();
         MessageListResult mlr = getFlagChangesOfMessages(loadedMessages);
+        putTime(times, "getFlagChanges", s6);
+        s6 = System.currentTimeMillis();
         flagMessages = mlr.getMessages();
+        putTime(times, "getMessages", s6);
       } else {
         messages = imapFolder.getMessages(start, end);
       }
+      long s2 = System.currentTimeMillis();
       for (int i = messages.length - 1; i >= 0; i--) {
+
+        long s7 = System.currentTimeMillis();
         Message m = messages[i];
         long uid = uidImapFolder.getUID(m);
+        putTime(times, "getUID", s7);
 
 
         if (flagMessages != null) {
@@ -341,17 +364,23 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           }
         }
 
-
+        s7 = System.currentTimeMillis();
         Flags flags = m.getFlags();
+        putTime(times, "getFlags", s7);
         boolean seen = flags.contains(Flags.Flag.SEEN);
 
+        s7 = System.currentTimeMillis();
         Date date = m.getSentDate();
+        putTime(times, "getSentDate", s7);
 
         // Skipping email from listing, because it is a spam probably,
         // ...at least citromail does not give any information about the email in some cases,
         // and in web browsing it displays an "x" sign before the title, which may indicate
         // that this is a spam
+
+        s7 = System.currentTimeMillis();
         Person fromPerson = getSenderPersonObject(m);
+        putTime(times, "getFrom", s7);
         if (fromPerson == null) {
           // skipping email
         } else {
@@ -367,9 +396,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             System.out.println("adding: new Date("+ date.getTime() +"l), \""+ fromEmail +"\")");
           }*/
 
+          s7 = System.currentTimeMillis();
           EmailContent content = getMessageContent(m);
+          putTime(times, "getMessageContent", s7);
 
+          s7 = System.currentTimeMillis();
           String subject = m.getSubject();
+          putTime(times, "getSubject", s7);
           if (subject != null) {
             subject = prepareMimeFieldToDecode(subject);
             try {
@@ -401,10 +434,22 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           emails.add(mle);
         }
       }
+      Log.d("yako", "total for cycle time -> " + (System.currentTimeMillis() - s2));
 
 
       imapFolder.close(false);
-      
+      Log.d("yako", "total time -> " + (System.currentTimeMillis() - s1));
+
+      long sum = 0;
+      for (Long e : times.values()) {
+        sum += e;
+      }
+      Log.d("yako", "total for cycle time based on times map-> " + sum);
+      for (Map.Entry<String, Long> e : times.entrySet()) {
+        Formatter f = new Formatter().format("%.2f", (e.getValue() * 100.0 / sum));
+        Log.d("yako", "\t" + e.getKey() + " -> " + e.getValue() + " -> "+ f.toString() +" %");
+      }
+
       return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
     } catch (AuthenticationFailedException ex) {
       throw ex;
@@ -600,7 +645,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
    * @throws IOException 
    */
   protected EmailContent getMessageContent(Message fullMessage) throws MessagingException, IOException {
-    
+//    return new EmailContent(new HtmlContent("test", HtmlContent.ContentType.TEXT), null);
 //    System.setProperty("javax.activation.debug", "true");
     HtmlContent content = new HtmlContent();
     List<Attachment> attachments = null;
@@ -614,9 +659,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               HtmlContent.ContentType.TEXT_HTML);
       return new EmailContent(hc, null);
     }
-    
+
     if (fullMessage.isMimeType("text/*")) {
-      
+
       if (fullMessage.isMimeType("text/html")) {
         content = new HtmlContent((String) msg, HtmlContent.ContentType.TEXT_HTML);
       } else if (fullMessage.isMimeType("text/plain")) {
@@ -624,20 +669,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       } else {
         content = new HtmlContent((String) msg, HtmlContent.ContentType.TEXT);
       }
-        
+
     } else if (fullMessage.isMimeType("multipart/*")) {
-      
+
       if (msg instanceof Multipart) {
         Multipart mp = (Multipart) msg;
         content = getContentOfMultipartMessage(mp, 0);
         attachments = getAttachmentsOfMultipartMessage(mp, true, 0);
-        
+
       }
-        
+
     } else if (msg instanceof IMAPInputStream) {
       IMAPInputStream imapIs = (IMAPInputStream) msg;
       InputStream dis = MimeUtility.decode(imapIs, "binary");
-      
+
       BufferedReader br = new BufferedReader(new InputStreamReader(dis));
       String line;
       while ((line = br.readLine()) != null) {
