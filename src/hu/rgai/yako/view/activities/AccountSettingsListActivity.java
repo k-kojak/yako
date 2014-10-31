@@ -52,11 +52,10 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
-  FacebookSettingActivity fbFragment = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState, true, false, false);
+    super.onCreate(savedInstanceState, true, false, true);
   }
 
   @Override

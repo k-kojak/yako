@@ -35,8 +35,8 @@
             android:src="@drawable/ic_fb_messenger"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:layout_marginBottom="0px"
-            android:layout_marginRight="0px"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
             />
 
     </RelativeLayout>
@@ -60,7 +60,7 @@
                 android:maxLines="2"
                 android:ellipsize="end"
                 android:marqueeRepeatLimit="marquee_forever"
-                android:text="Subject"
+                android:text="@string/subject"
                 android:textColor="#040404"
                 android:typeface="sans"
                 android:textSize="16sp"
@@ -91,8 +91,8 @@
                         android:text="Jan 01"
                         android:layout_marginRight="5dip"
                         android:textSize="12sp"
-                        android:textColor="#10bcc9"
-                        android:textStyle="bold"
+                        android:textColor="#aa000000"
+                        android:textStyle="normal"
                         />
 
                     <ImageView
