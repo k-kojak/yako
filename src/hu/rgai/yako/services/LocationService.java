@@ -42,8 +42,11 @@ public class LocationService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
-    mLocationReceiver = new LocationUpdateReceiver();
-    registerReceiver(mLocationReceiver, new IntentFilter(ACTION_NEW_LOCATION_ARRIVED));
+    Log.d("yako", "Location Service started...");
+    if (mLocationReceiver == null) {
+      mLocationReceiver = new LocationUpdateReceiver();
+      registerReceiver(mLocationReceiver, new IntentFilter(ACTION_NEW_LOCATION_ARRIVED));
+    }
   }
 
   @Override
