@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
               android:background="#ffffffff">
 
     <LinearLayout
+        android:id="@+id/header"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="#68A4CC"
@@ -49,8 +50,51 @@
         android:id="@+id/email_content"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_below="@id/header"
         android:scrollbarStyle="outsideOverlay"
-        android:padding="10dip">
+        android:paddingTop="6dip"
+        android:paddingLeft="6dip"
+        android:paddingRight="6dip"
+        android:paddingBottom="24dip" >
     </WebView>
 
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/quick_answer_footer"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/quick_answer_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quick Answers"
+            android:textSize="18sp"
+            android:textColor="#ffaaaaaa"
+            android:paddingLeft="7dp"
+            android:paddingRight="21dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:clickable="true"
+            android:background="@drawable/quick_answer_btn_bg"
+            />
+
+        <HorizontalScrollView
+            android:id="@+id/quick_answers"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#ff222222" >
+
+            <LinearLayout
+                android:id="@+id/quick_answer_inner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+         </HorizontalScrollView>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

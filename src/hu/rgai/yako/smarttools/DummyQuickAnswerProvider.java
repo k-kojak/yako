@@ -13,10 +13,20 @@ public class DummyQuickAnswerProvider implements QuickAnswerProvider {
   @Override
   public List<String> getQuickAnswers(MessageListElement message) {
     List<String> answers = new LinkedList<String>();
-    if (Math.random() > 0.5) {
+    if (Math.random() > 0.01) {
       answers.add("Igen");
       answers.add("Talán");
       answers.add("Sör");
+      answers.add("Lorem");
+      answers.add("Ipsum");
+      answers.add("dolor");
+      answers.add("sit");
+      answers.add("amet");
+      answers.add("consectetur");
+      answers.add("adipiscing");
+      answers.add("elit");
+      answers.add("Donec");
+      answers.add("pellentesque");
     }
     return answers;
   }
