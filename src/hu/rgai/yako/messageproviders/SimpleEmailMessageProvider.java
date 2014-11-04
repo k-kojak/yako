@@ -717,7 +717,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         }
         continue;
       }
-      files.add(new Attachment(MimeUtility.decodeText(bp.getFileName()), bp.getSize()));
+      String fName = bp.getFileName() == null ? "noname" : bp.getFileName();
+      files.add(new Attachment(MimeUtility.decodeText(fName), bp.getSize()));
       if (!onlyInfo) {
         InputStream is = bp.getInputStream();
         File f = new File(this.attachmentFolder + bp.getFileName());

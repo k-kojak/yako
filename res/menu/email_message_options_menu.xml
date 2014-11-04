@@ -18,17 +18,6 @@
           messagelogger:showAsAction="ifRoom"
         />
 
-    <item
-        android:id="@+id/quick_answer"
-        android:title="@string/quick_answer"
-        messagelogger:showAsAction="ifRoom" >
-        <menu>
-            <item
-                android:title="Placeholder1"
-                messagelogger:showAsAction="ifRoom"/>
-        </menu>
-    </item>
-
 
     <!--<item android:id="@+id/forward"
     android:icon="@drawable/ic_action_forward"
