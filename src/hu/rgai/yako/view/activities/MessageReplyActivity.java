@@ -79,6 +79,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
   private Account mAccount;
   private WebView mQuotedMessage = null;
   private CheckBox mQuoteCheckbox = null;
+  private View mQuotedSeparator = null;
   private EditText mSubject = null;
   private MessageListElement mMessage = null;
   private FullSimpleMessage mFullMessage = null;
@@ -111,6 +112,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
+    mQuotedSeparator = (View) findViewById(R.id.quoted_separator);
 
 
     if (getIntent().getExtras() != null) {
@@ -188,6 +190,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     } else {
       mQuotedMessage.setVisibility(View.GONE);
       mQuoteCheckbox.setVisibility(View.GONE);
+      mQuotedSeparator.setVisibility(View.GONE);
     }
     showHideSubjectField();
     showHideCharacterCountField();
@@ -250,6 +253,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       visibility = View.GONE;
     }
     mQuotedMessage.setVisibility(visibility);
+    mQuotedSeparator.setVisibility(visibility);
   }
 
   private void processImplicitIntent(Intent intent) {

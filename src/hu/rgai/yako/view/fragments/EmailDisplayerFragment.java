@@ -74,7 +74,6 @@ public class EmailDisplayerFragment extends Fragment {
     mWebView = (WebView) mView.findViewById(R.id.email_content);
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
     
-    
     EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
     mAccount = eda.getAccount();
     mMessage = eda.getMessage();
