@@ -190,7 +190,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     } else {
       mQuotedMessage.setVisibility(View.GONE);
       mQuoteCheckbox.setVisibility(View.GONE);
-      mQuotedSeparator.setVisibility(View.GONE);
     }
     showHideSubjectField();
     showHideCharacterCountField();
@@ -253,7 +252,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       visibility = View.GONE;
     }
     mQuotedMessage.setVisibility(visibility);
-    mQuotedSeparator.setVisibility(visibility);
   }
 
   private void processImplicitIntent(Intent intent) {
