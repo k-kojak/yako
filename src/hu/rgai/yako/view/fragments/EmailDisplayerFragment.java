@@ -31,6 +31,7 @@ import hu.rgai.yako.view.activities.EmailDisplayerActivity;
 import hu.rgai.yako.workers.MessageSender;
 import net.htmlparser.jericho.Source;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -73,6 +74,8 @@ public class EmailDisplayerFragment extends Fragment {
     mView = inflater.inflate(R.layout.email_displayer, container, false);
     mWebView = (WebView) mView.findViewById(R.id.email_content);
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
+    mWebView.getSettings().setBuiltInZoomControls(true);
+
     
     EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
     mAccount = eda.getAccount();
@@ -80,7 +83,7 @@ public class EmailDisplayerFragment extends Fragment {
     mFrom = mMessage.getFrom();
     mContent = (FullSimpleMessage) mMessage.getFullMessage();
     displayMessage();
-    
+
     
     
     mWebViewClient = new WebViewClient() {
@@ -204,6 +207,21 @@ public class EmailDisplayerFragment extends Fragment {
     ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));
+    ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());;
+    
+    String recipientsNames = "to: ";
+    LinkedList<Person> recipientsList = (LinkedList<Person>) mMessage.getRecipientsList();
+
+    for(Person person : recipientsList) {
+      recipientsNames += person.getName();
+
+      if(!recipientsList.getLast().equals(person)) {
+        recipientsNames += " ,"; 
+      }
+    }
+    
+    ((TextView)mView.findViewById(R.id.recipients)).setText(recipientsNames);
+
     
     HtmlContent hc = mContent.getContent();
     String c = hc.getContent().toString();

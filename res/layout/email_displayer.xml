@@ -5,13 +5,13 @@
               android:layout_height="fill_parent"
               android:background="#ffffffff">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/header"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#68A4CC"
         android:padding="1dip"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="#EDEAE8">
 
         <ImageView
             android:id="@+id/avatar"
@@ -21,7 +21,9 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:id="@+id/info_layout"
+            android:layout_toRightOf="@id/avatar">
 
             <TextView
                 android:id="@+id/from_name"
@@ -31,26 +33,55 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 />
+            
+             <TextView
+                android:id="@+id/from_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="10sp"
+                />
+             
+             <TextView
+                android:id="@+id/recipients"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="10sp"
+                />
 
 
+
+        </LinearLayout>
+
+        
             <TextView
                 android:id="@+id/date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textSize="13sp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 />
 
-        </LinearLayout>
-
-    </LinearLayout>
+    </RelativeLayout>
 
 
+            
+                    
+    <View
+       android:id="@+id/separator"   
+       android:layout_width="fill_parent"
+       android:layout_height="1dp"
+       android:background="#c0c0c0"
+       android:layout_below="@id/header"/>
+        
     <WebView
         android:id="@+id/email_content"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@id/header"
+        android:layout_below="@id/separator"
         android:scrollbarStyle="outsideOverlay"
         android:paddingTop="6dip"
         android:paddingLeft="6dip"
