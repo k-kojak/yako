@@ -3,12 +3,15 @@ package hu.rgai.yako.view.fragments;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -122,7 +125,21 @@ public class EmailDisplayerFragment extends Fragment {
     List<String> answers = qap.getQuickAnswers(mMessage);
 
     if (answers != null && !answers.isEmpty()) {
+      Resources r = getResources();
+      float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, r.getDisplayMetrics());
+      int i = 0;
       for (final String s : answers) {
+
+        if (i > 0) {
+          LinearLayout v = new LinearLayout(getActivity());
+          LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int)(px * 1), ViewGroup.LayoutParams.MATCH_PARENT);
+          params.topMargin = (int)(8 * px);
+          params.bottomMargin = (int)(8 * px);
+          v.setBackgroundColor(0xff393939);
+          v.setLayoutParams(params);
+          ansHolder.addView(v);
+        }
+
         TextView tv = (TextView) inflater.inflate(R.layout.quick_answer_item, container, false);
         tv.setText(s);
         tv.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +149,8 @@ public class EmailDisplayerFragment extends Fragment {
           }
         });
         ansHolder.addView(tv);
+
+        i++;
       }
 
       new Handler().postDelayed(new Runnable() {
