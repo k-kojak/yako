@@ -1,6 +1,7 @@
 package hu.rgai.yako.view.activities;
 
 import android.content.Context;
+import android.support.v7.app.ActionBar;
 import android.view.*;
 import android.widget.Toast;
 import hu.rgai.android.test.R;
@@ -63,6 +64,9 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState, true, false, true);
+
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
 
     Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(this.getClass().getName());
