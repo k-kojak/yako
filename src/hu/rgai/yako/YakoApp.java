@@ -198,20 +198,37 @@ public class YakoApp extends Application {
   }
 
   public static void setActionBarColor(ActionBarActivity aba, GpsZone closest) {
-    int titleColor;
+    int targetColor;
 
     if (closest != null) {
-      titleColor = 0xff << 24 | closest.getZoneType().getColor();
+      targetColor = 0xff << 24 | closest.getZoneType().getColor();
     } else {
-      titleColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
+      targetColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
     }
 
-    TransitionDrawable titleAnimation = new TransitionDrawable(
-            new Drawable[]{new ColorDrawable(mPreviousActionbarColor), new ColorDrawable(titleColor)});
-    aba.getSupportActionBar().setBackgroundDrawable(titleAnimation);
-    titleAnimation.startTransition(1000);
+    String device = getDeviceName();
+    ColorDrawable targetColorDr = new ColorDrawable(targetColor);
+    if (device.startsWith("htc")) {
+      aba.getSupportActionBar().setBackgroundDrawable(targetColorDr);
+    } else {
+      TransitionDrawable titleAnimation = new TransitionDrawable(
+              new ColorDrawable[]{new ColorDrawable(mPreviousActionbarColor), targetColorDr});
+      aba.getSupportActionBar().setBackgroundDrawable(titleAnimation);
+      titleAnimation.startTransition(1000);
+    }
 
-    mPreviousActionbarColor = titleColor;
+
+    mPreviousActionbarColor = targetColor;
+  }
+
+  public static String getDeviceName() {
+    String manufacturer = Build.MANUFACTURER.toLowerCase();
+    String model = Build.MODEL.toLowerCase();
+    if (model.startsWith(manufacturer)) {
+      return model;
+    } else {
+      return manufacturer + " " + model;
+    }
   }
 
   public static void setActionBarTitle(ActionBarActivity aba, GpsZone closest, boolean setTitle, boolean setSubtitle) {
