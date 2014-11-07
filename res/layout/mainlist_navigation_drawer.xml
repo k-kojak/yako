@@ -64,12 +64,13 @@
                 android:orientation="vertical" />
 
             <View
-
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
-                android:background="#3a3a3a"
+                android:background="#22ffffff"
                 android:layout_marginBottom="4dp"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginTop="4dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"/>
 
             <RelativeLayout
                 android:layout_width="fill_parent"
