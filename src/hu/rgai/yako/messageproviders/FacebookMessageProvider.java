@@ -397,6 +397,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         xmpp.disconnect();
         success = false;
       } catch (Exception e) {
+        Log.d("yako", "", e);
         success = false;
       }
     }
