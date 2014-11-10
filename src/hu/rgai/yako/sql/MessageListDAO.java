@@ -33,10 +33,6 @@ public class MessageListDAO  {
   public static final String COL_CONTENT = "content";
 
   private static final String COL_FROM_ID = PersonSenderDAO.TABLE_PERSON + PersonSenderDAO.COL_ID;
-//  public static final String COL_FROM_ID = "from_id";
-//  public static final String COL_FROM_NAME = "from_name";
-//  public static final String COL_FROM_TYPE = "from_type";
-//  public static final String COL_FROM_CONTACT_ID = "from_contact_id";
 
   public static final String COL_DATE = "date";
   public static final String COL_MSG_TYPE = "message_type";
@@ -54,9 +50,6 @@ public class MessageListDAO  {
           + COL_UNREAD_CNT + " integer not null, "
           + COL_CONTENT + " text, "
           + COL_FROM_ID + " integer NOT NULL, "
-//          + COL_FROM_NAME + " text, "
-//          + COL_FROM_TYPE + " text, "
-//          + COL_FROM_CONTACT_ID + " integer, "
           + COL_DATE + " text, "
           + COL_MSG_TYPE + " text, "
           + COL_ACCOUNT_ID + " integer not null,"
@@ -136,9 +129,6 @@ public class MessageListDAO  {
       long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(from);
       ContentValues cv = new ContentValues();
       cv.put(COL_FROM_ID, fromID);
-//      cv.put(COL_FROM_NAME, from.getName());
-//      cv.put(COL_FROM_TYPE, from.getType().toString());
-//      cv.put(COL_FROM_CONTACT_ID, from.getContactId());
       mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
     } else {
       throw new RuntimeException("Person was NULL when updating message's getFrom value");
@@ -182,17 +172,11 @@ public class MessageListDAO  {
       if (mle.getFrom() == null) return;
       long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
       cv.put(COL_FROM_ID, fromID);
-//      cv.put(COL_FROM_NAME, mle.getFrom().getName());
-//      cv.put(COL_FROM_TYPE, mle.getFrom().getType().toString());
-//      cv.put(COL_FROM_CONTACT_ID, mle.getFrom().getContactId());
 
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());
       cv.put(COL_MSG_TYPE, mle.getMessageType().toString());
       cv.put(COL_ACCOUNT_ID, accounts.get(mle.getAccount()));
       cv.put(COL_IS_IMPORTANT, mle.isImportant() ? 1 : 0);
-//      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-//        cv.put(COL_CONTENT, ((FullSimpleMessage) mle.getFullMessage()).getContent().getContent().toString());
-//      }
     } catch (NullPointerException ex) {
       Log.d("rgai", "mle.getFrom has a null value somewhere: " + mle.getFrom(), ex);
     }
@@ -210,22 +194,6 @@ public class MessageListDAO  {
 
   public Cursor getAllMessagesCursor(LinkedList<Long> accountIds, boolean getAttachments, boolean orderByImportant) {
     return getMessagesCursor(accountIds, null, false, getAttachments, orderByImportant);
-//    String selection = null;
-//    String[] selectionArgs = null;
-//    if (accountId != -1) {
-//      selection = COL_ACCOUNT_ID + " = ?";
-//      selectionArgs = new String[]{Long.toString(accountId)};
-//    }
-//
-//    // this is the query what I need
-//    // SELECT a.*, SUM(b.cnt) FROM a LEFT JOIN (SELECT b.a_id, COUNT(c.*) AS cnt FROM b LEFT JOIN c ON b.id = c.b_id GROUP BY b.a_id) AS b ON a.id = b.a_id GROUP BY a.id;
-//
-//    String cols = Utils.joinString(allColumns, ", ");
-//    String query = "SELECT " + cols + ", COUNT(a." + AttachmentDAO.COL_ID + ") AS attach_cnt"
-//            + " FROM " + TABLE_MESSAGES + " AS m, " + AttachmentDAO.TABLE_ATTACHMENTS + " AS a"
-//            + " WHERE a." + AttachmentDAO.COL_ID;
-//
-//    return mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, selection, selectionArgs, null, null, COL_DATE + " DESC");
   }
 
 
@@ -245,8 +213,6 @@ public class MessageListDAO  {
     // SELECT a.*, SUM(b.cnt) FROM a LEFT JOIN (SELECT b.a_id, COUNT(c.*) AS cnt FROM b LEFT JOIN c ON b.id = c.b_id GROUP BY b.a_id) AS b ON a.id = b.a_id GROUP BY a.id;
 
     String cols = Utils.joinString(allColumns, ", ");
-
-
 
     /**
      * Constructing attachmentQuery part if needed
@@ -275,7 +241,6 @@ public class MessageListDAO  {
     if (!accountIds.isEmpty()) {
       String inClosure = SQLHelper.Utils.getInClosure(accountIds);
       accountQuery = " AND " + COL_ACCOUNT_ID + " IN " + inClosure;      
-      //selectionArgs.add(inClosure);
     }
 
 
@@ -457,13 +422,6 @@ public class MessageListDAO  {
     MessageListElement mle = cursorToMessageListElement(cursor, accounts);
     cursor.close();
     return mle;
-//    String column = rawId ? COL_ID : COL_MSG_ID;
-//    Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGES, allColumns, column + " = ?", new String[]{id},
-//            null, null, null);
-//    cursor.moveToFirst();
-//    MessageListElement mle = cursorToMessageListElement(cursor, accounts);
-//    cursor.close();
-//    return mle;
   }
 
 
