@@ -290,19 +290,24 @@ public class EmailDisplayerFragment extends Fragment {
 
     @Override
     protected void onPostExecute(String result) {
-      try {
-        JSONObject root = new JSONObject(result);
-        JSONArray data = root.getJSONArray("data");
-        List<String> answers = null;
-        if (data != null && data.length() != 0) {
-          answers = new ArrayList<String>(data.length());
-          for (int i = 0; i < data.length(); i++) {
-            answers.add(data.get(i).toString());
+      if (result == null) {
+        loadQuickAnswers(mInflater, mContainer, null, false);
+      } else {
+        try {
+          JSONObject root = new JSONObject(result);
+          JSONArray data = root.getJSONArray("data");
+          List<String> answers = null;
+          if (data != null && data.length() != 0) {
+            answers = new ArrayList<String>(data.length());
+            for (int i = 0; i < data.length(); i++) {
+              answers.add(data.get(i).toString());
+            }
           }
+          loadQuickAnswers(mInflater, mContainer, answers, false);
+        } catch (JSONException e) {
+          loadQuickAnswers(mInflater, mContainer, null, false);
+          e.printStackTrace();
         }
-        loadQuickAnswers(mInflater, mContainer, answers, false);
-      } catch (JSONException e) {
-        e.printStackTrace();
       }
     }
   }
