@@ -221,7 +221,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
       StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
       StrictMode.setThreadPolicy(policy);
 
-      ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
+      ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 443, "chat.facebook.com");
       config.setSASLAuthenticationEnabled(true);
       config.setSecurityMode(SecurityMode.enabled);
       config.setRosterLoadedAtLogin(true);
@@ -377,7 +377,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
           String content, String subject) {
 
-    ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 5222, "chat.facebook.com");
+    ConnectionConfiguration config = new ConnectionConfiguration("chat.facebook.com", 443, "chat.facebook.com");
 
     config.setSASLAuthenticationEnabled(true);
     config.setSecurityMode(SecurityMode.enabled);
