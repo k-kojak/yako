@@ -118,7 +118,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     super.onCreate(icicle, true, true, true);
     
     Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    t.setScreenName(((Object)this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
 
@@ -395,7 +395,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     localManager.unregisterReceiver(mLocationChangeReceiver);
 
     Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     
 // refreshing last notification date when closing activity

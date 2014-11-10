@@ -69,7 +69,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     actionBar.setDisplayHomeAsUpEnabled(true);
 
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    t.setScreenName(((Object)this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
     setContentView(R.layout.activity_email_displayer);
@@ -138,7 +138,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     super.onPause(); // To change body of generated methods, choose Tools |
                      // Templates.
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
   }
 

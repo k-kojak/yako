@@ -121,7 +121,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
     // setting google analytics
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    t.setScreenName(((Object)this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
     // setting variables
@@ -460,7 +460,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   protected void onPause() {
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
