@@ -21,6 +21,7 @@ import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
+import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.workers.MessageListerAsyncTask;
 
@@ -41,6 +42,9 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
+import hu.rgai.yako.workers.TimeoutAsyncTask;
+import net.htmlparser.jericho.Source;
+import org.apache.http.HttpResponse;
 
 public class MessageListerHandler extends TimeoutHandler {
 
@@ -120,74 +124,10 @@ public class MessageListerHandler extends TimeoutHandler {
 
 
   private void postNotification(int newMessageCount, MessageListElement lastUnreadMsg) {
-    YakoApp.setLastNotifiedMessage(lastUnreadMsg);
-    NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-    if (lastUnreadMsg != null) {
-      boolean soundNotification = StoreHandler.SystemSettings.isNotificationSoundTurnedOn(mContext);
-      boolean zoneActivated = StoreHandler.isZoneStateActivated(mContext);
-      boolean vibrateNotification = StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext);
-      boolean isEmailType = lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL);
-      if (!MainActivity.isMainActivityVisible()) {
-        String fromNameText = "?";
-        if (lastUnreadMsg.getFrom() != null) {
-          fromNameText = lastUnreadMsg.getFrom().getName();
-        } else {
-          if (lastUnreadMsg.getRecipientsList() != null) {
-            fromNameText = "";
-            for (int i = 0; i < lastUnreadMsg.getRecipientsList().size(); i++) {
-              if (i > 0) {
-                fromNameText += ",";
-              }
-              fromNameText += lastUnreadMsg.getRecipientsList().get(i).getName();
-            }
-          }
-        }
 
+    NotificationAsyncTask notifAsync = new NotificationAsyncTask(newMessageCount, lastUnreadMsg);
+    notifAsync.executeTask(mContext, new Void[]{});
 
-        TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
-                lastUnreadMsg.getRawId());
-        if (lastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)
-                || lastUnreadMsg.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-          lastUnreadMsg.setFullMessage(contents.first());
-        } else {
-          lastUnreadMsg.setFullMessage(new FullThreadMessage(contents));
-        }
-
-        QuickAnswerProvider qap = new DummyQuickAnswerProvider();
-        List<String> answers = qap.getQuickAnswers(lastUnreadMsg);
-        boolean hasQuickAnswers = false;
-        if (answers != null && !answers.isEmpty()) {
-          hasQuickAnswers = true;
-        }
-
-        Notification quickAnserNotification = null;
-        if (hasQuickAnswers && isEmailType) {
-          quickAnserNotification = buildNotification(newMessageCount, lastUnreadMsg, true, fromNameText,
-                  zoneActivated, soundNotification, vibrateNotification, true, true, answers, null);
-        }
-
-        Notification simpleNotif = buildNotification(newMessageCount, lastUnreadMsg, isEmailType, fromNameText,
-                zoneActivated, soundNotification, vibrateNotification, false, hasQuickAnswers, answers,
-                quickAnserNotification);
-
-        mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, simpleNotif);
-
-        // logging...
-        KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
-        EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH,
-                EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
-                + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
-      }
-      // if main activity visible: only play sound if needed...
-      else {
-        if ((zoneActivated && lastUnreadMsg.isImportant() && soundNotification)
-                || (!zoneActivated && soundNotification)) {
-          Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
-          Ringtone r = RingtoneManager.getRingtone(mContext.getApplicationContext(), soundURI);
-          r.play();
-        }
-      }
-    }
   }
 
   private Notification buildNotification(int newMessageCount, MessageListElement lastUnreadMsg, boolean isEmailType,
@@ -330,6 +270,104 @@ public class MessageListerHandler extends TimeoutHandler {
     }
     if (MainActivity.isMainActivityVisible()) {
       Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+    }
+  }
+
+  private class NotificationAsyncTask extends TimeoutAsyncTask<Void, Void, Void> {
+
+    private final int mNewMessageCount;
+    private final MessageListElement mLastUnreadMsg;
+
+    public NotificationAsyncTask(int newMessageCount, MessageListElement lastUnreadMsg) {
+      super(null);
+      mNewMessageCount = newMessageCount;
+      mLastUnreadMsg = lastUnreadMsg;
+    }
+
+    @Override
+    protected Void doInBackground(Void... params) {
+
+      YakoApp.setLastNotifiedMessage(mLastUnreadMsg);
+      NotificationManager mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+      if (mLastUnreadMsg != null) {
+        boolean soundNotification = StoreHandler.SystemSettings.isNotificationSoundTurnedOn(mContext);
+        boolean zoneActivated = StoreHandler.isZoneStateActivated(mContext);
+        boolean vibrateNotification = StoreHandler.SystemSettings.isNotificationVibrationTurnedOn(mContext);
+        boolean isEmailType = mLastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL);
+        if (!MainActivity.isMainActivityVisible()) {
+          String fromNameText = "?";
+          if (mLastUnreadMsg.getFrom() != null) {
+            fromNameText = mLastUnreadMsg.getFrom().getName();
+          } else {
+            if (mLastUnreadMsg.getRecipientsList() != null) {
+              fromNameText = "";
+              for (int i = 0; i < mLastUnreadMsg.getRecipientsList().size(); i++) {
+                if (i > 0) {
+                  fromNameText += ",";
+                }
+                fromNameText += mLastUnreadMsg.getRecipientsList().get(i).getName();
+              }
+            }
+          }
+
+
+          TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
+                  mLastUnreadMsg.getRawId());
+          if (mLastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)
+                  || mLastUnreadMsg.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+            mLastUnreadMsg.setFullMessage(contents.first());
+          } else {
+            mLastUnreadMsg.setFullMessage(new FullThreadMessage(contents));
+          }
+
+          boolean hasQuickAnswers = false;
+
+          Source source = new Source(contents.first().getContent().getContent().toString());
+          String plainText = source.getRenderer().toString();
+          Map<String, String> postParams = new HashMap<String, String>(2);
+          postParams.put("mod", "yako_quick_answer");
+          postParams.put("text", plainText);
+          Log.d("yako", "postParams: " + postParams);
+          HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
+          List<String> answers = null;
+          if (response != null) {
+            String result = RemoteMessageController.responseToString(response);
+            answers = RemoteMessageController.responseStringToArray(result);
+            if (answers != null && !answers.isEmpty()) {
+              hasQuickAnswers = true;
+            }
+          }
+
+          Notification quickAnserNotification = null;
+          if (hasQuickAnswers && isEmailType) {
+            quickAnserNotification = buildNotification(mNewMessageCount, mLastUnreadMsg, true, fromNameText,
+                    zoneActivated, soundNotification, vibrateNotification, true, true, answers, null);
+          }
+
+          Notification simpleNotif = buildNotification(mNewMessageCount, mLastUnreadMsg, isEmailType, fromNameText,
+                  zoneActivated, soundNotification, vibrateNotification, false, hasQuickAnswers, answers,
+                  quickAnserNotification);
+
+          mNotificationManager.notify(Settings.NOTIFICATION_NEW_MESSAGE_ID, simpleNotif);
+
+          // logging...
+          KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+          EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH,
+                  EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
+                          + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
+        }
+        // if main activity visible: only play sound if needed...
+        else {
+          if ((zoneActivated && mLastUnreadMsg.isImportant() && soundNotification)
+                  || (!zoneActivated && soundNotification)) {
+            Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
+            Ringtone r = RingtoneManager.getRingtone(mContext.getApplicationContext(), soundURI);
+            r.play();
+          }
+        }
+      }
+
+      return null;
     }
   }
 

@@ -9,8 +9,12 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +74,28 @@ public class RemoteMessageController {
     }
     return null;
 
+  }
+
+  public static List<String> responseStringToArray(String result) {
+    if (result == null) {
+      return null;
+    } else {
+      try {
+        JSONObject root = new JSONObject(result);
+        JSONArray data = root.getJSONArray("data");
+        List<String> answers = null;
+        if (data != null && data.length() != 0) {
+          answers = new ArrayList<String>(data.length());
+          for (int i = 0; i < data.length(); i++) {
+            answers.add(data.get(i).toString());
+          }
+        }
+        return answers;
+      } catch (JSONException e) {
+        Log.d("yako", "", e);
+        return null;
+      }
+    }
   }
 
 }
