@@ -313,33 +313,39 @@ public class MessageListerHandler extends TimeoutHandler {
 
           TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
                   mLastUnreadMsg.getRawId());
+          String textToProcess;
           if (mLastUnreadMsg.getMessageType().equals(MessageProvider.Type.EMAIL)
                   || mLastUnreadMsg.getMessageType().equals(MessageProvider.Type.GMAIL)) {
             mLastUnreadMsg.setFullMessage(contents.first());
+            textToProcess = contents.first().getContent().getContent().toString();
           } else {
             mLastUnreadMsg.setFullMessage(new FullThreadMessage(contents));
+            textToProcess = mLastUnreadMsg.getTitle();
           }
 
-          boolean hasQuickAnswers = false;
 
-          Source source = new Source(contents.first().getContent().getContent().toString());
-          String plainText = source.getRenderer().toString();
-          Map<String, String> postParams = new HashMap<String, String>(2);
-          postParams.put("mod", "yako_quick_answer");
-          postParams.put("text", plainText);
-          Log.d("yako", "postParams: " + postParams);
-          HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
+          boolean hasQuickAnswers = false;
           List<String> answers = null;
-          if (response != null) {
-            String result = RemoteMessageController.responseToString(response);
-            answers = RemoteMessageController.responseStringToArray(result);
-            if (answers != null && !answers.isEmpty()) {
-              hasQuickAnswers = true;
+          if (textToProcess != null) {
+            Source source = new Source(textToProcess);
+            String plainText = source.getRenderer().toString();
+            Map<String, String> postParams = new HashMap<String, String>(2);
+            postParams.put("mod", "yako_quick_answer");
+            postParams.put("text", plainText);
+            Log.d("yako", "postParams: " + postParams);
+            HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
+
+            if (response != null) {
+              String result = RemoteMessageController.responseToString(response);
+              answers = RemoteMessageController.responseStringToArray(result);
+              if (answers != null && !answers.isEmpty()) {
+                hasQuickAnswers = true;
+              }
             }
           }
 
           Notification quickAnserNotification = null;
-          if (hasQuickAnswers && isEmailType) {
+          if (hasQuickAnswers) {
             quickAnserNotification = buildNotification(mNewMessageCount, mLastUnreadMsg, true, fromNameText,
                     zoneActivated, soundNotification, vibrateNotification, true, true, answers, null);
           }

@@ -17,13 +17,13 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -43,7 +43,6 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -72,12 +71,9 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.intents.IntentStrings;
-
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import hu.rgai.yako.workers.TimeoutAsyncTask;
+import net.htmlparser.jericho.Source;
+import org.apache.http.HttpResponse;
 
 public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
@@ -87,6 +83,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   private ThreadContentGetterHandler mHandler = null;
   private MessageListElement mMessage = null;
   private ListView lv = null;
+  private ViewGroup mQuickAnswers = null;
   private EditText mText = null;
   private ThreadViewAdapter mAdapter = null;
   private final Date lastLoadMoreEvent = null;
@@ -147,6 +144,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     // initing GUI variables
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
+    mQuickAnswers = (ViewGroup)findViewById(R.id.quick_answers);
     lv.setOnScrollListener(new LogOnScrollListener());
     MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     if (mp.isMessageDeletable()) {
@@ -585,15 +583,9 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
     }
 
-//    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
 
   public void displayMessage(boolean scrollToBottom, boolean isInternetNeededForLoad) {
-    int firstVisiblePos = lv.getFirstVisiblePosition();
-    int oldItemCount = 0;
-    if (mAdapter != null) {
-      oldItemCount = mAdapter.getCount();
-    }
     TreeSet<FullSimpleMessage> messages = null;
     if (isInternetNeededForLoad) {
       messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
@@ -609,8 +601,10 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       } else {
         mAdapter.clear();
       }
+      FullSimpleMessage lastMessage = null;
       for (FullSimpleMessage m : messages) {
         mAdapter.add(m);
+        lastMessage = m;
       }
       mAdapter.notifyDataSetChanged();
       if (lv.getAdapter() == null) {
@@ -619,10 +613,21 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       if (firstLoad || scrollToBottom) {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);
-      } else {
-//        int newItemCount = mAdapter.getCount();
-//        lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
       }
+      getQuickAnswers(lastMessage.getContent().getContent().toString());
+    }
+  }
+
+  private void getQuickAnswers(String content) {
+    QuickAnswerLoader qal = new QuickAnswerLoader(LayoutInflater.from(this), mQuickAnswers, content);
+    qal.executeTask(this, new Void[]{});
+  }
+
+  private void displayQuickAnswers(LayoutInflater inflater, ViewGroup container, List<String> answers, boolean timeout) {
+    if (answers == null || answers.isEmpty()) {
+      mQuickAnswers.setVisibility(View.GONE);
+    } else {
+      mQuickAnswers.setVisibility(View.VISIBLE);
     }
   }
 
@@ -697,6 +702,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
     }
   }
+
+
   
   
   public class DataUpdateReceiver extends BroadcastReceiver {
@@ -718,6 +725,50 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         }
       }
     }
+  }
+
+  private class QuickAnswerLoader extends TimeoutAsyncTask<Void, Void, List<String>> {
+
+    private static final String requestMod = "yako_quick_answer";
+    private final LayoutInflater mInflater;
+    private final ViewGroup mContainer;
+    private final String mText;
+
+
+    public QuickAnswerLoader(LayoutInflater inflater, ViewGroup container, String text) {
+      super(null);
+      mInflater = inflater;
+      mContainer = container;
+      mText = text;
+    }
+
+    @Override
+    protected List<String> doInBackground(Void... params) {
+      Source source = new Source(mText);
+      String plainText = source.getRenderer().toString();
+
+      Map<String, String> postParams = new HashMap<String, String>(2);
+      postParams.put("mod", requestMod);
+      postParams.put("text", plainText);
+      HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
+      if (response != null) {
+        String result = RemoteMessageController.responseToString(response);
+        if (result != null) {
+          return RemoteMessageController.responseStringToArray(result);
+        }
+      }
+      return null;
+    }
+
+    @Override
+    protected void onPostExecute(List<String> answers) {
+      if (answers == null) {
+        displayQuickAnswers(mInflater, mContainer, null, false);
+      } else {
+        displayQuickAnswers(mInflater, mContainer, answers, false);
+      }
+    }
+
   }
 
   class LogOnScrollListener implements OnScrollListener {
