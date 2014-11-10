@@ -498,7 +498,7 @@ public class MainActivityFragment extends Fragment {
     if (mAdapter == null) {
       mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity, importantDrawable,
               zoneActivated, closestZone,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated), mAccounts);
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null), mAccounts);
     } else {
       Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null);
       mAdapter.changeCursor(newCursor);
