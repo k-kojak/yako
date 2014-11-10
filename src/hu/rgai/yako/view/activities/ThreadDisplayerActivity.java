@@ -1,5 +1,8 @@
 package hu.rgai.yako.view.activities;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.widget.*;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.ThreadViewAdapter;
@@ -50,14 +53,8 @@ import android.util.TypedValue;
 import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.QuickContactBadge;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -84,6 +81,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   private MessageListElement mMessage = null;
   private ListView lv = null;
   private ViewGroup mQuickAnswers = null;
+  private ViewGroup mQuickAnswersInner = null;
+  private ViewGroup mQuickAnswersCaret = null;
   private EditText mText = null;
   private ThreadViewAdapter mAdapter = null;
   private final Date lastLoadMoreEvent = null;
@@ -145,6 +144,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
     mQuickAnswers = (ViewGroup)findViewById(R.id.quick_answers);
+    mQuickAnswersInner = (ViewGroup) findViewById(R.id.quick_answers_inner);
+    mQuickAnswersCaret = (ViewGroup) findViewById(R.id.quick_answer_caret);
     lv.setOnScrollListener(new LogOnScrollListener());
     MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     if (mp.isMessageDeletable()) {
@@ -624,15 +625,48 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   }
 
   private void displayQuickAnswers(LayoutInflater inflater, ViewGroup container, List<String> answers, boolean timeout) {
+
+    Resources r = getResources();
+    float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, r.getDisplayMetrics());
+    int i = 0;
+
     if (answers == null || answers.isEmpty()) {
-      mQuickAnswers.setVisibility(View.GONE);
+      toggleQuickAnsers(false);
     } else {
-      mQuickAnswers.setVisibility(View.VISIBLE);
+      mQuickAnswersInner.removeAllViews();
+      for (final String s : answers) {
+        if (i > 0) {
+          LinearLayout v = new LinearLayout(this);
+          LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int) (px * 1), ViewGroup.LayoutParams.MATCH_PARENT);
+          params.topMargin = (int) (8 * px);
+          params.bottomMargin = (int) (8 * px);
+          v.setBackgroundColor(0xff393939);
+          v.setLayoutParams(params);
+          mQuickAnswersInner.addView(v);
+        }
+
+        TextView tv = (TextView) inflater.inflate(R.layout.quick_answer_item, container, false);
+        tv.setText(s);
+        tv.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            quickAnswerClicked(s);
+          }
+        });
+        mQuickAnswersInner.addView(tv);
+        i++;
+      }
+      toggleQuickAnsers(true);
     }
   }
 
+  private void quickAnswerClicked(String s) {
+    closeQuickAnsers(null);
+    mText.setText(s);
+    sendMessage(null);
+  }
+
   private void refreshMessageList(int offset) {
-    Log.d("rgai", "loading messages with offset: " + offset);
     ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset <= 0);
     if (offset > 0) {
       myThread.setOffset(offset);
@@ -665,6 +699,40 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     appendVisibleElementToStringBuilder(builder);
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
+  }
+
+  public void closeQuickAnsers(View view) {
+    toggleQuickAnsers(false);
+  }
+
+  private void toggleQuickAnsers(boolean show) {
+    ObjectAnimator mover;
+    int start;
+    int end;
+    Animator.AnimatorListener animListener;
+    if (show) {
+      start = mQuickAnswersCaret.getWidth();
+      end = 0;
+      animListener = new Animator.AnimatorListener() {
+        public void onAnimationStart(Animator animation) {mQuickAnswersCaret.setVisibility(View.VISIBLE);}
+        public void onAnimationEnd(Animator animation) {}
+        public void onAnimationCancel(Animator animation) {}
+        public void onAnimationRepeat(Animator animation) {}
+      };
+    } else {
+      start = 0;
+      end = mQuickAnswersCaret.getWidth();
+      animListener = new Animator.AnimatorListener() {
+        public void onAnimationStart(Animator animation) {}
+        public void onAnimationEnd(Animator animation) {mQuickAnswersCaret.setVisibility(View.GONE);}
+        public void onAnimationCancel(Animator animation) {}
+        public void onAnimationRepeat(Animator animation) {}
+      };
+    }
+    mover = ObjectAnimator.ofFloat(mQuickAnswersCaret, "translationX", start, end);
+    mover.setDuration(250);
+    mover.addListener(animListener);
+    mover.start();
   }
 
   private class ConnectivityListener extends BroadcastReceiver {
