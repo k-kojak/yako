@@ -116,11 +116,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#77dd77"
-                    android:layout_marginLeft="33dp"
+                    android:textSize="16sp"
+                    android:background="@drawable/zone_list_selector"
+                    android:layout_marginLeft="27dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="6dp"
+                    android:padding="6dp"
                     android:clickable="true"
-                    android:text="Add zone" />
+                    android:text="+ Zone" />
 
             </LinearLayout>
 
