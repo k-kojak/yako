@@ -13,12 +13,12 @@ public class ThreadContentGetterHandler extends TimeoutHandler {
     this.mThreadDisplayer = mThreadDisplayer;
   }
   
-  public void onComplete(boolean saveToDbAfterLoad, boolean success, FullThreadMessage messageContent, boolean scrollToBottom) {
+  public void onComplete(boolean loadQuickAnswers, boolean saveToDbAfterLoad, boolean success, FullThreadMessage messageContent, boolean scrollToBottom) {
     if (!success) {
       Toast.makeText(mThreadDisplayer, "Error while loading content", Toast.LENGTH_LONG).show();
     } else {
       mThreadDisplayer.appendLoadedMessages(messageContent, saveToDbAfterLoad);
-      mThreadDisplayer.displayMessage(scrollToBottom, saveToDbAfterLoad);
+      mThreadDisplayer.displayMessage(loadQuickAnswers, scrollToBottom, saveToDbAfterLoad);
     }
     mThreadDisplayer.dismissProgressDialog();
   }
