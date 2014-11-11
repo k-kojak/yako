@@ -27,7 +27,7 @@ public class LocationLogger implements LocationListener {
       if (locationManager == null)
         return;
 
-      loggingLocation();
+      //loggingLocation();
     } catch (Exception e) {
       Log.d("willrgai", "", e);
     }

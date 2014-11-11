@@ -187,11 +187,11 @@ public enum EventLogger {
   }
 
   public synchronized void writeToLogFile( LogFilePaths logFilePath, String log, boolean logTimeStamp) {
-    if (logTimeStamp) {
+    /*if (logTimeStamp) {
       writeFormatedLogToLogFile( logFilePath, LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
       writeFormatedLogToLogFile( logFilePath, log);
-    }
+    }*/
   }
 
   private void writeFormatedLogToLogFile( LogFilePaths logFilePath, String log) {
@@ -281,7 +281,7 @@ public enum EventLogger {
     @Override
     public void run() {
       locationLogger.updateLocation();
-      writeRunningProcessesNamesToLogFile();
+      //writeRunningProcessesNamesToLogFile();
       h.postDelayed(myRunnable, GPS_AND_PROCCES_LOGGING_WAIT_TIME);
     }
   };
