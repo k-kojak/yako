@@ -82,7 +82,7 @@ public class EmailDisplayerFragment extends Fragment {
     
     return edf;
   }
-  
+
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
