@@ -193,8 +193,8 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
       i++;
     }
 
-    ZoneTypeAdapter adapter = new ZoneTypeAdapter(this, android.R.layout.simple_spinner_item, objects);
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    ZoneTypeAdapter adapter = new ZoneTypeAdapter(this, R.layout.gmaps_zonetype_spinner_selected, objects);
+    adapter.setDropDownViewResource(R.layout.gmaps_zonetype_spinner_item);
     spinner.setAdapter(adapter);
     spinner.setSelection(selected);
   }
