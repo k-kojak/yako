@@ -2,6 +2,7 @@ package hu.rgai.yako.view.activities;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
+import android.graphics.Point;
 import android.widget.*;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -76,6 +77,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
+  private boolean mIsQuickAnswerHidden = true;
+
   private ProgressDialog pd = null;
   private ThreadContentGetterHandler mHandler = null;
   private MessageListElement mMessage = null;
@@ -146,6 +149,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     mQuickAnswers = (ViewGroup)findViewById(R.id.quick_answers);
     mQuickAnswersInner = (ViewGroup) findViewById(R.id.quick_answers_inner);
     mQuickAnswersCaret = (ViewGroup) findViewById(R.id.quick_answer_caret);
+    initQuickAnswerBar();
     lv.setOnScrollListener(new LogOnScrollListener());
     MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     if (mp.isMessageDeletable()) {
@@ -394,8 +398,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     }
     Log.d("rgai", "thread msg count: " + fullMsgCount);
     if (fullMsgCount > 0) {
-      displayMessage(true, isInternetNeededForLoad);
-      refreshMessageList();
+      displayMessage(false, true, isInternetNeededForLoad);
+      refreshMessageList(true);
     } else {
       if (pd == null) {
         pd = new ProgressDialog(this);
@@ -403,7 +407,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
       pd.show();
       pd.setContentView(R.layout.progress_dialog);
-      refreshMessageList();
+      refreshMessageList(false);
     }
   }
 
@@ -477,6 +481,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     }
 
     actViewingMessage = null;
+
+    toggleQuickAnsers(false);
   }
 
   @Override
@@ -526,7 +532,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
               messagesSize = ((FullThreadMessage)mMessage.getFullMessage()).getMessages().size();
             }
           }
-          refreshMessageList(messagesSize);
+          refreshMessageList(false, messagesSize);
           Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
       } else {
         // Log.d("rgai", "@@@skipping load button press for 5 sec");
@@ -586,7 +592,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   }
 
-  public void displayMessage(boolean scrollToBottom, boolean isInternetNeededForLoad) {
+  public void displayMessage(boolean loadQuickAnswers, boolean scrollToBottom, boolean isInternetNeededForLoad) {
     TreeSet<FullSimpleMessage> messages = null;
     if (isInternetNeededForLoad) {
       messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
@@ -615,7 +621,9 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);
       }
-      getQuickAnswers(lastMessage.getContent().getContent().toString());
+      if (!lastMessage.isIsMe() && loadQuickAnswers) {
+        getQuickAnswers(lastMessage.getContent().getContent().toString());
+      }
     }
   }
 
@@ -666,16 +674,16 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     sendMessage(null);
   }
 
-  private void refreshMessageList(int offset) {
-    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset <= 0);
+  private void refreshMessageList(boolean loadQuickAnswers, int offset) {
+    ThreadContentGetter myThread = new ThreadContentGetter(this, loadQuickAnswers, mHandler, mMessage.getAccount(), offset <= 0);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
     myThread.executeTask(this, new String[]{mMessage.getId()});
   }
 
-  private void refreshMessageList() {
-    refreshMessageList(-1);
+  private void refreshMessageList(boolean loadQuickAnswers) {
+    refreshMessageList(loadQuickAnswers, -1);
   }
 
   private void appendVisibleElementToStringBuilder(StringBuilder builder) {
@@ -705,7 +713,34 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     toggleQuickAnsers(false);
   }
 
+  private void initQuickAnswerBar() {
+
+    Display display = getWindowManager().getDefaultDisplay();
+    Point size = new Point();
+    display.getSize(size);
+    int width = size.x;
+
+    mQuickAnswersCaret.setAlpha(0.0f);
+    mQuickAnswersCaret.setVisibility(View.VISIBLE);
+    ObjectAnimator mover = ObjectAnimator.ofFloat(mQuickAnswersCaret, "translationX", 0, width);
+    mover.setDuration(0);
+    mover.addListener(new Animator.AnimatorListener() {
+      public void onAnimationStart(Animator animation) {}
+      public void onAnimationEnd(Animator animation) {
+        mQuickAnswersCaret.setAlpha(1.0f);
+      }
+      public void onAnimationCancel(Animator animation) {}
+      public void onAnimationRepeat(Animator animation) {}
+    });
+    mover.start();
+  }
+
   private void toggleQuickAnsers(boolean show) {
+
+    if (!show && mIsQuickAnswerHidden) return;
+
+    mIsQuickAnswerHidden = !show;
+    Log.d("yako", "left pos: " + mQuickAnswersCaret.getLeft());
     ObjectAnimator mover;
     int start;
     int end;
@@ -714,7 +749,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       start = mQuickAnswersCaret.getWidth();
       end = 0;
       animListener = new Animator.AnimatorListener() {
-        public void onAnimationStart(Animator animation) {mQuickAnswersCaret.setVisibility(View.VISIBLE);}
+        public void onAnimationStart(Animator animation) {/*mQuickAnswersCaret.setVisibility(View.VISIBLE);*/}
         public void onAnimationEnd(Animator animation) {}
         public void onAnimationCancel(Animator animation) {}
         public void onAnimationRepeat(Animator animation) {}
@@ -724,7 +759,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       end = mQuickAnswersCaret.getWidth();
       animListener = new Animator.AnimatorListener() {
         public void onAnimationStart(Animator animation) {}
-        public void onAnimationEnd(Animator animation) {mQuickAnswersCaret.setVisibility(View.GONE);}
+        public void onAnimationEnd(Animator animation) {/*mQuickAnswersCaret.setVisibility(View.GONE);*/}
         public void onAnimationCancel(Animator animation) {}
         public void onAnimationRepeat(Animator animation) {}
       };
@@ -744,7 +779,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         if (info != null && info.isConnected()) {
-          ThreadDisplayerActivity.this.refreshMessageList();
+          ThreadDisplayerActivity.this.refreshMessageList(false);
         }
       }
     }
@@ -758,7 +793,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         int resultType = sentMessageData.getResultType();
         switch(resultType) {
           case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
-            ThreadDisplayerActivity.this.refreshMessageList();
+            ThreadDisplayerActivity.this.refreshMessageList(true);
             mMessageListChanged = true;
             break;
           case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
@@ -789,7 +824,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE)
             || intent.getAction().equals(
                 Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
-          activity.refreshMessageList();
+          activity.refreshMessageList(true);
         }
       }
     }
