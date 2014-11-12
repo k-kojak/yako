@@ -87,7 +87,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
   }
 
   private void loggingSendMessage() {
-    StringBuilder builder = new StringBuilder();
+    /*StringBuilder builder = new StringBuilder();
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SENDMESSAGE_STR);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(mRecipient.getType());
@@ -96,8 +96,8 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(mRecipient.getContactId());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(RSAENCODING.INSTANCE.encodingString(mRecipient.getData()));
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);
+    builder.append(RSAENCODING.INSTANCE.encryptString(mRecipient.getData()));
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);*/
   }
 
   @Override
