@@ -125,6 +125,34 @@
                     android:clickable="true"
                     android:text="+ Zone" />
 
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginLeft="33dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#777777"
+                        android:textSize="14sp"
+                        android:layout_centerVertical="true"
+                        android:text="Fake zone" />
+
+                    <Switch
+                        android:id="@+id/fake_zone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginRight="5dp"
+                        android:textOn="On"
+                        android:textOff="Off" />
+
+                </RelativeLayout>
+
+
+
             </LinearLayout>
 
         </LinearLayout>

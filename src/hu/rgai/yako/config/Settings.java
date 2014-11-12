@@ -234,6 +234,7 @@ public final class Settings {
     public static final int FULL_MESSAGE_RESULT = 2;
     public static final int GOOGLE_MAPS_ACTIVITY_RESULT = 3;
     public static final int PREFERENCES_REQUEST_CODE = 4;
+    public static final int FAKE_GOOGLE_MAPS_ACTIVITY_RESULT = 5;
   }
   
   public static final class ActivityResultCodes {

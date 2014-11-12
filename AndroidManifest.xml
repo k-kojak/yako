@@ -121,6 +121,14 @@
                        android:value=".MainActivity"/>
         </activity>
 
+        <activity android:name="hu.rgai.yako.view.activities.FakeGoogleMapsActivity"
+                  android:label="Select zone"
+                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+                  android:parentActivityName=".MainActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                       android:value=".MainActivity"/>
+        </activity>
+
 
         <activity android:name="hu.rgai.yako.view.activities.MessageReplyActivity"
                   android:theme="@style/CustomActionBarTheme"
