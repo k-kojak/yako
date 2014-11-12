@@ -64,7 +64,7 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
 
     
     for (String term : rankedTerms) {
-      Pattern pattern = Pattern.compile(term);
+      Pattern pattern = Pattern.compile("\\b" + term + "\\b");
       Matcher  matcher = pattern.matcher(content);
       while (matcher.find())
         ++counter;
@@ -107,7 +107,7 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
       }
     }
     rankedTerms.add("!");
-    rankedTerms.add("?");
+    rankedTerms.add("\\?");
     rankedTerms.add("fontos");
     rankedTerms.add("sürgős");
     rankedTerms.add("vigyázz");
