@@ -107,7 +107,7 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
       }
     }
     rankedTerms.add("!");
-    rankedTerms.add("?");
+    rankedTerms.add("\\?");
     rankedTerms.add("fontos");
     rankedTerms.add("sürgős");
     rankedTerms.add("vigyázz");
