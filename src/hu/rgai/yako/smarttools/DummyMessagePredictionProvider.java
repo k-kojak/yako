@@ -1,4 +1,4 @@
-package hu.rgai.yako.smarttools;
+packapackage hu.rgai.yako.smarttools;
 
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -31,8 +31,8 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
   @Override
   public double predictMessage(Context context, MessageListElement message) {
     
-    /*if (message.isSeen())
-      return 0;*/
+    if (message.isSeen())
+      return 0;
     if (message.getDate().getTime() < Calendar.getInstance().getTime().getTime() - timeLimitToRank)
       return 0;
     String content = "";

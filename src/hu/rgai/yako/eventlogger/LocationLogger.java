@@ -27,7 +27,7 @@ public class LocationLogger implements LocationListener {
       if (locationManager == null)
         return;
 
-      //loggingLocation();
+      loggingLocation();
     } catch (Exception e) {
       Log.d("willrgai", "", e);
     }
@@ -41,14 +41,14 @@ public class LocationLogger implements LocationListener {
     locationManager.requestSingleUpdate(crit, this, null);
   }
 
-  private String getFormatedLocationString(Location location) {
-    return "coordinates latitude " + String.valueOf(location.getLatitude()) + " longitude " + String.valueOf(location.getLongitude());
-  }
+//  private String getFormatedLocationString(Location location) {
+//    return "coordinates latitude " + String.valueOf(location.getLatitude()) + " longitude " + String.valueOf(location.getLongitude());
+//  }
 
   @Override
   public void onLocationChanged(Location location) {
-    Log.d("willrgai", "logging location: " + location.toString());
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(location), true);
+//    Log.d("willrgai", "logging location: " + location.toString());
+//    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, getFormatedLocationString(location), true);
   }
 
   @Override

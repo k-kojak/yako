@@ -342,7 +342,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     }
     
     if (mQuotedMessage.getVisibility() == View.VISIBLE) {
-      Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
+      Source source = new Source("<br /><br /><hr />" + mFullMessage.getContent().getContent());
       content += source.getRenderer().toString();
     }
     
