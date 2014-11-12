@@ -1,5 +1,6 @@
 package hu.rgai.yako.smarttools;
 
+import android.util.Log;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.GpsZone;
@@ -69,7 +70,8 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
       while (matcher.find())
         ++counter;
     }
-    return 1 - 1/counter;
+    double rank = 1 - 1/counter;
+    return rank;
   }
   
   private void fillRankWords(GpsZone closest, List<String> rankedTerms) {
