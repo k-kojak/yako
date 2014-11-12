@@ -7,8 +7,10 @@ import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,11 +23,16 @@ import android.content.Context;
 public class DummyMessagePredictionProvider implements MessagePredictionProvider {
   
   static int timeLimitToRank = 24 * 60 * 60 * 1000;
+  static Map<GpsZone.ZoneType,LinkedList<Pattern>> zoneTermListMap = new HashMap<GpsZone.ZoneType, LinkedList<Pattern>>();
+  
+  static {
+    fillRankWords();
+  }
   @Override
   public double predictMessage(Context context, MessageListElement message) {
     
-    if (message.isSeen())
-      return 0;
+    /*if (message.isSeen())
+      return 0;*/
     if (message.getDate().getTime() < Calendar.getInstance().getTime().getTime() - timeLimitToRank)
       return 0;
     String content = "";
@@ -48,75 +55,98 @@ public class DummyMessagePredictionProvider implements MessagePredictionProvider
      * That means location cannot be set, so there will be no active (NEAR, CLOSEST) locations.
      */
     List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(context);
-    GpsZone closest = GpsZone.getClosest(gpsZones);
-    List<String> rankedTerms = new LinkedList<String>();
-    
-    
+    GpsZone closest = GpsZone.getClosest(gpsZones);    
 
-    fillRankWords(closest, rankedTerms);
-    
-
-    return getRank(content, rankedTerms);
+    return getRank(content, closest);
   }
   
-  private double getRank(String content, List<String> rankedTerms) {
+  private static double getRank(String content, GpsZone closest) {
     double counter = 1;
-
-    
-    for (String term : rankedTerms) {
-      Pattern pattern = Pattern.compile("\\b" + term + "\\b");
-      Matcher  matcher = pattern.matcher(content);
-      while (matcher.find())
-        ++counter;
+    content = content.toLowerCase();
+    if (closest != null) {      
+      LinkedList<Pattern> termPatternList = zoneTermListMap.get(closest.getZoneType());
+      if (termPatternList == null)
+        return 0;
+      for (Pattern termPattern : termPatternList) {
+        Matcher  matcher = termPattern.matcher(content);
+        while (matcher.find())
+          ++counter;
+      }
+      return 1 - 1/counter;
+    } else {
+      return 0;
     }
-    return 1 - 1/counter;
+    
   }
   
-  private void fillRankWords(GpsZone closest, List<String> rankedTerms) {
-    String s = "";
-    if (closest != null) {      
-      if (closest.getZoneType().equals(GpsZone.ZoneType.REST)) {
-        s = "rest";
-      } else if (closest.getZoneType().equals(GpsZone.ZoneType.WORK)) {
-        s = "work";
-        rankedTerms.add("főnök");
-        rankedTerms.add("meeting");
-        rankedTerms.add("megbeszélés");
-        rankedTerms.add("munka");
-        rankedTerms.add("hiba");
-        rankedTerms.add("határidő");
-        rankedTerms.add("program");
-        rankedTerms.add("állás");
-        rankedTerms.add("gyorsan");
-        rankedTerms.add("kell");
-        rankedTerms.add("pénz");
-      } else if (closest.getZoneType().equals(GpsZone.ZoneType.SILENT)) {
-        s = "silent";
-        rankedTerms.add("család");
-        rankedTerms.add("gyerek");
-        rankedTerms.add("apa");
-        rankedTerms.add("anya");
-        rankedTerms.add("tesó");
-        rankedTerms.add("báty");
-        rankedTerms.add("nővér");
-        rankedTerms.add("szeret");
-        rankedTerms.add("csaj");
-        rankedTerms.add("nő");
-        rankedTerms.add("dota");
-        rankedTerms.add("játék");
-      }
-    }
-    rankedTerms.add("!");
-    rankedTerms.add("\\?");
-    rankedTerms.add("fontos");
-    rankedTerms.add("sürgős");
-    rankedTerms.add("vigyázz");
-    rankedTerms.add("veszély");
-    rankedTerms.add("kv");
-    rankedTerms.add("kv");
-    rankedTerms.add("kávé");
-    rankedTerms.add("kávé");
+  private static void fillRankWords() {
+    LinkedList<Pattern> workTermList = new LinkedList<Pattern>();
+    LinkedList<Pattern> restTermList = new LinkedList<Pattern>();
+    LinkedList<Pattern> silentTermList = new LinkedList<Pattern>();
+        
+    fillWorkTermList(workTermList);
 
+    fillRestTermList(restTermList);
+    zoneTermListMap.put(GpsZone.ZoneType.WORK, workTermList);
+    zoneTermListMap.put(GpsZone.ZoneType.SILENT, silentTermList);
+    zoneTermListMap.put(GpsZone.ZoneType.REST, restTermList);
+  }
+
+  private static void fillRestTermList(LinkedList<Pattern> restTermList) {
+    restTermList.add(Pattern.compile(".*" + "család" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "gyerek" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "apa" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "anya" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "tesó" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "báty" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "nővér" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "szeret" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "csaj" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "nő" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "dota" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "játék" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "bor" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "sör" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "pálinka" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "pia" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "whisky" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "szesz" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "szex" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "!" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "\\?" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "fontos" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "sürgős" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "vigyázz" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "veszély" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "kv" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "kv" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "kávé" + ".*"));
+    restTermList.add(Pattern.compile(".*" + "kávé" + ".*"));
+  }
+
+  private static void fillWorkTermList(LinkedList<Pattern> workTermList) {
+    workTermList.add(Pattern.compile(".*" + "főnök" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "meeting" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "megbeszélés" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "munka" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "hiba" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "határidő" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "program" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "állás" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "gyorsan" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "kell" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "pénz" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "yako" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "!" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "\\?" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "fontos" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "sürgős" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "vigyázz" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "veszély" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "kv" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "kv" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "kávé" + ".*"));
+    workTermList.add(Pattern.compile(".*" + "kávé" + ".*"));
   }
 
 }
