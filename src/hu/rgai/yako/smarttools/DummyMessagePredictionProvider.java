@@ -1,4 +1,4 @@
-packapackage hu.rgai.yako.smarttools;
+package hu.rgai.yako.smarttools;
 
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.FullSimpleMessage;
