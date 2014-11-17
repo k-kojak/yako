@@ -1,5 +1,9 @@
 package hu.rgai.yako.view.activities;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.graphics.Point;
+import android.widget.*;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.ThreadViewAdapter;
@@ -17,13 +21,13 @@ import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.handlers.ThreadContentGetterHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 import hu.rgai.yako.workers.ThreadContentGetter;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -43,7 +47,6 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -51,14 +54,8 @@ import android.util.TypedValue;
 import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.QuickContactBadge;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -72,21 +69,23 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.intents.IntentStrings;
-
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import hu.rgai.yako.workers.TimeoutAsyncTask;
+import net.htmlparser.jericho.Source;
+import org.apache.http.HttpResponse;
 
 public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
+  private boolean mIsQuickAnswerHidden = true;
+
   private ProgressDialog pd = null;
   private ThreadContentGetterHandler mHandler = null;
   private MessageListElement mMessage = null;
   private ListView lv = null;
+  private ViewGroup mQuickAnswers = null;
+  private ViewGroup mQuickAnswersInner = null;
+  private ViewGroup mQuickAnswersCaret = null;
   private EditText mText = null;
   private ThreadViewAdapter mAdapter = null;
   private final Date lastLoadMoreEvent = null;
@@ -121,7 +120,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
 
     // setting google analytics
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    t.setScreenName(((Object)this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
     // setting variables
@@ -147,6 +146,10 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     // initing GUI variables
     setContentView(R.layout.threadview_main);
     lv = (ListView) findViewById(R.id.main);
+    mQuickAnswers = (ViewGroup)findViewById(R.id.quick_answers);
+    mQuickAnswersInner = (ViewGroup) findViewById(R.id.quick_answers_inner);
+    mQuickAnswersCaret = (ViewGroup) findViewById(R.id.quick_answer_caret);
+    initQuickAnswerBar();
     lv.setOnScrollListener(new LogOnScrollListener());
     MessageProvider mp = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
     if (mp.isMessageDeletable()) {
@@ -395,8 +398,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     }
     Log.d("rgai", "thread msg count: " + fullMsgCount);
     if (fullMsgCount > 0) {
-      displayMessage(true, isInternetNeededForLoad);
-      refreshMessageList();
+      displayMessage(false, true, isInternetNeededForLoad);
+      refreshMessageList(true);
     } else {
       if (pd == null) {
         pd = new ProgressDialog(this);
@@ -404,7 +407,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
       pd.show();
       pd.setContentView(R.layout.progress_dialog);
-      refreshMessageList();
+      refreshMessageList(false);
     }
   }
 
@@ -460,7 +463,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   protected void onPause() {
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     logActivityEvent(EventLogger.LOGGER_STRINGS.THREAD.THREAD_PAUSE_STR);
     super.onPause();
@@ -478,6 +481,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     }
 
     actViewingMessage = null;
+
+    toggleQuickAnsers(false);
   }
 
   @Override
@@ -527,7 +532,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
               messagesSize = ((FullThreadMessage)mMessage.getFullMessage()).getMessages().size();
             }
           }
-          refreshMessageList(messagesSize);
+          refreshMessageList(false, messagesSize);
           Toast.makeText(this, getString(R.string.loading_more_elements), Toast.LENGTH_LONG).show();
       } else {
         // Log.d("rgai", "@@@skipping load button press for 5 sec");
@@ -585,15 +590,9 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
     }
 
-//    YakoApp.setMessageContent(mMessage, mMessage.getFullMessage());
   }
 
-  public void displayMessage(boolean scrollToBottom, boolean isInternetNeededForLoad) {
-    int firstVisiblePos = lv.getFirstVisiblePosition();
-    int oldItemCount = 0;
-    if (mAdapter != null) {
-      oldItemCount = mAdapter.getCount();
-    }
+  public void displayMessage(boolean loadQuickAnswers, boolean scrollToBottom, boolean isInternetNeededForLoad) {
     TreeSet<FullSimpleMessage> messages = null;
     if (isInternetNeededForLoad) {
       messages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
@@ -609,8 +608,10 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       } else {
         mAdapter.clear();
       }
+      FullSimpleMessage lastMessage = null;
       for (FullSimpleMessage m : messages) {
         mAdapter.add(m);
+        lastMessage = m;
       }
       mAdapter.notifyDataSetChanged();
       if (lv.getAdapter() == null) {
@@ -619,24 +620,70 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       if (firstLoad || scrollToBottom) {
         firstLoad = false;
         lv.setSelection(lv.getAdapter().getCount() - 1);
-      } else {
-//        int newItemCount = mAdapter.getCount();
-//        lv.setSelection(newItemCount - oldItemCount + firstVisiblePos);
+      }
+      if (!lastMessage.isIsMe() && loadQuickAnswers) {
+        getQuickAnswers(lastMessage.getContent().getContent().toString());
       }
     }
   }
 
-  private void refreshMessageList(int offset) {
-    Log.d("rgai", "loading messages with offset: " + offset);
-    ThreadContentGetter myThread = new ThreadContentGetter(this, mHandler, mMessage.getAccount(), offset <= 0);
+  private void getQuickAnswers(String content) {
+    QuickAnswerLoader qal = new QuickAnswerLoader(LayoutInflater.from(this), mQuickAnswers, content);
+    qal.executeTask(this, new Void[]{});
+  }
+
+  private void displayQuickAnswers(LayoutInflater inflater, ViewGroup container, List<String> answers, boolean timeout) {
+
+    Resources r = getResources();
+    float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, r.getDisplayMetrics());
+    int i = 0;
+
+    if (answers == null || answers.isEmpty()) {
+      toggleQuickAnsers(false);
+    } else {
+      mQuickAnswersInner.removeAllViews();
+      for (final String s : answers) {
+        if (i > 0) {
+          LinearLayout v = new LinearLayout(this);
+          LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int) (px * 1), ViewGroup.LayoutParams.MATCH_PARENT);
+          params.topMargin = (int) (8 * px);
+          params.bottomMargin = (int) (8 * px);
+          v.setBackgroundColor(0xff393939);
+          v.setLayoutParams(params);
+          mQuickAnswersInner.addView(v);
+        }
+
+        TextView tv = (TextView) inflater.inflate(R.layout.quick_answer_item, container, false);
+        tv.setText(s);
+        tv.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            quickAnswerClicked(s);
+          }
+        });
+        mQuickAnswersInner.addView(tv);
+        i++;
+      }
+      toggleQuickAnsers(true);
+    }
+  }
+
+  private void quickAnswerClicked(String s) {
+    closeQuickAnsers(null);
+    mText.setText(s);
+    sendMessage(null);
+  }
+
+  private void refreshMessageList(boolean loadQuickAnswers, int offset) {
+    ThreadContentGetter myThread = new ThreadContentGetter(this, loadQuickAnswers, mHandler, mMessage.getAccount(), offset <= 0);
     if (offset > 0) {
       myThread.setOffset(offset);
     }
     myThread.executeTask(this, new String[]{mMessage.getId()});
   }
 
-  private void refreshMessageList() {
-    refreshMessageList(-1);
+  private void refreshMessageList(boolean loadQuickAnswers) {
+    refreshMessageList(loadQuickAnswers, -1);
   }
 
   private void appendVisibleElementToStringBuilder(StringBuilder builder) {
@@ -662,6 +709,67 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
   }
 
+  public void closeQuickAnsers(View view) {
+    toggleQuickAnsers(false);
+  }
+
+  private void initQuickAnswerBar() {
+
+    Display display = getWindowManager().getDefaultDisplay();
+    Point size = new Point();
+    display.getSize(size);
+    int width = size.x;
+
+    mQuickAnswersCaret.setAlpha(0.0f);
+    mQuickAnswersCaret.setVisibility(View.VISIBLE);
+    ObjectAnimator mover = ObjectAnimator.ofFloat(mQuickAnswersCaret, "translationX", 0, width);
+    mover.setDuration(0);
+    mover.addListener(new Animator.AnimatorListener() {
+      public void onAnimationStart(Animator animation) {}
+      public void onAnimationEnd(Animator animation) {
+        mQuickAnswersCaret.setAlpha(1.0f);
+      }
+      public void onAnimationCancel(Animator animation) {}
+      public void onAnimationRepeat(Animator animation) {}
+    });
+    mover.start();
+  }
+
+  private void toggleQuickAnsers(boolean show) {
+
+    if (!show && mIsQuickAnswerHidden) return;
+
+    mIsQuickAnswerHidden = !show;
+    Log.d("yako", "left pos: " + mQuickAnswersCaret.getLeft());
+    ObjectAnimator mover;
+    int start;
+    int end;
+    Animator.AnimatorListener animListener;
+    if (show) {
+      start = mQuickAnswersCaret.getWidth();
+      end = 0;
+      animListener = new Animator.AnimatorListener() {
+        public void onAnimationStart(Animator animation) {/*mQuickAnswersCaret.setVisibility(View.VISIBLE);*/}
+        public void onAnimationEnd(Animator animation) {}
+        public void onAnimationCancel(Animator animation) {}
+        public void onAnimationRepeat(Animator animation) {}
+      };
+    } else {
+      start = 0;
+      end = mQuickAnswersCaret.getWidth();
+      animListener = new Animator.AnimatorListener() {
+        public void onAnimationStart(Animator animation) {}
+        public void onAnimationEnd(Animator animation) {/*mQuickAnswersCaret.setVisibility(View.GONE);*/}
+        public void onAnimationCancel(Animator animation) {}
+        public void onAnimationRepeat(Animator animation) {}
+      };
+    }
+    mover = ObjectAnimator.ofFloat(mQuickAnswersCaret, "translationX", start, end);
+    mover.setDuration(250);
+    mover.addListener(animListener);
+    mover.start();
+  }
+
   private class ConnectivityListener extends BroadcastReceiver {
 
     @Override
@@ -671,7 +779,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         if (info != null && info.isConnected()) {
-          ThreadDisplayerActivity.this.refreshMessageList();
+          ThreadDisplayerActivity.this.refreshMessageList(false);
         }
       }
     }
@@ -685,7 +793,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         int resultType = sentMessageData.getResultType();
         switch(resultType) {
           case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
-            ThreadDisplayerActivity.this.refreshMessageList();
+            ThreadDisplayerActivity.this.refreshMessageList(true);
             mMessageListChanged = true;
             break;
           case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
@@ -697,6 +805,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
       }
     }
   }
+
+
   
   
   public class DataUpdateReceiver extends BroadcastReceiver {
@@ -714,10 +824,54 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             Settings.Intents.NOTIFY_NEW_FB_GROUP_THREAD_MESSAGE)
             || intent.getAction().equals(
                 Settings.Intents.NEW_MESSAGE_ARRIVED_BROADCAST)) {
-          activity.refreshMessageList();
+          activity.refreshMessageList(true);
         }
       }
     }
+  }
+
+  private class QuickAnswerLoader extends TimeoutAsyncTask<Void, Void, List<String>> {
+
+    private static final String requestMod = "yako_quick_answer";
+    private final LayoutInflater mInflater;
+    private final ViewGroup mContainer;
+    private final String mText;
+
+
+    public QuickAnswerLoader(LayoutInflater inflater, ViewGroup container, String text) {
+      super(null);
+      mInflater = inflater;
+      mContainer = container;
+      mText = text;
+    }
+
+    @Override
+    protected List<String> doInBackground(Void... params) {
+      Source source = new Source(mText);
+      String plainText = source.getRenderer().toString();
+
+      Map<String, String> postParams = new HashMap<String, String>(2);
+      postParams.put("mod", requestMod);
+      postParams.put("text", plainText);
+      HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
+      if (response != null) {
+        String result = RemoteMessageController.responseToString(response);
+        if (result != null) {
+          return RemoteMessageController.responseStringToArray(result);
+        }
+      }
+      return null;
+    }
+
+    @Override
+    protected void onPostExecute(List<String> answers) {
+      if (answers == null) {
+        displayQuickAnswers(mInflater, mContainer, null, false);
+      } else {
+        displayQuickAnswers(mInflater, mContainer, answers, false);
+      }
+    }
+
   }
 
   class LogOnScrollListener implements OnScrollListener {

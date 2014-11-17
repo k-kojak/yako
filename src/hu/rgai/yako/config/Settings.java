@@ -34,7 +34,7 @@ import java.util.Map;
 public final class Settings {
 
   public static final int DEFAULT_ACTIONBAR_COLOR = 0xff222222;
-  public static final double IMPORTANT_LIMIT = 0.88;
+  public static final double IMPORTANT_LIMIT = 0.6;
 
   public static final boolean DEBUG = false;
   public static final String FACEBOOK_ME_IMG_FOLDER = "facebook_img";
@@ -234,6 +234,7 @@ public final class Settings {
     public static final int FULL_MESSAGE_RESULT = 2;
     public static final int GOOGLE_MAPS_ACTIVITY_RESULT = 3;
     public static final int PREFERENCES_REQUEST_CODE = 4;
+    public static final int FAKE_GOOGLE_MAPS_ACTIVITY_RESULT = 5;
   }
   
   public static final class ActivityResultCodes {

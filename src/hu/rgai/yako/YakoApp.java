@@ -13,6 +13,7 @@ import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Telephony;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.maps.model.LatLng;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
@@ -54,6 +56,8 @@ public class YakoApp extends Application {
 
   private Tracker tracker = null;
 
+  private static LatLng fakeLocation = null;
+
   private volatile static HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isRaedyForSms = null;
@@ -69,6 +73,14 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
+  }
+
+  public static LatLng getFakeLocation() {
+    return fakeLocation;
+  }
+
+  public static void setFakeLocation(LatLng location) {
+    fakeLocation = location;
   }
 
   /**
@@ -198,20 +210,37 @@ public class YakoApp extends Application {
   }
 
   public static void setActionBarColor(ActionBarActivity aba, GpsZone closest) {
-    int titleColor;
+    int targetColor;
 
     if (closest != null) {
-      titleColor = 0xff << 24 | closest.getZoneType().getColor();
+      targetColor = 0xff << 24 | closest.getZoneType().getColor();
     } else {
-      titleColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
+      targetColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
     }
 
-    TransitionDrawable titleAnimation = new TransitionDrawable(
-            new Drawable[]{new ColorDrawable(mPreviousActionbarColor), new ColorDrawable(titleColor)});
-    aba.getSupportActionBar().setBackgroundDrawable(titleAnimation);
-    titleAnimation.startTransition(1000);
+    String device = getDeviceName();
+    ColorDrawable targetColorDr = new ColorDrawable(targetColor);
+    if (device.startsWith("htc")) {
+      aba.getSupportActionBar().setBackgroundDrawable(targetColorDr);
+    } else {
+      TransitionDrawable titleAnimation = new TransitionDrawable(
+              new ColorDrawable[]{new ColorDrawable(mPreviousActionbarColor), targetColorDr});
+      aba.getSupportActionBar().setBackgroundDrawable(titleAnimation);
+      titleAnimation.startTransition(1000);
+    }
 
-    mPreviousActionbarColor = titleColor;
+
+    mPreviousActionbarColor = targetColor;
+  }
+
+  public static String getDeviceName() {
+    String manufacturer = Build.MANUFACTURER.toLowerCase();
+    String model = Build.MODEL.toLowerCase();
+    if (model.startsWith(manufacturer)) {
+      return model;
+    } else {
+      return manufacturer + " " + model;
+    }
   }
 
   public static void setActionBarTitle(ActionBarActivity aba, GpsZone closest, boolean setTitle, boolean setSubtitle) {

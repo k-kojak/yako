@@ -11,19 +11,24 @@
         android:id="@+id/alias_edit"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:textColor="#ff444444"
+        android:textColorHint="#ff888888"
         android:layout_marginBottom="12dp"
         android:hint="@string/alias_of_zone"/>
 
     <TableRow
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="12dp"
+        android:layout_gravity="center_horizontal">
 
         <TextView
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:textSize="16sp"
+            android:textColor="#ff444444"
+            android:layout_marginLeft="4dp"
             android:text="Zone category:"
              />
 
@@ -31,6 +36,7 @@
             android:id="@+id/zone_category"
             android:layout_width="0dp"
             android:layout_weight="1"
+            android:textColor="#ffff4444"
             android:layout_height="wrap_content" />
 
 

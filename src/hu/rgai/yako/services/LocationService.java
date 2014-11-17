@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import com.google.android.gms.maps.model.LatLng;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.tools.AndroidUtils;
@@ -99,7 +100,13 @@ public class LocationService extends Service {
     boolean zoneActivityChanged = true;
     GpsZone currentClosest = GpsZone.getClosest(zones);
 
-    if (mMyLastLocation != null) {
+    LatLng myLocation = new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude());
+    if (YakoApp.getFakeLocation() != null) {
+      Log.d("yako", "working with fake location...");
+      myLocation = YakoApp.getFakeLocation();
+    }
+
+    if (myLocation != null) {
       distanceChanged = false;
       zoneActivityChanged = false;
 
@@ -111,8 +118,8 @@ public class LocationService extends Service {
         int newDistance = Math.round(getDist(
                 (float) zone.getLat(),
                 (float) zone.getLong(),
-                (float) mMyLastLocation.getLatitude(),
-                (float) mMyLastLocation.getLongitude()));
+                (float) myLocation.latitude,
+                (float) myLocation.longitude));
 
         if (newDistance != zone.getDistance()) {
           distanceChanged = true;
@@ -140,9 +147,6 @@ public class LocationService extends Service {
           newProximity = GpsZone.Proximity.FAR;
         }
 
-//        if (!zone.getProximity().equals(newProximity)) {
-//          zoneActivityChanged = true;
-//        }
         zone.setProximity(newProximity);
       }
     }

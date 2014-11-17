@@ -18,7 +18,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.*;
 import android.view.animation.Animation;
@@ -56,10 +55,7 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.view.activities.AccountSettingsListActivity;
-import hu.rgai.yako.view.activities.GoogleMapsActivity;
-import hu.rgai.yako.view.activities.MessageReplyActivity;
-import hu.rgai.yako.view.activities.SystemPreferences;
+import hu.rgai.yako.view.activities.*;
 import hu.rgai.yako.view.extensions.LinearListView;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
@@ -84,6 +80,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private DrawerLayout mDrawerLayout;
   private LinearListView mAccountHolder;
   private CompoundButton mZonesToggle;
+  private CompoundButton mFakeZoneToggle;
   private View mZonesContainer;
   private LinearListView mZoneHolder;
   private MainListDrawerFilterAdapter mAccountFilterAdapter = null;
@@ -116,21 +113,21 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle, true, true, true);
-    
-    Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+
+    Tracker t = ((YakoApp) getApplication()).getTracker();
+    t.setScreenName(((Object) this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
 
     mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    
+
     // LOGGING
     setUpAndRegisterScreenReceiver();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openAllLogFile();
     }
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH , APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
+    EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
@@ -139,31 +136,32 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 //    sensorManager.registerListener(new AccelerometerListener(),
 //    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     mLocationChangeReceiver = new ZoneListChangedReceiver();
-    
-    
+
+
     setContentView(R.layout.mainlist_navigation_drawer);
-    
+
     mEmptyListText = new TextView(this);
     mEmptyListText.setText(this.getString(R.string.empty_list));
     mEmptyListText.setGravity(Gravity.CENTER);
     mEmptyListText.setVisibility(View.GONE);
-    ((FrameLayout)findViewById(R.id.content_frame)).addView(mEmptyListText);
-    
+    ((FrameLayout) findViewById(R.id.content_frame)).addView(mEmptyListText);
+
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
 
-    
+
     selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
-    
+
     if (selectedAccounts == null) {
       selectedAccounts = new LinkedList<Account>();
     }
-    
+
     mDrawerWrapper = findViewById(R.id.drawer_wrapper);
     mAccountHolder = (LinearListView) findViewById(R.id.account_holder);
     mAccountHolder.setIsSingleSelect(false);
 
     mZonesToggle = (CompoundButton) findViewById(R.id.zone_on_off);
+    mFakeZoneToggle = (CompoundButton) findViewById(R.id.fake_zone);
     mZoneHolder = (LinearListView) findViewById(R.id.zone_holder);
     mZonesContainer = findViewById(R.id.zones_container);
     mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
@@ -191,6 +189,20 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
       }
     });
 
+    mFakeZoneToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (!isChecked) {
+          YakoApp.setFakeLocation(null);
+          startLocationService(true);
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(MainActivity.this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
+        } else {
+          startFakeMapActivity();
+        }
+      }
+    });
+
     mAddGpsZone.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -206,7 +218,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
             R.drawable.ic_drawer, /* nav drawer image to replace 'Up' caret */
             R.string.mainlist_open_drawer, /* "open drawer" description for accessibility */
             R.string.mainlist_close_drawer /* "close drawer" description for accessibility */) {
-              
+
       @Override
       public void onDrawerClosed(View view) {
         super.onDrawerClosed(view);
@@ -218,7 +230,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
         super.onDrawerOpened(drawerView);
         showHideMenuBarIcons(true);
       }
-      
+
       @Override
       public void onDrawerSlide(View arg0, float slideOffset) {
         super.onDrawerSlide(arg0, slideOffset);
@@ -228,7 +240,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
           showHideMenuBarIcons(false);
         }
       }
-      
+
       private void showHideMenuBarIcons(boolean hide) {
         if (hide) {
           mDrawerIsVisible = true;
@@ -243,7 +255,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     };
 
     mDrawerLayout.setDrawerListener(mDrawerToggle);
-    
+
   }
 
   private void animateZoneList(final boolean isActivated) {
@@ -395,7 +407,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     localManager.unregisterReceiver(mLocationChangeReceiver);
 
     Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     
 // refreshing last notification date when closing activity
@@ -416,8 +428,12 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
-    super.onBackPressed();
+    if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+      mDrawerLayout.closeDrawer(GravityCompat.START);
+    } else {
+//      EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
+      super.onBackPressed();
+    }
   }
 
   
@@ -462,6 +478,18 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 
           Toast.makeText(this, "Zone saved.", Toast.LENGTH_SHORT).show();
         }
+      }
+    } else if (requestCode == Settings.ActivityRequestCodes.FAKE_GOOGLE_MAPS_ACTIVITY_RESULT) {
+      if (data != null && data.getAction() != null) {
+        if (data.getAction().equals(FakeGoogleMapsActivity.ACTION_FAKE_ZONE_SET)) {
+          startLocationService(true);
+//          loadZoneListAdapter(false);
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
+          mFakeZoneToggle.setChecked(true);
+        }
+      } else {
+        mFakeZoneToggle.setChecked(false);
       }
     }
   }
@@ -806,6 +834,14 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 //    Location.distanceBetween(x1, y1, x2, y2, dist);
 //    return dist[0];
 //  }
+
+  private void startFakeMapActivity() {
+    Intent i = new Intent(MainActivity.this, FakeGoogleMapsActivity.class);
+    LatLng latLng = LocationService.mMyLastLocation != null
+            ? new LatLng(LocationService.mMyLastLocation.getLatitude(), LocationService.mMyLastLocation.getLongitude()) : null;
+    i.putExtra(FakeGoogleMapsActivity.EXTRA_START_LOC, latLng);
+    startActivityForResult(i, Settings.ActivityRequestCodes.FAKE_GOOGLE_MAPS_ACTIVITY_RESULT);
+  }
 
   private void startMapActivity(GpsZone zone) {
     Intent i = new Intent(MainActivity.this, GoogleMapsActivity.class);

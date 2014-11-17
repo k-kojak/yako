@@ -92,7 +92,7 @@ public class FacebookSettingActivity extends ZoneDisplayActionBarActivity {
               }
               syncFacebookContactList(null);
               try {
-              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
+                setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
               } catch (Exception ex) {
                 Log.d("rgai", "", ex);
               }

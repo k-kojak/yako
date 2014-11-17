@@ -77,9 +77,6 @@ public class MainActivityFragment extends Fragment {
     mContextBarTimerHandler = new Handler();
 
 
-//    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
-    Log.d("rgai3", "QUERIING accounts: " + mAccounts);
-
     View mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
     mSwipeRefreshLayout = (SwipeRefreshLayout) mRootView.findViewById(R.id.SwipeRefreshLayout);
@@ -210,7 +207,6 @@ public class MainActivityFragment extends Fragment {
         Cursor cursorOfMessage = (Cursor)av.getItemAtPosition(itemIndex);
         MessageListElement message = MessageListDAO.cursorToMessageListElement(cursorOfMessage, mAccounts);
         Account a = message.getAccount();
-        Log.d("rgai3", "message's account after click: " + a);
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
         Intent intent = new Intent(mMainActivity, classToLoad);
 //        intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
@@ -252,7 +248,6 @@ public class MainActivityFragment extends Fragment {
   @Override
   public void onResume() {
     super.onResume();
-    Log.d("rgai3", "ONRESUME CALLED");
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
     updateAdapter();
     setLoadMoreButtonVisibility();
@@ -290,8 +285,7 @@ public class MainActivityFragment extends Fragment {
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
-      Log.d("rgai", "contextSelectedElements: " + contextSelectedElements);
-      
+
       LinkedList<MessageListElement> deletemessages = new LinkedList<MessageListElement>();
       MessageListElement mle;
       
@@ -419,7 +413,6 @@ public class MainActivityFragment extends Fragment {
       if (!contextSelectedElements.isEmpty()) {
         startContextualActionbarTimer();
       }
-      // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
       builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
@@ -456,11 +449,6 @@ public class MainActivityFragment extends Fragment {
     updateAdapter();
     setLoadMoreButtonVisibility();
     if (mAdapter != null) {
-//      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
-//        loadMoreButton.setVisibility(View.VISIBLE);
-//        loadMoreButtonVisible = true;
-//      }
-
       if (!contextSelectedElements.isEmpty()) {
         for (int i = 1; i < mAdapter.getCount(); i++) {
           long rawId = ((Cursor) (mAdapter.getItem(i))).getLong(0);
@@ -482,8 +470,7 @@ public class MainActivityFragment extends Fragment {
 
 
   private void updateAdapter() {
-    Log.d("rgai4", "@@ @@ update adapter....");
-    
+
     LinkedList<Long> accountIds = new LinkedList<Long>();        
     
     if (!MainActivity.selectedAccounts.isEmpty()) {
@@ -498,7 +485,7 @@ public class MainActivityFragment extends Fragment {
     if (mAdapter == null) {
       mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity, importantDrawable,
               zoneActivated, closestZone,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated), mAccounts);
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null), mAccounts);
     } else {
       Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null);
       mAdapter.changeCursor(newCursor);

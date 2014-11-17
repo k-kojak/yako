@@ -1,6 +1,7 @@
 package hu.rgai.yako.view.activities;
 
 import android.content.Context;
+import android.support.v7.app.ActionBar;
 import android.view.*;
 import android.widget.Toast;
 import hu.rgai.android.test.R;
@@ -64,8 +65,11 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState, true, false, true);
 
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    t.setScreenName(((Object)this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
     setContentView(R.layout.activity_email_displayer);
@@ -134,7 +138,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     super.onPause(); // To change body of generated methods, choose Tools |
                      // Templates.
     Tracker t = ((YakoApp) getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
   }
 
