@@ -5,22 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.*;
@@ -28,9 +22,6 @@ import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
-import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
-import hu.rgai.yako.smarttools.QuickAnswerProvider;
-import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.android.test.R;
@@ -45,8 +36,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -92,6 +81,8 @@ public class EmailDisplayerFragment extends Fragment {
     mAnswersShowHide = (TextView) mView.findViewById(R.id.quick_answer_btn);
     mInfoText = (TextView) mView.findViewById(R.id.info_text);
     mWebView.getSettings().setDefaultTextEncodingName(mailCharCode);
+    mWebView.getSettings().setBuiltInZoomControls(true);
+
     
     EmailDisplayerActivity eda = (EmailDisplayerActivity)getActivity();
     mAccount = eda.getAccount();
@@ -238,6 +229,21 @@ public class EmailDisplayerFragment extends Fragment {
     ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));
+    ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());;
+    
+    String recipientsNames = "to: ";
+    LinkedList<Person> recipientsList = (LinkedList<Person>) mMessage.getRecipientsList();
+
+    for(Person person : recipientsList) {
+      recipientsNames += person.getName();
+
+      if(!recipientsList.getLast().equals(person)) {
+        recipientsNames += " ,"; 
+      }
+    }
+    
+    ((TextView)mView.findViewById(R.id.recipients)).setText(recipientsNames);
+
     
     HtmlContent hc = mContent.getContent();
     String c = hc.getContent().toString();
