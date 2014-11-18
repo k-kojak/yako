@@ -15,7 +15,7 @@ public class BatchedAsyncTaskExecutor {
   private final String mProgressId;
   private BatchedAsyncTaskHandler mBatchHandler;
   
-  private volatile static TreeMap<String, BatchedProcessState> runningStacksState = new TreeMap<String, BatchedProcessState>();
+  private volatile static TreeMap<String, BatchedProcessState> runningStacksState = new TreeMap<>();
   
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
@@ -35,22 +35,22 @@ public class BatchedAsyncTaskExecutor {
 //    }
   }
   
-  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
-          String progressId) throws Exception {
-    this(tasks, params, progressId, null);
-  }
+//  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params,
+//          String progressId) throws Exception {
+//    this(tasks, params, progressId, null);
+//  }
   
-  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params) throws Exception {
-    this(tasks, params, null, null);
-  }
-  
-  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks) throws Exception {
-    this(tasks, null, null, null);
-  }
-  
-  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, String progressId) throws Exception {
-    this(tasks, null, progressId, null);
-  }
+//  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, Object[][] params) throws Exception {
+//    this(tasks, params, null, null);
+//  }
+//
+//  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks) throws Exception {
+//    this(tasks, null, null, null);
+//  }
+//
+//  public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, String progressId) throws Exception {
+//    this(tasks, null, progressId, null);
+//  }
   
   public BatchedAsyncTaskExecutor(List<BatchedTimeoutAsyncTask> tasks, String progressId, BatchedAsyncTaskHandler handler) throws Exception {
     this(tasks, null, progressId, handler);
@@ -106,12 +106,12 @@ public class BatchedAsyncTaskExecutor {
     return runningStacksState.containsKey(progressId) && !runningStacksState.get(progressId).isDone();
   }
   
-  public static BatchedProcessState getProgressState(String progressId) {
-    if (runningStacksState.containsKey(progressId)) {
-      return runningStacksState.get(progressId);
-    } else {
-      return null;
-    }
-  }
+//  public static BatchedProcessState getProgressState(String progressId) {
+//    if (runningStacksState.containsKey(progressId)) {
+//      return runningStacksState.get(progressId);
+//    } else {
+//      return null;
+//    }
+//  }
   
 }

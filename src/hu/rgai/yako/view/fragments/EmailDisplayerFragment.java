@@ -285,11 +285,9 @@ public class EmailDisplayerFragment extends Fragment {
       Map<String, String> postParams = new HashMap<String, String>(2);
       postParams.put("mod", requestMod);
       postParams.put("text", plainText);
-      Log.d("yako", "postParams: " + postParams);
       HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
       if (response != null) {
         result = RemoteMessageController.responseToString(response);
-        Log.d("yako", "server result: " + result);
       }
       return result;
     }

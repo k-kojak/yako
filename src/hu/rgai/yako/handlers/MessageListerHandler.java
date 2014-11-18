@@ -332,7 +332,7 @@ public class MessageListerHandler extends TimeoutHandler {
             Map<String, String> postParams = new HashMap<String, String>(2);
             postParams.put("mod", "yako_quick_answer");
             postParams.put("text", plainText);
-            Log.d("yako", "postParams: " + postParams);
+//            Log.d("yako", "postParams: " + postParams);
             HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
 
             if (response != null) {

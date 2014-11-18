@@ -43,17 +43,12 @@ public class MainService extends Service {
   public static final String MESSAGE_LIST_QUERY_KEY = "message_list_query_key";
   public static final String BATCHED_MESSAGE_LIST_TASK_DONE_INTENT = "batched_message_list_task_done_intent";
   public static final String NO_TASK_AVAILABLE_TO_PROCESS = "no_task_available_to_process";
-  private SensorManager sensorManager;
 
   public MainService() {}
 
   @Override
   public void onCreate() {
     RUNNING = true;
-
-//    sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
-//    sensorManager.registerListener(new AccelerometerListener(),
-//            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -85,15 +80,134 @@ public class MainService extends Service {
   
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    Log.d("rgai3", "Service onstartCommand");
 
     TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 
-    final MainServiceExtraParams extraParams;
-    
-    // if true that means android system restarted the mainservice without sending any parameter
-    // in this case we have to make a full query
+    ExtraProcessResult pr = getExtraParams(intent);
+    final MainServiceExtraParams extraParams = pr.mServExtraParams;
+
+    /**
+     * if true that means android system restarted the mainservice without sending any parameter
+     * if that is the case, we have to make a full query
+     */
+    boolean startedByAndroid = pr.startedByAndroid;
+    boolean isNet = isNetworkAvailable();
+    boolean isPhone = YakoApp.isRaedyForSms;
+
+    MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
+
+    if (accounts.isEmpty() && !isPhone) {
+      preHandler.finished(null, MessageListerAsyncTask.NO_ACCOUNT_SET, null);
+    } else {
+      if (!accounts.isEmpty() && !isPhone && !isNet) {
+        preHandler.finished(null, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
+      } else {
+        runMessageQuery(this, accounts, startedByAndroid, isNet, extraParams);
+
+      }
+    }
+    return Service.START_STICKY;
+  }
+
+
+
+  private static void runMessageQuery(final Context context, TreeSet<Account> accounts, boolean startedByAndroid,
+                                      boolean isNet, MainServiceExtraParams extraParams) {
+
+    if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
+
+      List<BatchedTimeoutAsyncTask> tasks = new LinkedList<>();
+      boolean wasAnyFullUpdateCheck = buildQueryTasks(context, accounts, extraParams, startedByAndroid, isNet, tasks);
+
+      try {
+        // this means there is no available task to process
+        if (tasks.isEmpty()) {
+          Intent i = new Intent(NO_TASK_AVAILABLE_TO_PROCESS);
+          LocalBroadcastManager.getInstance(context).sendBroadcast(i);
+        } else {
+          BatchedAsyncTaskHandler batchHandler = new MyBatchedTaskHandler(context);
+          BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, batchHandler);
+          executor.execute(context);
+        }
+      } catch (Exception ex) {
+        Log.d("rgai", "start command exception", ex);
+      }
+      if (wasAnyFullUpdateCheck) {
+        YakoApp.lastFullMessageUpdate = new Date();
+      }
+    } else {
+      asyncTaskQueue.add(extraParams);
+    }
+  }
+
+
+
+  /**
+   * Returns true if this was a full update check (all accounts were checked, not only 1), false otherwise.
+   * @param context
+   * @param accounts
+   * @param extraParams
+   * @param startedByAndroid
+   * @param isNet
+   * @param tasks
+   * @return
+   */
+  private static boolean buildQueryTasks(Context context, TreeSet<Account> accounts,
+                                                               MainServiceExtraParams extraParams,
+                                                               boolean startedByAndroid, boolean isNet,
+                                                               List<BatchedTimeoutAsyncTask> tasks) {
+    boolean wasAnyFullUpdateCheck = false;
+    TreeMap<Account, Long> accountsAccountKey = null;
+    TreeMap<Long, Account> accountsIntegerKey = null;
+
+    for (Account acc : accounts) {
+      if (extraParams.isAccountsEmpty() || extraParams.accountsContains(acc)) {
+        MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, context);
+
+        // checking if live connections are still alive, reconnect them if not
+        boolean isConnectionAlive = provider.isConnectionAlive();
+        AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, context);
+
+        boolean shouldLoadData = startedByAndroid || extraParams.isForceQuery() || extraParams.isLoadMore()
+                || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
+                || MainActivity.isMainActivityVisible();
+
+        boolean canLoadData = acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad();
+
+        if (shouldLoadData && canLoadData) {
+          if (extraParams.isAccountsEmpty()) {
+            wasAnyFullUpdateCheck = true;
+          }
+
+          // TODO: this Definitely should not be here
+          if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
+            MainActivity.openFbSession(context);
+          }
+          if (accountsAccountKey == null || accountsIntegerKey == null) {
+            accountsAccountKey = AccountDAO.getInstance(context).getAccountToIdMap();
+            accountsIntegerKey = AccountDAO.getInstance(context).getIdToAccountsMap();
+          }
+
+          MessageListerHandler th = new MessageListerHandler(context, extraParams, acc.getDisplayName());
+          MessageListerAsyncTask myThread = new MessageListerAsyncTask(context, accountsAccountKey,
+                  accountsIntegerKey, acc, provider, extraParams.isLoadMore(),
+                  extraParams.isMessagesRemovedAtServer(), extraParams.getQueryLimit(),
+                  extraParams.getQueryOffset(), th);
+          myThread.setTimeout(25000);
+
+          tasks.add(myThread);
+        }
+      }
+    }
+
+    return wasAnyFullUpdateCheck;
+  }
+
+  private static ExtraProcessResult getExtraParams(Intent intent) {
+
     boolean startedByAndroid = true;
+    MainServiceExtraParams extraParams;
+
     if (intent != null && intent.getExtras() != null) {
       if (intent.getExtras().containsKey(IntentStrings.Params.EXTRA_PARAMS)) {
         // alarm manager cannot send extra params via intent.putextra, we have
@@ -111,116 +225,8 @@ public class MainService extends Service {
     } else {
       extraParams = new MainServiceExtraParams();
     }
-    
-    boolean isNet = isNetworkAvailable();
-    boolean isPhone = YakoApp.isRaedyForSms;
-    MessageListerHandler preHandler = new MessageListerHandler(this, extraParams, null);
-    if (accounts.isEmpty() && !isPhone) {
-      preHandler.finished(null, MessageListerAsyncTask.NO_ACCOUNT_SET, null);
-    } else {
-      if (!accounts.isEmpty() && !isPhone && !isNet) {
-        preHandler.finished(null, MessageListerAsyncTask.NO_INTERNET_ACCESS, null);
-      } else {
-        
-        if (!BatchedAsyncTaskExecutor.isProgressRunning(MESSAGE_LIST_QUERY_KEY)) {
-          List<BatchedTimeoutAsyncTask> tasks = new LinkedList<BatchedTimeoutAsyncTask>();
-          boolean wasAnyFullUpdateCheck = false;
 
-          TreeMap<Account, Long> accountsAccountKey = null;
-          TreeMap<Long, Account> accountsIntegerKey = null;
-
-          for (Account acc : accounts) {
-            
-            if (extraParams.isAccountsEmpty() || extraParams.accountsContains(acc)) {
-              MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(acc, this);
-
-              
-              // checking if live connections are still alive, reconnect them if not
-              boolean isConnectionAlive = provider.isConnectionAlive();
-              AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, this);
-              
-              if (startedByAndroid || extraParams.isForceQuery() || extraParams.isLoadMore()
-                      || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
-                      || MainActivity.isMainActivityVisible()) {
-                
-                if (acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad()) {
-                  if (extraParams.isAccountsEmpty()) {
-                    wasAnyFullUpdateCheck = true;
-                  }
-                  
-                  // TODO: this Definitely should not be here
-                  if (acc.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
-                    MainActivity.openFbSession(this);
-                  }
-                  if (accountsAccountKey == null || accountsIntegerKey == null) {
-                    accountsAccountKey = AccountDAO.getInstance(this).getAccountToIdMap();
-                    accountsIntegerKey = AccountDAO.getInstance(this).getIdToAccountsMap();
-                  }
-
-                  MessageListerHandler th = new MessageListerHandler(this, extraParams, acc.getDisplayName());
-                  MessageListerAsyncTask myThread = new MessageListerAsyncTask(this, accountsAccountKey, accountsIntegerKey,
-                          acc, provider, extraParams.isLoadMore(), extraParams.isMessagesRemovedAtServer(),
-                          extraParams.getQueryLimit(), extraParams.getQueryOffset(), th);
-                  myThread.setTimeout(25000);
-                  
-                  tasks.add(myThread);
-                }
-              }
-            }
-          }
-          try {
-            // this means there is no available task to process
-            if (tasks.isEmpty()) {
-              Intent i = new Intent(NO_TASK_AVAILABLE_TO_PROCESS);
-              LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
-            } else {
-              BatchedAsyncTaskExecutor executor = new BatchedAsyncTaskExecutor(tasks, MESSAGE_LIST_QUERY_KEY, new BatchedAsyncTaskHandler() {
-                public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
-                  if (processState.isDone()) {
-                    // store current message list to disk!
-//                    synchronized (YakoApp.getMessages()) {
-//                      Log.i("rgai", "saving message list to disk");
-//                      AccountDAO accDAO = AccountDAO.getInstance(MainService.this);
-//                      TreeMap<Account, Integer> accounts = accDAO.getAccountToIdMap();
-
-                      // this means the database does not contains any accounts
-//                      if (accounts.isEmpty()) {
-//                        accDAO.insertAccounts(StoreHandler.getAccounts(MainService.this));
-//                        accounts = accDAO.getAccountToIdMap();
-//                      }
-//                      accDAO.close();
-
-//                      Log.d("rgai", "accountsMap: " + accounts);
-//                      MessageListDAO msgDAO = MessageListDAO.getInstance(MainService.this);
-//                      msgDAO.insertMessages(YakoApp.getMessages(), accounts);
-//                      Log.i("rgai", "saved");
-//                    }
-                    // if we have tasks in queue, then execute the next one
-                    if (!asyncTaskQueue.isEmpty()) {
-                      MainServiceExtraParams next = asyncTaskQueue.pollFirst();
-                      Intent intent = new Intent(MainService.this, MainService.class);
-                      intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, next);
-                      MainService.this.startService(intent);
-                    }
-                  }
-                  Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
-                  LocalBroadcastManager.getInstance(MainService.this).sendBroadcast(i);
-                }
-              });
-              executor.execute(this);
-            }
-          } catch (Exception ex) {
-            Log.d("rgai", "start command exception", ex);
-          }
-          if (wasAnyFullUpdateCheck) {
-            YakoApp.lastFullMessageUpdate = new Date();
-          }
-        } else {
-          asyncTaskQueue.add(extraParams);
-        }
-      }
-    }
-    return Service.START_STICKY;
+    return new ExtraProcessResult(extraParams, startedByAndroid);
   }
 
   private boolean isNetworkAvailable() {
@@ -238,6 +244,40 @@ public class MainService extends Service {
   public class MyBinder extends Binder {
     public MainService getService() {
       return MainService.this;
+    }
+  }
+
+  private static class MyBatchedTaskHandler implements BatchedAsyncTaskHandler {
+
+    final Context mContext;
+
+    public MyBatchedTaskHandler(Context context) {
+      mContext = context;
+    }
+
+    @Override
+    public void batchedTaskDone(boolean cancelled, String progressKey, BatchedProcessState processState) {
+      if (processState.isDone()) {
+        // if we have tasks in queue, then execute the next one
+        if (!asyncTaskQueue.isEmpty()) {
+          MainServiceExtraParams next = asyncTaskQueue.pollFirst();
+          Intent intent = new Intent(mContext, MainService.class);
+          intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, next);
+          mContext.startService(intent);
+        }
+      }
+      Intent i = new Intent(BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
+      LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
+    }
+  }
+
+  private static class ExtraProcessResult {
+    final MainServiceExtraParams mServExtraParams;
+    final boolean startedByAndroid;
+
+    public ExtraProcessResult(MainServiceExtraParams mServExtraParams, boolean startedByAndroid) {
+      this.mServExtraParams = mServExtraParams;
+      this.startedByAndroid = startedByAndroid;
     }
   }
 

@@ -171,7 +171,7 @@ public class LocationService extends Service {
 
           // Skip location update, because the new location accuracy is not accurate enough
           // (and we are still in location life limit)
-          Log.d("yako", "newLocation's accuracy: " + (newLocation != null ? newLocation.getAccuracy() : "null"));
+//          Log.d("yako", "newLocation's accuracy: " + (newLocation != null ? newLocation.getAccuracy() : "null"));
           if (newLocation != null && mMyLastLocation != null
                   && newLocation.getAccuracy() > 300.0f
                   && mMyLastLocation.getTime() + MY_LOCATION_LIFE_LENGTH > System.currentTimeMillis()) {
