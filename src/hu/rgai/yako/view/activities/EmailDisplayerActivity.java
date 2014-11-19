@@ -1,6 +1,8 @@
 package hu.rgai.yako.view.activities;
 
-import android.content.Context;
+import android.app.ProgressDialog;
+import android.content.*;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.view.*;
 import android.widget.Toast;
@@ -10,6 +12,7 @@ import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
+import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
@@ -26,8 +29,6 @@ import java.util.List;
 import java.util.TreeSet;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.*;
 import android.support.v4.view.PagerAdapter;
@@ -55,11 +56,12 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   private boolean mFromNotification = false;
   private FullSimpleMessage mContent = null;
   private MyPageChangeListener mPageChangeListener = null;
+  private ProgressDialog pd = null;
+  private CustomBroadcastReceiver mBcReceiver = null;
 
   private NonSwipeableViewPager mPager;
   private PagerAdapter mPagerAdapter;
   public static final int MESSAGE_REPLY_REQ_CODE = 1;
-  private static final int QUICK_ANSWER_GROUP = 1000;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -73,32 +75,58 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     t.send(new HitBuilders.AppViewBuilder().build());
 
     setContentView(R.layout.activity_email_displayer);
+
     long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
 
     TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
     mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
 
-
     if (mMessage == null) {
       finish(ErrorCodes.MESSAGE_IS_NULL_ON_MESSAGE_OPEN);
       return;
     }
+
+    mBcReceiver = new CustomBroadcastReceiver();
+
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+
+    toggleProgressDialog(true);
+
+    IntentFilter bcFilter = new IntentFilter(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT);
+    LocalBroadcastManager.getInstance(this).registerReceiver(mBcReceiver, bcFilter);
+
+    boolean hasContent = loadFullMessageContent();
+    if (hasContent) {
+      displayMessage();
+    }/* else {
+      // wait for asynctask to finish content load
+    }*/
+  }
+
+  private boolean loadFullMessageContent() {
     TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this, mMessage.getRawId());
     if (fullMessages != null && !fullMessages.isEmpty()) {
       mContent = fullMessages.first();
       mMessage.setFullMessage(mContent);
+      return true;
     } else {
-      finish(ErrorCodes.MESSAGE_CONTENT_NOT_PRESENT_IN_DB_FOR_EMAIL);
-      return;
+      return false;
     }
+  }
+
+  private void displayMessage() {
+    toggleProgressDialog(false);
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
-//    YakoApp.setMessageSeenAndReadLocally(mMessage);
 
     getSupportActionBar().setTitle(mContent.getSubject());
 
     // marking message as read
     MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-    TreeSet<String> messagesToMark = new TreeSet<String>();
+    TreeSet<String> messagesToMark = new TreeSet<>();
     messagesToMark.add(mMessage.getId());
     MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
     marker.executeTask(this, null);
@@ -112,11 +140,26 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     // Instantiate a ViewPager and a PagerAdapter.
     mPager = (NonSwipeableViewPager) findViewById(R.id.pager);
     mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(),
-        mContent.getAttachments() != null
-            && !mContent.getAttachments().isEmpty());
+            mContent.getAttachments() != null
+                    && !mContent.getAttachments().isEmpty());
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
+  }
+
+  public synchronized void toggleProgressDialog(boolean show) {
+    if (show) {
+      if (pd == null) {
+        pd = new ProgressDialog(this);
+        pd.setCancelable(false);
+      }
+      pd.show();
+      pd.setContentView(R.layout.progress_dialog);
+    } else {
+      if (pd != null) {
+        pd.dismiss();
+      }
+    }
   }
 
   private void finish(int code) {
@@ -135,11 +178,12 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   @Override
   protected void onPause() {
-    super.onPause(); // To change body of generated methods, choose Tools |
-                     // Templates.
+    super.onPause();
     Tracker t = ((YakoApp) getApplication()).getTracker();
     t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
+
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mBcReceiver);
   }
 
   @Override
@@ -262,6 +306,21 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     Log.d("willrgai", EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR);
     EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.EMAIL.EMAIL_BACKBUTTON_STR, true);
     super.onBackPressed();
+  }
+
+  private class CustomBroadcastReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction() != null) {
+        if (intent.getAction().equals(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT)) {
+          boolean hasContent = loadFullMessageContent();
+          if (hasContent) {
+            displayMessage();
+          }
+        }
+      }
+    }
   }
 
 }

@@ -66,21 +66,23 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   public Account getAccount() {
     return SmsAccount.getInstance();
   }
-  
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
-          throws CertPathValidatorException, SSLHandshakeException,
-          ConnectException, NoSuchProviderException, UnknownHostException,
-          IOException, MessagingException, AuthenticationFailedException {
-    return getMessageList(offset, limit, loadedMessages, 20);
+
+  @Override
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+
+    return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
   
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
-          throws CertPathValidatorException, SSLHandshakeException,
-          ConnectException, NoSuchProviderException, UnknownHostException,
-          IOException, MessagingException, AuthenticationFailedException {
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
 
-    final List<MessageListElement> messages = new LinkedList<MessageListElement>();
+    final List<MessageListElement> messages = new LinkedList<>();
     int foundThreads = 0;
     
     Uri uriSMSURI = Uri.parse("content://sms");

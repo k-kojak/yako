@@ -93,7 +93,9 @@ public class FullMessageDAO {
     cv.put(COL_MESSAGE_LIST_ID, messageListRawId);
     cv.put(COL_MSG_TYPE, simpleMessage.getMessageType().toString());
 
-    return mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
+    long rawId = mDbHelper.getDatabase().insert(TABLE_MESSAGE_CONTENT, null, cv);
+    AttachmentDAO.getInstance(context).insertAttachmentInfo(rawId, simpleMessage.getAttachments());
+    return rawId;
   }
 
 
@@ -107,7 +109,7 @@ public class FullMessageDAO {
     if (messageList != null && !messageList.isEmpty()) {
       idClause = SQLHelper.Utils.getInClosureFromListElement(messageList);
     }
-    List<Long> ids = new LinkedList<Long>();
+    List<Long> ids = new LinkedList<>();
     String q = "SELECT c." + COL_ID
             + " FROM " + TABLE_MESSAGE_CONTENT + " AS c, " + MessageListDAO.TABLE_MESSAGES + " AS m"
             + " WHERE c." + COL_MESSAGE_LIST_ID + " = m." + MessageListDAO.COL_ID;
@@ -138,7 +140,7 @@ public class FullMessageDAO {
    * @return
    */
   public TreeSet<FullSimpleMessage> getFullSimpleMessages(Context context, long rawMessageListId) {
-    TreeMap<Long, FullSimpleMessage> messages = new TreeMap<Long, FullSimpleMessage>();
+    TreeMap<Long, FullSimpleMessage> messages = new TreeMap<>();
     String q = "SELECT m." + COL_ID + ", " + COL_MSG_ID + ", " + COL_SUBJECT + ", " + COL_CONTENT_TYPE + ", "
             + COL_CONTENT_TEXT + ", " + COL_DATE + ", " + COL_IS_ME + ", " + COL_MSG_TYPE + ", " + PersonSenderDAO.COL_KEY
             + ", " + PersonSenderDAO.COL_NAME + ", " + PersonSenderDAO.COL_SECONDARY_NAME + ", " + PersonSenderDAO.COL_TYPE
@@ -146,7 +148,7 @@ public class FullMessageDAO {
             + " WHERE m." + COL_FROM_ID + " = p." + PersonSenderDAO.COL_ID
               + " AND " + COL_MESSAGE_LIST_ID + " = ?";
 
-    List<Long> fullMsgRawIds = new LinkedList<Long>();
+    List<Long> fullMsgRawIds = new LinkedList<>();
     Cursor cursor = mDbHelper.getDatabase().rawQuery(q, new String[] {Long.toString(rawMessageListId)});
     cursor.moveToFirst();
     while (!cursor.isAfterLast()) {
@@ -175,7 +177,7 @@ public class FullMessageDAO {
 
     appendAttachmentsToMessages(context, fullMsgRawIds, messages);
 
-    return new TreeSet<FullSimpleMessage>(messages.values());
+    return new TreeSet<>(messages.values());
   }
 
 
@@ -222,7 +224,7 @@ public class FullMessageDAO {
 
 
   private Set<String> getFullMessageIdsByMessageRawId(long messageListRawId) {
-    Set<String> ids = new TreeSet<String>();
+    Set<String> ids = new TreeSet<>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_MESSAGE_CONTENT, new String[] {COL_MSG_ID},
             COL_MESSAGE_LIST_ID + " = ?", new String[]{Long.toString(messageListRawId)}, null, null, null);
     cursor.moveToFirst();

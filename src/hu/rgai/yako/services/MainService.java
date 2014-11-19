@@ -153,9 +153,8 @@ public class MainService extends Service {
    * @return
    */
   private static boolean buildQueryTasks(Context context, TreeSet<Account> accounts,
-                                                               MainServiceExtraParams extraParams,
-                                                               boolean startedByAndroid, boolean isNet,
-                                                               List<BatchedTimeoutAsyncTask> tasks) {
+                                         MainServiceExtraParams extraParams, boolean startedByAndroid,
+                                         boolean isNet, List<BatchedTimeoutAsyncTask> tasks) {
     boolean wasAnyFullUpdateCheck = false;
     TreeMap<Account, Long> accountsAccountKey = null;
     TreeMap<Long, Account> accountsIntegerKey = null;
@@ -169,8 +168,8 @@ public class MainService extends Service {
         AndroidUtils.checkAndConnectMessageProviderIfConnectable(provider, isConnectionAlive, context);
 
         boolean shouldLoadData = startedByAndroid || extraParams.isForceQuery() || extraParams.isLoadMore()
-                || !isConnectionAlive || !provider.canBroadcastOnNewMessage()
-                || MainActivity.isMainActivityVisible();
+                || extraParams.isSplittedMessageSecondPart() || !isConnectionAlive
+                || !provider.canBroadcastOnNewMessage() || MainActivity.isMainActivityVisible();
 
         boolean canLoadData = acc.isInternetNeededForLoad() && isNet || !acc.isInternetNeededForLoad();
 
@@ -191,8 +190,9 @@ public class MainService extends Service {
           MessageListerHandler th = new MessageListerHandler(context, extraParams, acc.getDisplayName());
           MessageListerAsyncTask myThread = new MessageListerAsyncTask(context, accountsAccountKey,
                   accountsIntegerKey, acc, provider, extraParams.isLoadMore(),
-                  extraParams.isMessagesRemovedAtServer(), extraParams.getQueryLimit(),
-                  extraParams.getQueryOffset(), th);
+                  extraParams.isSplittedMessageSecondPart(), extraParams.isNewMessageArrivedRequest(),
+                  extraParams.getSplittedMessages(), extraParams.isMessagesRemovedAtServer(),
+                  extraParams.getQueryLimit(), extraParams.getQueryOffset(), th);
           myThread.setTimeout(25000);
 
           tasks.add(myThread);

@@ -153,7 +153,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
 
     if (selectedAccounts == null) {
-      selectedAccounts = new LinkedList<Account>();
+      selectedAccounts = new LinkedList<>();
     }
 
     mDrawerWrapper = findViewById(R.id.drawer_wrapper);
@@ -312,6 +312,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
     filter.addAction(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
+    filter.addAction(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT);
     filter.addAction(MainService.NO_TASK_AVAILABLE_TO_PROCESS);
     localManager.registerReceiver(mMessageLoadedReceiver, filter);
 
@@ -864,7 +865,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
         MainActivity.this.refreshLoadingIndicatorState();
       }
       // this one is responsible for list/data updates
-      else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
+      else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)
+              || intent.getAction().equals(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT)) {
         MainActivity.this.redisplayMessages();
       }
       // if no task available to do at service

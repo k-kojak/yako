@@ -49,7 +49,8 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException,
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException;
   
@@ -70,9 +71,10 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength) throws CertPathValidatorException,
-          SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
-          IOException, MessagingException, AuthenticationFailedException;
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException;
   
   /**
    * Returns a single message.

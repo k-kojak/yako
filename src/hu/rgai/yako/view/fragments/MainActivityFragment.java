@@ -471,7 +471,7 @@ public class MainActivityFragment extends Fragment {
 
   private void updateAdapter() {
 
-    LinkedList<Long> accountIds = new LinkedList<Long>();        
+    LinkedList<Long> accountIds = new LinkedList<>();
     
     if (!MainActivity.selectedAccounts.isEmpty()) {
       for (int i=0; i < MainActivity.selectedAccounts.size(); i++) {

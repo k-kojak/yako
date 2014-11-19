@@ -23,8 +23,15 @@ public class MessageListDAO  {
   public static final String TABLE_MESSAGES = "messages";
 
 
-
+  /**
+   * This is the RAW database id.
+   */
   public static final String COL_ID = "_id";
+
+  /**
+   * This is the message id, which was given by the provider, so this is not unique in the system,
+   * it only unique on the given domain.
+   */
   public static final String COL_MSG_ID = "msg_id";
   public static final String COL_SEEN = "seen";
   public static final String COL_TITLE = "title";
@@ -154,11 +161,12 @@ public class MessageListDAO  {
       cv.put(COL_UNREAD_CNT, 0);
     }
 
-    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(rawId)});
+    int r = mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(rawId)});
+    Log.d("yako", "updated rows ("+ rawId +"): " + r);
   }
 
 
-  public synchronized void insertMessage(Context context, MessageListElement mle, TreeMap<Account, Long> accounts) {
+  public synchronized long insertMessage(Context context, MessageListElement mle, TreeMap<Account, Long> accounts) {
     ContentValues cv = new ContentValues();
     try {
       cv.put(COL_MSG_ID, mle.getId());
@@ -169,7 +177,7 @@ public class MessageListDAO  {
 
       // TODO: currently we are not storing messages where getFrom is null
       // this case happens now when we have a group chat, so there is no sender, just recipients, so the getFrom is NULL
-      if (mle.getFrom() == null) return;
+      if (mle.getFrom() == null) return -1;
       long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
       cv.put(COL_FROM_ID, fromID);
 
@@ -181,14 +189,14 @@ public class MessageListDAO  {
       Log.d("rgai", "mle.getFrom has a null value somewhere: " + mle.getFrom(), ex);
     }
 
-    if (cv != null) {
-      long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
-      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+    long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
+    if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+      if (mle.getFullMessage() != null) {
         FullSimpleMessage fsm = (FullSimpleMessage) mle.getFullMessage();
-        long fullMessageRawId = FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
-        AttachmentDAO.getInstance(context).insertAttachmentInfo(fullMessageRawId, fsm.getAttachments());
+        FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
       }
     }
+    return msgRawId;
   }
 
 
@@ -339,7 +347,7 @@ public class MessageListDAO  {
 
   public TreeSet<MessageListElement> getAllMessagesToAccount(Account a) {
     if (a != null) {
-      TreeMap<Long, Account> accounts = new TreeMap<Long, Account>();
+      TreeMap<Long, Account> accounts = new TreeMap<>();
       accounts.put(a.getDatabaseId(), a);
       return getAllMessages(accounts, a.getDatabaseId());
     } else {
@@ -347,9 +355,37 @@ public class MessageListDAO  {
     }
   }
 
+//  public TreeMap<String, Long> getMessagesWithoutContent(Account account) {
+//    TreeMap<String, Long> emptyMessages = new TreeMap<>();
+//
+//
+//
+//    String query = "SELECT"
+//            + " m." + COL_ID + " AS msg_raw_id,"
+//            + " m." + COL_MSG_ID + " AS msg_id,"
+//            + " m." + COL_TITLE
+//            + " FROM " + TABLE_MESSAGES + " AS m"
+//            + " LEFT JOIN " + FullMessageDAO.TABLE_MESSAGE_CONTENT + " AS c"
+//            + " ON c." + FullMessageDAO.COL_MESSAGE_LIST_ID + " = m." + COL_ID
+//            + " WHERE c."+ FullMessageDAO.COL_MESSAGE_LIST_ID +" is null"
+//            + " AND m." + COL_ACCOUNT_ID + " = ?";
+//
+//    Cursor cursor = mDbHelper.getDatabase().rawQuery(query, new String[]{String.valueOf(account.getDatabaseId())});
+//    cursor.moveToFirst();
+//
+//    while (!cursor.isAfterLast()) {
+//      Log.d("yako", "this message do not have content: " + cursor.getString(2));
+//      emptyMessages.put(cursor.getString(1), cursor.getLong(0));
+//      cursor.moveToNext();
+//    }
+//
+//    cursor.close();
+//    return emptyMessages;
+//  }
+
 
   public TreeSet<MessageListElement> getAllMessages(TreeMap<Long, Account> accounts, long accountId) {
-    return new TreeSet<MessageListElement>(getAllMessagesMap(accounts, accountId).values());
+    return new TreeSet<>(getAllMessagesMap(accounts, accountId).values());
   }
 
 
@@ -359,8 +395,8 @@ public class MessageListDAO  {
 
 
   public TreeMap<Long, MessageListElement> getAllMessagesMap(TreeMap<Long, Account> accounts, long accountId) {
-    TreeMap<Long, MessageListElement> messages = new TreeMap<Long, MessageListElement>();
-    LinkedList<Long> accountIds = new LinkedList<Long>();
+    TreeMap<Long, MessageListElement> messages = new TreeMap<>();
+    LinkedList<Long> accountIds = new LinkedList<>();
     if (accountId != -1)
       accountIds.add(accountId);
     
@@ -489,7 +525,7 @@ public class MessageListDAO  {
           attachmentCount = cursor.getInt(cursor.getColumnIndex("sum"));
         }
 
-        mle = new MessageListElement(rawId, messageId, seen, title, subTitle, attachmentCount, from, null, date, account,
+        mle = new MessageListElement(false, rawId, messageId, seen, title, subTitle, attachmentCount, from, null, date, account,
                 msgType, isImportant);
       } catch (ParseException e) {
         Log.d("rgai", "", e);
@@ -497,10 +533,5 @@ public class MessageListDAO  {
     }
     return mle;
   }
+
 }
-
-
-
-
-
-

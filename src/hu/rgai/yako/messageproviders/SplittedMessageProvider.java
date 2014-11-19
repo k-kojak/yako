@@ -1,5 +1,6 @@
 package hu.rgai.yako.messageproviders;
 
+import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.beens.MessageListResult;
 
 import javax.mail.MessagingException;
@@ -22,7 +23,7 @@ public interface SplittedMessageProvider {
    * @throws IOException
    * @throws MessagingException
    */
-  public MessageListResult loadDataToMessages(TreeMap<String, Long> messagesToLoad)
+  public MessageListResult loadDataToMessages(TreeMap<String, MessageListElement> messagesToLoad)
           throws CertPathValidatorException, IOException, MessagingException;
 
 

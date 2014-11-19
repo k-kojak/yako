@@ -16,6 +16,7 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.NotificationReplaceService;
 import hu.rgai.yako.services.QuickReplyService;
+import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
 import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
@@ -53,6 +54,7 @@ public class MessageListerHandler extends TimeoutHandler {
   private final String mAccountDispName;
 
   public static final String MESSAGE_PACK_LOADED_INTENT = "massage_pack_loaded_intent";
+  public static final String SPLITTED_PACK_LOADED_INTENT = "splitted_pack_loaded_intent";
 
 
   public MessageListerHandler(Context context, MainServiceExtraParams extraParams, String accountDisplayName) {
@@ -79,18 +81,24 @@ public class MessageListerHandler extends TimeoutHandler {
       MessageListResult.ResultType resultType = messageResult.getResultType();
 
 
-      if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
-        notifyUIaboutMessageChange();
+      if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)
+              || resultType.equals(MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART)) {
+        notifyUIaboutMessageChange(resultType);
         return;
+      } else if (!messageResult.getSplittedMessages().isEmpty()) {
+        if (messageResult.getMessages() != null && !messageResult.getMessages().isEmpty()) {
+          Account a = messageResult.getMessages().get(0).getAccount();
+          getSplittedMessageSecondPart(mContext, a, messageResult.getSplittedMessages());
+        }
       }
 
       MessageListElement lastUnreadMsg = null;
-      Set<Account> accountsToUpdate = new HashSet<Account>();
+      Set<Account> accountsToUpdate = new HashSet<>();
 
       if (messageResult.getMessages() != null) {
         for (MessageListElement mle : messageResult.getMessages()) {
           Date lastNotForAcc = YakoApp.getLastNotification(mle.getAccount(), mContext);
-          if (!mle.isSeen() && mle.getDate().after(lastNotForAcc)) {
+          if (!mle.isSeen() && (lastNotForAcc == null || mle.getDate().after(lastNotForAcc))) {
             if (lastUnreadMsg == null) {
               lastUnreadMsg = mle;
             }
@@ -110,14 +118,36 @@ public class MessageListerHandler extends TimeoutHandler {
         postNotification(newMessageCount, lastUnreadMsg);
       }
 
-      notifyUIaboutMessageChange();
+      notifyUIaboutMessageChange(resultType);
 //      Log.d("rgai", " - - - - time to run handler: " + (System.currentTimeMillis() - s) + " ms");
     }
   }
 
+  private static void getSplittedMessageSecondPart(Context context, Account account,
+                                                   TreeMap<String, MessageListElement> splittedMessages) {
+    MainServiceExtraParams eParams = new MainServiceExtraParams();
+    eParams.setAccount(account);
+    eParams.setSplittedMessageSecondPart(true);
+    eParams.setSplittedMessages(splittedMessages);
 
-  private void notifyUIaboutMessageChange() {
-    Intent i = new Intent(MESSAGE_PACK_LOADED_INTENT);
+    Intent service = new Intent(context, MainScheduler.class);
+    service.setAction(Context.ALARM_SERVICE);
+    service.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
+
+    context.sendBroadcast(service);
+    Log.d("yako", "splitted message second part request...");
+  }
+
+  private void notifyUIaboutMessageChange(MessageListResult.ResultType resultType) {
+    Log.d("yako", "notif ui message change...");
+    String action;
+    if (resultType.equals(MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART)) {
+      action = SPLITTED_PACK_LOADED_INTENT;
+    } else {
+      action = MESSAGE_PACK_LOADED_INTENT;
+    }
+
+    Intent i = new Intent(action);
     LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
   }
 

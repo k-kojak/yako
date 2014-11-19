@@ -70,7 +70,7 @@ public class LocationService extends Service {
       mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, REQUEST_INTERVAL, 0.0f, pi);
     }
     String bestProvider = mLocationManager.getBestProvider(REQUEST_CRITERIA, false);
-    Log.d("yako", "best provider by hand: " + bestProvider);
+//    Log.d("yako", "best provider by hand: " + bestProvider);
     Location loc = mLocationManager.getLastKnownLocation(bestProvider);
     Intent i = new Intent(ACTION_NEW_LOCATION_ARRIVED);
     i.putExtra(EXTRA_LOCATION, loc);
@@ -100,7 +100,10 @@ public class LocationService extends Service {
     boolean zoneActivityChanged = true;
     GpsZone currentClosest = GpsZone.getClosest(zones);
 
-    LatLng myLocation = new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude());
+    LatLng myLocation = null;
+    if (mMyLastLocation != null) {
+      myLocation = new LatLng(mMyLastLocation.getLatitude(), mMyLastLocation.getLongitude());
+    }
     if (YakoApp.getFakeLocation() != null) {
       Log.d("yako", "working with fake location...");
       myLocation = YakoApp.getFakeLocation();
@@ -110,7 +113,7 @@ public class LocationService extends Service {
       distanceChanged = false;
       zoneActivityChanged = false;
 
-      TreeSet<GpsZone> nearLocationList = new TreeSet<GpsZone>();
+      TreeSet<GpsZone> nearLocationList = new TreeSet<>();
       String closestLoc = null;
       float closest = Float.MAX_VALUE;
 

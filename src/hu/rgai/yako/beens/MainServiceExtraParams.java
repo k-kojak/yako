@@ -1,10 +1,8 @@
 
 package hu.rgai.yako.beens;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -28,10 +26,13 @@ public class MainServiceExtraParams implements Parcelable {
   private int mQueryLimit = -1;
   private int mQueryOffset = -1;
   private boolean mLoadMore = false;
-  private List<Account> mAccounts = new LinkedList<Account>();
+  private List<Account> mAccounts = new LinkedList<>();
   private boolean mForceQuery = false;
   private int mResult = -1;
   private boolean mMessagesRemovedAtServer = false;
+  private boolean mSplittedMessageSecondPart = false;
+  private boolean mNewMessageArrivedRequest = false;
+  private TreeMap<String, MessageListElement> mSplittedMessages = new TreeMap<>();
 
   public MainServiceExtraParams() {}
   
@@ -44,6 +45,13 @@ public class MainServiceExtraParams implements Parcelable {
     mForceQuery = in.readByte() == 1;
     mResult = in.readInt();
     mMessagesRemovedAtServer = in.readByte() == 1;
+    mSplittedMessageSecondPart = in.readByte() == 1;
+    mNewMessageArrivedRequest = in.readByte() == 1;
+
+    int splittedLength = in.readInt();
+    for (int i = 0; i < splittedLength; i++) {
+      mSplittedMessages.put(in.readString(), (MessageListElement)in.readParcelable(MessageListElement.class.getClassLoader()));
+    }
   }
   
   public int describeContents() {
@@ -59,6 +67,14 @@ public class MainServiceExtraParams implements Parcelable {
     dest.writeByte((byte) (mForceQuery ? 1 : 0));
     dest.writeInt(mResult);
     dest.writeByte((byte) (mMessagesRemovedAtServer ? 1 : 0));
+    dest.writeByte((byte) (mSplittedMessageSecondPart ? 1 : 0));
+    dest.writeByte((byte) (mNewMessageArrivedRequest ? 1 : 0));
+
+    dest.writeInt(mSplittedMessages.size());
+    for (Map.Entry<String, MessageListElement> e : mSplittedMessages.entrySet()) {
+      dest.writeString(e.getKey());
+      dest.writeParcelable(e.getValue(), flags);
+    }
   }
 
   public boolean isFromNotifier() {
@@ -108,6 +124,19 @@ public class MainServiceExtraParams implements Parcelable {
   public void addAccount(Account acc) {
     this.mAccounts.add(acc);
   }
+
+  public void setOnNewMessageArrived(boolean newMessageArrivedRequest) {
+    mNewMessageArrivedRequest = newMessageArrivedRequest;
+  }
+
+  public boolean isNewMessageArrivedRequest() {
+    return mNewMessageArrivedRequest;
+  }
+
+  public void setAccount(Account account) {
+    mAccounts.clear();
+    mAccounts.add(account);
+  }
   
   public void setAccounts(List<Account> accounts) {
     this.mAccounts = accounts;
@@ -137,6 +166,22 @@ public class MainServiceExtraParams implements Parcelable {
     this.mMessagesRemovedAtServer = mMessagesRemovedAtServer;
   }
 
+  public void setSplittedMessageSecondPart(boolean splittedMessageSecondPart) {
+    mSplittedMessageSecondPart = splittedMessageSecondPart;
+  }
+
+  public void setSplittedMessages(TreeMap<String, MessageListElement> splittedMessages) {
+    mSplittedMessages = splittedMessages;
+  }
+
+  public TreeMap<String, MessageListElement> getSplittedMessages() {
+    return mSplittedMessages;
+  }
+
+  public boolean isSplittedMessageSecondPart() {
+    return mSplittedMessageSecondPart;
+  }
+
   @Override
   public String toString() {
     String ToString = "MainServiceExtraParams{" + "mFromNotifier=" + mFromNotifier + ", mQueryLimit=" + mQueryLimit + ", mQueryOffset=" + mQueryOffset + ", mLoadMore=" + mLoadMore + ", mAccounts=";
@@ -146,5 +191,6 @@ public class MainServiceExtraParams implements Parcelable {
     ToString += "mForceQuery=" + mForceQuery + ", mResult=" + mResult + '}';
     return  ToString;
   }
+
 
 }

@@ -40,30 +40,30 @@ public class SmartPredictionAsyncTask extends TimeoutAsyncTask<Void, Void, Void>
 
   @Override
   protected Void doInBackground(Void... params) {
-    long s = System.currentTimeMillis();
-    Collection<MessageListElement> messages;
-    if (mSingleRun) {
-      messages = new ArrayList<MessageListElement>(1);
-      messages.add(mMessage);
-    } else {
-      TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
-      messages = MessageListDAO.getInstance(mContext).getAllMessages(accounts);
-    }
-
-    MessagePredictionProvider predictionProvider = new DummyMessagePredictionProvider();
-    for (MessageListElement mle : messages) {
-      TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
-              mle.getRawId());
-      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
-        mle.setFullMessage(contents.first());
-      } else {
-        mle.setFullMessage(new FullThreadMessage(contents));
-      }
-      double ratio = predictionProvider.predictMessage(mContext, mle);
-      MessageListDAO.getInstance(mContext).setMessageAsImportant(mle.getRawId(),
-              MessagePredictionProvider.Helper.isImportant(ratio));
-    }
-    Log.d("yako", "time to predict importance: " + (System.currentTimeMillis() - s) + "ms");
+//    long s = System.currentTimeMillis();
+//    Collection<MessageListElement> messages;
+//    if (mSingleRun) {
+//      messages = new ArrayList<>(1);
+//      messages.add(mMessage);
+//    } else {
+//      TreeMap<Long, Account> accounts = AccountDAO.getInstance(mContext).getIdToAccountsMap();
+//      messages = MessageListDAO.getInstance(mContext).getAllMessages(accounts);
+//    }
+//
+//    MessagePredictionProvider predictionProvider = new DummyMessagePredictionProvider();
+//    for (MessageListElement mle : messages) {
+//      TreeSet<FullSimpleMessage> contents = FullMessageDAO.getInstance(mContext).getFullSimpleMessages(mContext,
+//              mle.getRawId());
+//      if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
+//        mle.setFullMessage(contents.first());
+//      } else {
+//        mle.setFullMessage(new FullThreadMessage(contents));
+//      }
+//      double ratio = predictionProvider.predictMessage(mContext, mle);
+//      MessageListDAO.getInstance(mContext).setMessageAsImportant(mle.getRawId(),
+//              MessagePredictionProvider.Helper.isImportant(ratio));
+//    }
+//    Log.d("yako", "time to predict importance: " + (System.currentTimeMillis() - s) + "ms");
     return null;
   }
 

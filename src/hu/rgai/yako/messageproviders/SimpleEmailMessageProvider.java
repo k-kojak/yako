@@ -6,7 +6,6 @@ package hu.rgai.yako.messageproviders;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import com.google.android.gms.internal.fo;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -31,7 +30,6 @@ import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.socketfactory.MySSLSocketFactory;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
-import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -46,8 +44,6 @@ import java.net.UnknownHostException;
 import java.security.Security;
 import java.security.cert.CertPathValidatorException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.mail.Address;
@@ -69,7 +65,6 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import javax.mail.search.FlagTerm;
 import javax.net.ssl.SSLHandshakeException;
-import net.htmlparser.jericho.Source;
 
 /**
  * Implements a simple email message providing via IMAP protocol.
@@ -78,7 +73,7 @@ import net.htmlparser.jericho.Source;
  * 
  * @author Tamas Kojedzinszky
  */
-public class SimpleEmailMessageProvider implements MessageProvider {
+public class SimpleEmailMessageProvider implements MessageProvider, SplittedMessageProvider {
 
   private final AccountFolder accountFolder;
   private final EmailAccount account;
@@ -275,9 +270,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
 
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
-          ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
-    return getMessageList(offset, limit, loadedMessages, 20);
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+
+    return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
 
   private void putTime(HashMap<String, Long> map, String s, long startTime) {
@@ -288,13 +286,15 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
           UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+
     long s1 = System.currentTimeMillis();
-    HashMap<String, Long> times = new HashMap<String, Long>();
+    HashMap<String, Long> times = new HashMap<>();
     try {
-      List<MessageListElement> emails = new LinkedList<MessageListElement>();
+      List<MessageListElement> emails = new LinkedList<>();
 
       long s3 = System.currentTimeMillis();
       IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
@@ -306,9 +306,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       long s4 = System.currentTimeMillis();
       imapFolder.open(Folder.READ_ONLY);
       UIDFolder uidImapFolder = imapFolder;
+
+
       int messageCount = imapFolder.getMessageCount();
       putTime(times, "openFolderGetMsgCount", s4);
       long s5 = System.currentTimeMillis();
+
+
       long nextUID = getNextUID(imapFolder, uidImapFolder, messageCount);
       putTime(times, "getNextUID", s5);
       if (offset == 0 && !hasNewMail(nextUID, messageCount) && !loadedMessages.isEmpty()) {
@@ -322,6 +326,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         Log.d("rgai", "NEW MAIL OR DELETION OR VALIDITY KEY");
       }
 
+
       int start = Math.max(1, messageCount - limit - offset + 1);
       int end = start + limit > messageCount ? messageCount : start + limit;
 
@@ -331,9 +336,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         long s6 = System.currentTimeMillis();
         messages = uidImapFolder.getMessagesByUID(getSmallestUID(loadedMessages), UIDFolder.LASTUID);
         putTime(times, "getMessagesByUid", s6);
+
         s6 = System.currentTimeMillis();
         MessageListResult mlr = getFlagChangesOfMessages(loadedMessages);
         putTime(times, "getFlagChanges", s6);
+
         s6 = System.currentTimeMillis();
         flagMessages = mlr.getMessages();
         putTime(times, "getMessages", s6);
@@ -364,10 +371,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           }
         }
 
-        s7 = System.currentTimeMillis();
-        Flags flags = m.getFlags();
-        putTime(times, "getFlags", s7);
-        boolean seen = flags.contains(Flags.Flag.SEEN);
+        boolean seen = true;
+        if (isNewMessageArrivedRequest) {
+          Flags flags = m.getFlags();
+          seen = flags.contains(Flags.Flag.SEEN);
+        }
+
+
 
         s7 = System.currentTimeMillis();
         Date date = m.getSentDate();
@@ -396,9 +406,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             System.out.println("adding: new Date("+ date.getTime() +"l), \""+ fromEmail +"\")");
           }*/
 
-          s7 = System.currentTimeMillis();
-          EmailContent content = getMessageContent(m);
-          putTime(times, "getMessageContent", s7);
+
+          EmailContent content = null;
+          if (isNewMessageArrivedRequest) {
+            content = getMessageContent(m);
+          }
+
 
           s7 = System.currentTimeMillis();
           String subject = m.getSubject();
@@ -411,25 +424,33 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               Log.d("rgai", "", ex);
             }
           } else {
-            try {
-              Source source = new Source(content.getContent().getContent());
-              String decoded = source.getRenderer().toString();
-//              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
-              String snippet = decoded;
-              subject = snippet;
-            } catch (StackOverflowError so) {
-              Log.d("rgai", "", so);
-            }
-            if (subject == null) {
+//            try {
+//              Source source = new Source(content.getContent().getContent());
+//              String decoded = source.getRenderer().toString();
+////              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
+//              String snippet = decoded;
+//              subject = snippet;
+//            } catch (StackOverflowError so) {
+//              Log.d("rgai", "", so);
+//            }
+//            if (subject == null) {
               subject = "<No subject>";
-            }
+//            }
           }
 
-          int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
-          MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "", attachSize,
-                  fromPerson, null, date, account, Type.EMAIL, false);
-          FullSimpleMessage fsm = new FullSimpleMessage(-1, uid + "", subject,
-                  content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
+          int attachSize = 0;
+          FullSimpleMessage fsm = null;
+
+          if (isNewMessageArrivedRequest) {
+            attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
+            fsm = new FullSimpleMessage(-1, uid + "", subject, content.getContent(), date, fromPerson,
+                    false, Type.EMAIL, content.getAttachmentList());
+          }
+
+          boolean splittedMessage = !isNewMessageArrivedRequest;
+          MessageListElement mle = new MessageListElement(splittedMessage, -1, String.valueOf(uid),
+                  seen, subject, "", attachSize, fromPerson, null, date, account, Type.EMAIL, false);
+
           mle.setFullMessage(fsm);
           emails.add(mle);
         }
@@ -453,21 +474,88 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
     } catch (AuthenticationFailedException ex) {
       throw ex;
-    } catch (SSLHandshakeException ex) {
-      throw ex;
-    } catch (ConnectException ex) {
-      throw ex;
+//    } catch (SSLHandshakeException ex) {
+//      throw ex;
+//    } catch (ConnectException ex) {
+//      throw ex;
     } catch (NoSuchProviderException ex) {
       throw ex;
-    } catch (UnknownHostException ex) {
-      throw ex;
-    } catch (IOException ex) {
-      throw ex;
+//    } catch (UnknownHostException ex) {
+//      throw ex;
+//    } catch (IOException ex) {
+//      throw ex;
     } catch (MessagingException ex) {
       throw ex;
     } finally {
       
-//      setFolderIdleBlocked(instance, false);
+    }
+  }
+
+  @Override
+  public MessageListResult loadDataToMessages(TreeMap<String, MessageListElement> messagesToLoad) throws CertPathValidatorException, IOException, MessagingException {
+    Log.d("yako", messagesToLoad.toString());
+
+    long s1 = System.currentTimeMillis();
+    HashMap<String, Long> times = new HashMap<>();
+    try {
+      List<MessageListElement> emails = new LinkedList<>();
+
+      long s3 = System.currentTimeMillis();
+      IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+      putTime(times, "getStoreGetFolder", s3);
+      if (imapFolder == null) {
+        return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
+      }
+
+      imapFolder.open(Folder.READ_ONLY);
+      UIDFolder uidImapFolder = imapFolder;
+
+      String uidsString[] = messagesToLoad.keySet().toArray(new String[messagesToLoad.keySet().size()]);
+      long uids[] = new long[uidsString.length];
+      for (int i = 0; i < uidsString.length; i++) {
+        uids[i] = Long.parseLong(uidsString[i]);
+      }
+
+      Message[] messages = uidImapFolder.getMessagesByUID(uids);
+
+      for (int i = messages.length - 1; i >= 0; i--) {
+
+        Message m = messages[i];
+        long uid = uidImapFolder.getUID(m);
+
+        MessageListElement mle = messagesToLoad.get(String.valueOf(uid));
+
+        Flags flags = m.getFlags();
+        boolean seen = flags.contains(Flags.Flag.SEEN);
+        EmailContent content = getMessageContent(m);
+        int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
+
+        mle.setSeen(seen);
+        mle.setAttachmentCount(attachSize);
+
+        FullSimpleMessage fsm = new FullSimpleMessage(-1, String.valueOf(uid), mle.getTitle(),
+                content.getContent(), mle.getDate(), mle.getFrom(), false, Type.EMAIL, content.getAttachmentList());
+        mle.setFullMessage(fsm);
+        emails.add(mle);
+      }
+
+
+      imapFolder.close(false);
+      Log.d("yako", "total time -> " + (System.currentTimeMillis() - s1));
+
+      long sum = 0;
+      for (Long e : times.values()) {
+        sum += e;
+      }
+      Log.d("yako", "total for cycle time based on times map-> " + sum);
+      for (Map.Entry<String, Long> e : times.entrySet()) {
+        Formatter f = new Formatter().format("%.2f", (e.getValue() * 100.0 / sum));
+        Log.d("yako", "\t" + e.getKey() + " -> " + e.getValue() + " -> "+ f.toString() +" %");
+      }
+
+      return new MessageListResult(emails, MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART);
+    } catch (AuthenticationFailedException ex) {
+      throw ex;
     }
   }
   
@@ -1029,6 +1117,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setOnNewMessageArrived(true);
           eParams.addAccount(account);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(messages.length);
@@ -1152,6 +1241,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     folder.close(true);
   }
+
+
 
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);

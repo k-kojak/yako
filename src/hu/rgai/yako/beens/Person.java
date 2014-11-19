@@ -36,7 +36,7 @@ public final class Person implements Parcelable, Serializable {
 
   private static Map<String, Person> storedPerson = null;
 
-  private Map<MessageProvider.Type, Set<String>> idMap = null;
+//  private Map<MessageProvider.Type, Set<String>> idMap = null;
 
 
   public static final Parcelable.Creator<Person> CREATOR = new Parcelable.Creator<Person>() {
@@ -99,34 +99,34 @@ public final class Person implements Parcelable, Serializable {
     this.name = name;
   }
 
-  public void addId(MessageProvider.Type type, String id) {
-    if (id == null) {
-      throw new RuntimeException("Person id cannot be null!");
-    }
-    if (idMap == null) {
-      idMap = new EnumMap<MessageProvider.Type, Set<String>>(MessageProvider.Type.class);
-    }
-    if (!idMap.containsKey(type)) {
-      idMap.put(type, new HashSet<String>());
-    }
-    idMap.get(type).add(id);
-  }
+//  public void addId(MessageProvider.Type type, String id) {
+//    if (id == null) {
+//      throw new RuntimeException("Person id cannot be null!");
+//    }
+//    if (idMap == null) {
+//      idMap = new EnumMap<>(MessageProvider.Type.class);
+//    }
+//    if (!idMap.containsKey(type)) {
+//      idMap.put(type, new HashSet<String>());
+//    }
+//    idMap.get(type).add(id);
+//  }
 
-  public String getOneId(MessageProvider.Type type) {
-    Set<String> l = this.getIds(type);
-    if (l != null && !l.isEmpty()) {
-      Iterator<String> i = l.iterator();
-      return i.next();
-    }
-    return null;
-  }
+//  public String getOneId(MessageProvider.Type type) {
+//    Set<String> l = this.getIds(type);
+//    if (l != null && !l.isEmpty()) {
+//      Iterator<String> i = l.iterator();
+//      return i.next();
+//    }
+//    return null;
+//  }
 
-  public Set<String> getIds(MessageProvider.Type type) {
-    if (idMap != null && idMap.containsKey(type)) {
-      return idMap.get(type);
-    }
-    return null;
-  }
+//  public Set<String> getIds(MessageProvider.Type type) {
+//    if (idMap != null && idMap.containsKey(type)) {
+//      return idMap.get(type);
+//    }
+//    return null;
+//  }
 
   public long getContactId() {
     return contactId;
@@ -136,15 +136,16 @@ public final class Person implements Parcelable, Serializable {
     this.id = in.readString();
     this.name = in.readString();
     this.contactId = in.readLong();
-    int length = in.readInt();
-    String[] types = new String[length];
-    in.readStringArray(types);
-    idMap = new EnumMap<MessageProvider.Type, Set<String>>(MessageProvider.Type.class);
-    for (String t : types) {
-      List<String> valList = new LinkedList<String>();
-      in.readStringList(valList);
-      idMap.put(MessageProvider.Type.valueOf(t), new HashSet<String>(valList));
-    }
+    this.type = MessageProvider.Type.valueOf(in.readString());
+//    int length = in.readInt();
+//    String[] types = new String[length];
+//    in.readStringArray(types);
+////    idMap = new EnumMap<>(MessageProvider.Type.class);
+//    for (String t : types) {
+//      List<String> valList = new LinkedList<>();
+//      in.readStringList(valList);
+//      idMap.put(MessageProvider.Type.valueOf(t), new HashSet<>(valList));
+//    }
   }
 
   @Override
@@ -154,25 +155,26 @@ public final class Person implements Parcelable, Serializable {
 
   @Override
   public void writeToParcel(Parcel out, int flags) {
-    String[] typesStr = new String[0];
-    if (idMap != null && !idMap.isEmpty()) {
-      Set<MessageProvider.Type> types = idMap.keySet();
-      typesStr = new String[types.size()];
-      int i = 0;
-      for (MessageProvider.Type t : types) {
-        typesStr[i++] = t.toString();
-      }
-    }
+//    String[] typesStr = new String[0];
+//    if (idMap != null && !idMap.isEmpty()) {
+//      Set<MessageProvider.Type> types = idMap.keySet();
+//      typesStr = new String[types.size()];
+//      int i = 0;
+//      for (MessageProvider.Type t : types) {
+//        typesStr[i++] = t.toString();
+//      }
+//    }
 
     out.writeString(id);
     out.writeString(name);
-    out.writeLong(this.contactId);
-    out.writeInt(typesStr.length);
-    out.writeStringArray(typesStr);
-    for (String t : typesStr) {
-      ArrayList<String> al = new ArrayList<String>(idMap.get(MessageProvider.Type.valueOf(t)));
-      out.writeStringList(al);
-    }
+    out.writeLong(contactId);
+    out.writeString(type.toString());
+//    out.writeInt(typesStr.length);
+//    out.writeStringArray(typesStr);
+//    for (String t : typesStr) {
+//      ArrayList<String> al = new ArrayList<>(idMap.get(MessageProvider.Type.valueOf(t)));
+//      out.writeStringList(al);
+//    }
   }
 
   @Override
@@ -186,7 +188,7 @@ public final class Person implements Parcelable, Serializable {
     }
     String key = p.getType().toString() + "_" + p.getId();
     if (storedPerson == null) {
-      storedPerson = new HashMap<String, Person>();
+      storedPerson = new HashMap<>();
     }
     if (storedPerson.containsKey(key)) {
       return storedPerson.get(key);
@@ -195,7 +197,7 @@ public final class Person implements Parcelable, Serializable {
       if (storedPerson.containsKey(key)) {
         return storedPerson.get(key);
       } else {
-        Person pa = null;
+        Person pa;
         if (rawContactId != -1) {
           // if dealing with sms, than p.getName() contains the phone number, so
           // that is the user id for sending message
@@ -264,7 +266,7 @@ public final class Person implements Parcelable, Serializable {
 
           new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
-        pa.addId(MessageProvider.Type.SMS, cursor.getColumnName(0));
+//        pa.addId(MessageProvider.Type.SMS, cursor.getColumnName(0));
       }
       cursor.close();
 
@@ -275,7 +277,7 @@ public final class Person implements Parcelable, Serializable {
 
           new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE }, null);
       while (cursor.moveToNext()) {
-        pa.addId(MessageProvider.Type.EMAIL, cursor.getColumnName(0));
+//        pa.addId(MessageProvider.Type.EMAIL, cursor.getColumnName(0));
       }
       cursor.close();
 
@@ -290,7 +292,7 @@ public final class Person implements Parcelable, Serializable {
           new String[] { rawContactId + "", ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE, ContactsContract.CommonDataKinds.Im.TYPE_OTHER + "",
               ContactsContract.CommonDataKinds.Im.PROTOCOL_CUSTOM + "", Settings.Contacts.DataKinds.Facebook.CUSTOM_NAME }, null);
       while (cursor.moveToNext()) {
-        pa.addId(MessageProvider.Type.FACEBOOK, cursor.getColumnName(0));
+//        pa.addId(MessageProvider.Type.FACEBOOK, cursor.getColumnName(0));
       }
       cursor.close();
     }

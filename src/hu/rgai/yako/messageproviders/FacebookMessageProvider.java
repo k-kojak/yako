@@ -78,15 +78,17 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest)
       throws CertPathValidatorException, SSLHandshakeException, ConnectException,
       NoSuchProviderException, UnknownHostException, IOException, MessagingException,
       AuthenticationFailedException {
-    return getMessageList(offset, limit, loadedMessages, 20);
+    return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
 
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
       throws CertPathValidatorException, SSLHandshakeException, ConnectException,
       NoSuchProviderException, UnknownHostException, IOException, MessagingException,
       AuthenticationFailedException {
