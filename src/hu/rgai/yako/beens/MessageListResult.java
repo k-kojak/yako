@@ -50,7 +50,7 @@ public class MessageListResult {
    * String key is the id of the message on a specific domain and value (long) is the database raw id of the message
    * which is already inserted into database.
    */
-  private TreeMap<String, MessageListElement> mSplittedMessages;
+  private TreeMap<String, MessageListElement> mSplittedMessages = null;
 
   public MessageListResult(List<MessageListElement> messages, ResultType resultType) {
     this.mMessages = messages;

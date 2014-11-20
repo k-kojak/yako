@@ -85,7 +85,7 @@ public class MessageListerHandler extends TimeoutHandler {
               || resultType.equals(MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART)) {
         notifyUIaboutMessageChange(resultType);
         return;
-      } else if (!messageResult.getSplittedMessages().isEmpty()) {
+      } else if (messageResult.getSplittedMessages() != null && !messageResult.getSplittedMessages().isEmpty()) {
         if (messageResult.getMessages() != null && !messageResult.getMessages().isEmpty()) {
           Account a = messageResult.getMessages().get(0).getAccount();
           getSplittedMessageSecondPart(mContext, a, messageResult.getSplittedMessages());
