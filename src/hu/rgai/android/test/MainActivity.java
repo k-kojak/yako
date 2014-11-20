@@ -341,22 +341,10 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
 
-
-    if (!StoreHandler.isMessageForDatabaseSorryDisplayed(this)) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-          StoreHandler.setIsMessageForDatabaseSorryDisplayed(MainActivity.this);
-        }
-      });
-      builder.setTitle("Backend changes");
-      builder.setMessage("Due to a bigger code refactor, your account settings are lost.\n" +
-              "Please set them again and apologize for the inconvenience.").show();
-    }
   }
 
   private void setAccountList() {
-    TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
+    TreeSet<Account> accounts = new TreeSet<>(mAccountsLongKey.values());
     mAccountFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
     mAccountHolder.setAdapter(mAccountFilterAdapter);
 //    mAccountHolder.clearChoices();
@@ -610,10 +598,10 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 
   private MainActivityFragment loadFragment() {
     
-    MainActivityFragment fragment = null;
+    MainActivityFragment fragment;
     
       FragmentManager fragmentManager = getSupportFragmentManager();
-      boolean makeTransaction = false;
+      boolean makeTransaction;
       if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
         makeTransaction = false;
       } else {
@@ -699,32 +687,11 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
       setRefreshActionButtonState(false);
     } else {
       setRefreshActionButtonState(true);
-//      if (mMenu != null) {
-//        MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
-//        if (refreshItem != null && refreshItem.getActionView() != null) {
-//          BatchedProcessState ps = BatchedAsyncTaskExecutor.getProgressState(MainService.MESSAGE_LIST_QUERY_KEY);
-//          ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(ps.getProcessDone()+"/"+ps.getTotalProcess());
-//        }
-//      }
     }
   }
   
   
   public void setRefreshActionButtonState(boolean refreshInProgress) {
-//    if (mMenu != null) {
-//      MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
-//      if (refreshItem != null) {
-//        if (refreshInProgress) {
-//          if (refreshItem.getActionView() == null) {
-//            refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
-//          } else {
-//            // do nothing, since we already displaying the progressbar
-//          }
-//        } else {
-//          refreshItem.setActionView(null);
-//        }
-//      }
-//    }
     if (mFragment != null) {
       mFragment.loadStateChanged(refreshInProgress);
     }

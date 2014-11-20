@@ -267,28 +267,6 @@ public class StoreHandler {
   }
 
 
-  /**
-   * At some point, the storage of accounts at shared preferences was replaced by database store, at that point
-   * the accounts were lost. Thats why at this version we display a message about this issue, but only once...
-   *
-   * @param context
-   * @return
-   */
-  public static boolean isMessageForDatabaseSorryDisplayed(Context context) {
-    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
-    boolean displayed = prefs.getBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, false);
-    return displayed;
-  }
-
-
-  public static void setIsMessageForDatabaseSorryDisplayed(Context context) {
-    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, true);
-    editor.commit();
-  }
-
-
   public static boolean saveByteArrayToDownloadFolder(Context context, byte[] data, String fileName) {
     return saveByteArray(context, data, null, fileName);
   }
