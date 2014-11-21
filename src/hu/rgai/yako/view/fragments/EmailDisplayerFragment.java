@@ -229,7 +229,7 @@ public class EmailDisplayerFragment extends Fragment {
     ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));
-    ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());;
+    ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());
     
     String recipientsNames = "to: ";
     LinkedList<Person> recipientsList = (LinkedList<Person>) mMessage.getRecipientsList();

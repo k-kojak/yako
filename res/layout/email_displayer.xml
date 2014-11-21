@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:background="#ffffffff">
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="#ffffffff">
 
     <RelativeLayout
         android:id="@+id/header"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:padding="1dip"
+        android:padding="6dip"
         android:orientation="horizontal"
         android:background="#EDEAE8">
 
         <ImageView
             android:id="@+id/avatar"
             android:layout_width="wrap_content"
-            android:layout_height="45dip"/>
+            android:layout_height="46dp"
+            android:layout_centerVertical="true"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -30,53 +31,46 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="16sp"
-                android:textStyle="bold"
-                />
-            
-             <TextView
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/from_email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="10sp"
-                />
-             
-             <TextView
+                android:textSize="12sp" />
+
+            <TextView
                 android:id="@+id/recipients"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="10sp"
-                />
-
+                android:visibility="gone"
+                android:textSize="12sp" />
 
 
         </LinearLayout>
 
-        
-            <TextView
-                android:id="@+id/date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textSize="13sp"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                />
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:layout_alignParentRight="true" />
 
     </RelativeLayout>
 
 
-            
-                    
     <View
-       android:id="@+id/separator"   
-       android:layout_width="fill_parent"
-       android:layout_height="1dp"
-       android:background="#c0c0c0"
-       android:layout_below="@id/header"/>
-        
+        android:id="@+id/separator"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#c0c0c0"
+        android:layout_below="@id/header"/>
+
     <WebView
         android:id="@+id/email_content"
         android:layout_width="fill_parent"
@@ -86,7 +80,7 @@
         android:paddingTop="6dip"
         android:paddingLeft="6dip"
         android:paddingRight="6dip"
-        android:paddingBottom="24dip" >
+        android:paddingBottom="24dip">
     </WebView>
 
     <LinearLayout
@@ -94,7 +88,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:orientation="vertical" >
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/quick_answer_btn"
@@ -108,20 +102,19 @@
             android:paddingTop="1dp"
             android:paddingBottom="1dp"
             android:clickable="true"
-            android:background="@drawable/quick_answer_btn_bg"
-            />
+            android:background="@drawable/quick_answer_btn_bg" />
 
         <HorizontalScrollView
             android:id="@+id/quick_answers"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="#ff222222" >
+            android:background="#ff222222">
 
             <LinearLayout
                 android:id="@+id/quick_answer_inner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal" >
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/info_text"
@@ -133,13 +126,11 @@
                     android:clickable="true"
                     android:paddingLeft="14dp"
                     android:paddingTop="10dp"
-                    android:paddingBottom="10dp"
+                    android:paddingBottom="10dp" />
 
-                    android:layout_margin="0dp" />
+            </LinearLayout>
 
-                </LinearLayout>
-
-         </HorizontalScrollView>
+        </HorizontalScrollView>
 
     </LinearLayout>
 
