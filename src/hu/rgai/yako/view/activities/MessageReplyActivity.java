@@ -112,7 +112,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     mContent = (TextView) findViewById(R.id.message_content);
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
-    mQuotedSeparator = (View) findViewById(R.id.quoted_separator);
+    mQuotedSeparator = findViewById(R.id.quoted_separator);
 
 
     if (getIntent().getExtras() != null) {
@@ -328,7 +328,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
   public static String getDesignedQuotedText(String s) {
     return "<br /><br />"
             + " <blockquote"
-            + " style=\"padding-left: 1ex; margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204);\">"
+            + " style=\"color: #666; padding-left: 1ex; margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204);\">"
             + s
             + "</blockquote>";
   }
