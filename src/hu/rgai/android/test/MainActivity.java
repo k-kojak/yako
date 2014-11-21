@@ -1,6 +1,5 @@
 package hu.rgai.android.test;
 
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.*;
@@ -86,10 +85,12 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private MainListDrawerFilterAdapter mAccountFilterAdapter = null;
   private ZoneListAdapter mZoneListAdapter = null;
 
+  private MainActivityFragment mMainFragment;
+  private static final String MAIN_FRAGMENT_TAG = "main_fragment";
+
   private TextView mAddGpsZone;
   private View mDrawerWrapper;
   private ActionBarDrawerToggle mDrawerToggle;
-  private MainActivityFragment mFragment = null;
 
   private boolean mDrawerIsVisible = false;
   private ProgressDialog pd = null;
@@ -141,7 +142,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     setContentView(R.layout.mainlist_navigation_drawer);
 
     mEmptyListText = new TextView(this);
-    mEmptyListText.setText(this.getString(R.string.empty_list));
+    mEmptyListText.setText(this.getString(R.string.no_account_set));
     mEmptyListText.setGravity(Gravity.CENTER);
     mEmptyListText.setVisibility(View.GONE);
     ((FrameLayout) findViewById(R.id.content_frame)).addView(mEmptyListText);
@@ -166,7 +167,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     mZonesContainer = findViewById(R.id.zones_container);
     mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 
@@ -293,6 +293,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     removeNotificationIfExists();
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
+
+    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     
     // setting zone list
     loadZoneListAdapter(false);
@@ -525,30 +527,49 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private void setContent(Boolean hasData) {
     // null means we dont know yet: called on onCreate
     if (hasData == null) {
-      toggleProgressDialog(true);
+      if (mAccountsLongKey.isEmpty()) {
+        toggleProgressDialog(false);
+        mEmptyListText.setVisibility(View.VISIBLE);
+        removeFragment();
+      } else {
+        toggleProgressDialog(true);
+        mEmptyListText.setVisibility(View.GONE);
+      }
     } else {
       toggleProgressDialog(false);
       if (hasData) {
         mEmptyListText.setVisibility(View.GONE);
-        mFragment = loadFragment();
+        loadFragment();
       } else {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
-          FragmentTransaction ft = fragmentManager.beginTransaction();
-          for (Fragment f : fragmentManager.getFragments()) {
-            if (f != null) {
-              ft.remove(f);
-            }
-          }
-          ft.commit();
-          fragmentManager.executePendingTransactions();
-        }
+        removeFragment();
         mEmptyListText.setVisibility(View.VISIBLE);
-        mFragment = null;
       }
     }
   }
-  
+
+  private void removeFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    Fragment f = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
+    if (f != null) {
+      FragmentTransaction ft = fragmentManager.beginTransaction();
+      ft.remove(f);
+      ft.commit();
+      mMainFragment = null;
+    }
+  }
+
+  private void loadFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    Fragment f = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
+    if (f == null) {
+      mMainFragment = MainActivityFragment.getInstance();
+      fragmentManager.beginTransaction().replace(R.id.content_frame, mMainFragment, MAIN_FRAGMENT_TAG).commit();
+      fragmentManager.executePendingTransactions();
+    } else {
+      mMainFragment = (MainActivityFragment)f;
+    }
+  }
+
   
   public void loadMoreMessage() {
     Intent service = new Intent(this, MainScheduler.class);
@@ -596,30 +617,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     }
   }
 
-  private MainActivityFragment loadFragment() {
-    
-    MainActivityFragment fragment;
-    
-      FragmentManager fragmentManager = getSupportFragmentManager();
-      boolean makeTransaction;
-      if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
-        makeTransaction = false;
-      } else {
-        makeTransaction = true;
-      }
-      
-      if (makeTransaction) {
-        fragment = MainActivityFragment.getInstance();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
-        fragmentManager.executePendingTransactions();
-      } else {
-        fragment = (MainActivityFragment) fragmentManager.getFragments().get(0);
-      }
-      
-      return fragment;
-  }
 
-  
+
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
     for (int i = 0; i < menu.size(); i++) {
@@ -692,8 +691,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   
   
   public void setRefreshActionButtonState(boolean refreshInProgress) {
-    if (mFragment != null) {
-      mFragment.loadStateChanged(refreshInProgress);
+    if (mMainFragment != null) {
+      mMainFragment.loadStateChanged(refreshInProgress);
     }
   }
 
@@ -725,7 +724,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private void redisplayMessages() {
     setContent(true);
     toggleProgressDialog(false);
-    mFragment.notifyAdapterChange();
+    mMainFragment.notifyAdapterChange();
   }
 
 
@@ -892,9 +891,9 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 
 
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, selectedAccounts);
-      if (mFragment != null) {
-        mFragment.hideContextualActionbar();
-        mFragment.notifyAdapterChange();
+      if (mMainFragment != null) {
+        mMainFragment.hideContextualActionbar();
+        mMainFragment.notifyAdapterChange();
       }
 
 
@@ -963,8 +962,8 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    if (mFragment != null) {
-      appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
+    if (mMainFragment != null) {
+      appendVisibleElementToStringBuilder(builder, mMainFragment.getListView(), mMainFragment.getAdapter());
     }
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);
