@@ -325,6 +325,14 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
   }
 
 
+  public static String getDesignedQuotedText(String s) {
+    return "<br /><br />"
+            + " <blockquote"
+            + " style=\"padding-left: 1ex; margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204);\">"
+            + s
+            + "</blockquote>";
+  }
+
   public void sendMessage(MessageRecipient recipient, Account from, List<MessageRecipient> recipients) {
     if (from == null) {
       return;
@@ -342,8 +350,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     }
     
     if (mQuotedMessage.getVisibility() == View.VISIBLE) {
-      Source source = new Source("<br /><br /><hr />" + mFullMessage.getContent().getContent());
-      content += source.getRenderer().toString();
+      content += getDesignedQuotedText(mFullMessage.getContent().getContent().toString());
     }
     
     

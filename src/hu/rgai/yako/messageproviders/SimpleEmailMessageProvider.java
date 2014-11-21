@@ -1008,7 +1008,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(addressList));
       msg.setSubject(subject);
       msg.setText(content);
-  //    msg.setHeader("X-Mailer", "");
+      msg.setHeader("Content-Type", "text/html; charset=UTF-8");
       msg.setSentDate(new Date());
       SMTPTransport t;
       if (account.isSsl()) {

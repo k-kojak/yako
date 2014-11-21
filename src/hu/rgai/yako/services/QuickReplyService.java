@@ -58,8 +58,8 @@ public class QuickReplyService extends IntentService {
           TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this,
                   message.getRawId());
           FullSimpleMessage fullMessage = fullMessages.first();
-          Source source = new Source("<br /><br />" + fullMessage.getContent().getContent());
-          content = source.getRenderer().toString();
+//          Source source = new Source("<br /><br />" + );
+          content = MessageReplyActivity.getDesignedQuotedText(fullMessage.getContent().getContent().toString());
         }
 
         MessageRecipient recipient = MessageRecipient.Helper.personToRecipient(message.getFrom());

@@ -197,8 +197,8 @@ public class EmailDisplayerFragment extends Fragment {
 
   private void quickAnswerClicked(String answer) {
     Account from = mMessage.getAccount();
-    Source source = new Source("<br /><br /><hr />" + mContent.getContent().getContent());
-    String content = source.getRenderer().toString();
+//    Source source = new Source("<br /><br /><hr />" + mContent.getContent().getContent());
+    String content = MessageReplyActivity.getDesignedQuotedText(mContent.getContent().getContent().toString());
 
     MessageRecipient recipient = MessageRecipient.Helper.personToRecipient(mMessage.getFrom());
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(
