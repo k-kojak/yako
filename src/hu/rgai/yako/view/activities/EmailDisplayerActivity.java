@@ -52,6 +52,7 @@ import java.util.TreeMap;
 
 public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
 
+  private Menu mMenu;
   private MessageListElement mMessage = null;
   private boolean mFromNotification = false;
   private FullSimpleMessage mContent = null;
@@ -119,6 +120,9 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   }
 
   private void displayMessage() {
+
+    setActionbarMenu();
+
     toggleProgressDialog(false);
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 
@@ -145,6 +149,24 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
+  }
+
+  private void setActionbarMenu() {
+    if (mMenu == null
+            || mMessage == null || mContent == null) {
+      return;
+    }
+
+    mMenu.findItem(R.id.message_reply).setVisible(true);
+
+    if (mContent.getAttachments() != null && !mContent.getAttachments().isEmpty()) {
+      mMenu.findItem(R.id.attachments).setVisible(true);
+    }
+
+    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
+    if (contactPerson.getContactId() == -1) {
+      mMenu.findItem(R.id.add_email_contact).setVisible(true);
+    }
   }
 
   public synchronized void toggleProgressDialog(boolean show) {
@@ -189,20 +211,10 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
-    if (mMessage == null || mContent == null) return true;
+    mMenu = menu;
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.email_message_options_menu, menu);
-
-    if (mContent.getAttachments() == null
-        || mContent.getAttachments().isEmpty()) {
-      menu.findItem(R.id.attachments).setVisible(false);
-    }
-
-    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
-    if (contactPerson.getContactId() != -1) {
-      menu.findItem(R.id.add_email_contact).setVisible(false);
-    }
-
+    inflater.inflate(R.menu.email_message_options_menu, mMenu);
+    setActionbarMenu();
     return true;
   }
 

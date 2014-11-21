@@ -5,16 +5,19 @@
         android:id="@+id/message_reply"
         android:icon="@drawable/ic_action_reply"
         android:title="@string/message_reply"
+        android:visible="false"
         messagelogger:showAsAction="ifRoom" />
 
     <item android:id="@+id/attachments"
           android:icon="@drawable/ic_attachment_menu"
           android:title="@string/view_attachments"
+          android:visible="false"
           messagelogger:showAsAction="ifRoom" />
 
     <item android:id="@+id/add_email_contact"
           android:icon="@drawable/ic_action_add_person"
           android:title="@string/add_contact"
+          android:visible="false"
           messagelogger:showAsAction="ifRoom"
         />
 
