@@ -32,7 +32,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected int unreadCount;
   protected int attachmentCount;
   protected Person from;
-  protected List<Person> recipients;
+  protected List<Person> mRecipients;
   protected Date date;
   protected Type messageType;
   protected boolean updateFlags;
@@ -87,7 +87,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.unreadCount = unreadCount;
     this.attachmentCount = attachmentCount;
     this.from = from;
-    this.recipients = recipients;
+    this.mRecipients = recipients;
     this.date = date;
     this.account = account;
     this.messageType = messageType;
@@ -108,8 +108,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.attachmentCount = in.readInt();
     this.from = in.readParcelable(Person.class.getClassLoader());
     
-    recipients = new LinkedList<>();
-    in.readList(recipients, Person.class.getClassLoader());
+    mRecipients = new LinkedList<>();
+    in.readList(mRecipients, Person.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     this.fullMessage = in.readParcelable(FullMessage.class.getClassLoader());
@@ -310,17 +310,18 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
 
   public boolean isGroupMessage() {
-    return recipients != null && recipients.size() > 1;
+    return mRecipients != null && mRecipients.size() > 1;
   }
   
   public List<Person> getRecipientsList() {
-    if (recipients == null) {
-      List<Person> rec = new LinkedList<Person>();
-      rec.add(from);
-      return rec;
-    } else {
-      return recipients;
+    if (mRecipients == null) {
+      mRecipients = new LinkedList<>();
     }
+    return mRecipients;
+  }
+
+  public void setRecipients(List<Person> recipients) {
+    this.mRecipients = recipients;
   }
 
   public void setFrom(Person from) {
@@ -409,7 +410,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     out.writeInt(unreadCount);
     out.writeInt(attachmentCount);
     out.writeParcelable(from, flags);
-    out.writeList(recipients);
+    out.writeList(mRecipients);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable(fullMessage, flags);

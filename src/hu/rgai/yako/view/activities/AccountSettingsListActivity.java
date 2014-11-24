@@ -168,7 +168,7 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
           // TODO: only run code below if any change really made on accounts (pass, name, other, etc.)
 
-//          YakoApp.removeMessages(oldAccount);
+//          YakoApp.deleteMessages(oldAccount);
           AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
 
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
@@ -176,7 +176,7 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
-//          YakoApp.removeMessages(oldAccount);
+//          YakoApp.deleteMessages(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {

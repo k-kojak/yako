@@ -29,7 +29,7 @@ public class FullMessageDAO {
   private static final String COL_CONTENT_TYPE = "content_type";
   private static final String COL_CONTENT_TEXT = "content_text";
   private static final String COL_DATE = "date";
-  private static final String COL_FROM_ID = PersonSenderDAO.TABLE_PERSON + PersonSenderDAO.COL_ID;
+  private static final String COL_FROM_ID = PersonDAO.TABLE_PERSON + PersonDAO.COL_ID;
   private static final String COL_IS_ME = "is_me";
   public static final String COL_MESSAGE_LIST_ID = MessageListDAO.TABLE_MESSAGES + MessageListDAO.COL_ID;
   private static final String COL_MSG_TYPE = "message_type";
@@ -47,7 +47,7 @@ public class FullMessageDAO {
           + COL_MSG_TYPE + " text NOT NULL, "
           + " UNIQUE ("+ COL_MSG_ID +", "+ COL_MESSAGE_LIST_ID +"),"
           + " FOREIGN KEY (" + COL_FROM_ID + ") REFERENCES "
-            + PersonSenderDAO.TABLE_PERSON + "(" + PersonSenderDAO.COL_ID + "),"
+            + PersonDAO.TABLE_PERSON + "(" + PersonDAO.COL_ID + "),"
           + " FOREIGN KEY (" + COL_MESSAGE_LIST_ID + ") REFERENCES "
             + MessageListDAO.TABLE_MESSAGES + "(" + MessageListDAO.COL_ID + ")"
           + ");";
@@ -80,7 +80,7 @@ public class FullMessageDAO {
 
 
   public long insertMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
-    long fromId = PersonSenderDAO.getInstance(context).getOrInsertPerson(simpleMessage.getFrom());
+    long fromId = PersonDAO.getInstance(context).getOrInsertPerson(simpleMessage.getFrom());
 
     ContentValues cv = new ContentValues();
     cv.put(COL_MSG_ID, simpleMessage.getId());
@@ -142,10 +142,10 @@ public class FullMessageDAO {
   public TreeSet<FullSimpleMessage> getFullSimpleMessages(Context context, long rawMessageListId) {
     TreeMap<Long, FullSimpleMessage> messages = new TreeMap<>();
     String q = "SELECT m." + COL_ID + ", " + COL_MSG_ID + ", " + COL_SUBJECT + ", " + COL_CONTENT_TYPE + ", "
-            + COL_CONTENT_TEXT + ", " + COL_DATE + ", " + COL_IS_ME + ", " + COL_MSG_TYPE + ", " + PersonSenderDAO.COL_KEY
-            + ", " + PersonSenderDAO.COL_NAME + ", " + PersonSenderDAO.COL_SECONDARY_NAME + ", " + PersonSenderDAO.COL_TYPE
-            + " FROM " + TABLE_MESSAGE_CONTENT + " AS m, " + PersonSenderDAO.TABLE_PERSON + " AS p"
-            + " WHERE m." + COL_FROM_ID + " = p." + PersonSenderDAO.COL_ID
+            + COL_CONTENT_TEXT + ", " + COL_DATE + ", " + COL_IS_ME + ", " + COL_MSG_TYPE + ", " + PersonDAO.COL_KEY
+            + ", " + PersonDAO.COL_NAME + ", " + PersonDAO.COL_SECONDARY_NAME + ", " + PersonDAO.COL_TYPE
+            + " FROM " + TABLE_MESSAGE_CONTENT + " AS m, " + PersonDAO.TABLE_PERSON + " AS p"
+            + " WHERE m." + COL_FROM_ID + " = p." + PersonDAO.COL_ID
               + " AND " + COL_MESSAGE_LIST_ID + " = ?";
 
     List<Long> fullMsgRawIds = new LinkedList<>();
@@ -154,9 +154,9 @@ public class FullMessageDAO {
     while (!cursor.isAfterLast()) {
       long _id = cursor.getLong(cursor.getColumnIndex(COL_ID));
 
-      Person p = new Person(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_KEY)),
-              cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_NAME)),
-              MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(PersonSenderDAO.COL_TYPE))));
+      Person p = new Person(cursor.getString(cursor.getColumnIndex(PersonDAO.COL_KEY)),
+              cursor.getString(cursor.getColumnIndex(PersonDAO.COL_NAME)),
+              MessageProvider.Type.valueOf(cursor.getString(cursor.getColumnIndex(PersonDAO.COL_TYPE))));
       HtmlContent content = new HtmlContent(cursor.getString(cursor.getColumnIndex(COL_CONTENT_TEXT)),
               HtmlContent.ContentType.valueOf(cursor.getString(cursor.getColumnIndex(COL_CONTENT_TYPE))));
 

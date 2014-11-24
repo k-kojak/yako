@@ -77,7 +77,7 @@ public class GpsZoneDAO {
   }
 
   public List<GpsZone> getAllZones() {
-    List<GpsZone> zones = new LinkedList<GpsZone>();
+    List<GpsZone> zones = new LinkedList<>();
     Cursor c = getAllZonesCursor();
     c.moveToFirst();
     while (!c.isAfterLast()) {

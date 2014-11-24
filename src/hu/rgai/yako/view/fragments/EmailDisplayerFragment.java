@@ -22,6 +22,7 @@ import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.android.test.R;
@@ -226,20 +227,32 @@ public class EmailDisplayerFragment extends Fragment {
    */
   private void displayMessage() {
     Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom).getBitmap();
-    ((ImageView)mView.findViewById(R.id.avatar)).setImageBitmap(img);
+    List<Person> recipients = MessageRecipientDAO
+            .getInstance(getActivity())
+            .getRecipientsToMessageId(getActivity(), mMessage);
+
+            ((ImageView) mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));
     ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());
-    
+    ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());
+
     String recipientsNames = "to: ";
-    LinkedList<Person> recipientsList = (LinkedList<Person>) mMessage.getRecipientsList();
 
-    for(Person person : recipientsList) {
-      recipientsNames += person.getName();
+    int i = 0;
+    for(Person person : recipients) {
 
-      if(!recipientsList.getLast().equals(person)) {
-        recipientsNames += " ,"; 
+      if (i > 0) {
+        recipientsNames += ", ";
       }
+
+      if (!person.getName().equals(person.getId())) {
+        recipientsNames += person.getName().split(" ")[0];
+      } else {
+        recipientsNames += person.getId().split("@")[0];
+      }
+
+      i++;
     }
     
     ((TextView)mView.findViewById(R.id.recipients)).setText(recipientsNames);

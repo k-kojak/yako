@@ -80,7 +80,7 @@ public class AttachmentDAO {
 
 
   public Map<Long, List<Attachment>> getAttachments(long fullMessageRawId) {
-    List<Long> ids = new ArrayList<Long>(1);
+    List<Long> ids = new ArrayList<>(1);
     ids.add(fullMessageRawId);
     return getAttachments(ids);
   }

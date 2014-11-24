@@ -11,10 +11,9 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.messageproviders.SplittedMessageProvider;
-import hu.rgai.yako.smarttools.DummyMessagePredictionProvider;
-import hu.rgai.yako.smarttools.MessagePredictionProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 
 import javax.mail.AuthenticationFailedException;
@@ -179,10 +178,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   }
 
   private void handleSplittedMessageSecondPart(MessageListResult messageResult) {
-    Log.d("yako", "handle splitted msg...");
     for (MessageListElement mle : messageResult.getMessages()) {
-      Log.d("yako", "handle...");
+//      searchPersonAndrInRecipients(mContext, mle);
       MessageListDAO.getInstance(mContext).updateMessageToSeen(mle.getRawId(), mle.isSeen());
+
+      MessageRecipientDAO.getInstance(mContext).insertRecipients(mContext, mle);
 
       FullSimpleMessage fsm = (FullSimpleMessage)mle.getFullMessage();
       FullMessageDAO.getInstance(mContext).insertMessage(mContext, mle.getRawId(), fsm);
@@ -282,7 +282,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       // associated with the given account
       if (!messagesToRemove.isEmpty()) {
         try {
-          MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+          MessageListDAO.getInstance(mContext).deleteMessages(mContext, a.getDatabaseId(), messagesToRemove);
         } catch (Exception e) {
           Log.d("rgai", "", e);
         }
@@ -376,6 +376,19 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     return splittedMessages;
   }
 
+  private static void searchPersonAndrInRecipients(Context context, MessageListElement mle) {
+    if (mle != null && mle.getRecipientsList() != null) {
+      List<Person> andrPerson = new LinkedList<>();
+      for (Person p : mle.getRecipientsList()) {
+        Person searchedFrom = Person.searchPersonAndr(context, p);
+        if (searchedFrom != null && !searchedFrom.equals(p)) {
+          andrPerson.add(searchedFrom);
+        }
+      }
+      mle.setRecipients(andrPerson);
+    }
+  }
+
 
   private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
@@ -396,7 +409,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
       for (MessageListElement mle : messagesToRemove) {
         long accId = mAccountsAccountKey.get(mle.getAccount());
-        MessageListDAO.getInstance(mContext).removeMessage(mle, accId);
+        try {
+          MessageListDAO.getInstance(mContext).deleteMessage(mContext, mle, accId);
+        } catch (Exception e) {
+          Log.d("yako", "", e);
+        }
       }
     }
   }
