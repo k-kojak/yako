@@ -242,7 +242,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
         return true;
 
       case R.id.add_email_contact:
-        ArrayList<String> contactDatas = new ArrayList<String>();
+        ArrayList<String> contactDatas = new ArrayList<>();
         contactDatas.add(mMessage.getFrom().getId());
         QuickContactBadge badgeSmall = AndroidUtils.addToContact(mMessage.getMessageType(), this, contactDatas);
         badgeSmall.onClick(item.getActionView());

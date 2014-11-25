@@ -17,7 +17,7 @@
             android:id="@+id/avatar"
             android:layout_width="wrap_content"
             android:layout_height="46dp"
-            android:layout_centerVertical="true"/>
+            />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -38,6 +38,9 @@
                 android:id="@+id/from_email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/email_header_text_bg"
+                android:padding="1dp"
+                android:clickable="true"
                 android:text=""
                 android:textSize="12sp" />
 
@@ -45,8 +48,24 @@
                 android:id="@+id/recipients"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:clickable="true"
                 android:text=""
-                android:textSize="12sp" />
+                android:background="@drawable/email_header_text_bg"
+                android:textSize="12sp"
+                android:padding="1dp"/>
+
+            <TextView
+                android:id="@+id/recipients_expanded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:text=""
+                android:background="@drawable/email_header_text_bg"
+                android:textSize="12sp"
+                android:padding="1dp"
+                android:visibility="gone"/>
 
 
         </LinearLayout>
@@ -70,17 +89,36 @@
         android:background="#c0c0c0"
         android:layout_below="@id/header"/>
 
-    <WebView
-        android:id="@+id/email_content"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@id/separator"
-        android:scrollbarStyle="outsideOverlay"
-        android:paddingTop="6dip"
-        android:paddingLeft="6dip"
-        android:paddingRight="6dip"
-        android:paddingBottom="24dip">
-    </WebView>
+    <!--<ScrollView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_below="@id/separator">-->
+
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:orientation="vertical">-->
+
+            <!--<TextView-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam id mi ac nisl euismod semper. Donec gravida sagittis risus dictum ornare. Nullam ut diam gravida, varius nibh non, faucibus sem. Donec nec vehicula diam. Nulla orci urna, lobortis ac libero fringilla, gravida euismod turpis. Nulla quis aliquam turpis, non consectetur diam. In ac justo dui. Vivamus massa enim, tempor id faucibus ac, convallis ac neque. Sed in enim eu orci sollicitudin gravida. "/>-->
+
+            <WebView
+                android:id="@+id/email_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/separator"
+                android:scrollbarStyle="outsideOverlay"
+                android:paddingTop="6dip"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip"
+                android:paddingBottom="24dip">
+            </WebView>
+
+        <!--</LinearLayout>-->
+
+    <!--</ScrollView>-->
 
     <LinearLayout
         android:id="@+id/quick_answer_footer"

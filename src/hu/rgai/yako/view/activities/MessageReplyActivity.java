@@ -114,6 +114,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
     mQuotedSeparator = findViewById(R.id.quoted_separator);
 
+    Person sendTo = null;
 
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
@@ -138,12 +139,16 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
           // TODO: check if message is set to read remotely in this case or not
           MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-          TreeSet<String> messagesToMark = new TreeSet<String>();
+          TreeSet<String> messagesToMark = new TreeSet<>();
           messagesToMark.add(mMessage.getId());
           MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
           marker.executeTask(this, null);
         }
-        
+      }
+      if (getIntent().getAction() != null) {
+        if (getIntent().getAction().equals(IntentStrings.Actions.DIRECT_EMAIL)) {
+          sendTo = getIntent().getExtras().getParcelable(IntentStrings.Params.PERSON);
+        }
       }
     }
     
@@ -183,15 +188,24 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       if (mMessage.getFrom() != null && mAccount != null
               && (mAccount.getAccountType().equals(MessageProvider.Type.EMAIL) || mAccount.getAccountType().equals(MessageProvider.Type.GMAIL))) {
 
-        MessageRecipient ri = new EmailMessageRecipient(mMessage.getFrom().getName(), mMessage.getFrom().getId(), mMessage.getFrom().getName(),
-                null, (int) mMessage.getFrom().getContactId());
-        recipients.addRecipient(ri);
+        sendTo = mMessage.getFrom();
       }
     } else {
       mQuotedMessage.setVisibility(View.GONE);
       mQuoteCheckbox.setVisibility(View.GONE);
       mQuotedSeparator.setVisibility(View.GONE);
     }
+
+    if (sendTo != null) {
+      Person sendToAndr = Person.searchPersonAndr(this, sendTo);
+      if (sendToAndr != null && !sendTo.equals(sendToAndr)) {
+        sendTo = sendToAndr;
+      }
+      MessageRecipient rec = new EmailMessageRecipient(sendTo.getName(), sendTo.getId(), sendTo.getName(), null,
+              (int)sendTo.getContactId());
+      recipients.addRecipient(rec);
+    }
+
     showHideSubjectField();
     showHideCharacterCountField();
 
