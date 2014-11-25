@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:hint="Subject"
         android:singleLine="true"
-        android:inputType="text" />
+        android:inputType="textCapSentences" />
 
           
       <EditText android:id="@+id/message_content"

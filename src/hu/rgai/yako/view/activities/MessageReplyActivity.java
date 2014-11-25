@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
@@ -110,7 +111,11 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     mSubject = (EditText) findViewById(R.id.subject);
     mCharCount = (TextView) findViewById(R.id.char_count);
     mContent = (TextView) findViewById(R.id.message_content);
+
     mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
+    mQuotedMessage.getSettings().setBuiltInZoomControls(true);
+    mQuotedMessage.getSettings().setDisplayZoomControls(false);
+
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
     mQuotedSeparator = findViewById(R.id.quoted_separator);
 
@@ -206,8 +211,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       recipients.addRecipient(rec);
     }
 
-    showHideSubjectField();
-    showHideCharacterCountField();
 
     Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
     ContactListAdapter adapter = new ContactListAdapter(this, c);
@@ -223,6 +226,20 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
       processImplicitIntent(getIntent());
     }
+
+    showHideCharacterCountField();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    new Handler().postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        showHideSubjectField();
+      }
+    }, 300);
+
   }
 
   private void showHideSubjectField() {
