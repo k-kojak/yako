@@ -54,6 +54,7 @@ import java.util.*;
  */
 public class EmailDisplayerFragment extends Fragment {
 
+  private static final String MSG_CONTENT = "msg_content";
   private FullSimpleMessage mContent = null;
   
   // instance which used to fetch email (if necessary)
@@ -108,7 +109,11 @@ public class EmailDisplayerFragment extends Fragment {
     mAccount = eda.getAccount();
     mMessage = eda.getMessage();
     mFrom = mMessage.getFrom();
-    mContent = (FullSimpleMessage) mMessage.getFullMessage();
+    if (savedInstanceState != null) {
+      mContent = savedInstanceState.getParcelable(MSG_CONTENT);
+    } else {
+      mContent = (FullSimpleMessage) mMessage.getFullMessage();
+    }
     displayMessage();
 
 
@@ -136,6 +141,12 @@ public class EmailDisplayerFragment extends Fragment {
     qal.executeTask(getActivity(), new Void[]{});
 
     return mView;
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    outState.putParcelable(MSG_CONTENT, mContent);
+    super.onSaveInstanceState(outState);
   }
 
   private void startEmailReplyActivity(Person to) {
@@ -257,7 +268,8 @@ public class EmailDisplayerFragment extends Fragment {
     Bitmap img = ProfilePhotoProvider.getImageToUser(this.getActivity(), mFrom).getBitmap();
 
 
-            ((ImageView) mView.findViewById(R.id.avatar)).setImageBitmap(img);
+
+    ((ImageView) mView.findViewById(R.id.avatar)).setImageBitmap(img);
     ((TextView)mView.findViewById(R.id.from_name)).setText(mFrom.getName());
     ((TextView)mView.findViewById(R.id.date)).setText(Utils.getPrettyTime(mContent.getDate()));
     ((TextView)mView.findViewById(R.id.from_email)).setText(mFrom.getId());
