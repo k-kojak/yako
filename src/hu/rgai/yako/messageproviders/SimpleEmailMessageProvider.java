@@ -973,8 +973,8 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   }
 
   @Override
-  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
-          String content, String subject) {
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData,
+                          Set<? extends MessageRecipient> to, String content, String subject) {
     
     Properties props = System.getProperties();
     this.setProperties(props);
@@ -1014,7 +1014,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       Log.d("rgai", "", ex);
       success = false;
     }
-    
+
     MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
@@ -1029,7 +1029,13 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
           sb.append(", ");
         }
         if (er.getName() != null && er.getName().length() > 0) {
-          sb.append(er.getName());
+          String name = er.getName();
+          try {
+            name = MimeUtility.encodeText(name);
+          } catch (UnsupportedEncodingException e) {
+            Log.d("yako", "", e);
+          }
+          sb.append(name);
         }
         sb.append("<").append(er.getEmail()).append(">");
       }

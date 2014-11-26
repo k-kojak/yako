@@ -3,6 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -104,7 +105,7 @@ public class FullMessageDAO {
    * @param accountId  the id of the MessageListElement account id
    * @return
    */
-  public List<Long> getFullMessageIdsByAccountId(long accountId, List<MessageListElement> messageList) {
+  public List<Long> getFullMessageIdsByAccountId(long accountId, @Nullable List<MessageListElement> messageList) {
     String idClause = null;
     if (messageList != null && !messageList.isEmpty()) {
       idClause = SQLHelper.Utils.getInClosureFromListElement(messageList);

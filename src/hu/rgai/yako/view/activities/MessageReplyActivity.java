@@ -1,22 +1,16 @@
 package hu.rgai.yako.view.activities;
 
-import static android.app.Activity.RESULT_OK;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcelable;
 import android.provider.ContactsContract;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
-import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -28,14 +22,8 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.webkit.WebView;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.MultiAutoCompleteTextView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.ContactListAdapter;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
@@ -45,11 +33,9 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
-import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
@@ -61,8 +47,6 @@ import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
-import net.htmlparser.jericho.Source;
-
 /**
  *
  * @author Tamas Kojedzinszky
@@ -73,7 +57,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_SENT_FAILED = 2;
 
-  private int messageResult;
   private TextView mContent;
   private TextView mCharCount;
   private ChipsMultiAutoCompleteTextView recipients;
@@ -123,8 +106,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
 
     if (getIntent().getExtras() != null) {
       if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
-//        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-//        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
         long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
         TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
         mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
@@ -346,6 +327,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
           if (mContent.getText().toString().trim().length() == 0) {
             Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
           } else {
+//            prepareSend(to);
             prepareMessageSending(to);
           }
         }
@@ -364,7 +346,8 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
             + "</blockquote>";
   }
 
-  public void sendMessage(MessageRecipient recipient, Account from, List<MessageRecipient> recipients) {
+  public void sendMessage(MessageProvider.Type sendType, List<MessageRecipient> toSend,
+                          Account from, List<MessageRecipient> recipients) {
     if (from == null) {
       return;
     }
@@ -388,11 +371,11 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     // setting intent data for handling returning result
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(SimpleMessageSentBroadcastReceiver.class,
             IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
-    SentMessageData smd = getSentMessageDataToAccount(recipient.getDisplayName(), from);
+    SentMessageData smd = getSentMessageDataToAccount(recipients, from);
     sentMessBroadcD.setMessageData(smd);
     
     
-    MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
+    MessageSender rs = new MessageSender(sendType, toSend, from, sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void onTimeout(Context context) {
@@ -406,45 +389,32 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
-      // request a message list for the instance we sent the message with
-//      int threadAccountCount = 0;
-//      Account threadAccount = null;
-//      for (Account a : mChoosenAccountsToSend) {
-//        if (a.isThreadAccount()) {
-//          threadAccountCount++;
-//          threadAccount = a;
-//        }
-//      }
-//      Log.d("rgai", "thread instance count: " + threadAccountCount);
-//      Log.d("rgai", "thread instance: " + threadAccount);
-//      if (!mChoosenAccountsToSend.isEmpty()) {
-//        Log.d("rgai", "sending request to get messages");
-//        MainServiceExtraParams eParams = new MainServiceExtraParams();
-//        if (threadAccountCount == 1) {
-//          eParams.setAccount(threadAccount);
-//        }
-//        eParams.setForceQuery(true);
-//        Intent intent = new Intent(this, MainScheduler.class);
-//        intent.setAction(Context.ALARM_SERVICE);
-//        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
-//        this.sendBroadcast(intent);
-//      }
       finish();
     } else {
       prepareMessageSending(recipients);
     }
   }
   
-  public static SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
-  
+  public static SentMessageData getSentMessageDataToAccount(List<MessageRecipient> recipients, Account from) {
+
+    StringBuilder recName = new StringBuilder();
+    int i = 0;
+    for (MessageRecipient mr : recipients) {
+      if (i > 0) {
+        recName.append(", ");
+      }
+      recName.append(mr.getDisplayData());
+      i++;
+    }
+
     if (from.getAccountType().equals(MessageProvider.Type.SMS)) {
-      SmsSentMessageData smsData = new SmsSentMessageData(recipientName);
+      SmsSentMessageData smsData = new SmsSentMessageData(recName.toString());
       if (from.isThreadAccount()) {
         smsData.setAccountToLoad(from);
       }
       return smsData;
     } else {
-      SimpleSentMessageData simpleData = new SimpleSentMessageData(recipientName);
+      SimpleSentMessageData simpleData = new SimpleSentMessageData(recName.toString());
       if (from.isThreadAccount()) {
         simpleData.setAccountToLoad(from);
       }
@@ -459,7 +429,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 
     MessageRecipient ri = recipients.remove(0);
-    List<Account> availableAccounts = new LinkedList<Account>();
+    List<Account> availableAccounts = new LinkedList<>();
 
     for (Account actAcc : accounts) {
       if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
@@ -471,14 +441,26 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
         }
       }
     }
+
+    List<MessageRecipient> allRecipients = new LinkedList<>();
+    allRecipients.add(ri);
+    Iterator<MessageRecipient> it = recipients.iterator();
+    while (it.hasNext()) {
+      MessageRecipient mr = it.next();
+      if (mr.getType().equals(ri.getType())) {
+        allRecipients.add(mr);
+        it.remove();
+      }
+    }
+
     if (availableAccounts.isEmpty()) {
       Toast.makeText(this,
               "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " instance required for that.",
               Toast.LENGTH_LONG).show();
     } else if (availableAccounts.size() == 1) {
-      sendMessage(ri, availableAccounts.get(0), recipients);
+      sendMessage(ri.getType(), allRecipients, availableAccounts.get(0), recipients);
     } else {
-      chooseAccount(ri, availableAccounts, recipients);
+      chooseAccount(ri.getType(), allRecipients, availableAccounts, recipients);
     }
     
   }
@@ -537,8 +519,8 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     v.startAnimation(a);
   }
 
-  private void chooseAccount(final MessageRecipient recipient, final List<Account> accs,
-          final List<MessageRecipient> recipients) {
+  private void chooseAccount(final MessageProvider.Type sendType, final List<MessageRecipient> toSend,
+                             final List<Account> accs, final List<MessageRecipient> recipients) {
 
     String[] items = new String[accs.size()];
     int i = 0;
@@ -547,11 +529,11 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     }
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Send message to " + recipient.getDisplayName() + " from:");
+    builder.setTitle("Send " + toSend.get(0).getType() + " message with:");
     builder.setItems(items, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        sendMessage(recipient, accs.get(which), recipients);
+        sendMessage(sendType, toSend, accs.get(which), recipients);
       }
     });
 
@@ -561,7 +543,6 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
 
   @Override
   public void finish() {
-    setResult(messageResult);
     super.finish();
   }
 

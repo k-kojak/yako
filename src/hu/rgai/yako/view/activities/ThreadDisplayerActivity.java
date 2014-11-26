@@ -447,8 +447,10 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     } else {
       sentMessBroadcD.setMessageData(new SimpleSentMessageData(ri.getDisplayName()));
     }
-      
-    MessageSender rs = new MessageSender(ri, mMessage.getAccount(), sentMessBroadcD,
+
+    List<MessageRecipient> recipients = new LinkedList<>();
+    recipients.add(ri);
+    MessageSender rs = new MessageSender(ri.getType(), recipients, mMessage.getAccount(), sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void onTimeout(Context context) {

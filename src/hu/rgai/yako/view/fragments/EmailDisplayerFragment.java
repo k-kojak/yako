@@ -244,10 +244,15 @@ public class EmailDisplayerFragment extends Fragment {
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(
             SimpleMessageSentBroadcastReceiver.class, IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
 
-    SentMessageData smd = MessageReplyActivity.getSentMessageDataToAccount(recipient.getDisplayName(), from);
+    List<MessageRecipient> recipients = new LinkedList<>();
+    recipients.add(recipient);
+
+    SentMessageData smd = MessageReplyActivity.getSentMessageDataToAccount(recipients, from);
     sentMessBroadcD.setMessageData(smd);
 
-    MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
+
+
+    MessageSender rs = new MessageSender(recipient.getType(), recipients, from, sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void onTimeout(Context context) {

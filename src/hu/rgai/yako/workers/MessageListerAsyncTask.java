@@ -199,7 +199,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       }
 
 
-      if (mSplittedMessageSecondPart) {
+      if (mSplittedMessageSecondPart && mMessageProvider instanceof SplittedMessageProvider) {
         SplittedMessageProvider smp = (SplittedMessageProvider)mMessageProvider;
         messageResult = smp.loadDataToMessages(mSplittedMessages);
       } else {

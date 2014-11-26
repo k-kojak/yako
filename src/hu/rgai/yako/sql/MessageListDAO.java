@@ -104,19 +104,24 @@ public class MessageListDAO  {
    * @param messageList
    * @throws Exception
    */
-  public synchronized void deleteMessages(Context context, long accountId, List<MessageListElement> messageList) throws Exception {
+  public synchronized void deleteMessages(Context context,
+                                          long accountId,
+                                          @Nullable List<MessageListElement> messageList) throws Exception {
+    // TODO: continue nullable solution...
 
-    if (messageList == null) {
-      return;
-    }
+    List<Long> fullMessageIds = FullMessageDAO
+            .getInstance(context)
+            .getFullMessageIdsByAccountId(accountId, messageList);
 
-    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageList);
     List<Long> messageRawIds = new LinkedList<>();
-
-    for (MessageListElement mle : messageList) {
-      if (mle.getRawId() != -1) {
-        messageRawIds.add(mle.getRawId());
+    if (messageList != null) {
+      for (MessageListElement mle : messageList) {
+        if (mle.getRawId() != -1) {
+          messageRawIds.add(mle.getRawId());
+        }
       }
+    } else {
+      messageRawIds = getMessageRawIdsToAccount(accountId);
     }
 
     AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
@@ -128,10 +133,10 @@ public class MessageListDAO  {
 
     if (accountId != -1) {
       where = COL_ACCOUNT_ID + " = ?";
-      whereArgs = new String[]{Long.toString(accountId)};
+      whereArgs = new String[]{String.valueOf(accountId)};
     }
 
-    if (!messageList.isEmpty()) {
+    if (messageList != null && !messageList.isEmpty()) {
       if (where == null) {
         where = "";
       } else {
@@ -142,8 +147,8 @@ public class MessageListDAO  {
     if (where == null) {
       throw new Exception("where condition cannot be null: at least one condition should have a valid value");
     }
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, whereArgs);
-
+    int num = mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, whereArgs);
+    Log.d("yako", "removing messages: " + num);
   }
 
 
@@ -481,6 +486,21 @@ public class MessageListDAO  {
     return mle;
   }
 
+  private List<Long> getMessageRawIdsToAccount(long accountId) {
+    List<Long> ids = new LinkedList<>();
+    String query = "SELECT "+ COL_ID +
+            " FROM " + TABLE_MESSAGES + "" +
+            " WHERE " + COL_ACCOUNT_ID + " = ?";
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(query, new String[] {String.valueOf(accountId)});
+    cursor.moveToFirst();
+    while (!cursor.isAfterLast()) {
+      ids.add(cursor.getLong(0));
+      cursor.moveToNext();
+    }
+    cursor.close();
+
+    return ids;
+  }
 
   public long getMessageRawId(MessageListElement mle, long accountId) {
     String query = "SELECT "+ COL_ID +
@@ -492,6 +512,7 @@ public class MessageListDAO  {
     if (!cursor.isAfterLast()) {
       _id = cursor.getLong(0);
     }
+    cursor.close();
     return _id;
   }
 
