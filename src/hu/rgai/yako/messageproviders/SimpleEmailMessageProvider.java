@@ -372,9 +372,13 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
         }
 
         boolean seen = true;
+        List<Person> allRecipients = null;
         if (isNewMessageArrivedRequest) {
           Flags flags = m.getFlags();
           seen = flags.contains(Flags.Flag.SEEN);
+
+          Address[] recAddresses = m.getAllRecipients();
+          allRecipients = getAllRecipients(recAddresses);
         }
 
 
@@ -452,6 +456,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
                   seen, subject, "", attachSize, fromPerson, null, date, account, Type.EMAIL, false);
 
           mle.setFullMessage(fsm);
+          mle.setRecipients(allRecipients);
           emails.add(mle);
         }
       }

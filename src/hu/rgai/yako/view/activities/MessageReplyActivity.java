@@ -36,6 +36,7 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
@@ -102,9 +103,13 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
     mQuotedSeparator = findViewById(R.id.quoted_separator);
 
-    Person sendTo = null;
+    List<Person> sendTo = new ArrayList<>();
+    boolean replyToAll = false;
 
     if (getIntent().getExtras() != null) {
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_REPLY_TO_ALL)) {
+        replyToAll = getIntent().getExtras().getBoolean(IntentStrings.Params.MESSAGE_REPLY_TO_ALL, false);
+      }
       if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
         long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
         TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
@@ -133,7 +138,7 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       }
       if (getIntent().getAction() != null) {
         if (getIntent().getAction().equals(IntentStrings.Actions.DIRECT_EMAIL)) {
-          sendTo = getIntent().getExtras().getParcelable(IntentStrings.Params.PERSON);
+          sendTo.add((Person)getIntent().getExtras().getParcelable(IntentStrings.Params.PERSON));
         }
       }
     }
@@ -173,8 +178,18 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
     if (mMessage != null) {
       if (mMessage.getFrom() != null && mAccount != null
               && (mAccount.getAccountType().equals(MessageProvider.Type.EMAIL) || mAccount.getAccountType().equals(MessageProvider.Type.GMAIL))) {
-
-        sendTo = mMessage.getFrom();
+        sendTo.add(mMessage.getFrom());
+        if (replyToAll) {
+          String myEmail = mAccount.getAccountType().equals(MessageProvider.Type.GMAIL)
+                  ? ((GmailAccount)mAccount).getEmail() + "@gmail.com"
+                  : ((EmailAccount)mAccount).getEmail();
+          List<Person> recs = MessageRecipientDAO.getInstance(this).getRecipientsToMessageId(this, mMessage);
+          for (Person p : recs) {
+            if (!p.getId().equals(myEmail)) {
+              sendTo.add(p);
+            }
+          }
+        }
       }
     } else {
       mQuotedMessage.setVisibility(View.GONE);
@@ -182,14 +197,18 @@ public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
       mQuotedSeparator.setVisibility(View.GONE);
     }
 
-    if (sendTo != null) {
-      Person sendToAndr = Person.searchPersonAndr(this, sendTo);
-      if (sendToAndr != null && !sendTo.equals(sendToAndr)) {
-        sendTo = sendToAndr;
+    if (!sendTo.isEmpty()) {
+      for (int i = 0; i < sendTo.size(); i++) {
+        Person sendToAndr = Person.searchPersonAndr(this, sendTo.get(i));
+        if (sendToAndr != null && !sendTo.get(i).equals(sendToAndr)) {
+          sendTo.set(i, sendToAndr);
+        }
       }
-      MessageRecipient rec = new EmailMessageRecipient(sendTo.getName(), sendTo.getId(), sendTo.getName(), null,
-              (int)sendTo.getContactId());
-      recipients.addRecipient(rec);
+      for (Person p : sendTo) {
+        MessageRecipient rec = new EmailMessageRecipient(p.getName(), p.getId(), p.getName(), null,
+                (int) p.getContactId());
+        recipients.addRecipient(rec);
+      }
     }
 
 

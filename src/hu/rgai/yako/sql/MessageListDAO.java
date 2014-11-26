@@ -215,11 +215,13 @@ public class MessageListDAO  {
     }
 
     long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
+    mle.setRawId(msgRawId);
     if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
       if (mle.getFullMessage() != null) {
         FullSimpleMessage fsm = (FullSimpleMessage) mle.getFullMessage();
         FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
       }
+      MessageRecipientDAO.getInstance(context).insertRecipients(context, mle);
     }
     return msgRawId;
   }

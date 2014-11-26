@@ -21,7 +21,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.*;
@@ -30,7 +29,6 @@ import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.tools.RemoteMessageController;
 import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.android.test.R;
@@ -61,13 +59,13 @@ public class EmailDisplayerFragment extends Fragment {
   private Account mAccount;
   
   private MessageListElement mMessage;
+  private List<Person> mRecipients = null;
   // the sender of the message
   private Person mFrom;
   
   private View mView;
   // a view for displaying content
   private WebView mWebView = null;
-  private TextView mAnswersShowHide;
   private TextView mInfoText;
   private TextView mFoldedRecipients;
   private TextView mExpandedRecipients;
@@ -78,12 +76,9 @@ public class EmailDisplayerFragment extends Fragment {
   private boolean mQuickAnswerIsTranslated = false;
   // default character encoding of message
   private String mailCharCode = "UTF-8";
-  public static final int MESSAGE_REPLY_REQ_CODE = 1;
 
-  public static final EmailDisplayerFragment newInstance() {
-    EmailDisplayerFragment edf = new EmailDisplayerFragment();
-    
-    return edf;
+  public static EmailDisplayerFragment newInstance() {
+    return new EmailDisplayerFragment();
   }
 
 
@@ -92,7 +87,6 @@ public class EmailDisplayerFragment extends Fragment {
     
     mView = inflater.inflate(R.layout.email_displayer, container, false);
     mWebView = (WebView) mView.findViewById(R.id.email_content);
-    mAnswersShowHide = (TextView) mView.findViewById(R.id.quick_answer_btn);
     mInfoText = (TextView) mView.findViewById(R.id.info_text);
     mFoldedRecipients = (TextView)mView.findViewById(R.id.recipients);
     mExpandedRecipients = (TextView)mView.findViewById(R.id.recipients_expanded);
@@ -109,6 +103,7 @@ public class EmailDisplayerFragment extends Fragment {
     mAccount = eda.getAccount();
     mMessage = eda.getMessage();
     mFrom = mMessage.getFrom();
+    mRecipients = eda.getRecipients();
     if (savedInstanceState != null) {
       mContent = savedInstanceState.getParcelable(MSG_CONTENT);
     } else {
@@ -291,15 +286,11 @@ public class EmailDisplayerFragment extends Fragment {
   }
 
   private void setRecipientsFields() {
-    List<Person> recipients = MessageRecipientDAO
-            .getInstance(getActivity())
-            .getRecipientsToMessageId(getActivity(), mMessage);
-
-    setFoldedRecipientsField(recipients);
-    setExpandedRecipientsField(recipients);
+    setFoldedRecipientsField();
+    setExpandedRecipientsField();
   }
 
-  private void setFoldedRecipientsField(List<Person> recipients) {
+  private void setFoldedRecipientsField() {
 
     StringBuilder recipientsNames = new StringBuilder("to: ");
 
@@ -308,7 +299,7 @@ public class EmailDisplayerFragment extends Fragment {
             : ((EmailAccount)mAccount).getEmail();
 
     int i = 0;
-    for (Person person : recipients) {
+    for (Person person : mRecipients) {
 
       if (i > 0) {
         recipientsNames.append(", ");
@@ -333,9 +324,9 @@ public class EmailDisplayerFragment extends Fragment {
     });
   }
 
-  private void setExpandedRecipientsField(List<Person> recipients) {
+  private void setExpandedRecipientsField() {
 
-    String recipientsNames = getExpandedRecipientsText(recipients);
+    String recipientsNames = getExpandedRecipientsText(mRecipients);
 
     Spannable spannable = new SpannableString(recipientsNames);
 
@@ -370,8 +361,6 @@ public class EmailDisplayerFragment extends Fragment {
             }
           }
 //          return true;
-        } else {
-
         }
         return false;
       }
@@ -455,7 +444,7 @@ public class EmailDisplayerFragment extends Fragment {
       Source source = new Source(mText);
       String plainText = source.getRenderer().toString();
 
-      Map<String, String> postParams = new HashMap<String, String>(2);
+      Map<String, String> postParams = new HashMap<>(2);
       postParams.put("mod", requestMod);
       postParams.put("text", plainText);
       HttpResponse response = RemoteMessageController.sendPostRequest(postParams);
@@ -475,7 +464,7 @@ public class EmailDisplayerFragment extends Fragment {
           JSONArray data = root.getJSONArray("data");
           List<String> answers = null;
           if (data != null && data.length() != 0) {
-            answers = new ArrayList<String>(data.length());
+            answers = new ArrayList<>(data.length());
             for (int i = 0; i < data.length(); i++) {
               answers.add(data.get(i).toString());
             }

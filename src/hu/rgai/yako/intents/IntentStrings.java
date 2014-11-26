@@ -35,9 +35,10 @@ public class IntentStrings {
     public static final String ACCOUNT = "instance";
     public static final String BUNDLE = "bundle";
 
-    // this 2 data is required to find a messageListElement
+
     public static final String MESSAGE_ID = "message_id";
     public static final String MESSAGE_RAW_ID = "message_raw_id";
+    public static final String MESSAGE_REPLY_TO_ALL = "message_reply_to_all";
     public static final String MESSAGE_ACCOUNT = "message_account";
     
     public static final String MESSAGE_SENT_RESULT_TYPE = "message_sent_result_type";

@@ -8,6 +8,13 @@
         android:visible="false"
         messagelogger:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/message_reply_to_all"
+        android:icon="@drawable/ic_action_reply_all"
+        android:title="@string/message_reply_all"
+        android:visible="false"
+        messagelogger:showAsAction="ifRoom" />
+
     <item android:id="@+id/attachments"
           android:icon="@drawable/ic_attachment_menu"
           android:title="@string/view_attachments"

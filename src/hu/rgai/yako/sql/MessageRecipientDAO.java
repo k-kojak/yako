@@ -90,6 +90,10 @@ public class MessageRecipientDAO {
   }
 
   public synchronized void insertRecipients(Context context, MessageListElement mle) {
+    if (mle == null) {
+      throw new NullPointerException("MessageListElement is null when trying to insert recipient.");
+    }
+
     if (mle.getRawId() == -1 || mle.getRecipientsList() == null) {
       return;
     }
