@@ -174,7 +174,7 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
-          Account oldAccount = (Account) data.getParcelableExtra("old_account");
+          Account oldAccount = data.getParcelableExtra("old_account");
           AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
 //          YakoApp.deleteMessages(oldAccount);
           
@@ -275,7 +275,7 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
   public static void showHidePassword(boolean showPass, EditText passField) {
     int s, e;
-    s = passField.getSelectionStart();;
+    s = passField.getSelectionStart();
     e = passField.getSelectionEnd();
     if (showPass) {
       passField.setTransformationMethod(null);

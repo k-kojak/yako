@@ -8,7 +8,8 @@ import java.util.List;
 
 public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
-  public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
+  public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN}
+
   public enum ZoneType {
     WORK("Work", R.drawable.ic_important_work, 0x635241),
     REST("Rest", R.drawable.ic_important_home, 0x152C1B),
@@ -37,7 +38,7 @@ public class GpsZone implements Parcelable, Comparable<GpsZone> {
       return mColor;
     }
 
-  };
+  }
 
   private final String mAlias;
   private final double mLat;

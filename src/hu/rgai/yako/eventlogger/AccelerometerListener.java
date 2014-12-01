@@ -53,7 +53,6 @@ public class AccelerometerListener implements SensorEventListener {
           sb.append(deltaY);
           sb.append(" ");
           hasAccData = true;
-          ;
         }
 
         if (deltaZ > NOISE) {
@@ -61,7 +60,6 @@ public class AccelerometerListener implements SensorEventListener {
           sb.append(deltaZ);
           sb.append(" ");
           hasAccData = true;
-          ;
         }
 
         mLastX = x;

@@ -64,9 +64,9 @@
         android:text="@string/show_password"
         android:onClick="onCheckboxClicked" />
 
-      <Button android:text="Sync contact list now"
+      <Button android:text="@string/sync_contact_list_now"
             android:id="@+id/sync_fb_contact_list" 
-            android:textSize="14dp"
+            android:textSize="14sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="syncFacebookContactList"

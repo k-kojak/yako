@@ -27,8 +27,8 @@ import java.util.logging.Logger;
 public class ErrorLog {
   
   private static final String errorLogPath = "/mLogger/log";
-  public enum Reason {FB_CONTACT_SYNC, OTHER};
-  
+  public enum Reason {FB_CONTACT_SYNC, OTHER}
+
   public static void dumpLogcat(Context context, Reason r) {
     dumpLogcat(context, r, -1, null, null);
   }

@@ -53,7 +53,7 @@ public class GmailSettingActivity extends ZoneDisplayActionBarActivity implement
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("instance") != null) {
-      oldAccount = (GmailAccount)b.getParcelable("instance");
+      oldAccount = b.getParcelable("instance");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
     }

@@ -3,7 +3,6 @@
     android:id="@+id/editTxt"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/chips_edittext_bg"
     android:drawablePadding="1dp"
     android:drawableRight="@drawable/android"
     android:padding="4dp"

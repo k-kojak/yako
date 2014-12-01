@@ -1,5 +1,6 @@
 package hu.rgai.yako.messageproviders;
 
+import hu.rgai.android.test.BuildConfig;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FacebookAccount;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
@@ -80,18 +81,16 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           boolean isNewMessageArrivedRequest)
-      throws CertPathValidatorException, SSLHandshakeException, ConnectException,
-      NoSuchProviderException, UnknownHostException, IOException, MessagingException,
-      AuthenticationFailedException {
+      throws CertPathValidatorException,
+          IOException, MessagingException {
     return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
 
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           int snippetMaxLength, boolean isNewMessageArrivedRequest)
-      throws CertPathValidatorException, SSLHandshakeException, ConnectException,
-      NoSuchProviderException, UnknownHostException, IOException, MessagingException,
-      AuthenticationFailedException {
+      throws CertPathValidatorException,
+          IOException, MessagingException {
     Bundle params = new Bundle();
 
     final List<MessageListElement> messages = new LinkedList<MessageListElement>();
@@ -284,7 +283,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public FullThreadMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException {
+  public FullThreadMessage getMessage(String id, int offset, int limit) throws MessagingException, IOException {
 
     Bundle params = new Bundle();
     final FullThreadMessage ftm = new FullThreadMessage();
@@ -503,12 +502,12 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullMessage getMessage(String id) throws MessagingException, IOException {
     return getMessage(id, 0, 20);
   }
 
   @Override
-  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String id, boolean seen) throws MessagingException, IOException {
     // we cannot set facebook messages status to read...
   }
 
@@ -547,7 +546,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
-  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessagesAsRead(String[] id, boolean seen) throws MessagingException, IOException {
     // we cannot mark facebook messages on server side
   }
 

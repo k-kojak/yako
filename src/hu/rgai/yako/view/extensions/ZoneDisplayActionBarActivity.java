@@ -1,10 +1,12 @@
 package hu.rgai.yako.view.extensions;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.GpsZone;
 
+@SuppressLint("Registered")
 public class ZoneDisplayActionBarActivity extends ActionBarActivity {
 
   private boolean mChangeColor = false;

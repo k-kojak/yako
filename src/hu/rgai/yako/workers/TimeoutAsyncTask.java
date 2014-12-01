@@ -47,7 +47,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
    * @param params the params to execute
    */
   public void executeTask(final Context context, Params[] params) {
-    AndroidUtils.<Params, Progress, Result>startTimeoutAsyncTask(this, params);
+    AndroidUtils.startTimeoutAsyncTask(this, params);
     
     if (mTimeout != -1) {
       Handler h = new Handler();

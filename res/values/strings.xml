@@ -33,14 +33,14 @@
   <string name="mark_as_unread">Mark as unread</string>
   <string name="delete_message">Delete message</string>
   <string name="delete_thread">Delete thread</string>
-  <string name="loading">Loading...</string>
+  <string name="loading">Loading…</string>
   <string name="last_full_update">Last full update: </string>
   <string name="today">Today</string>
   <string name="all">All</string>
     
   <string name="to_hint">To</string>
   <string name="email_hint">your@email.com</string>
-  <string name="google_account_hint">google account</string>
+  <string name="google_account_hint">Google account</string>
   <string name="infmail_account_hint">infmail username</string>
   <string name="imap_hint">imap address</string>
   <string name="smtp_hint">smtp address</string>
@@ -126,6 +126,14 @@
   <string name="quick_answers">Quick Answers</string>
   <string name="no_qa_available">No Quick Answers available</string>
   <string name="service_not_available">Service not available</string>
+  <string name="sync_contact_list_now">Sync contact list now</string>
+  <string name="zone_category">Zone category:</string>
+  <string name="accuracy">Accuracy:</string>
+  <string name="filter">FILTER</string>
+  <string name="zones">ZONES</string>
+  <string name="plus_zone">+ Zone</string>
+  <string name="fake_zone">Fake zone</string>
+  <string name="content">Content</string>
 
 
 </resources>

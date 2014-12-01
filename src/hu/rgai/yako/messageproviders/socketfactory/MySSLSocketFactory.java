@@ -21,7 +21,7 @@ public class MySSLSocketFactory extends SSLSocketFactory {
       sslcontext.init(null, // No KeyManager required
               new TrustManager[]{new MyTrustManager()},
               new java.security.SecureRandom());
-      factory = (SSLSocketFactory) sslcontext.getSocketFactory();
+      factory = sslcontext.getSocketFactory();
     } catch (Exception ex) {
       Log.d("rgai", "", ex);
     }

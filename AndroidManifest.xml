@@ -31,7 +31,7 @@
     <application
             android:name="hu.rgai.yako.YakoApp"
             android:label="@string/app_name"
-            android:icon="@drawable/yako">
+            android:icon="@drawable/ic_launcher">
 
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
 
@@ -173,16 +173,16 @@
 
 
         <service android:name="hu.rgai.yako.services.MainService"
-                 android:icon="@drawable/yako"
+                 android:icon="@drawable/ic_launcher"
                  android:label="@string/service_name">
         </service>
 
         <service android:name="hu.rgai.yako.services.NotificationReplaceService"
-                 android:icon="@drawable/yako"
+                 android:icon="@drawable/ic_launcher"
                  android:label="@string/notif_replace_service"/>
 
         <service android:name="hu.rgai.yako.services.QuickReplyService"
-                 android:icon="@drawable/yako"
+                 android:icon="@drawable/ic_launcher"
                  android:label="@string/quick_reply_service"/>
 
 

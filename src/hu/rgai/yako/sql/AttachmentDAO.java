@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+import android.util.LongSparseArray;
 import hu.rgai.yako.beens.Attachment;
 import hu.rgai.yako.tools.Utils;
 
@@ -79,7 +80,7 @@ public class AttachmentDAO {
   }
 
 
-  public Map<Long, List<Attachment>> getAttachments(long fullMessageRawId) {
+  public LongSparseArray<List<Attachment>> getAttachments(long fullMessageRawId) {
     List<Long> ids = new ArrayList<>(1);
     ids.add(fullMessageRawId);
     return getAttachments(ids);
@@ -94,8 +95,8 @@ public class AttachmentDAO {
 //  }
 
 
-  public Map<Long, List<Attachment>> getAttachments(Collection<Long> fullMessageRawIds) {
-    HashMap<Long, List<Attachment>> attachments = new HashMap<Long, List<Attachment>>();
+  public LongSparseArray<List<Attachment>> getAttachments(Collection<Long> fullMessageRawIds) {
+    LongSparseArray<List<Attachment>> attachments = new LongSparseArray<>();
     if (fullMessageRawIds != null && !fullMessageRawIds.isEmpty()) {
       String cols = Utils.joinString(allColumns, ",");
       String ids = SQLHelper.Utils.getInClosure(fullMessageRawIds);
@@ -112,7 +113,7 @@ public class AttachmentDAO {
         String fileName = cursor.getString(cursor.getColumnIndex(COL_FILENAME));
         long fileSize = cursor.getLong(cursor.getColumnIndex(COL_SIZE));
         Attachment att = new Attachment(_id, fileName, fileSize, 0);
-        if (!attachments.containsKey(msg_id)) {
+        if (attachments.get(msg_id) == null) {
           attachments.put(msg_id, new LinkedList<Attachment>());
         }
         attachments.get(msg_id).add(att);

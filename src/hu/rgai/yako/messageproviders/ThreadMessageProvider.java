@@ -12,7 +12,7 @@ import javax.mail.NoSuchProviderException;
  */
 public interface ThreadMessageProvider extends MessageProvider {
   
-  public FullMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException;
+  public FullMessage getMessage(String id, int offset, int limit) throws MessagingException, IOException;
   
   public void deleteThread(String id);
   

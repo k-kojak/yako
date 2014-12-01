@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.ContactsContract;
+import android.util.LongSparseArray;
 import hu.rgai.yako.beens.BitmapResult;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Person;
@@ -21,7 +22,7 @@ import java.util.Set;
  */
 public class ProfilePhotoProvider {
 
-  private static Map<Long, Bitmap> photos = null;
+  private static LongSparseArray<Bitmap> photos = null;
   private static Bitmap groupChatPhoto = null;
   private static Set<Long> noImageToTheseUsers;
   private static long noImageCacheTime = System.currentTimeMillis();
@@ -55,7 +56,7 @@ public class ProfilePhotoProvider {
     if (photos == null) {
       initPhotosMap(context);
     }
-    if (photos.containsKey(contactId)) {
+    if (photos.get(contactId) != null) {
       img = photos.get(contactId);
       if (contactId == -1) {
         isDefaultImage = true;
@@ -91,7 +92,7 @@ public class ProfilePhotoProvider {
   }
   
   private static void initPhotosMap(Context c) {
-    photos = new HashMap<Long, Bitmap>();
+    photos = new LongSparseArray<>();
     Bitmap defaultImg = BitmapFactory.decodeResource(c.getResources(), R.drawable.ic_contact_picture);
     photos.put(-1l, defaultImg);
   }
@@ -104,7 +105,7 @@ public class ProfilePhotoProvider {
     }
     if (photos == null) {
       return false;
-    } else if (photos.containsKey(contactId)) {
+    } else if (photos.get(contactId) != null) {
       return true;
     } else if (noImageToTheseUsers != null && noImageToTheseUsers.contains(contactId)) {
       return true;

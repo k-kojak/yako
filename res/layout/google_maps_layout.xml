@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:textSize="14sp"
-            android:text="Accuracy: "
+            android:text="@string/accuracy"
             android:layout_gravity="center_vertical"/>
 
         <SeekBar

@@ -26,10 +26,10 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/thumbnail"
         android:layout_toRightOf="@+id/thumbnail"
-        android:text="..."
+        android:text=""
         android:textColor="#888888"
         android:typeface="sans"
-        android:textSize="14dip" />
+        android:textSize="14sp" />
  
     
     <TextView
@@ -38,18 +38,18 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/name"
         android:textColor="#bbbbbb"
-        android:textSize="12dip"
+        android:textSize="12sp"
         android:typeface="sans"
         android:layout_marginTop="1dip"
         android:layout_toRightOf="@+id/thumbnail"
-        android:text="..." />
+        android:text="" />
  
     
     <ImageView
             android:id="@+id/mimetype_image"
             android:layout_width="16dip"
             android:layout_height="16dip"
-            android:layout_marginTop="10px"
+            android:layout_marginTop="5dp"
             android:layout_alignParentRight="true"
             android:layout_alignTop="@id/name"
             android:gravity="right"

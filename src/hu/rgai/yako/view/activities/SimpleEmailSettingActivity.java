@@ -99,7 +99,7 @@ public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity imp
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("instance") != null) {
-      oldAccount = (EmailAccount)b.getParcelable("instance");
+      oldAccount = b.getParcelable("instance");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
       imap.setText(oldAccount.getImapAddress());
@@ -154,7 +154,7 @@ public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity imp
   }
   
   private boolean isSsl() {
-    return ((String)securityType.getSelectedItem()).equals("SSL") ? true : false;
+    return securityType.getSelectedItem().equals("SSL") ? true : false;
   }
   
   public void saveAccountSettings() {

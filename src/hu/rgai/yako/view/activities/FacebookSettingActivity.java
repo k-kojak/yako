@@ -142,7 +142,7 @@ public class FacebookSettingActivity extends ZoneDisplayActionBarActivity {
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("instance") != null) {
-      oldAccount = (FacebookAccount)b.getParcelable("instance");
+      oldAccount = b.getParcelable("instance");
       setFieldsByAccount(oldAccount);
     }
     

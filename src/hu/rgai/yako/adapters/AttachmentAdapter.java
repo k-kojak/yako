@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
+import android.util.LongSparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -31,7 +32,7 @@ public class AttachmentAdapter extends BaseAdapter {
   private final List<Attachment> mAttachments;
   private final EmailAccount mAccount;
   private final String mMessageId;
-  private static final HashMap<Long, AttachmentDownloader> downloaders = new HashMap<Long, AttachmentDownloader>();
+  private static final LongSparseArray<AttachmentDownloader> downloaders = new LongSparseArray<>();
 
 
   public AttachmentAdapter(Context context, List<Attachment> attachments, Account account, String messageId) {
@@ -62,7 +63,7 @@ public class AttachmentAdapter extends BaseAdapter {
     final ViewHolder holder;
 
     if (view == null) {
-      view = inflater.inflate(R.layout.attachment_list_item, null);
+      view = inflater.inflate(R.layout.attachment_list_item, parent, false);
       holder = new ViewHolder();
 
       holder.progressBar = (ProgressBar) view.findViewById(R.id.progressbar);
@@ -81,7 +82,7 @@ public class AttachmentAdapter extends BaseAdapter {
     holder.fileName.setText(attachment.getFileName());
     holder.fileSize.setText(Utils.getPrettyFileSize(attachment.getSize()));
 
-    if (downloaders.containsKey(attachment.getRawId())) {
+    if (downloaders.get(attachment.getRawId()) != null) {
       AttachmentDownloader ad = downloaders.get(attachment.getRawId());
       if (ad.isRunning()) {
         ad.setProgressBarView(holder.progressBar);
@@ -96,7 +97,7 @@ public class AttachmentAdapter extends BaseAdapter {
 //    }
     holder.button.setOnClickListener(new View.OnClickListener() {
       public void onClick(View arg0) {
-        if (!downloaders.containsKey(attachment.getRawId())) {
+        if (downloaders.get(attachment.getRawId()) == null) {
           if (!attachment.isDownloaded()) {
             AttachmentDownloader downloader = new AttachmentDownloader(attachment, progBarHandler, mAccount,
                     mMessageId, holder.progressBar, holder.fileSize, mContext);

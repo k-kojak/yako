@@ -252,7 +252,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  private synchronized Store getStore() throws NoSuchProviderException, MessagingException, AuthenticationFailedException {
+  private synchronized Store getStore() throws MessagingException {
     Properties props = System.getProperties();
     this.setProperties(props);
     Session session = Session.getDefaultInstance(props, null);
@@ -272,8 +272,8 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           boolean isNewMessageArrivedRequest)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
-          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+          throws CertPathValidatorException,
+          IOException, MessagingException {
 
     return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
@@ -288,8 +288,8 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           int snippetMaxLength, boolean isNewMessageArrivedRequest)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
-          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+          throws CertPathValidatorException,
+          IOException, MessagingException {
 
     long s1 = System.currentTimeMillis();
     HashMap<String, Long> times = new HashMap<>();
@@ -893,7 +893,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
 
 
   @Override
-  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullMessage getMessage(String id) throws MessagingException, IOException {
 
     Folder  queryFolder = getFolder();
 
@@ -926,10 +926,10 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   
   public byte[] getAttachmentOfMessage(String messageId,
           String attachmentId, AttachmentProgressUpdate onProgressUpdate)
-          throws NoSuchProviderException, MessagingException, IOException {
+          throws MessagingException, IOException {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
-    UIDFolder uidFolder = (UIDFolder)folder;
+    UIDFolder uidFolder = folder;
     folder.open(Folder.READ_ONLY);
     
     Message ms = uidFolder.getMessageByUID(Long.parseLong(messageId));
@@ -1049,7 +1049,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
     return sb.toString();
   }
 
-  public void markMessagesAsRead(String[] ids, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessagesAsRead(String[] ids, boolean seen) throws MessagingException, IOException {
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
     UIDFolder uidFolder = folder;
@@ -1075,11 +1075,11 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   }
   
   @Override
-  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String id, boolean seen) throws MessagingException, IOException {
     
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
-    UIDFolder uidFolder = (UIDFolder)folder;
+    UIDFolder uidFolder = folder;
     
     Message ms = uidFolder.getMessageByUID(Long.parseLong(id));
 
@@ -1231,10 +1231,10 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   }
 
 
-  public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public void deleteMessage(String id) throws MessagingException, IOException {
     IMAPFolder folder = (IMAPFolder)getStore().getFolder("Inbox");
     folder.open(Folder.READ_WRITE);
-    UIDFolder uidFolder = (UIDFolder)folder;
+    UIDFolder uidFolder = folder;
     
     Message ms = uidFolder.getMessageByUID(Long.parseLong(id));
 

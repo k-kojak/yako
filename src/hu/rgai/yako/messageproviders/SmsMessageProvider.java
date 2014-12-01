@@ -57,8 +57,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
 
   Context mContext;
 
-  public SmsMessageProvider(){};
-  
+  public SmsMessageProvider(){}
+
   public SmsMessageProvider(Context myContext) {
     mContext = myContext;
   }
@@ -70,8 +70,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           boolean isNewMessageArrivedRequest)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
-          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+          throws CertPathValidatorException,
+          IOException, MessagingException {
 
     return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
   }
@@ -79,8 +79,8 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   @Override
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           int snippetMaxLength, boolean isNewMessageArrivedRequest)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
-          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+          throws CertPathValidatorException,
+          IOException, MessagingException {
 
     final List<MessageListElement> messages = new LinkedList<>();
     int foundThreads = 0;
@@ -166,7 +166,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
-  public FullThreadMessage getMessage(String threadId, int offset, int limit)throws NoSuchProviderException,
+  public FullThreadMessage getMessage(String threadId, int offset, int limit)throws
           MessagingException, IOException {
     // TODO Auto-generated method stub
     final FullThreadMessage ftm = new FullThreadMessage();
@@ -356,11 +356,11 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     
   }
 
-  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
+  public FullMessage getMessage(String id) throws MessagingException, IOException {
     return getMessage(id, 0, 20);
   }
 
-  public void markMessageAsRead(String threadId, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessageAsRead(String threadId, boolean seen) throws MessagingException, IOException {
     if (seen) {
       markMessagesOfThreadToSeen(threadId);
     } else {
@@ -394,7 +394,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     }
   }
   
-  public void markMessagesAsRead(String[] ids, boolean seen) throws NoSuchProviderException, MessagingException, IOException {
+  public void markMessagesAsRead(String[] ids, boolean seen) throws MessagingException, IOException {
     for (int i = 0; i < ids.length; i++) {
       markMessageAsRead(ids[i], seen);
     }

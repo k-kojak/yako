@@ -24,7 +24,7 @@ public class HtmlContent implements Parcelable, Serializable {
     public String getMimeName() {
       return mimeType;
     }
-  };
+  }
 
 
   protected StringBuilder content;

@@ -98,8 +98,8 @@ public class FakeGoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
   private void putZoneOnMap(GpsZone zone) {
     int icon = R.drawable.ic_custom_fake_map_marker;
-    float iconAlpha = 0.8f;
-    int circleColor = 0x11000000;
+    float iconAlpha = 0.7f;
+    int circleColor = 0x22000000;
     float circleStroke = 1.0f;
 
     LatLng latLng = new LatLng(zone.getLat(), zone.getLong());

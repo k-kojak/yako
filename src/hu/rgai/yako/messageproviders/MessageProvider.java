@@ -28,9 +28,9 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public interface MessageProvider {
   
-  public enum Type {EMAIL, GMAIL, FACEBOOK, SMS};
-  
-  
+  public enum Type {EMAIL, GMAIL, FACEBOOK, SMS}
+
+
   public Account getAccount();
   
   /**
@@ -51,8 +51,7 @@ public interface MessageProvider {
    */
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           boolean isNewMessageArrivedRequest) throws CertPathValidatorException,
-          SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
-          IOException, MessagingException, AuthenticationFailedException;
+          IOException, MessagingException;
   
   /**
    * Returns the list of messages.
@@ -73,8 +72,8 @@ public interface MessageProvider {
    */
   public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
                                           int snippetMaxLength, boolean isNewMessageArrivedRequest)
-          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
-          UnknownHostException, IOException, MessagingException, AuthenticationFailedException;
+          throws CertPathValidatorException,
+          IOException, MessagingException;
   
   /**
    * Returns a single message.
@@ -85,7 +84,7 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws IOException 
    */
-  public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException;
+  public FullMessage getMessage(String id) throws MessagingException, IOException;
   
   /**
    * Sets the status of a message to seen.
@@ -96,7 +95,7 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws IOException 
    */
-  public void markMessageAsRead(String id, boolean seen) throws NoSuchProviderException, MessagingException, IOException;
+  public void markMessageAsRead(String id, boolean seen) throws MessagingException, IOException;
   
   
   /**
@@ -108,7 +107,7 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws IOException 
    */
-  public void markMessagesAsRead(String[] id, boolean seen) throws NoSuchProviderException, MessagingException, IOException;
+  public void markMessagesAsRead(String[] id, boolean seen) throws MessagingException, IOException;
   
   /**
    * Tells that if the message provider sends broadcast to the system when new message arrives.
@@ -177,7 +176,7 @@ public interface MessageProvider {
    * @throws javax.mail.MessagingException
    * @throws java.io.IOException
    */
-  public void deleteMessage(String id) throws NoSuchProviderException, MessagingException, IOException;
+  public void deleteMessage(String id) throws MessagingException, IOException;
   
   /**
    * Sends a message to the given recipient with the given content.

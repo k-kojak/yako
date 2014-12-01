@@ -92,7 +92,7 @@ class Uploader implements Runnable {
     EventLogger.INSTANCE.saveTempBufferToLogFileAndClear( LogFilePaths.FILE_TO_UPLOAD_PATH );
   }
 
-  public synchronized boolean uploadLogsToServer(Context context) throws ClientProtocolException, IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
+  public synchronized boolean uploadLogsToServer(Context context) throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException, UnrecoverableKeyException, ParseException, JSONException {
 
     List<String> logList = getLogListFromLogFile();
     String jsonEncodedLogs = logToJsonConverter.convertLogToJsonFormat(logList);
@@ -175,7 +175,7 @@ class Uploader implements Runnable {
 
   }
 
-  private boolean uploadCallInformations(final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+  private boolean uploadCallInformations(final HttpPost httpPost) throws IOException {
     List<String> callInformations = getCallInformations();
 
     String encryptedContactInformations = logToJsonConverter.convertLogToJsonFormat(callInformations);
@@ -220,7 +220,7 @@ class Uploader implements Runnable {
     return callInformations;
   }
 
-  private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws UnsupportedEncodingException, IOException, ClientProtocolException {
+  private boolean uploadLogs(String jsonEncodedLogs, final HttpPost httpPost) throws IOException {
     final StringEntity httpEntity = new StringEntity(jsonEncodedLogs, org.apache.http.protocol.HTTP.UTF_8);
     httpEntity.setContentType("application/json");
     httpPost.setEntity(httpEntity);
@@ -245,10 +245,10 @@ class Uploader implements Runnable {
       return true;
   }
 
-  private List<String> getLogListFromLogFile() throws FileNotFoundException, IOException {
+  private List<String> getLogListFromLogFile() throws IOException {
     List<String> logList = new ArrayList<String>();
     BufferedReader br;
-    if (EventLogger.INSTANCE.sdCard)
+    if (EventLogger.sdCard)
       br = new BufferedReader(new FileReader( LogFilePaths.FILE_TO_UPLOAD_PATH.toString() ));
     else
       br = new BufferedReader(new InputStreamReader(context.openFileInput( LogFilePaths.FILE_TO_UPLOAD_PATH.toString())));

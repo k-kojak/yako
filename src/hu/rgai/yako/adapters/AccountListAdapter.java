@@ -53,8 +53,8 @@ public class AccountListAdapter extends CursorAdapter {
     Account account = AccountDAO.cursorToAccount(cursor);
 
     // Setting all values in listview
-    name.setText((String)account.getDisplayName());
-    type.setText((String)account.getAccountType().toString());
+    name.setText(account.getDisplayName());
+    type.setText(account.getAccountType().toString());
     if (account.getAccountType().equals(MessageProvider.Type.FACEBOOK)) {
       icon.setImageResource(R.drawable.fb);
     } else if (account.getAccountType().equals(MessageProvider.Type.GMAIL)) {

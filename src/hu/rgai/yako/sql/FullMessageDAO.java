@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.util.LongSparseArray;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
@@ -184,10 +185,11 @@ public class FullMessageDAO {
 
   private void appendAttachmentsToMessages(Context context, List<Long> fullMessageRawIds,
                                            TreeMap<Long, FullSimpleMessage> messages) {
-    Map<Long, List<Attachment>> attachments = AttachmentDAO.getInstance(context).getAttachments(fullMessageRawIds);
-    for (Map.Entry<Long, List<Attachment>> entry : attachments.entrySet()) {
-      if (messages.containsKey(entry.getKey())) {
-        messages.get(entry.getKey()).setAttachments(entry.getValue());
+    LongSparseArray<List<Attachment>> attachments = AttachmentDAO.getInstance(context).getAttachments(fullMessageRawIds);
+    for (int i = 0; i < attachments.size(); i++) {
+      long key = attachments.keyAt(i);
+      if (messages.containsKey(key)) {
+        messages.get(key).setAttachments(attachments.get(key));
       }
     }
   }

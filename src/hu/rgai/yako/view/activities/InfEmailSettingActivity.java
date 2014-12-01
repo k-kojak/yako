@@ -55,7 +55,7 @@ public class InfEmailSettingActivity extends ZoneDisplayActionBarActivity implem
     
     Bundle b = getIntent().getExtras();
     if (b != null && b.getParcelable("instance") != null) {
-      oldAccount = (EmailAccount)b.getParcelable("instance");
+      oldAccount = b.getParcelable("instance");
       email.setText(oldAccount.getEmail());
       pass.setText(oldAccount.getPassword());
     }
