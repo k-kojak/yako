@@ -557,6 +557,11 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
   }
 
   @Override
+  public boolean testConnection() {
+    return true;
+  }
+
+  @Override
   public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
     Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
     return null;

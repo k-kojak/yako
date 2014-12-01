@@ -69,16 +69,16 @@ public final class Settings {
   private static Map<MessageProvider.Type, Class> accountTypeToMessageReplyer = null;
   private static Map<MessageProvider.Type, Class> accountTypeToMessageProvider = null;
   private static Map<MessageProvider.Type, Class> accountTypeToAccountClass = null;
-  private static Map<MessageProvider.Type, Class> accountTypeToFullParcMessageClass = null;
-  private static Map<MessageProvider.Type, Class> accountTypeToFullMessageClass = null;
-  private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
+//  private static Map<MessageProvider.Type, Class> accountTypeToFullParcMessageClass = null;
+//  private static Map<MessageProvider.Type, Class> accountTypeToFullMessageClass = null;
+//  private static Map<MessageProvider.Type, Integer> accountTypeToIconResource = null;
   private static Map<String, Integer> imgToMimetype = null;
   private static List<String> facebookPermissions = null;
 
 
   public static Map<String, Class> getContactDataTypeToRecipientClass() {
     if (contactDataTypeToRecipientClass == null) {
-      contactDataTypeToRecipientClass = new HashMap<String, Class>();
+      contactDataTypeToRecipientClass = new HashMap<>();
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, EmailMessageRecipient.class);
 //      contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, PhoneRecipientAndr.class);
       contactDataTypeToRecipientClass.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, SmsMessageRecipient.class);
@@ -89,7 +89,7 @@ public final class Settings {
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToAccountClass() {
     if (accountTypeToAccountClass == null) {
-      accountTypeToAccountClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToAccountClass = new EnumMap<>(MessageProvider.Type.class);
       accountTypeToAccountClass.put(MessageProvider.Type.EMAIL, EmailAccount.class);
       accountTypeToAccountClass.put(MessageProvider.Type.FACEBOOK, FacebookAccount.class);
       accountTypeToAccountClass.put(MessageProvider.Type.GMAIL, GmailAccount.class);
@@ -97,38 +97,38 @@ public final class Settings {
     return accountTypeToAccountClass;
   }
   
-  public static Map<MessageProvider.Type, Class> getAccountTypeToFullParcMessageClass() {
-    if (accountTypeToFullParcMessageClass == null) {
-      accountTypeToFullParcMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
-      accountTypeToFullParcMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
-    }
-    return accountTypeToFullParcMessageClass;
-  }
+//  public static Map<MessageProvider.Type, Class> getAccountTypeToFullParcMessageClass() {
+//    if (accountTypeToFullParcMessageClass == null) {
+//      accountTypeToFullParcMessageClass = new EnumMap<>(MessageProvider.Type.class);
+//      accountTypeToFullParcMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
+//      accountTypeToFullParcMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
+//      accountTypeToFullParcMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
+//      accountTypeToFullParcMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
+//    }
+//    return accountTypeToFullParcMessageClass;
+//  }
   
-  public static Map<MessageProvider.Type, Class> getAccountTypeToFullMessageClass() {
-    if (accountTypeToFullMessageClass == null) {
-      accountTypeToFullMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
-      accountTypeToFullMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
-      accountTypeToFullMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
-      accountTypeToFullMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
-      accountTypeToFullMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
-    }
-    return accountTypeToFullMessageClass;
-  }
-  
-  public static Map<MessageProvider.Type, Integer> getAccountTypeToIconResource() {
-    if (accountTypeToIconResource == null) {
-      accountTypeToIconResource = new EnumMap<MessageProvider.Type, Integer>(MessageProvider.Type.class);
-      accountTypeToIconResource.put(MessageProvider.Type.EMAIL, R.drawable.ic_email);
-      accountTypeToIconResource.put(MessageProvider.Type.FACEBOOK, R.drawable.fb);
-      accountTypeToIconResource.put(MessageProvider.Type.GMAIL, R.drawable.gmail_icon);
-      accountTypeToIconResource.put(MessageProvider.Type.SMS, R.drawable.ic_sms3);
-    }
-    return accountTypeToIconResource;
-  }
+//  public static Map<MessageProvider.Type, Class> getAccountTypeToFullMessageClass() {
+//    if (accountTypeToFullMessageClass == null) {
+//      accountTypeToFullMessageClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+//      accountTypeToFullMessageClass.put(MessageProvider.Type.EMAIL, FullSimpleMessage.class);
+//      accountTypeToFullMessageClass.put(MessageProvider.Type.FACEBOOK, FullThreadMessage.class);
+//      accountTypeToFullMessageClass.put(MessageProvider.Type.GMAIL, FullSimpleMessage.class);
+//      accountTypeToFullMessageClass.put(MessageProvider.Type.SMS, FullThreadMessage.class);
+//    }
+//    return accountTypeToFullMessageClass;
+//  }
+//
+//  public static Map<MessageProvider.Type, Integer> getAccountTypeToIconResource() {
+//    if (accountTypeToIconResource == null) {
+//      accountTypeToIconResource = new EnumMap<MessageProvider.Type, Integer>(MessageProvider.Type.class);
+//      accountTypeToIconResource.put(MessageProvider.Type.EMAIL, R.drawable.ic_email);
+//      accountTypeToIconResource.put(MessageProvider.Type.FACEBOOK, R.drawable.fb);
+//      accountTypeToIconResource.put(MessageProvider.Type.GMAIL, R.drawable.gmail_icon);
+//      accountTypeToIconResource.put(MessageProvider.Type.SMS, R.drawable.ic_sms3);
+//    }
+//    return accountTypeToIconResource;
+//  }
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageDisplayer() {
     if (accountTypeToMessageDisplayer == null) {
@@ -143,7 +143,7 @@ public final class Settings {
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageReplyer() {
     if (accountTypeToMessageReplyer == null) {
-      accountTypeToMessageReplyer = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToMessageReplyer = new EnumMap<>(MessageProvider.Type.class);
       
       accountTypeToMessageReplyer.put(MessageProvider.Type.EMAIL, MessageReplyActivity.class);
       accountTypeToMessageReplyer.put(MessageProvider.Type.FACEBOOK, ThreadDisplayerActivity.class);
@@ -155,7 +155,7 @@ public final class Settings {
   
   public static Map<MessageProvider.Type, Class> getAccountTypeToMessageProvider() {
     if (accountTypeToMessageProvider == null) {
-      accountTypeToMessageProvider = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToMessageProvider = new EnumMap<>(MessageProvider.Type.class);
       accountTypeToMessageProvider.put(MessageProvider.Type.EMAIL, SimpleEmailMessageProvider.class);
       accountTypeToMessageProvider.put(MessageProvider.Type.FACEBOOK, FacebookMessageProvider.class);
       accountTypeToMessageProvider.put(MessageProvider.Type.GMAIL, SimpleEmailMessageProvider.class);
@@ -166,7 +166,7 @@ public final class Settings {
 
   public static Map<MessageProvider.Type, Class> getAccountTypeToSettingClass() {
     if (accountTypeToSettingClass == null) {
-      accountTypeToSettingClass = new EnumMap<MessageProvider.Type, Class>(MessageProvider.Type.class);
+      accountTypeToSettingClass = new EnumMap<>(MessageProvider.Type.class);
       accountTypeToSettingClass.put(MessageProvider.Type.EMAIL, SimpleEmailSettingActivity.class);
       accountTypeToSettingClass.put(MessageProvider.Type.GMAIL, GmailSettingActivity.class);
       accountTypeToSettingClass.put(MessageProvider.Type.FACEBOOK, FacebookSettingActivity.class);
@@ -176,7 +176,7 @@ public final class Settings {
   
   public static Map<String, Integer> getImgToMimetype() {
     if (imgToMimetype == null) {
-      imgToMimetype = new HashMap<String, Integer>();
+      imgToMimetype = new HashMap<>();
       imgToMimetype.put("phone_v2", R.drawable.ic_sms3);
       imgToMimetype.put("email_v2", R.drawable.ic_email);
       imgToMimetype.put("im", R.drawable.ic_fb_messenger);
@@ -186,7 +186,7 @@ public final class Settings {
   
   public static List<String> getFacebookPermissions() {
     if (facebookPermissions == null) {
-      facebookPermissions = new LinkedList<String>();
+      facebookPermissions = new LinkedList<>();
       facebookPermissions.add("email");
       facebookPermissions.add("read_mailbox");
     }

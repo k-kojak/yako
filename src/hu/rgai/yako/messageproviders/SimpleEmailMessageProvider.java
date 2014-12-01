@@ -29,6 +29,7 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.socketfactory.MySSLSocketFactory;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
@@ -1206,6 +1207,12 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
 
 
   public boolean isMessageDeletable() {
+    return true;
+  }
+
+  @Override
+  public boolean testConnection() throws MessagingException {
+    getStore(account);
     return true;
   }
 

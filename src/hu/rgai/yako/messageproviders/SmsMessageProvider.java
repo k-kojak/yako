@@ -427,6 +427,11 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
   }
 
   @Override
+  public boolean testConnection() {
+    return true;
+  }
+
+  @Override
   public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) {
     Log.d("rgai", "NOT SUPPORTED YET", new Exception("method not supported"));
     return null;
