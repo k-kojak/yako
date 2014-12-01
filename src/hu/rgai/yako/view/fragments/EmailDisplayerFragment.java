@@ -53,13 +53,15 @@ import java.util.*;
 public class EmailDisplayerFragment extends Fragment {
 
   private static final String MSG_CONTENT = "msg_content";
+  private static final String MSG_RECIPIENTS = "msg_recipients";
+
   private FullSimpleMessage mContent = null;
   
   // instance which used to fetch email (if necessary)
   private Account mAccount;
   
   private MessageListElement mMessage;
-  private List<Person> mRecipients = null;
+  private ArrayList<Person> mRecipients = null;
   // the sender of the message
   private Person mFrom;
   
@@ -103,11 +105,12 @@ public class EmailDisplayerFragment extends Fragment {
     mAccount = eda.getAccount();
     mMessage = eda.getMessage();
     mFrom = mMessage.getFrom();
-    mRecipients = eda.getRecipients();
     if (savedInstanceState != null) {
       mContent = savedInstanceState.getParcelable(MSG_CONTENT);
+      mRecipients = savedInstanceState.getParcelableArrayList(MSG_RECIPIENTS);
     } else {
       mContent = (FullSimpleMessage) mMessage.getFullMessage();
+      mRecipients = new ArrayList<>(eda.getRecipients());
     }
     displayMessage();
 
@@ -141,6 +144,7 @@ public class EmailDisplayerFragment extends Fragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     outState.putParcelable(MSG_CONTENT, mContent);
+    outState.putParcelableArrayList(MSG_RECIPIENTS, mRecipients);
     super.onSaveInstanceState(outState);
   }
 
