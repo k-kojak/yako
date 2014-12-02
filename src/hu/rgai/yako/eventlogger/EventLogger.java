@@ -187,11 +187,11 @@ public enum EventLogger {
   }
 
   public synchronized void writeToLogFile( LogFilePaths logFilePath, String log, boolean logTimeStamp) {
-    /*if (logTimeStamp) {
+    if (logTimeStamp) {
       writeFormatedLogToLogFile( logFilePath, LogToJsonConverter.getCurrentTime() + SPACE_STR + log);
     } else {
       writeFormatedLogToLogFile( logFilePath, log);
-    }*/
+    }
   }
 
   private void writeFormatedLogToLogFile( LogFilePaths logFilePath, String log) {
@@ -367,7 +367,8 @@ public enum EventLogger {
     }
 
     public static class NOTIFICATION {
-      public static final String NOTIFICATION_POPUP_STR = "notification:popup";
+      public static final String POPUP_STR = "notification:popup";
+      public static final String SWIPE_OUT_DELETE = "notification:swipe_delete";
     }
 
     public static class APPLICATION {

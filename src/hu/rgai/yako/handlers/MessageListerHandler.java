@@ -17,8 +17,6 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.NotificationReplaceService;
 import hu.rgai.yako.services.QuickReplyService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
-import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
@@ -389,7 +387,7 @@ public class MessageListerHandler extends TimeoutHandler {
           // logging...
           KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
           EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH,
-                  EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
+                  EventLogger.LOGGER_STRINGS.NOTIFICATION.POPUP_STR
                           + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
         }
         // if main activity visible: only play sound if needed...

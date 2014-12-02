@@ -212,9 +212,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     return mlr;
   }
 
-  public static boolean isXmppAlive() {
-    return xmpp != null && xmpp.isConnected();
-  }
 
   private void initConnection(FacebookAccount fba, final Context context) {
     // Log.d("rgai", "initing xmpp connection");
@@ -275,13 +272,6 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
     }
   }
 
-  public static void closeConnection() {
-    if (xmpp != null) {
-      // Log.d("rgai", "Disconnecting XMPP");
-      xmpp.disconnect();
-      xmpp = null;
-    }
-  }
 
   @Override
   public FullThreadMessage getMessage(String id, int offset, int limit) throws NoSuchProviderException, MessagingException, IOException {
@@ -395,7 +385,7 @@ public class FacebookMessageProvider implements ThreadMessageProvider {
         SmackConfiguration.setPacketReplyTimeout(10000);
         xmpp.login(account.getUniqueName(), account.getPassword());
       } catch (XMPPException e) {
-        Log.d("rgai", "", e);
+        Log.d("yako", "", e);
         xmpp.disconnect();
         success = false;
       } catch (Exception e) {
