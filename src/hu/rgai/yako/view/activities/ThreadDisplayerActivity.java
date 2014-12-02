@@ -305,6 +305,9 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   protected void onResume() {
     super.onResume();
+
+    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft);
+
     mMessageListChanged = false;
     if (mMessage == null) return;
     

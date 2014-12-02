@@ -89,6 +89,8 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
+    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft);
+
     toggleProgressDialog(true);
 
     IntentFilter bcFilter = new IntentFilter(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT);
