@@ -223,9 +223,15 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
 
   private void runPostProcess(MessageListResult msgResult) {
-    MessageListElement[] newMessages = msgResult
-            .getMessages()
-            .toArray(new MessageListElement[msgResult.getMessages().size()]);
+    MessageListElement[] newMessages;
+
+    if (msgResult.getMessages() != null) {
+      newMessages = msgResult
+              .getMessages()
+              .toArray(new MessageListElement[msgResult.getMessages().size()]);
+    } else {
+      newMessages = new MessageListElement[0];
+    }
 
     MessageListResult.ResultType resultType = msgResult.getResultType();
 
@@ -236,6 +242,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
 
     boolean sendBC = false;
+
     for (MessageListElement m : newMessages) {
       if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
         sendBC = true;
