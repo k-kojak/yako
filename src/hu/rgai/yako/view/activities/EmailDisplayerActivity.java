@@ -89,7 +89,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
-    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft);
+    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft_slightly);
 
     toggleProgressDialog(true);
 

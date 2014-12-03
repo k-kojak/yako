@@ -289,9 +289,9 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     super.onResume();
 
     if (mStartedFromBackstack) {
-      overridePendingTransition(R.anim.activity_translate_fromleft, R.anim.activity_translate_toright);
+      overridePendingTransition(R.anim.activity_translate_fromleft_slightly, R.anim.activity_translate_toright);
     } else {
-      overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft);
+      overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft_slightly);
     }
 
     is_activity_visible = true;

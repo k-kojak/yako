@@ -306,7 +306,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
-    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft);
+    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft_slightly);
 
     mMessageListChanged = false;
     if (mMessage == null) return;
@@ -316,8 +316,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     removeNotificationIfExists();
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 //    YakoApp.setMessageSeenAndReadLocally(mMessage);
-        
-    
+
+
     // register wifi connection receiver if this acount depends on network, so after
     // wifi reconnect we can download messages immediately
     if (mMessage.getAccount().isInternetNeededForLoad()) {
