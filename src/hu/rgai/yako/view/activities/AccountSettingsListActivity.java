@@ -35,6 +35,7 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.ZoneNotificationDAO;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
@@ -159,7 +160,8 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
           Account newAccount = data.getParcelableExtra("new_account");
-          AccountDAO.getInstance(this).addAccount(newAccount);
+          long rawId = AccountDAO.getInstance(this).addAccount(newAccount);
+          ZoneNotificationDAO.getInstance(this).saveNotificationSettingByAccount(rawId);
           Log.d("rgai3", "NEW ACCOUNT SAVED ");
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {

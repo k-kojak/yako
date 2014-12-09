@@ -57,9 +57,10 @@ public class GpsZoneDAO {
     return count != 0;
   }
 
-  public void saveZone(GpsZone zone) {
+  public long saveZone(GpsZone zone) {
     ContentValues cv = buildContentValues(zone);
-    mDbHelper.getDatabase().insert(TABLE_GPS_ZONES, null, cv);
+    long zoneId = mDbHelper.getDatabase().insert(TABLE_GPS_ZONES, null, cv);
+    return zoneId;
   }
 
   public void updateZone(String aliasToUpdate, GpsZone zone) {
@@ -67,13 +68,30 @@ public class GpsZoneDAO {
     mDbHelper.getDatabase().update(TABLE_GPS_ZONES, cv, COL_ALIAS + " = ?", new String[]{aliasToUpdate});
   }
 
-  public void removeZoneByAlias(String alias) {
+  public void removeZoneByAlias(String alias, Context context) {
+    ZoneNotificationDAO.getInstance(context).removeByZones(getZoneIdByAlias(alias));
     mDbHelper.getDatabase().delete(TABLE_GPS_ZONES, COL_ALIAS + " = ?", new String[] {alias});
   }
 
   public Cursor getAllZonesCursor() {
     return mDbHelper.getDatabase().query(TABLE_GPS_ZONES, allColumns, null, null, null, null,
             COL_ALIAS + " ASC");
+  }
+  
+  public int getZoneIdByAlias(String alias) {
+    int zoneId = -1;
+    Cursor c = getAllZonesCursor();
+    c.moveToFirst();
+    while (!c.isAfterLast()) {
+      if(alias.equals(c.getString(1))){
+        zoneId = c.getInt(0);
+      break;
+      }
+      c.moveToNext();
+    }
+    c.close();
+
+    return zoneId;
   }
 
   public List<GpsZone> getAllZones() {

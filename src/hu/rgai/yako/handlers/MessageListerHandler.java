@@ -20,6 +20,8 @@ import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
 import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
+import hu.rgai.yako.sql.GpsZoneDAO;
+import hu.rgai.yako.sql.ZoneNotificationDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.ProfilePhotoProvider;
 import hu.rgai.yako.tools.RemoteMessageController;
@@ -115,7 +117,17 @@ public class MessageListerHandler extends TimeoutHandler {
         YakoApp.updateLastNotification(a, mContext);
       }
       if (newMessageCount != 0 && StoreHandler.SystemSettings.isNotificationTurnedOn(mContext)) {
-        postNotification(newMessageCount, lastUnreadMsg);
+
+        if(StoreHandler.isZoneStateActivated(mContext) && YakoApp.getClosestZone(mContext, false) != null) {
+          long zoneId = GpsZoneDAO.getInstance(mContext).getZoneIdByAlias(YakoApp.getClosestZone(mContext, false).getAlias());
+          long accountId = lastUnreadMsg.getAccount().getDatabaseId();
+          boolean isChecked = ZoneNotificationDAO.getInstance(mContext).getNotificationCheckedByZoneAndAccount(zoneId, accountId);
+          if(isChecked) {
+            postNotification(newMessageCount, lastUnreadMsg);
+          }
+        } else {
+          postNotification(newMessageCount, lastUnreadMsg);
+        }
       }
 
       notifyUIaboutMessageChange(resultType);

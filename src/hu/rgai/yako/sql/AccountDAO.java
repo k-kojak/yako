@@ -100,6 +100,7 @@ public class AccountDAO  {
     else if (_id == -1 && readyForSms) {
       Log.d("rgai", "case 3");
       long rawId = addAccount(SmsAccount.getInstance());
+      ZoneNotificationDAO.getInstance(context).saveNotificationSettingByAccount(rawId);
       SmsAccount.getInstance().setId(rawId);
     }
   }
@@ -137,7 +138,9 @@ public class AccountDAO  {
 
   public synchronized void modifyAccount(Context context, Account oldAccount, Account newAccount) {
     removeAccountWithCascade(context, oldAccount.getDatabaseId());
-    addAccount(newAccount);
+    long rawId = addAccount(newAccount);
+    ZoneNotificationDAO.getInstance(context).saveNotificationSettingByAccount(rawId);
+    
   }
 
 
@@ -223,6 +226,7 @@ public class AccountDAO  {
   public void removeAccountWithCascade(Context context, long accountId) {
     try {
       MessageListDAO.getInstance(context).removeMessages(context, accountId);
+      ZoneNotificationDAO.getInstance(context).removeByAccounts(accountId);
     } catch (Exception e) {
       Log.d("rgai", "", e);
     }

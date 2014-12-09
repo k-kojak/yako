@@ -123,6 +123,7 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   private void createTableMapZones(SQLiteDatabase db) {
     db.execSQL(GpsZoneDAO.TABLE_CREATE);
+    db.execSQL(ZoneNotificationDAO.TABLE_CREATE);
   }
 
   private void alterTableMessageListElement_predictionVal(SQLiteDatabase db) {
@@ -142,6 +143,7 @@ public class SQLHelper extends SQLiteOpenHelper {
     db.execSQL("DROP TABLE IF EXISTS " + MessageListDAO.TABLE_MESSAGES);
     db.execSQL("DROP TABLE IF EXISTS " + AccountDAO.TABLE_ACCOUNTS);
     db.execSQL("DROP TABLE IF EXISTS " + GpsZoneDAO.TABLE_GPS_ZONES);
+    db.execSQL("DROP TABLE IF EXISTS " + ZoneNotificationDAO.TABLE_ZONE_NOTIFICATIONS);
   }
 
   public static class Utils {

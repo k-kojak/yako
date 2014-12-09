@@ -95,7 +95,7 @@ public class ZoneListAdapter extends BaseAdapter {
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                   @Override
                   public void onClick(DialogInterface dialog, int which) {
-                    GpsZoneDAO.getInstance(mActivity).removeZoneByAlias(zone.getAlias());
+                    GpsZoneDAO.getInstance(mActivity).removeZoneByAlias(zone.getAlias(), mActivity);
                     mActivity.loadZoneListAdapter(true);
                     mActivity.startLocationService(true);
                   }
