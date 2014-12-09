@@ -27,24 +27,14 @@ import android.widget.TextView;
 public class ZoneNotificationListAdapter extends CursorAdapter {
 
   private static LayoutInflater inflater = null;
-  private Cursor accounts = null;
-  private boolean mUpdate = false;
-  private GpsZone mGpsZone= null;
-  private Map<String, Boolean> checkState = null;
+  private HashMap<String, Boolean> checkState = null;
 
-
-  public ZoneNotificationListAdapter(Context context, Cursor cursorOfAccounts, GpsZone gpsZone, boolean update) {
+  public ZoneNotificationListAdapter(Context context, Cursor cursorOfAccounts, HashMap<String, Boolean> checkState) {
     super(context, cursorOfAccounts, false);
-    accounts = cursorOfAccounts;
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    mUpdate = update;
-    mGpsZone = gpsZone; 
-    checkState = new HashMap <String,Boolean>();
-    for(int i = 0; i < accounts.getCount();i++) {
-      accounts.moveToPosition(i);
-      accounts.getString(2);
-      checkState.put(accounts.getString(2), false);
-    }
+    
+    this.checkState = new HashMap <String,Boolean>();
+    this.checkState.putAll(checkState);
   }
 
   static class ViewHolder {  
@@ -58,30 +48,15 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
     // TODO Auto-generated method stub
 
     final ViewHolder holder = (ViewHolder)view.getTag();
+    final Account account = AccountDAO.cursorToAccount(cursor);
+    holder.accountName.setText(account.getDisplayName());
 
-//    holder.accountSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener(){
-//      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//
-//        System.out.println("isChecked : ? " + isChecked );  
-//        holder.accountSwitch.setChecked(isChecked);
-//        checkState.put(holder.accountName.toString(), isChecked);
-//        System.out.println("na mivan " + checkState.get(holder.accountName.toString()));
-//      }               
-//    });
-    
-   
-    holder.accountSwitch.setOnClickListener(new View.OnClickListener() {
-
-      public void onClick(View v) {
-          if (((CompoundButton) v).isChecked()) {
-            checkState.put(holder.accountName.toString(), true);
-          } else {
-            checkState.put(holder.accountName.toString(), false);
-            
-          }
+    holder.accountSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        holder.accountSwitch.setChecked(isChecked);
+        checkState.put(account.getDisplayName(), isChecked);
       }
-  });
-
+    });
   }
 
   @Override
@@ -90,30 +65,23 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
 
     View view = inflater.inflate(R.layout.zone_notification_list_item, parent, false);
 
+    Account account = AccountDAO.cursorToAccount(cursor);
     ViewHolder holder = new ViewHolder();
     holder.accountName = (TextView) view.findViewById(R.id.account_textview);
     holder.accountSwitch = (CompoundButton) view.findViewById(R.id.account_switch);
-
-    Account account = AccountDAO.cursorToAccount(cursor);
-    holder.accountName.setText((String)account.getDisplayName().toString());
-
-    if(!mUpdate) {
-      holder.accountSwitch.setChecked(true);
-      checkState.put(holder.accountName.toString(), true);
-    } else { 
-      int zoneId = GpsZoneDAO.getInstance(mContext).getZoneIdByAlias(mGpsZone.getAlias());
-      boolean isChecked = ZoneNotificationDAO.getInstance(mContext).getNotificationCheckedByZoneAndAccount(zoneId, account.getDatabaseId());
-      holder.accountSwitch.setChecked(isChecked);
-      checkState.put(holder.accountName.toString(), isChecked);
-    }
+    holder.accountName.setText(account.getDisplayName());
+    holder.accountSwitch.setChecked(checkState.get(account.getDisplayName()));
 
     view.setTag(holder);
+    
 
     return view;
   }
 
   public Map<String, Boolean> getAllState() {
-    return checkState;
+    Map<String, Boolean> allState = new HashMap<String, Boolean>(); 
+    allState.putAll(checkState);
+    return allState;
   }
 
 }

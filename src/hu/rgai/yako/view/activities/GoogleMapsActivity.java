@@ -60,6 +60,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
   private ZoneNotificationListAdapter mZoneNotListAdapter = null;
   private HashMap<String, Boolean> mCheckedStates = null; 
   private ZoneNotificationDAO mZoneNotDAO = null;
+  private int mZoneId = -1;
 
 
 
@@ -79,6 +80,8 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
         mUpdating = true;
         mNewZoneAlias = mZoneToEdit.getAlias();
         mNewZoneType = mZoneToEdit.getZoneType();
+        mZoneId = GpsZoneDAO.getInstance(GoogleMapsActivity.this).getZoneIdByAlias(mZoneToEdit.getAlias());
+
       } else if (extras.containsKey(EXTRA_START_LOC)) {
         mInitLatLng = extras.getParcelable(EXTRA_START_LOC);
       }
@@ -133,9 +136,28 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     mSeekBar.setProgress((mRadiusValue - 20) / 10);
     setRadiusText(mRadiusValue);
     
-    mZoneNotListAdapter = new ZoneNotificationListAdapter(getApplicationContext(), AccountDAO.getInstance(getApplicationContext()).getAllAccountsCursor(), mZoneToEdit, mUpdating);
-    mCheckedStates = (HashMap<String, Boolean>) mZoneNotListAdapter.getAllState(); 
     mZoneNotDAO = ZoneNotificationDAO.getInstance(GoogleMapsActivity.this);
+    mCheckedStates =  new HashMap<String, Boolean>(); 
+    
+    
+      Cursor accountsCursor = AccountDAO.getInstance(getApplicationContext()).getAllAccountsCursor();
+      Account account = null;
+      boolean isChecked = false;
+      
+      accountsCursor.moveToFirst();
+      while(!accountsCursor.isAfterLast()) {
+        account = AccountDAO.cursorToAccount(accountsCursor);
+        
+        if(mUpdating) {
+        isChecked = mZoneNotDAO.getNotificationCheckedByZoneAndAccount(mZoneId, account.getDatabaseId());
+        mCheckedStates.put(account.getDisplayName(), isChecked);
+        } else {
+        mCheckedStates.put(account.getDisplayName(), true); 
+        }
+        accountsCursor.moveToNext();
+      }
+
+    mZoneNotListAdapter = new ZoneNotificationListAdapter(getApplicationContext(),accountsCursor, mCheckedStates);
   }
 
   @Override
@@ -185,16 +207,15 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     boolean refreshNeeded = true;
     
     int oldZoneId = GpsZoneDAO.getInstance(GoogleMapsActivity.this).getZoneIdByAlias(mNewZoneAlias);
-    boolean notificationChanged = false;
-    
-    if(mUpdating) {
-      notificationChanged = checkNotificationChanged(oldZoneId);
-    }
     
     if (!mUpdating) {
       long newZoneId = GpsZoneDAO.getInstance(GoogleMapsActivity.this).saveZone(newZone);
       saveNotificationsToZone(newZoneId);
     } else {
+      
+      boolean notificationChanged = false;
+      notificationChanged = checkNotificationChanged(oldZoneId);
+      
       if (!mZoneToEdit.equals(newZone) || notificationChanged ) {
         GpsZoneDAO.getInstance(GoogleMapsActivity.this).updateZone(mZoneToEdit.getAlias(), newZone);
         saveNotificationsToZone(oldZoneId);
@@ -212,11 +233,13 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     Cursor notifications = mZoneNotDAO.getAllNotificationsToZoneCursor(zoneId);
     Cursor accounts = AccountDAO.getInstance(GoogleMapsActivity.this).getAllAccountsCursor();
     boolean notificationChanged = false;
+    Account account = null;
     
     accounts.moveToFirst();
     notifications.moveToFirst();
-    while (!accounts.isAfterLast()) {  
-      if(mCheckedStates.get(accounts.getString(2)) != (notifications.getInt(3) == 1 ? true : false)) {
+    while (!accounts.isAfterLast()) {
+      account = AccountDAO.cursorToAccount(accounts);
+      if(mCheckedStates.get(account.getDisplayName()) != (notifications.getInt(3) == 1 ? true : false)) {
         notificationChanged = true;
         break;
       }
@@ -226,33 +249,21 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     notifications.close();
     accounts.close();
     return notificationChanged;
-    
-//    boolean notificationChanged = false;
-//    notifications.moveToFirst();
-//    while (!notifications.isAfterLast()) {
-//      System.out.println("gomb " + checkedButtons.get(i).isChecked() +  " : es " + notifications.getInt(3));
-//      
-//      if(checkedButtons.get(i).isChecked() != (notifications.getInt(3) == 1 ? true : false)) {
-//        notificationChanged = true;
-//        break;
-//      }
-//      i++;
-//      notifications.moveToNext();
-//    }
-//    notifications.close();
-//    return notificationChanged;
   }
 
 
   private void saveNotificationsToZone(long zoneId) {
 
     Cursor accounts = AccountDAO.getInstance(GoogleMapsActivity.this).getAllAccountsCursor();
+    Account account = null;
+    
     accounts.moveToFirst();
     while (!accounts.isAfterLast()) {
+      account = AccountDAO.cursorToAccount(accounts);
       if(!mUpdating){
-      mZoneNotDAO.saveNotificationSettingToZone(accounts.getInt(0), zoneId, mCheckedStates.get(accounts.getString(2)));
+      mZoneNotDAO.saveNotificationSettingToZone(account.getDatabaseId(), zoneId, mCheckedStates.get(account.getDisplayName()));
       } else {
-      mZoneNotDAO.updateNotificationSettingToZone(accounts.getInt(0), zoneId, mCheckedStates.get(accounts.getString(2)));
+      mZoneNotDAO.updateNotificationSettingToZone(account.getDatabaseId(), zoneId, mCheckedStates.get(account.getDisplayName()));
       }
       accounts.moveToNext();
     }
@@ -351,12 +362,8 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
   private void showSettingsDialog(boolean finishAfterOk) {
     View dialogView = LayoutInflater.from(this).inflate(R.layout.gmaps_zone_adder, null, false);
-
-    
     ListView mNotificationSettingsList = (ListView)dialogView.findViewById(R.id.account_notification_listview);
     mNotificationSettingsList.setAdapter(mZoneNotListAdapter);
-  
-    
     EditText input = (EditText)dialogView.findViewById(R.id.alias_edit);
     Spinner spinner = (Spinner)dialogView.findViewById(R.id.zone_category);
     setZoneTypeSpinner(spinner, mUpdating ? mNewZoneType : null);
@@ -373,7 +380,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
               }
             })
             .create();
-    alertD.setOnShowListener(new OnAliasShowListener(alertD, input, spinner, mCheckedStates, finishAfterOk));
+    alertD.setOnShowListener(new OnAliasShowListener(alertD, input, spinner, finishAfterOk));
     alertD.show();
   }
 
@@ -382,14 +389,12 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     private AlertDialog mDialog;
     private EditText mInput;
     private Spinner mZoneCategory;
-    private HashMap<String, Boolean> mCheckedButtons;
     private boolean mFinishAfterOk;
 
-    public OnAliasShowListener(AlertDialog dialog, EditText input, Spinner zoneCategory, HashMap<String, Boolean> checkedButtons,  boolean finishAfterOk) {
+    public OnAliasShowListener(AlertDialog dialog, EditText input, Spinner zoneCategory, boolean finishAfterOk) {
       mDialog = dialog;
       mInput = input;
       mZoneCategory = zoneCategory;
-      mCheckedButtons = checkedButtons;
       mFinishAfterOk = finishAfterOk;
     }
 
