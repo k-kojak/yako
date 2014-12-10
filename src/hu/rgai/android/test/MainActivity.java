@@ -98,7 +98,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
   private ZoneListChangedReceiver mLocationChangeReceiver = null;
   private ScreenReceiver screenReceiver;
-  private TextView mEmptyListText = null;
+//  private TextView mEmptyListText = null;
   private TreeMap<Long, Account> mAccountsLongKey = null;
   
   
@@ -107,10 +107,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
 
-  private LayoutInflater mInflater;
-  
-  
-  
 
   @Override
   public void onCreate(Bundle icicle) {
@@ -120,8 +116,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     t.setScreenName(((Object) this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
 
-
-    mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
     // LOGGING
     setUpAndRegisterScreenReceiver();
@@ -134,19 +128,19 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
     }
-//    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-//    sensorManager.registerListener(new AccelerometerListener(),
-//    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     mLocationChangeReceiver = new ZoneListChangedReceiver();
 
 
     setContentView(R.layout.mainlist_navigation_drawer);
 
-    mEmptyListText = new TextView(this);
-    mEmptyListText.setText(this.getString(R.string.no_account_set));
-    mEmptyListText.setGravity(Gravity.CENTER);
-    mEmptyListText.setVisibility(View.GONE);
-    ((FrameLayout) findViewById(R.id.content_frame)).addView(mEmptyListText);
+//    mEmptyListText = new TextView(this);
+//    mEmptyListText.setText(this.getString(R.string.no_account_set));
+//    mEmptyListText.setGravity(Gravity.CENTER);
+//    mEmptyListText.setVisibility(View.GONE);
+//    ((FrameLayout) findViewById(R.id.content_frame)).addView(mEmptyListText);
+
+//    mTooltipLayout = new ToolTipRelativeLayout(this);
+//    ((FrameLayout) findViewById(R.id.content_frame)).addView(mTooltipLayout);
 
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
@@ -299,7 +293,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
 
-    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
+    setContent();
     
     // setting zone list
     loadZoneListAdapter(false);
@@ -532,27 +526,30 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     return r | g | b;
   }
 
-  private void setContent(Boolean hasData) {
-    // null means we dont know yet: called on onCreate
+  private void setContent() {
+    Boolean hasData = MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null;
+
+//    TooltipFactory.display(mTooltipLayout, this, TooltipFactory.Tooltip.ACCOUNTS_MENU, true);
     if (hasData == null) {
       if (mAccountsLongKey.isEmpty()) {
         toggleProgressDialog(false);
-        mEmptyListText.setVisibility(View.VISIBLE);
-        removeFragment();
+//        mEmptyListText.setVisibility(View.VISIBLE);
+//        removeFragment();
       } else {
         toggleProgressDialog(true);
-        mEmptyListText.setVisibility(View.GONE);
+//        mEmptyListText.setVisibility(View.GONE);
       }
     } else {
       toggleProgressDialog(false);
-      if (hasData) {
-        mEmptyListText.setVisibility(View.GONE);
-        loadFragment();
-      } else {
-        removeFragment();
-        mEmptyListText.setVisibility(View.VISIBLE);
-      }
+//      if (hasData) {
+//        mEmptyListText.setVisibility(View.GONE);
+//        loadFragment();
+//      } else {
+//        removeFragment();
+//        mEmptyListText.setVisibility(View.VISIBLE);
+//      }
     }
+    loadFragment(hasData);
   }
 
   private void removeFragment() {
@@ -566,16 +563,17 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
     }
   }
 
-  private void loadFragment() {
+  private void loadFragment(Boolean hasData) {
     FragmentManager fragmentManager = getSupportFragmentManager();
     Fragment f = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
     if (f == null) {
-      mMainFragment = MainActivityFragment.getInstance();
+      mMainFragment = MainActivityFragment.newInstance();
       fragmentManager.beginTransaction().replace(R.id.content_frame, mMainFragment, MAIN_FRAGMENT_TAG).commit();
       fragmentManager.executePendingTransactions();
     } else {
       mMainFragment = (MainActivityFragment)f;
     }
+    mMainFragment.setHasData(hasData);
   }
 
   
@@ -730,7 +728,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   
   
   private void redisplayMessages() {
-    setContent(true);
+    setContent();
     toggleProgressDialog(false);
     mMainFragment.notifyAdapterChange();
   }
@@ -845,7 +843,7 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
-        MainActivity.this.setContent(MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount() != 0);
+        MainActivity.this.setContent();
       }
     }
   }

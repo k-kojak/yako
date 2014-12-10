@@ -15,6 +15,9 @@ import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import android.widget.AbsListView.MultiChoiceModeListener;
+import com.nhaarman.supertooltips.ToolTip;
+import com.nhaarman.supertooltips.ToolTipRelativeLayout;
+import com.nhaarman.supertooltips.ToolTipView;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
@@ -36,6 +39,7 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
+import hu.rgai.yako.tools.TooltipFactory;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
 import hu.rgai.yako.workers.MessageDeletionAsyncTask;
@@ -49,13 +53,19 @@ import java.util.*;
 public class MainActivityFragment extends Fragment {
 
   private ListView mListView;
+  private TextView mInfoText;
+  private Button loadMoreButton = null;
+  private SwipeRefreshLayout mSwipeRefreshLayout;
+  private ProgressBar mTopProgressBar;
+  private ToolTipRelativeLayout mToolTipFrameLayout;
+
   private MainListAdapter mAdapter = null;
   private TreeSet<Long> contextSelectedElements = null;
   private MainActivity mMainActivity = null;
-  private Button loadMoreButton = null;
   private boolean loadMoreButtonVisible = false;
-  private ProgressBar mTopProgressBar;
-  private SwipeRefreshLayout mSwipeRefreshLayout;
+
+
+
   
   private Handler mContextBarTimerHandler = null;
   private final Runnable mContextBarTimerCallback = new Runnable() {
@@ -67,13 +77,13 @@ public class MainActivityFragment extends Fragment {
 
   TreeMap<Long, Account> mAccounts = null;
 
-  public static MainActivityFragment getInstance() {
+  public static MainActivityFragment newInstance() {
     return new MainActivityFragment();
   }
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    contextSelectedElements = new TreeSet<Long>();
+    contextSelectedElements = new TreeSet<>();
     mContextBarTimerHandler = new Handler();
 
 
@@ -88,6 +98,7 @@ public class MainActivityFragment extends Fragment {
             Color.parseColor("#F1F1F1"));
     mTopProgressBar = (ProgressBar) mRootView.findViewById(R.id.progressbar);
     mListView = (ListView) mRootView.findViewById(R.id.list);
+    mInfoText = (TextView) mRootView.findViewById(R.id.info_text);
     
     mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
     mListView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
@@ -241,9 +252,22 @@ public class MainActivityFragment extends Fragment {
         builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
       }
     });
+
+    ToolTipRelativeLayout mTooltipLayout = (ToolTipRelativeLayout)mRootView.findViewById(R.id.activity_main_tooltipframelayout);
+    TooltipFactory.display(mTooltipLayout, getActivity(), TooltipFactory.Tooltip.ACCOUNTS_MENU, true);
+
     return mRootView;
   }
 
+  public void setHasData(Boolean hasData) {
+    if (hasData == null || !hasData) {
+      mListView.setVisibility(View.GONE);
+      mInfoText.setVisibility(View.VISIBLE);
+    } else {
+      mListView.setVisibility(View.VISIBLE);
+      mInfoText.setVisibility(View.GONE);
+    }
+  }
 
   @Override
   public void onResume() {

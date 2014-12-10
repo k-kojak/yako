@@ -1,32 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.SwipeRefreshLayout 
+<android.support.v4.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/SwipeRefreshLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
- 
-  <RelativeLayout
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:orientation="vertical">
-  
-    <ListView
-        android:id="@+id/list"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:divider="#c5c5c5"
-        android:dividerHeight="1dp"
-        android:showDividers="middle"
-        android:listSelector="@drawable/list_selector" />
-    
-    <ProgressBar
-        android:id="@+id/progressbar"
+
+
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="6dp"
-        android:layout_alignParentTop="true"
-        android:visibility="gone"
-        android:indeterminate="true"
-        style="@android:style/Widget.ProgressBar.Horizontal" />
-    
-  </RelativeLayout>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:divider="#c5c5c5"
+            android:dividerHeight="1dp"
+            android:showDividers="middle"
+            android:listSelector="@drawable/list_selector"/>
+
+        <TextView
+            android:id="@+id/info_text"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:text="@string/no_account_set"
+            android:layout_centerInParent="true"/>
+
+        <ProgressBar
+            android:id="@+id/progressbar"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_alignParentTop="true"
+            android:visibility="gone"
+            android:indeterminate="true"
+            style="@android:style/Widget.ProgressBar.Horizontal"/>
+
+
+        <com.nhaarman.supertooltips.ToolTipRelativeLayout
+            android:id="@+id/activity_main_tooltipframelayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </RelativeLayout>
 </android.support.v4.widget.SwipeRefreshLayout>

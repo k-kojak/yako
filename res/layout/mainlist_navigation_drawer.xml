@@ -155,8 +155,14 @@
 
             </LinearLayout>
 
+            <!--<com.nhaarman.supertooltips.ToolTipRelativeLayout-->
+            <!--android:id="@+id/activity_main_tooltipframelayout"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent" />-->
+
         </LinearLayout>
 
     </ScrollView>
+
 
 </android.support.v4.widget.DrawerLayout>

@@ -298,7 +298,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       List<MessageListElement> emails = new LinkedList<>();
 
       long s3 = System.currentTimeMillis();
-      IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+      IMAPFolder imapFolder = (IMAPFolder)getStore (account).getFolder("Inbox");
       putTime(times, "getStoreGetFolder", s3);
       if (imapFolder == null) {
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
@@ -878,7 +878,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
         if (!htmlFound) {
           try {
             content = new HtmlContent(bp.getContent().toString(), HtmlContent.ContentType.TEXT_PLAIN);
-          } catch (UnsupportedEncodingException ex) {
+          } catch (UnsupportedEncodingException | IllegalStateException ex) {
             Log.d("rgai", "", ex);
           }
         }

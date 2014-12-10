@@ -127,5 +127,11 @@
   <string name="no_qa_available">No Quick Answers available</string>
   <string name="service_not_available">Service not available</string>
 
+  <string name="tooltip_account">Here you can add some accounts.</string>
+  <string name="tooltip_new_message">This is where you can compose new messages.</string>
+  <string name="tooltip_nav_drawer">Open the navigation drawer to filter your messages or to manage your locations.</string>
+  <string name="close">Close</string>
+  <string name="next">Next</string>
+
 
 </resources>

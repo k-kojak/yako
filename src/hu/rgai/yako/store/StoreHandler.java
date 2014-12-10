@@ -57,7 +57,7 @@ public class StoreHandler {
   private static final String IS_ZONE_STATE_ACTIVATED = "IS_ZONE_STATE_ACTIVATED";
 
   public static class SystemSettings {
-    
+
     public static boolean isNotificationTurnedOn(Context context) {
       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
       Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION, true);
