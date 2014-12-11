@@ -134,6 +134,13 @@
   <string name="work">Work</string>
   <string name="rest">Rest</string>
   <string name="silent">Silent</string>
+  <string name="from">from</string>
+  <string name="accuracy">Accuracy:</string>
+  <string name="dot_dot_dot">…</string>
+  <string name="zone_category">Zone category:</string>
+  <string name="content">Content</string>
+  <string name="sync_contact_list">Sync contact list now</string>
+  <string name="account">Account</string>
 
 
 </resources>

@@ -29,7 +29,7 @@
             android:textSize="16sp"
             android:textColor="#ff444444"
             android:layout_marginLeft="4dp"
-            android:text="Zone category:"
+            android:text="@string/zone_category"
              />
 
         <Spinner

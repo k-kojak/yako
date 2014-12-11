@@ -88,7 +88,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="right"
-                        android:text="Jan 01"
+                        android:text=""
                         android:layout_marginRight="5dip"
                         android:textSize="12sp"
                         android:textColor="#aa000000"
@@ -136,7 +136,7 @@
                 android:typeface="sans"
                 android:layout_marginTop="1dip"
                 android:layout_marginBottom="3dip"
-                android:text="From" />
+                android:text="@string/from" />
 
 
             <TextView
@@ -152,7 +152,7 @@
                 android:layout_marginBottom="3dip"
                 android:layout_marginRight="5dip"
                 android:textSize="11sp"
-                android:text="Account" />
+                android:text="@string/account" />
         </TableRow>
 
     </RelativeLayout>

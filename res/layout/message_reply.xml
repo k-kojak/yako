@@ -38,7 +38,7 @@
         android:id="@+id/subject"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="Subject"
+        android:hint="@string/subject"
         android:singleLine="true"
         android:inputType="textCapSentences" />
 
@@ -46,7 +46,7 @@
       <EditText android:id="@+id/message_content"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="Content"
+        android:hint="@string/content"
         android:inputType="textCapSentences|textMultiLine"
         android:layout_weight="20" />
 

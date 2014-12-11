@@ -332,7 +332,6 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
         });
       }
     }, 350);
-
   }
 
   private void placeMarkerOnMap(LatLng latLng) {
