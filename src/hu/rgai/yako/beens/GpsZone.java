@@ -1,5 +1,6 @@
 package hu.rgai.yako.beens;
 
+import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 import hu.rgai.android.test.R;
@@ -9,24 +10,25 @@ import java.util.List;
 public class GpsZone implements Parcelable, Comparable<GpsZone> {
 
   public enum Proximity {CLOSEST, NEAR, FAR, UNKNOWN};
+
   public enum ZoneType {
-    WORK("Work", R.drawable.ic_important_work, 0x635241),
-    REST("Rest", R.drawable.ic_important_home, 0x152C1B),
-    SILENT("Silent", R.drawable.ic_important_silence, 0x003340)
+    WORK(R.string.work, R.drawable.ic_important_work, 0x635241),
+    REST(R.string.rest, R.drawable.ic_important_home, 0x152C1B),
+    SILENT(R.string.silent, R.drawable.ic_important_silence, 0x003340)
     ;
 
-    private final String mDisplayName;
+    private final int mDisplayNameResId;
     private final int mDrawable;
     private final int mColor;
 
-    private ZoneType(String displayName, int drawable, int color) {
-      mDisplayName = displayName;
+    private ZoneType(int displayNameResId, int drawable, int color) {
+      mDisplayNameResId = displayNameResId;
       mDrawable = drawable;
       mColor = color;
     }
 
-    public String getDisplayName() {
-      return mDisplayName;
+    public String getDisplayName(Context context) {
+      return context.getString(mDisplayNameResId);
     }
 
     public int getDrawable() {

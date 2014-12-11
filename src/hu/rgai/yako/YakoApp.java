@@ -248,7 +248,7 @@ public class YakoApp extends Application {
     String subTitle = "";
     if (closest != null) {
       title = "@ " + closest.getAlias();
-      subTitle = closest.getZoneType().getDisplayName();
+      subTitle = closest.getZoneType().getDisplayName(aba);
     }
     if (setTitle) {
       aba.getSupportActionBar().setTitle(title);

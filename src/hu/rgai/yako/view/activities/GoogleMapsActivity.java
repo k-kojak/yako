@@ -354,7 +354,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
       }
 
       GpsZone.ZoneType zt = mItems.get(position);
-      ((TextView)v.findViewById(android.R.id.text1)).setText(zt.getDisplayName());
+      ((TextView)v.findViewById(android.R.id.text1)).setText(zt.getDisplayName(GoogleMapsActivity.this));
       return v;
     }
 

@@ -131,6 +131,9 @@
   <string name="fake_zone">Fake zone</string>
   <string name="zones">ZONES</string>
   <string name="filter">FILTER</string>
+  <string name="work">Work</string>
+  <string name="rest">Rest</string>
+  <string name="silent">Silent</string>
 
 
 </resources>
