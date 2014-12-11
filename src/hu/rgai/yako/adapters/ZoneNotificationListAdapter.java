@@ -1,19 +1,6 @@
 package hu.rgai.yako.adapters;
 
 
-
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import hu.rgai.android.test.R;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.GpsZone;
-import hu.rgai.yako.sql.AccountDAO;
-import hu.rgai.yako.sql.GpsZoneDAO;
-import hu.rgai.yako.sql.ZoneNotificationDAO;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
@@ -23,6 +10,11 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
+import hu.rgai.android.test.R;
+import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.sql.AccountDAO;
+
+import java.util.HashMap;
 
 public class ZoneNotificationListAdapter extends CursorAdapter {
 
@@ -33,7 +25,7 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
     super(context, cursorOfAccounts, false);
     inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     
-    this.checkState = new HashMap <String,Boolean>();
+    this.checkState = new HashMap <>();
     this.checkState.putAll(checkState);
   }
 
@@ -45,7 +37,6 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
 
   @Override
   public void bindView(View view, Context context, Cursor cursor) {
-    // TODO Auto-generated method stub
 
     final ViewHolder holder = (ViewHolder)view.getTag();
     final Account account = AccountDAO.cursorToAccount(cursor);
@@ -61,7 +52,6 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
 
   @Override
   public View newView(Context context, Cursor cursor, ViewGroup parent) {
-    // TODO Auto-generated method stub
 
     View view = inflater.inflate(R.layout.zone_notification_list_item, parent, false);
 
@@ -74,12 +64,16 @@ public class ZoneNotificationListAdapter extends CursorAdapter {
 
     view.setTag(holder);
     
-
     return view;
   }
 
-  public Map<String, Boolean> getAllState() {
-    Map<String, Boolean> allState = new HashMap<String, Boolean>(); 
+  public void setPredefinedState(HashMap<String, Boolean> states) {
+    checkState = states;
+  }
+
+
+  public HashMap<String, Boolean> getAllState() {
+    HashMap<String, Boolean> allState = new HashMap<>();
     allState.putAll(checkState);
     return allState;
   }

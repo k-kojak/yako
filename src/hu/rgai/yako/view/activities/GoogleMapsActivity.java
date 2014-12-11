@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
@@ -20,6 +21,7 @@ import hu.rgai.android.test.R;
 import hu.rgai.yako.adapters.ZoneNotificationListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.GpsZone;
+import hu.rgai.yako.beens.SmsAccount;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.ZoneNotificationDAO;
@@ -279,10 +281,11 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
 
 
-  private void setZoneTypeSpinner(Spinner spinner, GpsZone.ZoneType zoneType) {
+  private void setZoneTypeSpinner(final LinearListView mNotificationSettingsList, final Spinner spinner,
+                                  GpsZone.ZoneType zoneType) {
     int i = 0;
     int selected = 0;
-    List<GpsZone.ZoneType> objects = new LinkedList<GpsZone.ZoneType>();
+    List<GpsZone.ZoneType> objects = new LinkedList<>();
     for (GpsZone.ZoneType zt : GpsZone.ZoneType.values()) {
       objects.add(zt);
       if (zt.equals(zoneType)) {
@@ -291,10 +294,45 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
       i++;
     }
 
-    ZoneTypeAdapter adapter = new ZoneTypeAdapter(this, R.layout.gmaps_zonetype_spinner_selected, objects);
+    final ZoneTypeAdapter adapter = new ZoneTypeAdapter(this, R.layout.gmaps_zonetype_spinner_selected, objects);
     adapter.setDropDownViewResource(R.layout.gmaps_zonetype_spinner_item);
     spinner.setAdapter(adapter);
     spinner.setSelection(selected);
+
+
+    new Handler().postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+          @Override
+          public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            GpsZone.ZoneType zType = adapter.getItem(position);
+            HashMap<String, Boolean> currentStates = mZoneNotListAdapter.getAllState();
+            if (zType.equals(GpsZone.ZoneType.REST)) {
+
+            } else if (zType.equals(GpsZone.ZoneType.SILENT)) {
+              for (Map.Entry<String, Boolean> e : currentStates.entrySet()) {
+                if (e.getKey().equals(SmsAccount.getInstance().getDisplayName())) {
+                  e.setValue(true);
+                } else {
+                  e.setValue(false);
+                }
+              }
+            } else if (zType.equals(GpsZone.ZoneType.WORK)) {
+              for (Map.Entry<String, Boolean> e : currentStates.entrySet()) {
+                e.setValue(true);
+              }
+            }
+            mZoneNotListAdapter.setPredefinedState(currentStates);
+            mNotificationSettingsList.setAdapter(mZoneNotListAdapter);
+          }
+
+          @Override
+          public void onNothingSelected(AdapterView<?> parent) {}
+        });
+      }
+    }, 350);
+
   }
 
   private void placeMarkerOnMap(LatLng latLng) {
@@ -373,7 +411,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     mNotificationSettingsList.setAdapter(mZoneNotListAdapter);
     EditText input = (EditText)dialogView.findViewById(R.id.alias_edit);
     Spinner spinner = (Spinner)dialogView.findViewById(R.id.zone_category);
-    setZoneTypeSpinner(spinner, mUpdating ? mNewZoneType : null);
+    setZoneTypeSpinner(mNotificationSettingsList, spinner, mUpdating ? mNewZoneType : null);
     if (mUpdating) {
       input.setText(mNewZoneAlias);
     }
