@@ -74,7 +74,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
 //  private static List<GpsZone> mGpsZones = null;
 //  private Location mMyLastLocation = null;
 
-  private boolean mStartedFromBackstack = false;
   private int mPreviousDrawerColor = Settings.DEFAULT_ACTIONBAR_COLOR;
 
   private DrawerLayout mDrawerLayout;
@@ -288,12 +287,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
-    if (mStartedFromBackstack) {
-      overridePendingTransition(R.anim.activity_translate_fromleft_slightly, R.anim.activity_translate_toright);
-    } else {
-      overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft_slightly);
-    }
-
     is_activity_visible = true;
     removeNotificationIfExists();
 
@@ -395,8 +388,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   @Override
   protected void onPause() {
 
-//    overridePendingTransition(R.anim.activity_translate_fromleft, R.anim.activity_translate_toright);
-
     is_activity_visible = false;
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
 
@@ -439,7 +430,6 @@ public class MainActivity extends ZoneDisplayActionBarActivity {
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == Settings.ActivityRequestCodes.FULL_MESSAGE_RESULT) {
-      mStartedFromBackstack = true;
       if (data != null && data.hasExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED)) {
         boolean refreshNeeded = data.getBooleanExtra(IntentStrings.Params.MESSAGE_THREAD_CHANGED, false);
         if (refreshNeeded) {
