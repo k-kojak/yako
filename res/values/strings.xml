@@ -126,6 +126,11 @@
   <string name="quick_answers">Quick Answers</string>
   <string name="no_qa_available">No Quick Answers available</string>
   <string name="service_not_available">Service not available</string>
+  <string name="notify_these_accounts">NOTIFY THESE ACCOUNTS:</string>
+  <string name="new_zone">+ Zone</string>
+  <string name="fake_zone">Fake zone</string>
+  <string name="zones">ZONES</string>
+  <string name="filter">FILTER</string>
 
 
 </resources>

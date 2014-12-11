@@ -8,15 +8,16 @@
         android:id="@+id/account_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
         android:textColor="#000000"
-        android:text="TextView" />
+        android:text="" />
 
     <Switch
         android:id="@+id/account_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
+        android:layout_centerVertical="true"
         android:textOff="Off"
         android:textOn="On" />
 

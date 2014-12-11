@@ -55,7 +55,7 @@
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="6dp"
                 android:textSize="12sp"
-                android:text="FILTER" />
+                android:text="@string/filter" />
 
             <hu.rgai.yako.view.extensions.LinearListView
                 android:id="@+id/account_holder"
@@ -85,7 +85,7 @@
                     android:textColor="#777777"
                     android:layout_marginLeft="5dp"
                     android:textSize="12sp"
-                    android:text="ZONES" />
+                    android:text="@string/zones" />
 
                 <Switch
                     android:id="@+id/zone_on_off"
@@ -123,7 +123,7 @@
                     android:layout_marginBottom="6dp"
                     android:padding="6dp"
                     android:clickable="true"
-                    android:text="+ Zone" />
+                    android:text="@string/new_zone" />
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
@@ -137,7 +137,7 @@
                         android:textColor="#777777"
                         android:textSize="14sp"
                         android:layout_centerVertical="true"
-                        android:text="Fake zone" />
+                        android:text="@string/fake_zone" />
 
                     <Switch
                         android:id="@+id/fake_zone"
