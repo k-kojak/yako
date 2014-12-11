@@ -4,15 +4,18 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 import hu.rgai.yako.beens.Person;
+import hu.rgai.yako.messageproviders.MessageProvider;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by kojak on 7/2/2014.
  */
-public class PersonSenderDAO {
+public class PersonDAO {
 
-  private static PersonSenderDAO instance = null;
+  private static PersonDAO instance = null;
   private SQLHelper mDbHelper = null;
 
 
@@ -48,15 +51,15 @@ public class PersonSenderDAO {
 
   private String[] allColumns = { COL_ID, COL_KEY, COL_NAME, COL_SECONDARY_NAME, COL_TYPE };
 
-  public static synchronized PersonSenderDAO getInstance(Context context) {
+  public static synchronized PersonDAO getInstance(Context context) {
     if (instance == null) {
-      instance = new PersonSenderDAO(context);
+      instance = new PersonDAO(context);
     }
     return instance;
   }
 
 
-  private PersonSenderDAO(Context context) {
+  private PersonDAO(Context context) {
     mDbHelper = SQLHelper.getInstance(context);
   }
 
@@ -97,6 +100,25 @@ public class PersonSenderDAO {
     return mDbHelper.getDatabase().insert(TABLE_PERSON, null, cv);
   }
 
+  public List<Person> getPersonsById(List<Integer> ids) {
+    List<Person> persons = new LinkedList<>();
+
+    String inClosure = SQLHelper.Utils.getInClosure(ids);
+    Cursor cursor = mDbHelper.getDatabase().query(TABLE_PERSON, allColumns,
+            COL_ID + " IN " + inClosure, null, null, null, COL_NAME);
+    cursor.moveToFirst();
+    while (!cursor.isAfterLast()) {
+      Person p = new Person(-1,
+              cursor.getString(1),
+              cursor.getString(2),
+              MessageProvider.Type.valueOf(cursor.getString(4))
+              );
+      persons.add(p);
+      cursor.moveToNext();
+    }
+
+    return persons;
+  }
 
   public long getPersonRawId(Person person) {
     long _id = -1;

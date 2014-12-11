@@ -163,6 +163,12 @@ public interface MessageProvider {
 
 
   /**
+   * Tests if a connection is possible to establish with the account.
+   * @return true if connection is possible, false otherwise
+   */
+  public boolean testConnection() throws MessagingException;
+
+  /**
    * Retrieves a MessageListResult with a list of minimal MessageListElement objects, where only the UID is used for
    * merging messages locally.
    * @param lowestStoredMessageUID the lowest UID of the stored message on the device

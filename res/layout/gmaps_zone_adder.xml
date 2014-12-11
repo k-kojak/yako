@@ -42,10 +42,11 @@
 
     </TableRow>
 
-    <ListView
+    <hu.rgai.yako.view.extensions.LinearListView
         android:id="@+id/account_notification_listview"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
-    </ListView>
+    </hu.rgai.yako.view.extensions.LinearListView>
 
 </LinearLayout>

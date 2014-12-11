@@ -12,12 +12,14 @@ public class IntentStrings {
     public static final String SMS_DELIVERED = "hu.rgai.yako.intent.action.sms_delivered";
     public static final String SMS_SENT = "hu.rgai.yako.intent.action.sms_sent";
     public static final String DELETE_INTENT = "hu.rgai.yako.intent.action.delete_intent";
+    public static final String DIRECT_EMAIL = "hu.rgai.yako.intent.action.direct_intent";
 
   }
   
   public static class Params {
     
     public static final String EXTRA_PARAMS = "extra_params";
+    public static final String PERSON = "hu.rgai.yako.intent.params.email";
     public static final String FROM_NOTIFIER = "from_notifier";
     public static final String QUICK_ANSWER_OPTION = "quick_answer_option";
     public static final String QUERY_LIMIT = "query_limit";
@@ -33,9 +35,10 @@ public class IntentStrings {
     public static final String ACCOUNT = "instance";
     public static final String BUNDLE = "bundle";
 
-    // this 2 data is required to find a messageListElement
+
     public static final String MESSAGE_ID = "message_id";
     public static final String MESSAGE_RAW_ID = "message_raw_id";
+    public static final String MESSAGE_REPLY_TO_ALL = "message_reply_to_all";
     public static final String MESSAGE_ACCOUNT = "message_account";
     
     public static final String MESSAGE_SENT_RESULT_TYPE = "message_sent_result_type";

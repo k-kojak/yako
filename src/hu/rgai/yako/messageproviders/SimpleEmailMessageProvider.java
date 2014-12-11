@@ -29,6 +29,7 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.socketfactory.MySSLSocketFactory;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
@@ -372,9 +373,13 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
         }
 
         boolean seen = true;
+        List<Person> allRecipients = null;
         if (isNewMessageArrivedRequest) {
           Flags flags = m.getFlags();
           seen = flags.contains(Flags.Flag.SEEN);
+
+          Address[] recAddresses = m.getAllRecipients();
+          allRecipients = getAllRecipients(recAddresses);
         }
 
 
@@ -452,6 +457,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
                   seen, subject, "", attachSize, fromPerson, null, date, account, Type.EMAIL, false);
 
           mle.setFullMessage(fsm);
+          mle.setRecipients(allRecipients);
           emails.add(mle);
         }
       }
@@ -474,16 +480,8 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
     } catch (AuthenticationFailedException ex) {
       throw ex;
-//    } catch (SSLHandshakeException ex) {
-//      throw ex;
-//    } catch (ConnectException ex) {
-//      throw ex;
     } catch (NoSuchProviderException ex) {
       throw ex;
-//    } catch (UnknownHostException ex) {
-//      throw ex;
-//    } catch (IOException ex) {
-//      throw ex;
     } catch (MessagingException ex) {
       throw ex;
     } finally {
@@ -491,9 +489,21 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
     }
   }
 
+  private static List<Person> getAllRecipients(Address[] recs) {
+    if (recs == null) {
+      return null;
+    }
+
+    List<Person> recipients = new ArrayList<>(recs.length);
+    for (Address a : recs) {
+      recipients.add(getPersonFromAddress(a));
+    }
+
+    return recipients;
+  }
+
   @Override
   public MessageListResult loadDataToMessages(TreeMap<String, MessageListElement> messagesToLoad) throws CertPathValidatorException, IOException, MessagingException {
-    Log.d("yako", messagesToLoad.toString());
 
     long s1 = System.currentTimeMillis();
     HashMap<String, Long> times = new HashMap<>();
@@ -521,9 +531,14 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       for (int i = messages.length - 1; i >= 0; i--) {
 
         Message m = messages[i];
+        if (m == null) continue;
+
         long uid = uidImapFolder.getUID(m);
 
         MessageListElement mle = messagesToLoad.get(String.valueOf(uid));
+
+        Address[] recAddresses = m.getAllRecipients();
+        List<Person> allRecipients = getAllRecipients(recAddresses);
 
         Flags flags = m.getFlags();
         boolean seen = flags.contains(Flags.Flag.SEEN);
@@ -532,6 +547,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
 
         mle.setSeen(seen);
         mle.setAttachmentCount(attachSize);
+        mle.setRecipients(allRecipients);
 
         FullSimpleMessage fsm = new FullSimpleMessage(-1, String.valueOf(uid), mle.getTitle(),
                 content.getContent(), mle.getDate(), mle.getFrom(), false, Type.EMAIL, content.getAttachmentList());
@@ -657,47 +673,57 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
 
 
   private Person getSenderPersonObject(Message m) throws MessagingException {
-    String from = null;
     if (m.getFrom() != null) {
-      from = m.getFrom()[0].toString();
-      from = prepareMimeFieldToDecode(from);
+      return getPersonFromAddress(m.getFrom()[0]);
+    } else {
+      return null;
     }
+  }
+
+  /**
+   * Extracts the person information from Address object.
+   *
+   * @param address the raw input Address object from the email
+   * @return Person object
+   */
+  private static Person getPersonFromAddress(Address address) {
+
+    if (address == null) {
+      return null;
+    }
+
+    String from = address.toString();
+    from = prepareMimeFieldToDecode(from);
+
     if (from != null) {
       try {
         from = MimeUtility.decodeText(from);
       } catch (java.io.UnsupportedEncodingException ex) {
         Log.d("rgai", "", ex);
       }
+    } else {
+      return null;
     }
 
-    // Skipping email from listing, because it is a spam probably,
-    // ...at least citromail does not give any information about the email in some cases,
-    // and in web browsing it displays an "x" sign before the title, which may indicate
-    // that this is a spam
-    if (from == null) {
-      // skipping email
-      return null;
+    String fromName;
+    String fromEmail;
+    String regex = "(.*)<([^<>]*)>";
+
+    if (from.matches(regex)) {
+      Pattern pattern = Pattern.compile(regex);
+      Matcher matcher = pattern.matcher(from);
+      matcher.find();
+      fromName = matcher.group(1);
+      fromEmail = matcher.group(2);
     } else {
-      String fromName = null;
-      String fromEmail = null;
-      String regex = "(.*)<([^<>]*)>";
-//        System.out.println("SimpleEmailMessageProvider: from -> " + from);
-      if (from.matches(regex)) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(from);
-        while(matcher.find()) {
-          fromName = matcher.group(1);
-          fromEmail = matcher.group(2);
-          break;
-        }
-      } else {
-        fromName = from;
-        fromEmail = from;
-      }
-      return new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+      fromName = from;
+      fromEmail = from;
     }
+    return new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+
   }
-  
+
+
   /**
    * Replaces the "x-unknown" encoding type with "iso-8859-2" to be able to decode the mime
    * string and removes the quotation marks if there is any.
@@ -867,34 +893,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
     return content;
   }
   
-  /**
-   * Extracts the person information from Address object.
-   * 
-   * @param a the raw input Address object from the email
-   * @return Person object
-   */
-  private static Person getPersonFromAddress(Address a) {
-    String ad = a.toString();
-    
-    ad = prepareMimeFieldToDecode(ad);
-    try {
-      ad = MimeUtility.decodeText(ad);
-    } catch (UnsupportedEncodingException ex) {
-      Log.d("rgai", "", ex);
-    }
-    
-    int mailOp = ad.indexOf("<");
-    int mailCl = ad.indexOf(">");
-    String name = null;
-    String email;
-    if (mailOp != -1 && mailOp + 1 < mailCl) {
-      email = ad.substring(mailOp + 1, mailCl);
-      name = ad.substring(0, mailOp).trim();
-    } else {
-      email = ad.trim();
-    }
-    return new Person(email, name, MessageProvider.Type.EMAIL);
-  }
+
 
   @Override
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
@@ -908,7 +907,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
     Message ms = queryFolder.getMessage(Integer.parseInt(id));
 //    ms.s
     
-    List<Person> to = new LinkedList<Person>();
+    List<Person> to = new LinkedList<>();
     
     Address[] addr = ms.getAllRecipients();
     for (Address a : addr) {
@@ -982,8 +981,8 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
   }
 
   @Override
-  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
-          String content, String subject) {
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData,
+                          Set<? extends MessageRecipient> to, String content, String subject) {
     
     Properties props = System.getProperties();
     this.setProperties(props);
@@ -1008,7 +1007,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(addressList));
       msg.setSubject(subject);
       msg.setText(content);
-  //    msg.setHeader("X-Mailer", "");
+      msg.setHeader("Content-Type", "text/html; charset=UTF-8");
       msg.setSentDate(new Date());
       SMTPTransport t;
       if (account.isSsl()) {
@@ -1023,7 +1022,7 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       Log.d("rgai", "", ex);
       success = false;
     }
-    
+
     MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
@@ -1038,7 +1037,13 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
           sb.append(", ");
         }
         if (er.getName() != null && er.getName().length() > 0) {
-          sb.append(er.getName());
+          String name = er.getName();
+          try {
+            name = MimeUtility.encodeText(name);
+          } catch (UnsupportedEncodingException e) {
+            Log.d("yako", "", e);
+          }
+          sb.append(name);
         }
         sb.append("<").append(er.getEmail()).append(">");
       }
@@ -1204,6 +1209,12 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
 
 
   public boolean isMessageDeletable() {
+    return true;
+  }
+
+  @Override
+  public boolean testConnection() throws MessagingException {
+    getStore(account);
     return true;
   }
 

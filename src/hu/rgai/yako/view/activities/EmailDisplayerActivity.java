@@ -5,18 +5,14 @@ import android.content.*;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.view.*;
-import android.widget.Toast;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.*;
-import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.ErrorCodes;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.handlers.MessageListerHandler;
-import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
-import hu.rgai.yako.smarttools.QuickAnswerProvider;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.NonSwipeableViewPager;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
@@ -33,7 +29,6 @@ import android.os.Bundle;
 import android.support.v4.app.*;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.widget.QuickContactBadge;
 
@@ -45,16 +40,16 @@ import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.intents.IntentStrings;
-import hu.rgai.yako.workers.MessageSender;
-import net.htmlparser.jericho.Source;
 
 import java.util.TreeMap;
 
 public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
 
+  private Menu mMenu;
   private MessageListElement mMessage = null;
   private boolean mFromNotification = false;
   private FullSimpleMessage mContent = null;
+  private List<Person> mRecipients = null;
   private MyPageChangeListener mPageChangeListener = null;
   private ProgressDialog pd = null;
   private CustomBroadcastReceiver mBcReceiver = null;
@@ -94,6 +89,8 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   protected void onResume() {
     super.onResume();
 
+    overridePendingTransition(R.anim.activity_translate_fromright, R.anim.activity_translate_toleft_slightly);
+
     toggleProgressDialog(true);
 
     IntentFilter bcFilter = new IntentFilter(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT);
@@ -112,6 +109,8 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     if (fullMessages != null && !fullMessages.isEmpty()) {
       mContent = fullMessages.first();
       mMessage.setFullMessage(mContent);
+      mRecipients = MessageRecipientDAO.getInstance(this)
+              .getRecipientsToMessageId(this, mMessage);
       return true;
     } else {
       return false;
@@ -119,6 +118,9 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   }
 
   private void displayMessage() {
+
+    setActionbarMenu();
+
     toggleProgressDialog(false);
     MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
 
@@ -145,6 +147,28 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
     mPager.setAdapter(mPagerAdapter);
     mPageChangeListener = new MyPageChangeListener();
     mPager.setOnPageChangeListener(mPageChangeListener);
+  }
+
+  private void setActionbarMenu() {
+    if (mMenu == null || mMessage == null || mContent == null) {
+      return;
+    }
+
+    mMenu.findItem(R.id.message_reply).setVisible(true);
+
+    if (mContent.getAttachments() != null && !mContent.getAttachments().isEmpty()) {
+      mMenu.findItem(R.id.attachments).setVisible(true);
+    }
+
+    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
+    if (contactPerson.getContactId() == -1) {
+      mMenu.findItem(R.id.add_email_contact).setVisible(true);
+    }
+
+    if (mRecipients.size() > 1) {
+      mMenu.findItem(R.id.message_reply_to_all).setVisible(true);
+    }
+
   }
 
   public synchronized void toggleProgressDialog(boolean show) {
@@ -189,33 +213,27 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
-    if (mMessage == null || mContent == null) return true;
+    mMenu = menu;
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.email_message_options_menu, menu);
-
-    if (mContent.getAttachments() == null
-        || mContent.getAttachments().isEmpty()) {
-      menu.findItem(R.id.attachments).setVisible(false);
-    }
-
-    Person contactPerson = Person.searchPersonAndr(this, mMessage.getFrom());
-    if (contactPerson.getContactId() != -1) {
-      menu.findItem(R.id.add_email_contact).setVisible(false);
-    }
-
+    inflater.inflate(R.menu.email_message_options_menu, mMenu);
+    setActionbarMenu();
     return true;
   }
 
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-
+    Intent intent;
     switch (item.getItemId()) {
       case R.id.message_reply:
-        Intent intent = new Intent(this, MessageReplyActivity.class);
+        intent = new Intent(this, MessageReplyActivity.class);
         intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, mMessage.getRawId());
-        //        intent.putExtra(IntentStrings.Params.MESSAGE_ID, mMessage.getId());
-        //        intent.putExtra(IntentStrings.Params.MESSAGE_ACCOUNT, (Parcelable)mMessage.getAccount());
+        startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
+        return true;
+      case R.id.message_reply_to_all:
+        intent = new Intent(this, MessageReplyActivity.class);
+        intent.putExtra(IntentStrings.Params.MESSAGE_RAW_ID, mMessage.getRawId());
+        intent.putExtra(IntentStrings.Params.MESSAGE_REPLY_TO_ALL, true);
         startActivityForResult(intent, MESSAGE_REPLY_REQ_CODE);
         return true;
       case android.R.id.home:
@@ -230,7 +248,7 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
         return true;
 
       case R.id.add_email_contact:
-        ArrayList<String> contactDatas = new ArrayList<String>();
+        ArrayList<String> contactDatas = new ArrayList<>();
         contactDatas.add(mMessage.getFrom().getId());
         QuickContactBadge badgeSmall = AndroidUtils.addToContact(mMessage.getMessageType(), this, contactDatas);
         badgeSmall.onClick(item.getActionView());
@@ -259,6 +277,10 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
 
   public FullSimpleMessage getContent() {
     return mContent;
+  }
+
+  public List<Person> getRecipients() {
+    return mRecipients;
   }
 
   private class MyPageChangeListener extends ViewPager.SimpleOnPageChangeListener {

@@ -107,7 +107,7 @@ public class AccountDAO  {
 
 
   public TreeMap<Account, Long> getAccountToIdMap() {
-    TreeMap<Account, Long> accounts = new TreeMap<Account, Long>();
+    TreeMap<Account, Long> accounts = new TreeMap<>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();

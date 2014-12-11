@@ -3,6 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -39,7 +40,7 @@ public class MessageListDAO  {
   public static final String COL_UNREAD_CNT = "unread_count";
   public static final String COL_CONTENT = "content";
 
-  private static final String COL_FROM_ID = PersonSenderDAO.TABLE_PERSON + PersonSenderDAO.COL_ID;
+  private static final String COL_FROM_ID = PersonDAO.TABLE_PERSON + PersonDAO.COL_ID;
 
   public static final String COL_DATE = "date";
   public static final String COL_MSG_TYPE = "message_type";
@@ -64,7 +65,7 @@ public class MessageListDAO  {
           + " FOREIGN KEY (" + COL_ACCOUNT_ID + ")"
             + " REFERENCES " + AccountDAO.TABLE_ACCOUNTS + "(" + AccountDAO.COL_ID + "),"
           + " FOREIGN KEY (" + COL_FROM_ID + ")"
-            + " REFERENCES " + PersonSenderDAO.TABLE_PERSON + "(" + PersonSenderDAO.COL_ID + ")"
+            + " REFERENCES " + PersonDAO.TABLE_PERSON + "(" + PersonDAO.COL_ID + ")"
           + ");";
 
   public static final String ALTER_TABLE_PREDICTION = "ALTER TABLE " + TABLE_MESSAGES
@@ -96,18 +97,43 @@ public class MessageListDAO  {
   }
 
 
-  public synchronized void removeMessages(Context context, long accountId, List<MessageListElement> messageList) throws Exception {
-    List<Long> fullMessageIds = FullMessageDAO.getInstance(context).getFullMessageIdsByAccountId(accountId, messageList);
+  /**
+   *
+   * @param context
+   * @param accountId
+   * @param messageList
+   * @throws Exception
+   */
+  public synchronized void deleteMessages(Context context,
+                                          long accountId,
+                                          @Nullable List<MessageListElement> messageList) throws Exception {
+    // TODO: continue nullable solution...
+
+    List<Long> fullMessageIds = FullMessageDAO
+            .getInstance(context)
+            .getFullMessageIdsByAccountId(accountId, messageList);
+
+    List<Long> messageRawIds = new LinkedList<>();
+    if (messageList != null) {
+      for (MessageListElement mle : messageList) {
+        if (mle.getRawId() != -1) {
+          messageRawIds.add(mle.getRawId());
+        }
+      }
+    } else {
+      messageRawIds = getMessageRawIdsToAccount(accountId);
+    }
 
     AttachmentDAO.getInstance(context).deleteAttachments(fullMessageIds);
     FullMessageDAO.getInstance(context).removeMessagesToAccount(fullMessageIds);
+    MessageRecipientDAO.getInstance(context).removeRecipients(messageRawIds);
 
     String where = null;
     String[] whereArgs = null;
 
     if (accountId != -1) {
       where = COL_ACCOUNT_ID + " = ?";
-      whereArgs = new String[]{Long.toString(accountId)};
+      whereArgs = new String[]{String.valueOf(accountId)};
     }
 
     if (messageList != null && !messageList.isEmpty()) {
@@ -116,24 +142,24 @@ public class MessageListDAO  {
       } else {
         where += " AND ";
       }
-      where += COL_ID + " IN " + SQLHelper.Utils.getInClosureFromListElement(messageList);
+      where += COL_ID + " IN " + SQLHelper.Utils.getInClosure(messageRawIds);
     }
     if (where == null) {
       throw new Exception("where condition cannot be null: at least one condition should have a valid value");
     }
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, whereArgs);
-
+    int num = mDbHelper.getDatabase().delete(TABLE_MESSAGES, where, whereArgs);
+    Log.d("yako", "removing messages: " + num);
   }
 
 
   public synchronized void removeMessages(Context context, long accountId) throws Exception {
-    removeMessages(context, accountId, null);
+    deleteMessages(context, accountId, null);
   }
 
 
   public synchronized void updateFrom(Context context, long messageRawId, Person from) {
     if (from != null) {
-      long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(from);
+      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(from);
       ContentValues cv = new ContentValues();
       cv.put(COL_FROM_ID, fromID);
       mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
@@ -161,8 +187,7 @@ public class MessageListDAO  {
       cv.put(COL_UNREAD_CNT, 0);
     }
 
-    int r = mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(rawId)});
-    Log.d("yako", "updated rows ("+ rawId +"): " + r);
+    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(rawId)});
   }
 
 
@@ -178,7 +203,7 @@ public class MessageListDAO  {
       // TODO: currently we are not storing messages where getFrom is null
       // this case happens now when we have a group chat, so there is no sender, just recipients, so the getFrom is NULL
       if (mle.getFrom() == null) return -1;
-      long fromID = PersonSenderDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
+      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
       cv.put(COL_FROM_ID, fromID);
 
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());
@@ -190,11 +215,13 @@ public class MessageListDAO  {
     }
 
     long msgRawId = mDbHelper.getDatabase().insert(TABLE_MESSAGES, null, cv);
+    mle.setRawId(msgRawId);
     if (mle.getMessageType().equals(MessageProvider.Type.EMAIL) || mle.getMessageType().equals(MessageProvider.Type.GMAIL)) {
       if (mle.getFullMessage() != null) {
         FullSimpleMessage fsm = (FullSimpleMessage) mle.getFullMessage();
         FullMessageDAO.getInstance(context).insertMessage(context, msgRawId, fsm);
       }
+      MessageRecipientDAO.getInstance(context).insertRecipients(context, mle);
     }
     return msgRawId;
   }
@@ -269,11 +296,11 @@ public class MessageListDAO  {
     orderBy += COL_DATE + " DESC";
 
 
-    String query = "SELECT " + cols + ", " + PersonSenderDAO.COL_KEY + " AS from_key, "
-            + PersonSenderDAO.COL_NAME + " AS from_name, " + PersonSenderDAO.COL_SECONDARY_NAME + " AS from_sec_name, "
-            + PersonSenderDAO.COL_TYPE + " AS from_type" + attachmentQuerySel
-            + " FROM " + PersonSenderDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
-            + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonSenderDAO.TABLE_PERSON + "." + PersonSenderDAO.COL_ID
+    String query = "SELECT " + cols + ", " + PersonDAO.COL_KEY + " AS from_key, "
+            + PersonDAO.COL_NAME + " AS from_name, " + PersonDAO.COL_SECONDARY_NAME + " AS from_sec_name, "
+            + PersonDAO.COL_TYPE + " AS from_type" + attachmentQuerySel
+            + " FROM " + PersonDAO.TABLE_PERSON + ", " + TABLE_MESSAGES + attachmentQueryFrom
+            + " WHERE " + TABLE_MESSAGES + "." + COL_FROM_ID + " = " + PersonDAO.TABLE_PERSON + "." + PersonDAO.COL_ID
             + accountQuery + messageIdQuery + attachmentQueryGroup
             + orderBy;
 
@@ -286,20 +313,21 @@ public class MessageListDAO  {
     return getAllMessages(accounts, -1);
   }
 
-  public void setMessageAsImportant(long msgId, boolean important) {
-    ContentValues cv = new ContentValues();
-    cv.put(COL_IS_IMPORTANT, important);
-    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{String.valueOf(msgId)});
-  }
+//  public void setMessageAsImportant(long msgId, boolean important) {
+//    ContentValues cv = new ContentValues();
+//    cv.put(COL_IS_IMPORTANT, important);
+//    mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{String.valueOf(msgId)});
+//  }
 
   public void removeMessage(Context context, List<MessageListElement> deletedMessages) throws Exception {
-    removeMessages(context, -1, deletedMessages);
+    deleteMessages(context, -1, deletedMessages);
   }
 
 
-  public synchronized void removeMessage(MessageListElement mle, long accountId) {
-    mDbHelper.getDatabase().delete(TABLE_MESSAGES, COL_MSG_ID + " = ? AND " + COL_ACCOUNT_ID + " = ?",
-            new String[] {mle.getId(), Long.toString(accountId)});
+  public synchronized void deleteMessage(Context context, MessageListElement mle, long accountId) throws Exception {
+    List<MessageListElement> msgs = new ArrayList<>(1);
+    msgs.add(mle);
+    deleteMessages(context, accountId, msgs);
   }
 
 
@@ -460,6 +488,21 @@ public class MessageListDAO  {
     return mle;
   }
 
+  private List<Long> getMessageRawIdsToAccount(long accountId) {
+    List<Long> ids = new LinkedList<>();
+    String query = "SELECT "+ COL_ID +
+            " FROM " + TABLE_MESSAGES + "" +
+            " WHERE " + COL_ACCOUNT_ID + " = ?";
+    Cursor cursor = mDbHelper.getDatabase().rawQuery(query, new String[] {String.valueOf(accountId)});
+    cursor.moveToFirst();
+    while (!cursor.isAfterLast()) {
+      ids.add(cursor.getLong(0));
+      cursor.moveToNext();
+    }
+    cursor.close();
+
+    return ids;
+  }
 
   public long getMessageRawId(MessageListElement mle, long accountId) {
     String query = "SELECT "+ COL_ID +
@@ -471,6 +514,7 @@ public class MessageListDAO  {
     if (!cursor.isAfterLast()) {
       _id = cursor.getLong(0);
     }
+    cursor.close();
     return _id;
   }
 
@@ -490,7 +534,7 @@ public class MessageListDAO  {
         c.moveToNext();
       }
       try {
-        removeMessages(context, -1, msgRawIds);
+        deleteMessages(context, -1, msgRawIds);
       } catch (Exception e) {
         Log.d("rgai", "", e);
       }

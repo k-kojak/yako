@@ -17,8 +17,6 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.NotificationReplaceService;
 import hu.rgai.yako.services.QuickReplyService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
-import hu.rgai.yako.smarttools.DummyQuickAnswerProvider;
-import hu.rgai.yako.smarttools.QuickAnswerProvider;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.ZoneNotificationDAO;
@@ -198,13 +196,13 @@ public class MessageListerHandler extends TimeoutHandler {
         simpleButtonHandling(isEmailType, lastUnreadMsg, mBuilder, hasQuickAnswers, quickAnswers, quickAnswerNotification);
       }
 
-      if ((zoneActivated && lastUnreadMsg.isImportant() && soundNotification)
+      if ((zoneActivated /*&& lastUnreadMsg.isImportant()*/ && soundNotification)
               || (!zoneActivated && soundNotification)) {
         Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
         mBuilder.setSound(soundURI);
       }
 
-      if ((zoneActivated && lastUnreadMsg.isImportant() && vibrateNotification)
+      if ((zoneActivated /*&& lastUnreadMsg.isImportant()*/ && vibrateNotification)
               || (!zoneActivated) && vibrateNotification) {
         mBuilder.setVibrate(new long[] { 100, 150, 100, 150, 500, 150, 100, 150 });
       }
@@ -401,12 +399,12 @@ public class MessageListerHandler extends TimeoutHandler {
           // logging...
           KeyguardManager km = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
           EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH,
-                  EventLogger.LOGGER_STRINGS.NOTIFICATION.NOTIFICATION_POPUP_STR
+                  EventLogger.LOGGER_STRINGS.NOTIFICATION.POPUP_STR
                           + EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR + km.inKeyguardRestrictedInputMode(), true);
         }
         // if main activity visible: only play sound if needed...
         else {
-          if ((zoneActivated && mLastUnreadMsg.isImportant() && soundNotification)
+          if ((zoneActivated /*&& mLastUnreadMsg.isImportant()*/ && soundNotification)
                   || (!zoneActivated && soundNotification)) {
             Uri soundURI = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.alarm);
             Ringtone r = RingtoneManager.getRingtone(mContext.getApplicationContext(), soundURI);

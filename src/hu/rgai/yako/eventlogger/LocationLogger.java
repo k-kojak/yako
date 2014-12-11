@@ -38,7 +38,11 @@ public class LocationLogger implements LocationListener {
     Criteria crit = new Criteria();
     crit.setPowerRequirement(Criteria.POWER_MEDIUM);
     crit.setCostAllowed(false);
-    locationManager.requestSingleUpdate(crit, this, null);
+    try {
+      locationManager.requestSingleUpdate(crit, this, null);
+    } catch (IllegalArgumentException e) {
+      Log.d("yako", "", e);
+    }
   }
 
 //  private String getFormatedLocationString(Location location) {

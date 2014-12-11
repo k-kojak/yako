@@ -23,6 +23,7 @@ import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.ZoneNotificationDAO;
+import hu.rgai.yako.view.extensions.LinearListView;
 import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.ArrayList;
@@ -148,11 +149,11 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
       while(!accountsCursor.isAfterLast()) {
         account = AccountDAO.cursorToAccount(accountsCursor);
         
-        if(mUpdating) {
-        isChecked = mZoneNotDAO.getNotificationCheckedByZoneAndAccount(mZoneId, account.getDatabaseId());
-        mCheckedStates.put(account.getDisplayName(), isChecked);
+        if (mUpdating) {
+          isChecked = mZoneNotDAO.getNotificationCheckedByZoneAndAccount(mZoneId, account.getDatabaseId());
+          mCheckedStates.put(account.getDisplayName(), isChecked);
         } else {
-        mCheckedStates.put(account.getDisplayName(), true); 
+          mCheckedStates.put(account.getDisplayName(), true);
         }
         accountsCursor.moveToNext();
       }
@@ -260,10 +261,16 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     accounts.moveToFirst();
     while (!accounts.isAfterLast()) {
       account = AccountDAO.cursorToAccount(accounts);
-      if(!mUpdating){
-      mZoneNotDAO.saveNotificationSettingToZone(account.getDatabaseId(), zoneId, mCheckedStates.get(account.getDisplayName()));
+      if (!mUpdating) {
+        mZoneNotDAO.saveNotificationSettingToZone(
+                account.getDatabaseId(),
+                zoneId,
+                mCheckedStates.get(account.getDisplayName()));
       } else {
-      mZoneNotDAO.updateNotificationSettingToZone(account.getDatabaseId(), zoneId, mCheckedStates.get(account.getDisplayName()));
+        mZoneNotDAO.updateNotificationSettingToZone(
+                account.getDatabaseId(),
+                zoneId,
+                mCheckedStates.get(account.getDisplayName()));
       }
       accounts.moveToNext();
     }
@@ -362,7 +369,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
 
   private void showSettingsDialog(boolean finishAfterOk) {
     View dialogView = LayoutInflater.from(this).inflate(R.layout.gmaps_zone_adder, null, false);
-    ListView mNotificationSettingsList = (ListView)dialogView.findViewById(R.id.account_notification_listview);
+    LinearListView mNotificationSettingsList = (LinearListView)dialogView.findViewById(R.id.account_notification_listview);
     mNotificationSettingsList.setAdapter(mZoneNotListAdapter);
     EditText input = (EditText)dialogView.findViewById(R.id.alias_edit);
     Spinner spinner = (Spinner)dialogView.findViewById(R.id.zone_category);

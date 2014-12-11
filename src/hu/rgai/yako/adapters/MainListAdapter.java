@@ -47,13 +47,13 @@ public class MainListAdapter extends CursorAdapter {
 
 
   public void bindView(View view, Context context, Cursor cursor) {
-    
 
-      ViewHolder holder = (ViewHolder)view.getTag();
 
-      MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
+    ViewHolder holder = (ViewHolder) view.getTag();
 
-      // dealing with attachment display
+    MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
+
+    // dealing with attachment display
 //      boolean hasAttachment;
 //      if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessage) {
 //        FullSimpleMessage fsmp = (FullSimpleMessage)message.getFullMessage();
@@ -65,36 +65,36 @@ public class MainListAdapter extends CursorAdapter {
 //      } else {
 //        hasAttachment = false;
 //      }
-      if (message.getAttachmentCount() != 0) {
-        holder.attachment.setVisibility(View.VISIBLE);
-      } else {
-        holder.attachment.setVisibility(View.GONE);
+    if (message.getAttachmentCount() != 0) {
+      holder.attachment.setVisibility(View.VISIBLE);
+    } else {
+      holder.attachment.setVisibility(View.GONE);
+    }
+
+
+    // Setting all values in listview
+    // TODO: itt null pointer exceptionnel elszallunk olykor
+    String subjectText = "?";
+    if (message.getTitle() == null) {
+      if (message.getSubTitle() != null) {
+        subjectText = message.getSubTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
       }
+    } else {
+      subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
+    }
 
+    if (message.getUnreadCount() > 0) {
+      subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+    }
 
-      // Setting all values in listview
-      // TODO: itt null pointer exceptionnel elszallunk olykor
-      String subjectText = "?";
-      if (message.getTitle() == null) {
-        if (message.getSubTitle() != null) {
-          subjectText = message.getSubTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-        }
-      } else {
-        subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-      }
+    holder.subject.setText(subjectText);
 
-      if (message.getUnreadCount() > 0) {
-        subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
-      }
-
-      holder.subject.setText(subjectText);
-
-      if (message.isImportant() && mIsZonesActivated && mClosestZone != null) {
-        holder.important.setVisibility(View.VISIBLE);
-        holder.important.setImageDrawable(mContext.getResources().getDrawable(mImportantDrawable));
-      } else {
-        holder.important.setVisibility(View.GONE);
-      }
+//    if (message.isImportant() && mIsZonesActivated && mClosestZone != null) {
+//      holder.important.setVisibility(View.VISIBLE);
+//      holder.important.setImageDrawable(mContext.getResources().getDrawable(mImportantDrawable));
+//    } else {
+      holder.important.setVisibility(View.GONE);
+//    }
 
 
 

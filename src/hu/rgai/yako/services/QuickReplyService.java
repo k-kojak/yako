@@ -19,6 +19,8 @@ import hu.rgai.yako.view.activities.MessageReplyActivity;
 import hu.rgai.yako.workers.MessageSender;
 import net.htmlparser.jericho.Source;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -58,18 +60,20 @@ public class QuickReplyService extends IntentService {
           TreeSet<FullSimpleMessage> fullMessages = FullMessageDAO.getInstance(this).getFullSimpleMessages(this,
                   message.getRawId());
           FullSimpleMessage fullMessage = fullMessages.first();
-          Source source = new Source("<br /><br />" + fullMessage.getContent().getContent());
-          content = source.getRenderer().toString();
+//          Source source = new Source("<br /><br />" + );
+          content = MessageReplyActivity.getDesignedQuotedText(fullMessage.getContent().getContent().toString());
         }
 
         MessageRecipient recipient = MessageRecipient.Helper.personToRecipient(message.getFrom());
         SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(
                 SimpleMessageSentBroadcastReceiver.class, IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
 
-        SentMessageData smd = MessageReplyActivity.getSentMessageDataToAccount(recipient.getDisplayName(), from);
+        List<MessageRecipient> recipients = new LinkedList<>();
+        recipients.add(recipient);
+        SentMessageData smd = MessageReplyActivity.getSentMessageDataToAccount(recipients, from);
         sentMessBroadcD.setMessageData(smd);
 
-        MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
+        MessageSender rs = new MessageSender(recipient.getType(), recipients, from, sentMessBroadcD,
                 new TimeoutHandler() {
                   @Override
                   public void onTimeout(Context context) {

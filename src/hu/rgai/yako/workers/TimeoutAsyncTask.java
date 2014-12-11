@@ -4,6 +4,7 @@ package hu.rgai.yako.workers;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 
@@ -29,7 +30,7 @@ public abstract class TimeoutAsyncTask<Params, Progress, Result> extends AsyncTa
   private TimeoutHandler mTimeoutHandler = null;
 
   
-  public TimeoutAsyncTask(TimeoutHandler handler) {
+  public TimeoutAsyncTask(@Nullable TimeoutHandler handler) {
     mTimeoutHandler = handler;
   }
 
