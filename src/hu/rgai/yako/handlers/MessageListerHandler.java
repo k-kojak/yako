@@ -66,7 +66,9 @@ public class MessageListerHandler extends TimeoutHandler {
   @Override
   public void onTimeout(Context context) {
     if (mExtraParams.isForceQuery() || mExtraParams.isLoadMore()) {
-      Toast.makeText(mContext, "Connection onTimeout: " + mAccountDispName, Toast.LENGTH_LONG).show();
+      Toast.makeText(mContext,
+              String.format(context.getString(R.string.connection_timeout_xaccount), mAccountDispName),
+              Toast.LENGTH_LONG).show();
     }
   }
 

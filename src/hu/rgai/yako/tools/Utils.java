@@ -5,6 +5,8 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import android.content.Context;
+import hu.rgai.android.test.R;
 import org.ocpsoft.prettytime.PrettyTime;
 
 /**
@@ -78,7 +80,7 @@ public class Utils {
     return pt.format(date);
   }
   
-  public static String getSimplifiedTime(Date date) {
+  public static String getSimplifiedTime(Context context, Date date) {
     Calendar now = Calendar.getInstance();
     Calendar comp = new GregorianCalendar();
     comp.setTime(date);
@@ -94,7 +96,7 @@ public class Utils {
     if (now.get(Y) == comp.get(Y)) {
       if (now.get(M) == comp.get(M)) {
         if (now.get(D) == comp.get(D)) {
-          s = "Today, " + time;
+          s = context.getString(R.string.today) + " " + time;
         } else {
           s = new SimpleDateFormat("MMM dd").format(date) + ", " + time;
         }

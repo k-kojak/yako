@@ -138,7 +138,7 @@ public class InfEmailSettingActivity extends ZoneDisplayActionBarActivity implem
 
   private void validateInfField(TextView tv, String text) {
     if (text.contains("@")) {
-      tv.setError("Invalid username");
+      tv.setError(getString(R.string.invalid_username));
     } else {
       tv.setError(null);
     }

@@ -84,7 +84,7 @@ public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity imp
       public void afterTextChanged(Editable arg0) {}
 
       public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-        AccountSettingsListActivity.validateUriField(imap, text.toString());
+        AccountSettingsListActivity.validateUriField(SimpleEmailSettingActivity.this, imap, text.toString());
       }
     });
     smtp.addTextChangedListener(new TextWatcher() {
@@ -92,7 +92,7 @@ public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity imp
       public void afterTextChanged(Editable arg0) {}
 
       public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-        AccountSettingsListActivity.validateUriField(smtp, text.toString());
+        AccountSettingsListActivity.validateUriField(SimpleEmailSettingActivity.this, smtp, text.toString());
       }
     });
     
@@ -195,7 +195,7 @@ public class SimpleEmailSettingActivity extends ZoneDisplayActionBarActivity imp
   }
   
   public void onTextChanged(CharSequence text, int arg1, int arg2, int arg3) {
-    AccountSettingsListActivity.validateEmailField(email, text.toString());
+    AccountSettingsListActivity.validateEmailField(this, email, text.toString());
     autoFillImapSmtpField(text);
   }
 

@@ -96,7 +96,7 @@ public class ThreadViewAdapter extends ArrayAdapter<FullSimpleMessage> {
     View padding = row.findViewById(R.id.padding);
 
 		msgBubble.setText(coment.getContent().getContent().toString());
-    time.setText(Utils.getSimplifiedTime(coment.getDate()));
+    time.setText(Utils.getSimplifiedTime(context, coment.getDate()));
 
     FullSimpleMessage prevMsg = null;
     if (position - 1 >= 0) {

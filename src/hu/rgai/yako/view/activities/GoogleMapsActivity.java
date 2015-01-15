@@ -91,7 +91,7 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     }
     String title;
     if (mUpdating) {
-      title = "Updating " + mZoneToEdit.getAlias();
+      title = String.format(getString(R.string.updating), mZoneToEdit.getAlias());
     } else {
       title = "Adding new zone";
     }
@@ -242,7 +242,8 @@ public class GoogleMapsActivity extends ZoneDisplayActionBarActivity {
     notifications.moveToFirst();
     while (!accounts.isAfterLast()) {
       account = AccountDAO.cursorToAccount(accounts);
-      if(mCheckedStates.get(account.getDisplayName()) != (notifications.getInt(3) == 1 ? true : false)) {
+      if (notifications.isAfterLast()
+              || (mCheckedStates.get(account.getDisplayName()) != (notifications.getInt(3) == 1))) {
         notificationChanged = true;
         break;
       }

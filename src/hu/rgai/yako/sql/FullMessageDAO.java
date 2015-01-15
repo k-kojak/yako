@@ -81,7 +81,7 @@ public class FullMessageDAO {
 
 
   public long insertMessage(Context context, long messageListRawId, FullSimpleMessage simpleMessage) {
-    long fromId = PersonDAO.getInstance(context).getOrInsertPerson(simpleMessage.getFrom());
+    long fromId = PersonDAO.getInstance(context).getOrInsertPerson(context, simpleMessage.getFrom());
 
     ContentValues cv = new ContentValues();
     cv.put(COL_MSG_ID, simpleMessage.getId());

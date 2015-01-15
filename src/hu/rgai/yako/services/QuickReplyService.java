@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
@@ -77,7 +78,7 @@ public class QuickReplyService extends IntentService {
                 new TimeoutHandler() {
                   @Override
                   public void onTimeout(Context context) {
-                    Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, getString(R.string.unable_to_send_msg), Toast.LENGTH_SHORT).show();
                   }
                 },
                 subject, quickAnswer + content, this);

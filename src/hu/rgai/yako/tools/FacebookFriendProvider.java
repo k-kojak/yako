@@ -1,6 +1,7 @@
 package hu.rgai.yako.tools;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -11,6 +12,7 @@ import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.model.GraphObject;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.fbintegrate.FacebookIntegrateItem;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.view.activities.FacebookSettingActivity;
@@ -22,6 +24,8 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import javax.mail.Quota;
 
 /**
  *
@@ -73,7 +77,7 @@ public class FacebookFriendProvider {
                 try {
                   GraphObject go = response.getGraphObject();
                   if (go == null) {
-                    th.showToast("Unable to update contact list due to Facebook error");
+                    th.showToast(activity.getString(R.string.unable_to_update_fb_contact));
                     return;
                   }
                   JSONObject jso = go.getInnerJSONObject();
@@ -84,6 +88,7 @@ public class FacebookFriendProvider {
                   Date start = new Date();
                   int toastInterval = 20;
                   long nextToast = start.getTime() + toastInterval * 1000;
+                  Resources res = activity.getResources();
                   for (int i = 0; i < count; i++) {
                     // count statistics
                     String timeleftStr = "";
@@ -95,8 +100,10 @@ public class FacebookFriendProvider {
                       if (timeLeftInMin > 0) {
                         timeLeftInSec -= timeLeftInMin * 60;
                       }
-                      timeleftStr = (timeLeftInMin > 0 ? timeLeftInMin + " min" + (timeLeftInMin > 1 ? "s " : " ") : "") + timeLeftInSec + " sec" + (timeLeftInSec > 1 ? "s" : "");
-                      String toastStr = "Still updating, " + timeleftStr + " left";
+                      String min = timeLeftInMin > 0 ? res.getQuantityString(R.plurals.minutes, timeLeftInMin, timeLeftInMin) : "";
+                      String sec = timeLeftInSec > 0 ? res.getQuantityString(R.plurals.seconds, timeLeftInSec, timeLeftInSec) : "";
+                      timeleftStr = min + " " + sec;
+                      String toastStr = String.format(activity.getString(R.string.still_updating_xtime_left), timeleftStr);
                       th.showToast(toastStr);
 //              Toast.makeText(activity, timeleftStr + , Toast.LENGTH_LONG).show();
                       nextToast += toastInterval * 1000;

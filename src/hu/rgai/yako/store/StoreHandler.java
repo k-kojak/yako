@@ -81,7 +81,7 @@ public class StoreHandler {
     SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = prefs.edit();
     editor.putBoolean(IS_ZONE_STATE_ACTIVATED, active);
-    editor.commit();
+    editor.apply();
   }
 
   public static boolean isZoneStateActivated(Context context) {
@@ -325,7 +325,7 @@ public class StoreHandler {
     editor.putString(context.getString(R.string.settings_fb_access_token_exp_date), df.format(expirationDate));
 //    Log.d("rgai", df.format(expirationDate));
     
-    editor.commit();
+    editor.apply();
   }
   
   
@@ -334,7 +334,7 @@ public class StoreHandler {
     SharedPreferences.Editor editor = prefs.edit();
     editor.remove(context.getString(R.string.settings_fb_access_token));
     editor.remove(context.getString(R.string.settings_fb_access_token_exp_date));
-    editor.commit();
+    editor.apply();
   }
   
   

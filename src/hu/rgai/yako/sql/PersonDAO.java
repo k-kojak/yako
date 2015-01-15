@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
@@ -75,9 +76,9 @@ public class PersonDAO {
    * @param person
    * @return
    */
-  public long getOrInsertPerson(Person person) {
+  public long getOrInsertPerson(Context context, Person person) {
     if (person.getName() == null) {
-      person.setName("<Unknown name>");
+      person.setName(context.getString(R.string.unknown_name));
     }
     SQLiteDatabase db = mDbHelper.getDatabase();
     db.beginTransaction();

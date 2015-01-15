@@ -14,9 +14,9 @@ import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.FullMessage;
 import hu.rgai.yako.beens.FullSimpleMessage;
@@ -46,8 +46,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
@@ -274,7 +272,7 @@ public class SmsMessageProvider extends BroadcastReceiver implements ThreadMessa
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       String thisPackageName = context.getPackageName();
       if (!Telephony.Sms.getDefaultSmsPackage(context).equals(thisPackageName)) {
-        Toast.makeText(context, "Yako: new SMS message arrived.", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, context.getString(R.string.yako_new_sms_msg_arrived), Toast.LENGTH_LONG).show();
         return;
       }
     }

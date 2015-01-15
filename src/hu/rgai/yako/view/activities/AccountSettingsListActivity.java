@@ -255,21 +255,21 @@ public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
   }
 
-  public static void validateEmailField(TextView tv, String text) {
-    validatePatternAndShowErrorOnField(tv, text,
+  public static void validateEmailField(Context context, TextView tv, String text) {
+    validatePatternAndShowErrorOnField(context, tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9\\-]+)*(\\.[A-Za-z]{2,})$"));
 
   }
 
-  public static void validateUriField(TextView tv, String text) {
-    validatePatternAndShowErrorOnField(tv, text,
+  public static void validateUriField(Context context, TextView tv, String text) {
+    validatePatternAndShowErrorOnField(context, tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"));
   }
 
-  protected static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
+  protected static void validatePatternAndShowErrorOnField(Context context, TextView tv, String text, Pattern p) {
     Matcher matcher = p.matcher(text);
     if (!matcher.matches()) {
-      tv.setError("Invalid email address");
+      tv.setError(context.getString(R.string.invalid_email_address));
     } else {
       tv.setError(null);
     }

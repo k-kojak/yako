@@ -3,6 +3,7 @@ package hu.rgai.yako.workers;
 
 import android.content.Context;
 import android.util.Log;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.handlers.MessageDeleteHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -91,7 +92,7 @@ public class MessageDeletionAsyncTask extends TimeoutAsyncTask<Void, Void, Boole
                     mProvider.getAccount().isInternetNeededForLoad());
         }        
       } else {
-        mHandler.toastMessage("Unable to delete message.");
+        mHandler.toastMessage(mContext.getString(R.string.unable_to_del_msg));
       }
       mHandler.onComplete();
     }

@@ -238,7 +238,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     switch (item.getItemId()) {
       case R.id.discard:
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             final Context c = ThreadDisplayerActivity.this;
             mMessageListChanged = true;
@@ -291,9 +291,10 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             messageMarker.executeTask(c, null);
           }
         });
-        builder.setNegativeButton("No", null);
-        builder.setTitle("Delete message");
-        builder.setMessage("Delete selected message?").show();
+        builder.setNegativeButton(R.string.no, null);
+        builder.setTitle(R.string.delete_message);
+        String delMsg = getResources().getQuantityString(R.plurals.delete_selected_msg, 1);
+        builder.setMessage(delMsg).show();
 
         return true;
       default:
@@ -332,7 +333,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         Toast
             .makeText(
                 this,
-                "Sorry, but group message sending is not available (because of Facebook).",
+                getString(R.string.sorry_grps_msg_send_not_available),
                 Toast.LENGTH_LONG).show();
         firstResume = false;
       }
@@ -369,9 +370,8 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
         finish();
       }
     });
-    builder.setTitle("Error");
-    builder.setMessage(
-        "Connection error, please try later.\n(Error " + code + ")").show();
+    builder.setTitle(R.string.error);
+    builder.setMessage(String.format(getString(R.string.connection_error_pls_try_later_xcode), code)).show();
   }
 
   @Override
@@ -423,7 +423,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
   public void sendMessage(View view) {
     String t = mText.getText().toString().trim();
     if (t.length() == 0) {
-      Toast.makeText(this, "Empty message", Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, getString(R.string.empty_message), Toast.LENGTH_SHORT).show();
       return;
     }
 
@@ -455,7 +455,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             new TimeoutHandler() {
               @Override
               public void onTimeout(Context context) {
-                Toast.makeText(context, "Unable to send message...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.unable_to_send_msg, Toast.LENGTH_SHORT).show();
               }
             },
             "", mText.getText().toString(), this);
@@ -507,9 +507,9 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
     switch (requestCode) {
     case (MESSAGE_REPLY_REQ_CODE):
       if (resultCode == MessageReplyActivity.MESSAGE_SENT_OK) {
-        Toast.makeText(this, "Message sent", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.msg_sent), Toast.LENGTH_LONG).show();
       } else if (resultCode == MessageReplyActivity.MESSAGE_SENT_FAILED) {
-        Toast.makeText(this, "Failed to send message ", Toast.LENGTH_LONG)
+        Toast.makeText(this, getString(R.string.failed_to_send_msg), Toast.LENGTH_LONG)
             .show();
       }
       break;
@@ -800,7 +800,7 @@ public class ThreadDisplayerActivity extends ZoneDisplayActionBarActivity {
             mMessageListChanged = true;
             break;
           case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
-            Toast.makeText(context, "Unable to send message", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.unable_to_send_msg, Toast.LENGTH_SHORT).show();
             break;
           default:
             break;

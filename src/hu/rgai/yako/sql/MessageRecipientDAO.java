@@ -99,7 +99,7 @@ public class MessageRecipientDAO {
     }
 
     for (Person p : mle.getRecipientsList()) {
-      long personRawId = PersonDAO.getInstance(context).getOrInsertPerson(p);
+      long personRawId = PersonDAO.getInstance(context).getOrInsertPerson(context, p);
 
       ContentValues cv = new ContentValues();
       cv.put(COL_MSG_ID, mle.getRawId());

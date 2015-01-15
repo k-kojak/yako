@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+  <plurals name="seconds">
+    <item quantity="one">%d sec</item>
+    <item quantity="other">%d secs</item>
+  </plurals>
+
+  <plurals name="minutes">
+    <item quantity="one">%d min</item>
+    <item quantity="other">%d mins</item>
+  </plurals>
+
+  <plurals name="delete_selected_msg">
+    <item quantity="one">Delete selected message?</item>
+    <item quantity="other">Delete selected messages?</item>
+  </plurals>
+
   <string name="app_id">549327858470212</string>
   <string name="app_name">Yako</string>
   <string name="facebook_login_name">Login to Facebook</string>
@@ -17,14 +33,12 @@
   <string name="view_attachments">View attachments</string>
   
   <string name="account_settings">Account settings</string>
-  <string name="service_name">This is my service</string>
+  <string name="service_name">Yako service</string>
   <string name="manage_accounts">Manage accounts</string>
   <string name="system_preferences">Settings</string>
-  <string name="filter_list">Filter list</string>
   <string name="message_reply">Reply</string>
   <string name="message_send_new">New message</string>
   <string name="load_more">Load more</string>
-  <string name="help">Help</string>
   <string name="save">Save</string>
   <string name="delete">Delete</string>
   <string name="cancel">Cancel</string>
@@ -34,8 +48,6 @@
   <string name="delete_message">Delete message</string>
   <string name="delete_thread">Delete thread</string>
   <string name="loading">Loading...</string>
-  <string name="last_full_update">Last full update: </string>
-  <string name="today">Today</string>
   <string name="all">All</string>
     
   <string name="to_hint">To</string>
@@ -46,41 +58,16 @@
   <string name="smtp_hint">smtp address</string>
   <string name="password_hint">password</string>
   <string name="show_password">Show password</string>
-  <string name="refreshing">Refreshing</string>
   <string name="loading_more_elements">Loading older messages</string>
     
     
   <string name="settings_fb_access_token">hu.rgai.android.settings.accounts.fb_access_token</string>
   <string name="settings_fb_access_token_exp_date">hu.rgai.android.settings.accounts.fb_access_token.expiration_date</string>
   <string name="settings_accounts">hu.rgai.android.settings.accounts</string>
-  <string name="settings_accounts_size">hu.rgai.android.settings.accounts.size</string>
-  <string name="settings_accounts_item">hu.rgai.android.settings.accounts.item</string>
-  <string name="settings_accounts_item_type">hu.rgai.android.settings.accounts.item</string>
-  <string name="settings_accounts_item_name">hu.rgai.android.settings.accounts.item.name</string>
-  <string name="settings_accounts_item_unique_name">hu.rgai.android.settings.accounts.item.unique.name</string>
-  <string name="settings_accounts_item_pass">hu.rgai.android.settings.accounts.item.pass</string>
-  <string name="settings_accounts_item_id">hu.rgai.android.settings.accounts.item.id</string>
-  <string name="settings_accounts_item_imap">hu.rgai.android.settings.accounts.item.imap</string>
-  <string name="settings_accounts_item_smtp">hu.rgai.android.settings.accounts.item.smtp</string>
-  <string name="settings_accounts_item_ssl">hu.rgai.android.settings.accounts.item.ssl</string>
-    
-    
-  <string name="settings_email_file_key">hu.rgai.android.settings.file.email</string>
-  <string name="settings_saved_pass">hu.rgai.android.settings.password</string>
-  <string name="settings_saved_email">hu.rgai.android.settings.email</string>
-  <string name="settings_saved_imap">hu.rgai.android.settings.imap</string>
-  <string name="settings_saved_initial_email_num">hu.rgai.android.settings.initial_email_num</string>
-    
-  <string name="exception_unknown_host">The provided host is unknown. Please check it again.</string>
-  <string name="exception_io">IO Exception.</string>
+
   <string name="exception_unknown">IO Exception.</string>
-  <string name="exception_connect">Connect exception.</string>
-  <string name="exception_nosuch_provider">No such provider exception.</string>
-  <string name="exception_messaging">Messaging exception.</string>
-  <string name="exception_ssl_handshake">SSL Handshake exception.</string>
-  <string name="exception_cert_path_validator">Certification path validator exception.</string>
   <string name="no_internet_access">Not connected to internet.</string>
-  <string name="empty_list">No messages to display.</string>
+
   <string name="no_account_set">Please add an account to display messages.</string>
   <string name="unsupported_encoding">Unsopported encoding exception.</string>
   <string name="unsupported_charset">Unsopported charset exception.</string>
@@ -105,23 +92,21 @@
   <string name="account_name_facebook">Facebook</string>
   <string name="account_name_infemail">Inf email</string>
   <string name="account_name_simplemail">Simple email</string>
-  
-    
-   
+
+
+
   <string name="add_account">Add Account</string>
-  <string name="remove_account">Remove Account</string>
-  <string name="add_attachment">Add attachment</string>
+
   <string name="message_reply_all">Reply all</string>
-  <string name="message_forward">Forward</string>
-  <string name="refresh">Refresh</string>
-  
+
+
+
   <string name="mainlist_open_drawer">Open drawer</string>
   <string name="mainlist_close_drawer">Close drawer</string>
   <string name="add_contact">Add to contacts</string>
     <string name="alias_of_zone">Alias of zone</string>
     <string name="notif_replace_service">Notification replace service</string>
     <string name="quick_reply_service">Quick reply service</string>
-    <string name="quick_answer">Quick answer</string>
     <string name="subject">Subject</string>
   <string name="quick_answers">Quick Answers</string>
   <string name="no_qa_available">No Quick Answers available</string>
@@ -141,6 +126,58 @@
   <string name="content">Content</string>
   <string name="sync_contact_list">Sync contact list now</string>
   <string name="account">Account</string>
+  <string name="invalid_email_address">Invalid email address</string>
+  <string name="dl_file_is_in_download_folder">The file is in the Download folder.</string>
+  <string name="cant_open_file">Can\'t open the file.</string>
+  <string name="x_saved_in_downloads">%s saved in Downloads</string>
+  <string name="failed_to_save_x">Failed to save document: %s</string>
+  <string name="failed_to_download_x">Failed to download file: %s</string>
+  <string name="error">Error</string>
+  <string name="connection_error_pls_try_later_xcode">Connection error, please try later.\n(Error %s)</string>
+  <string name="me">me</string>
+  <string name="unable_to_update_fb_contact">Unable to update contact list due to Facebook error</string>
+  <string name="still_updating_xtime_left">Still updating, %s left.</string>
+  <string name="fb_sync_is_running">Synchronization is running</string>
+  <string name="fb_session_problem">Facebook session problem</string>
+  <string name="syncing_contact_list">Syncing contact list...</string>
+  <string name="change_settings">Change settings</string>
+  <string name="connection_blocked_by_google_untrusted_app">Connection blocked by Google.\n
+    You have to turn off less secure app protection at:\n
+    https://www.google.com/settings/security/lesssecureapps
+  </string>
+  <string name="updating">Updating %s</string>
+  <string name="invalid_username">Invalid username</string>
+  <string name="selected">selected</string>
+  <string name="yes">Yes</string>
+  <string name="timeout_while_deleting_msg">Timeout while deleting message</string>
+  <string name="no">No</string>
+  <string name="unable_to_del_msg">Unable to delete message.</string>
+  <string name="connection_timeout_xaccount">Connection timeout: %s</string>
+  <string name="uanble_to_mark_msg_status">Unable to mark message status.</string>
+  <string name="timeout_while_marking_msg">Timeout while marking messages</string>
+  <string name="sending_msg">Sending message ...</string>
+  <string name="unknown_name"><![CDATA[<Unknown name>]]></string>
+  <string name="unable_to_send_msg">Unable to send message...</string>
+  <string name="yako_new_sms_msg_arrived">Yako: new SMS message arrived.</string>
+  <string name="error_while_loading_content">Error while loading content</string>
+  <string name="sorry_grps_msg_send_not_available">Sorry, but group message sending is not available (because of
+    Facebook).
+  </string>
+  <string name="msg_sent">Message sent</string>
+  <string name="failed_to_send_msg">Failed to send message</string>
+  <string name="today">Today</string>
+  <string name="yako_is_not_the_def_sms_prov">Yako is not the default SMS provider. Please set as default at default
+    applications.
+  </string>
+  <string name="delete_zone">Delete zone</string>
+  <string name="sure_delete_zone_xzone">Are you sure want to delete zone %s?</string>
+  <string name="message_delivered">Message delivered</string>
+  <string name="message_delivered_to">Message delivered to</string>
+  <string name="deliver_failed">Deliver failed</string>
+  <string name="failed_to_deliver_msg_to">Failed to deliver message to</string>
+  <string name="message_sent">Message sent</string>
+  <string name="message_sent_to">Message sent to</string>
+  <string name="send_failed">Sending failed</string>
 
 
 </resources>

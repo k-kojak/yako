@@ -10,11 +10,11 @@
               
   <ScrollView
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
     
     <LinearLayout android:orientation="vertical"
                   android:layout_width="fill_parent"
-                  android:layout_height="fill_parent">
+                  android:layout_height="wrap_content">
     
   
       <com.facebook.widget.ProfilePictureView
@@ -30,8 +30,6 @@
         android:id="@+id/display_name"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
-        android:editable="false"
         android:freezesText="true"
         android:gravity="center"  />
 

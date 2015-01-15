@@ -159,7 +159,7 @@ public class MessageListDAO  {
 
   public synchronized void updateFrom(Context context, long messageRawId, Person from) {
     if (from != null) {
-      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(from);
+      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(context, from);
       ContentValues cv = new ContentValues();
       cv.put(COL_FROM_ID, fromID);
       mDbHelper.getDatabase().update(TABLE_MESSAGES, cv, COL_ID + " = ?", new String[]{Long.toString(messageRawId)});
@@ -203,7 +203,7 @@ public class MessageListDAO  {
       // TODO: currently we are not storing messages where getFrom is null
       // this case happens now when we have a group chat, so there is no sender, just recipients, so the getFrom is NULL
       if (mle.getFrom() == null) return -1;
-      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(mle.getFrom());
+      long fromID = PersonDAO.getInstance(context).getOrInsertPerson(context, mle.getFrom());
       cv.put(COL_FROM_ID, fromID);
 
       cv.put(COL_DATE, new Timestamp(mle.getDate().getTime()).toString());

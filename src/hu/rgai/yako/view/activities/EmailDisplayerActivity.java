@@ -193,9 +193,9 @@ public class EmailDisplayerActivity extends ZoneDisplayActionBarActivity {
         finish();
       }
     });
-    builder.setTitle("Error");
+    builder.setTitle(getString(R.string.error));
     builder.setMessage(
-        "Connection error, please try later.\n(Error " + code + ")").show();
+        String.format(getString(R.string.connection_error_pls_try_later_xcode), code)).show();
   }
 
   @Override

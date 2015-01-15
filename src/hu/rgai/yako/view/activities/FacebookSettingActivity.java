@@ -253,14 +253,14 @@ public class FacebookSettingActivity extends ZoneDisplayActionBarActivity {
   public void syncFacebookContactList(View view) {
     if (user != null) {
       if (FacebookIntegratorAsyncTask.isRunning) {
-        Toast.makeText(this, "Synchronization is running", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.fb_sync_is_running), Toast.LENGTH_LONG).show();
       } else {
-        Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
+        Toast.makeText(FacebookSettingActivity.this, getString(R.string.syncing_contact_list), Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this);
         integrator.executeTask(this, new String[]{user.getId()});
       }
     } else {
-      Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();
+      Toast.makeText(this, getString(R.string.fb_session_problem), Toast.LENGTH_LONG).show();
     }
   }
   

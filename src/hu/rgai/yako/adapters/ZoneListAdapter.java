@@ -90,8 +90,8 @@ public class ZoneListAdapter extends BaseAdapter {
       @Override
       public void onClick(View v) {
         new AlertDialog.Builder(mActivity)
-                .setTitle("Delete zone")
-                .setMessage("Are you sure want to delete zone "+ zone.getAlias() +"?")
+                .setTitle(mActivity.getString(R.string.delete_zone))
+                .setMessage(String.format(mActivity.getString(R.string.sure_delete_zone_xzone), zone.getAlias()))
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                   @Override
                   public void onClick(DialogInterface dialog, int which) {

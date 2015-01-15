@@ -3,6 +3,7 @@ package hu.rgai.yako.handlers;
 
 import android.content.Context;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 
 public class MessageSeenMarkerHandler extends TimeoutHandler {
@@ -15,11 +16,15 @@ public class MessageSeenMarkerHandler extends TimeoutHandler {
   
   @Override
   public void onTimeout(Context context) {
-    Toast.makeText(mFragment.getActivity(), "Timeout while marking messages", Toast.LENGTH_LONG).show();
+    Toast.makeText(mFragment.getActivity(), context.getString(R.string.timeout_while_marking_msg), Toast.LENGTH_LONG).show();
   }
   
   public void toastMessage(String s) {
     Toast.makeText(mFragment.getActivity(), s, Toast.LENGTH_LONG).show();
+  }
+
+  public void toastMessage(int resId) {
+    Toast.makeText(mFragment.getActivity(), resId, Toast.LENGTH_LONG).show();
   }
   
   public void success() {

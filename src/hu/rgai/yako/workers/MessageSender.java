@@ -2,6 +2,7 @@ package hu.rgai.yako.workers;
 
 import android.content.Context;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.EmailMessageRecipient;
@@ -114,7 +115,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   @Override
   protected void onProgressUpdate(String... values) {
-    Toast.makeText(mContext, "Sending message ...", Toast.LENGTH_SHORT).show();
+    Toast.makeText(mContext, mContext.getString(R.string.sending_msg), Toast.LENGTH_SHORT).show();
   }
 
 }

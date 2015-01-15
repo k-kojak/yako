@@ -102,7 +102,7 @@ public class MainActivityFragment extends Fragment {
         }
         if (contextSelectedElements.size() > 0) {
           startContextualActionbarTimer();
-          mode.setTitle(contextSelectedElements.size() + " selected");
+          mode.setTitle(contextSelectedElements.size() + " " + mMainActivity.getString(R.string.selected));
           if (contextSelectedElements.size() == 1) {
             mode.getMenu().findItem(R.id.reply).setVisible(true);
             Context c = MainActivityFragment.this.getActivity();
@@ -183,7 +183,7 @@ public class MainActivityFragment extends Fragment {
 
     loadMoreButton = new Button(mMainActivity);
     loadMoreButton.setVisibility(View.GONE);
-    loadMoreButton.setText("Load more ...");
+    loadMoreButton.setText(R.string.load_more);
     loadMoreButton.getBackground().setAlpha(0);
     loadMoreButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -283,10 +283,10 @@ public class MainActivityFragment extends Fragment {
   private void contextActionDeleteMessage() {
     cancelContextualActionbarTimer();
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+    builder.setPositiveButton(mMainActivity.getString(R.string.yes), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
 
-      LinkedList<MessageListElement> deletemessages = new LinkedList<MessageListElement>();
+      LinkedList<MessageListElement> deletemessages = new LinkedList<>();
       MessageListElement mle;
       
       for (Long idx : contextSelectedElements) {        
@@ -316,7 +316,7 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         public void onTimeout(Context context) {
-          Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
+          Toast.makeText(mContext, context.getString(R.string.timeout_while_deleting_msg), Toast.LENGTH_LONG).show();
           mTopProgressBar.setVisibility(View.GONE);
         }
       };      
@@ -331,13 +331,15 @@ public class MainActivityFragment extends Fragment {
       hideContextualActionbar();
       }
     });
-    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+    builder.setNegativeButton(mMainActivity.getString(R.string.no), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
         startContextualActionbarTimer();
       }
     }); 
-    builder.setTitle("Delete message");
-    builder.setMessage("Delete selected message"+ (contextSelectedElements.size() == 1 ? "" : "s") +"?").show();
+    builder.setTitle(mMainActivity.getString(R.string.delete_message));
+    builder.setMessage(mMainActivity
+            .getResources()
+            .getQuantityString(R.plurals.delete_selected_msg, contextSelectedElements.size())).show();
     
   }
   

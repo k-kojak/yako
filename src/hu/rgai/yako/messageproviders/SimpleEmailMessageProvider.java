@@ -298,11 +298,16 @@ public class SimpleEmailMessageProvider implements MessageProvider, SplittedMess
       List<MessageListElement> emails = new LinkedList<>();
 
       long s3 = System.currentTimeMillis();
-      IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
-      putTime(times, "getStoreGetFolder", s3);
+      IMAPFolder imapFolder = null;
+      try {
+        imapFolder = (IMAPFolder) getStore(account).getFolder("Inbox");
+      } catch (AuthenticationFailedException e) {
+        Log.d("kojak", "", e);
+      }
       if (imapFolder == null) {
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
+      putTime(times, "getStoreGetFolder", s3);
       
       long s4 = System.currentTimeMillis();
       imapFolder.open(Folder.READ_ONLY);

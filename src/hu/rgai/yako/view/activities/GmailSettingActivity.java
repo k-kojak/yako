@@ -2,6 +2,7 @@ package hu.rgai.yako.view.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -123,13 +124,13 @@ public class GmailSettingActivity extends ZoneDisplayActionBarActivity implement
 
   private void showLessSecureDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+    builder.setNeutralButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.dismiss();
       }
     });
-    builder.setPositiveButton("Change settings", new DialogInterface.OnClickListener() {
+    builder.setPositiveButton(getString(R.string.change_settings), new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW,
@@ -137,10 +138,8 @@ public class GmailSettingActivity extends ZoneDisplayActionBarActivity implement
         startActivity(browserIntent);
       }
     });
-    builder.setTitle("Error");
-    builder.setMessage("Connection blocked by Google.\n" +
-            "You have to turn off less secure app protection at:\n"
-            +"https://www.google.com/settings/security/lesssecureapps").show();
+    builder.setTitle(R.string.error);
+    builder.setMessage(getString(R.string.connection_blocked_by_google_untrusted_app)).show();
   }
   
   private void saveAccountSettings(EmailAccount newAccount) {
@@ -176,7 +175,7 @@ public class GmailSettingActivity extends ZoneDisplayActionBarActivity implement
 
   private void validateGmailField(TextView tv, String text) {
     if (text.contains("@")) {
-      AccountSettingsListActivity.validatePatternAndShowErrorOnField(tv, text,
+      AccountSettingsListActivity.validatePatternAndShowErrorOnField(this, tv, text,
               Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"));
     }
 

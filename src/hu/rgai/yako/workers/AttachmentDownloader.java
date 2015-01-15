@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Attachment;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
@@ -76,13 +77,17 @@ public class AttachmentDownloader implements Runnable, Serializable {
             if (mFileSize != null && mFileSize.get() != null) {
               mFileSize.get().setText(Utils.getPrettyFileSize(mAttachment.getSize()));
             }
-            Toast.makeText(mContext, mAttachment.getFileName() + " saved in Downloads", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext,
+                    String.format(mContext.getString(R.string.x_saved_in_downloads), mAttachment.getFileName()),
+                    Toast.LENGTH_SHORT).show();
           }
         });
       } else {
         mHandler.post(new Runnable() {
           public void run() {
-            Toast.makeText(mContext, "Failed to save document: " + mAttachment.getFileName(), Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext,
+                    String.format(mContext.getString(R.string.failed_to_save_x), mAttachment.getFileName()),
+                    Toast.LENGTH_LONG).show();
           }
         });
       }
@@ -91,7 +96,9 @@ public class AttachmentDownloader implements Runnable, Serializable {
       setProgressBarValue(0, true);
       mHandler.post(new Runnable() {
         public void run() {
-          Toast.makeText(mContext, "Failed to download file: " + mAttachment.getFileName(), Toast.LENGTH_LONG).show();
+          Toast.makeText(mContext,
+                  String.format(mContext.getString(R.string.failed_to_download_x), mAttachment.getFileName()),
+                  Toast.LENGTH_LONG).show();
         }
       });
     }

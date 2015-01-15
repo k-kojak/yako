@@ -122,7 +122,7 @@ public class AndroidUtils {
         BlockingQueue<Runnable> rq = tpe.getQueue();
         StringBuilder sb = new StringBuilder();
         for (Runnable r : rq) {
-          sb.append(r.toString()+ "\n");
+          sb.append(r.toString()).append("\n");
         }
 
         Tracker t = yApp.getTracker();

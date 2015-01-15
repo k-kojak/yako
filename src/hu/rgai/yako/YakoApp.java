@@ -127,7 +127,7 @@ public class YakoApp extends Application {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       String thisPackageName = getPackageName();
       if (!Telephony.Sms.getDefaultSmsPackage(this).equals(thisPackageName)) {
-        Toast.makeText(this, "Yako is not the default SMS provider. Please set as default at default applications.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.yako_is_not_the_def_sms_prov), Toast.LENGTH_LONG).show();
         return false;
       }
     }

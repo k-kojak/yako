@@ -309,7 +309,7 @@ public class EmailDisplayerFragment extends Fragment {
         recipientsNames.append(", ");
       }
       if (person.getId().equals(myEmail)) {
-        recipientsNames.append("me");
+        recipientsNames.append(getResources().getString(R.string.me));
       } else {
         if (!person.getName().equals(person.getId())) {
           recipientsNames.append(person.getName().split(" ")[0]);
