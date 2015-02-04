@@ -24,6 +24,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   // this is the database id of the message
   protected long mRawId;
 
+  protected boolean mSplittedMessage;
   protected String id;
   protected boolean seen;
   protected String title;
@@ -31,10 +32,11 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   protected int unreadCount;
   protected int attachmentCount;
   protected Person from;
-  protected List<Person> recipients;
+  protected List<Person> mRecipients;
   protected Date date;
   protected Type messageType;
   protected boolean updateFlags;
+  protected boolean mIsImportant;
   
   protected FullMessage fullMessage;
 
@@ -72,9 +74,11 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    * @param updateFlags indicates that this message already exists at the display list, only update the flag infos of this message, but nothing else
    */
-  public MessageListElement(long rawId, String messageId, boolean seen, String title, String subTitle, int unreadCount,
-                            int attachmentCount, Person from, List<Person> recipients, Date date, Account account,
-                            Type messageType, boolean updateFlags) {
+  public MessageListElement(boolean splittedMessage, long rawId, String messageId, boolean seen, String title,
+                            String subTitle, int unreadCount, int attachmentCount, Person from,
+                            List<Person> recipients, Date date, Account account, Type messageType,
+                            boolean updateFlags, boolean isImportant) {
+    this.mSplittedMessage = splittedMessage;
     this.mRawId = rawId;
     this.id = messageId;
     this.seen = seen;
@@ -83,16 +87,19 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.unreadCount = unreadCount;
     this.attachmentCount = attachmentCount;
     this.from = from;
-    this.recipients = recipients;
+    this.mRecipients = recipients;
     this.date = date;
     this.account = account;
     this.messageType = messageType;
     this.updateFlags = updateFlags;
+    this.mIsImportant = isImportant;
   }
   
   public MessageListElement(Parcel in) {
     initStringToClassLoader();
-    
+
+    this.mSplittedMessage = in.readByte() == 1;
+    this.mRawId = in.readLong();
     this.id = in.readString();
     this.seen = in.readByte() == 1;
     this.title = in.readString();
@@ -101,8 +108,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     this.attachmentCount = in.readInt();
     this.from = in.readParcelable(Person.class.getClassLoader());
     
-    recipients = new LinkedList<Person>();
-    in.readList(recipients, Person.class.getClassLoader());
+    mRecipients = new LinkedList<>();
+    in.readList(mRecipients, Person.class.getClassLoader());
     this.date = new Date(in.readLong());
     this.messageType = Type.valueOf(in.readString());
     this.fullMessage = in.readParcelable(FullMessage.class.getClassLoader());
@@ -124,7 +131,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public MessageListElement(String id, Account account) {
-    this(-1, id, false, null, null, 0, 0, null, null, null, account, account.getAccountType(), false);
+    this(false, -1, id, false, null, null, 0, 0, null, null, null, account, account.getAccountType(), false, false);
   }
   
   /**
@@ -139,8 +146,9 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param date date of the message
    * @param messageType type of the message, see {@link  hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(String id, boolean seen, String title, int unreadCount, int attachmentCount, Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(-1, id, seen, title, null, unreadCount, attachmentCount, from, recipients, date, account, messageType, false);
+  public MessageListElement(String id, boolean seen, String title, int unreadCount, int attachmentCount, Person from,
+                            List<Person> recipients, Date date, Account account, Type messageType) {
+    this(false, -1, id, seen, title, null, unreadCount, attachmentCount, from, recipients, date, account, messageType, false, false);
   }
   
   /**
@@ -156,7 +164,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    */
   public MessageListElement(long _id, String id, boolean seen, String title, Person from, List<Person> recipients,
                             Date date, Account account, Type messageType) {
-    this(_id, id, seen, title, null, -1, 0, from, recipients, date, account, messageType, false);
+    this(false, _id, id, seen, title, null, -1, 0, from, recipients, date, account, messageType, false, false);
   }
   
    /**
@@ -171,9 +179,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
    * @param date date of the message
    * @param messageType type of the message, see {@link hu.rgai.yako.messageproviders.MessageProvider.Type} for available types
    */
-  public MessageListElement(long _id, String id, boolean seen, String title, String snippet, int attachmentCount,
-          Person from, List<Person> recipients, Date date, Account account, Type messageType) {
-    this(_id, id, seen, title, snippet, -1, attachmentCount, from, recipients, date, account, messageType, false);
+  public MessageListElement(boolean splittedMessage, long _id,String id, boolean seen, String title, String snippet,
+                            int attachmentCount, Person from, List<Person> recipients, Date date, Account account,
+                            Type messageType, boolean isImportant) {
+    this(splittedMessage, _id, id, seen, title, snippet, -1, attachmentCount, from, recipients, date, account, messageType, false, isImportant);
   }
 
 
@@ -193,7 +202,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   public MessageListElement(long rawId, String id, boolean seen, Person from, Date date, Account account, Type messageType,
                             boolean updateFlags) {
-    this(rawId, id, seen, null, null, -1, 0, from, null, date, account, messageType, updateFlags);
+    this(false, rawId, id, seen, null, null, -1, 0, from, null, date, account, messageType, updateFlags, false);
   }
   
   private void initStringToClassLoader() {
@@ -282,6 +291,16 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     return id;
   }
 
+  /**
+   * Returns if this message is a splitted message or not.
+   * If splitted, that means further data load is required to finish downloading all necessary information
+   * to this message element (i.e. content)
+   * @return
+   */
+  public boolean isSplittedMessage() {
+    return mSplittedMessage;
+  }
+
   public boolean isSeen() {
     return seen;
   }
@@ -291,17 +310,18 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
 
   public boolean isGroupMessage() {
-    return recipients != null && recipients.size() > 1;
+    return mRecipients != null && mRecipients.size() > 1;
   }
   
   public List<Person> getRecipientsList() {
-    if (recipients == null) {
-      List<Person> rec = new LinkedList<Person>();
-      rec.add(from);
-      return rec;
-    } else {
-      return recipients;
+    if (mRecipients == null) {
+      mRecipients = new LinkedList<>();
     }
+    return mRecipients;
+  }
+
+  public void setRecipients(List<Person> recipients) {
+    this.mRecipients = recipients;
   }
 
   public void setFrom(Person from) {
@@ -324,6 +344,10 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     return attachmentCount;
   }
 
+  public void setAttachmentCount(int attachmentCount) {
+    this.attachmentCount = attachmentCount;
+  }
+
 //  public void setUnreadCount(int unreadCount) {
 //    this.unreadCount = unreadCount;
 //  }
@@ -334,6 +358,14 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
 
   public boolean isUpdateFlags() {
     return updateFlags;
+  }
+
+  public boolean isImportant() {
+    return mIsImportant;
+  }
+
+  public void setIsImportant(boolean isImportant) {
+    mIsImportant = isImportant;
   }
 
   public FullMessage getFullMessage() {
@@ -369,6 +401,8 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   
   public void writeToParcel(Parcel out, int flags) {
     initStringToClassLoader();
+    out.writeByte((byte) (mSplittedMessage ? 1 : 0));
+    out.writeLong(this.mRawId);
     out.writeString(this.id);
     out.writeByte((byte)(seen ? 1 : 0));
     out.writeString(title);
@@ -376,7 +410,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     out.writeInt(unreadCount);
     out.writeInt(attachmentCount);
     out.writeParcelable(from, flags);
-    out.writeList(recipients);
+    out.writeList(mRecipients);
     out.writeLong(date.getTime());
     out.writeString(messageType.toString());
     out.writeParcelable(fullMessage, flags);
@@ -384,7 +418,7 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
     if (!stringToClassLoader.containsKey(messageType)) {
     	
     } else {
-    	out.writeParcelable((Parcelable)account, flags);
+    	out.writeParcelable(account, flags);
     }
     
   }
@@ -422,19 +456,19 @@ public class MessageListElement implements Parcelable, Comparable<MessageListEle
   }
   
   public int compareTo(MessageListElement o) {
-    if (!this.account.equals(o.account)) {
+//    if (!this.account.equals(o.account)) {
       return -1 * this.date.compareTo(o.date);
-    } else {
-      if (!this.date.equals(o.date)) {
-        return -1 * this.date.compareTo(o.date);
-      } else {
+//    } else {
+//      if (!this.date.equals(o.date)) {
+//        return -1 * this.date.compareTo(o.date);
+//      } else {
 //        if (!this.id.equals(o.getId())) {
 //          return -1 * this.id.compareTo(o.id);
 //        } else {
-          return 0;
+//          return 0;
 //        }
-      }
-    }
+//      }
+//    }
 //    if (this.id.equals(o.getId()) && this.instance.equals(o.instance)) {
 //      return 0;
 //    } else {

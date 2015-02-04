@@ -8,10 +8,12 @@ import hu.rgai.yako.beens.*;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
 import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
-import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
+import hu.rgai.yako.messageproviders.SplittedMessageProvider;
+import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.view.activities.ThreadDisplayerActivity;
 
 import javax.mail.AuthenticationFailedException;
@@ -48,12 +50,15 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private final Context mContext;
   private int result = -1;
   private String errorMessage = null;
-  private final Account acc;
-  private final MessageProvider messageProvider;
-  private boolean loadMore = false;
+  private final Account mAccount;
+  private final MessageProvider mMessageProvider;
+  private boolean mLoadMore = false;
+  private boolean mSplittedMessageSecondPart = false;
+  private boolean mNewMessageArrivedRequest = false;
+  private TreeMap<String, MessageListElement> mSplittedMessages = new TreeMap<>();
   private boolean mMessageDeleteAtServer = false;
-  private int queryLimit;
-  private int queryOffset;
+  private int mQueryLimit;
+  private int mQueryOffset;
   private final MessageListerHandler mHandler;
   private final RunningSetup mRunningSetup;
   private final TreeMap<Account, Long> mAccountsAccountKey;
@@ -63,21 +68,27 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private volatile static HashMap<RunningSetup, Boolean> runningTaskStack = null;
 
   public MessageListerAsyncTask (Context context, TreeMap<Account, Long> accountsAccountKey,
-                                 TreeMap<Long, Account> accountsIntegerKey, Account acc, MessageProvider messageProvider,
-                                 boolean loadMore, boolean messageDeleteAtServer, int queryLimitOverride,
-                                 int queryOffsetOverride, MessageListerHandler handler) {
+                                 TreeMap<Long, Account> accountsIntegerKey, Account acc,
+                                 MessageProvider messageProvider, boolean loadMore,
+                                 boolean splittedMessageSecondPart, boolean newMessageArrivedRequest,
+                                 TreeMap<String, MessageListElement> splittedMessages,
+                                 boolean messageDeleteAtServer, int queryLimitOverride, int queryOffsetOverride,
+                                 MessageListerHandler handler) {
     
     super(handler);
     mContext = context;
     mAccountsAccountKey = accountsAccountKey;
     mAccountsIntegerKey = accountsIntegerKey;
-    this.acc = acc;
-    this.messageProvider = messageProvider;
-    this.loadMore = loadMore;
+    mAccount = acc;
+    mMessageProvider = messageProvider;
+    mLoadMore = loadMore;
+    mSplittedMessageSecondPart = splittedMessageSecondPart;
+    mNewMessageArrivedRequest = newMessageArrivedRequest;
+    mSplittedMessages = splittedMessages;
     mMessageDeleteAtServer = messageDeleteAtServer;
-    this.queryLimit = queryLimitOverride;
-    this.queryOffset = queryOffsetOverride;
-    this.mHandler = handler;
+    mQueryLimit = queryLimitOverride;
+    mQueryOffset = queryOffsetOverride;
+    mHandler = handler;
 
     int offset = 0;
     int limit = Settings.MESSAGE_QUERY_LIMIT;
@@ -85,47 +96,32 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       offset = MessageListDAO.getInstance(mContext).getAllMessagesCount(acc.getDatabaseId());
     }
 
-    if (queryLimit == -1 || queryOffset == -1) {
-      queryOffset = offset;
-      queryLimit = limit;
+    if (mQueryLimit == -1 || mQueryOffset == -1) {
+      mQueryOffset = offset;
+      mQueryLimit = limit;
     }
     
-    this.mRunningSetup = new RunningSetup(acc, queryLimit, queryOffset);
+    this.mRunningSetup = new RunningSetup(acc, mQueryLimit, mQueryOffset);
     
     if (runningTaskStack == null) {
-      runningTaskStack = new HashMap<RunningSetup, Boolean>();
+      runningTaskStack = new HashMap<>();
     }
   }
   
 
   @Override
   protected MessageListResult doInBackground(String... params) {
-    
-    
-    MessageListResult messageResult = null;
-    try {
-      if (messageProvider != null) {
-        if (isSetupRunning(mRunningSetup)) {
-          return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
-        }
 
-        // the already loaded messages to the specific content type...
-        TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(acc);
-        if (mMessageDeleteAtServer) {
-          long minUID = Long.MAX_VALUE;
-          for (MessageListElement mle : loadedMessages) {
-            long uid = Long.parseLong(mle.getId());
-            if (uid < minUID) minUID = uid;
-          }
-          messageResult = messageProvider.getUIDListForMerge(Long.toString(minUID));
-        } else {
-          messageResult = messageProvider.getMessageList(queryOffset, queryLimit, loadedMessages, Settings.MAX_SNIPPET_LENGTH);
-        }
-      }
+    MessageListResult messageResult = null;
+
+    try {
+
+      messageResult = getMessagesFromProvider();
+
     } catch (AuthenticationFailedException ex) {
       Log.d("rgai", "", ex);
       this.result = AUTHENTICATION_FAILED_EXCEPTION;
-      this.errorMessage = acc.getDisplayName();
+      this.errorMessage = mAccount.getDisplayName();
     } catch (CertPathValidatorException ex) {
       Log.d("rgai", "", ex);
       this.result = CERT_PATH_VALIDATOR_EXCEPTION;
@@ -156,29 +152,88 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     }
 
     if (messageResult != null) {
-      MessageListResult.ResultType resultType = messageResult.getResultType();
+      processMessageResult(messageResult);
+    }
 
+    return messageResult;
+  }
 
-      // if NO_CHANGE or ERROR, then just return, we do not have to merge because messages is probably empty anyway...
-      if (result == OK && !resultType.equals(MessageListResult.ResultType.NO_CHANGE)
-              && !resultType.equals(MessageListResult.ResultType.ERROR)) {
+  private void processMessageResult(MessageListResult messageResult) {
+    MessageListResult.ResultType resultType = messageResult.getResultType();
+
+    // if NO_CHANGE or ERROR, then just return, we do not have to merge because messages are probably empty anyway...
+    if (result == OK) {
+      if (resultType.equals(MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART)) {
+        handleSplittedMessageSecondPart(messageResult);
+      } else if (!resultType.equals(MessageListResult.ResultType.NO_CHANGE)
+            && !resultType.equals(MessageListResult.ResultType.ERROR)) {
         runPostProcess(messageResult);
       }
-
-      List<MessageListElement> msgs = new ArrayList<MessageListElement>(MessageListDAO.getInstance(mContext)
-              .getAllMessages(mAccountsIntegerKey));
-      messageResult.setMessages(msgs);
     }
-//    Log.d("rgai", "time to post process: " + (System.currentTimeMillis() - s) + " ms");
 
+    List<MessageListElement> msgs = new ArrayList<>(MessageListDAO.getInstance(mContext)
+            .getAllMessages(mAccountsIntegerKey));
+
+    messageResult.setMessages(msgs);
+  }
+
+  private void handleSplittedMessageSecondPart(MessageListResult messageResult) {
+    for (MessageListElement mle : messageResult.getMessages()) {
+//      searchPersonAndrInRecipients(mContext, mle);
+      MessageListDAO.getInstance(mContext).updateMessageToSeen(mle.getRawId(), mle.isSeen());
+
+      MessageRecipientDAO.getInstance(mContext).insertRecipients(mContext, mle);
+
+      FullSimpleMessage fsm = (FullSimpleMessage)mle.getFullMessage();
+      FullMessageDAO.getInstance(mContext).insertMessage(mContext, mle.getRawId(), fsm);
+    }
+  }
+
+  private MessageListResult getMessagesFromProvider()
+          throws MessagingException, IOException, CertPathValidatorException {
+
+    MessageListResult messageResult = null;
+    if (mMessageProvider != null) {
+      if (isSetupRunning(mRunningSetup)) {
+        return new MessageListResult(null, MessageListResult.ResultType.CANCELLED);
+      }
+
+
+      if (mSplittedMessageSecondPart && mMessageProvider instanceof SplittedMessageProvider) {
+        SplittedMessageProvider smp = (SplittedMessageProvider)mMessageProvider;
+        messageResult = smp.loadDataToMessages(mSplittedMessages);
+      } else {
+        // get the already loaded messages to the specific content type...
+        TreeSet<MessageListElement> loadedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(mAccount);
+        if (mMessageDeleteAtServer) {
+          long minUID = Long.MAX_VALUE;
+          for (MessageListElement mle : loadedMessages) {
+            long uid = Long.parseLong(mle.getId());
+            if (uid < minUID) minUID = uid;
+          }
+          messageResult = mMessageProvider.getUIDListForMerge(Long.toString(minUID));
+        } else {
+          messageResult = mMessageProvider.getMessageList(mQueryOffset, mQueryLimit,
+                  loadedMessages, mNewMessageArrivedRequest);
+        }
+      }
+    }
     return messageResult;
   }
 
 
   private void runPostProcess(MessageListResult msgResult) {
-    MessageListElement[] newMessages = msgResult.getMessages().toArray(new MessageListElement[msgResult.getMessages().size()]);
-    MessageListResult.ResultType resultType = msgResult.getResultType();
+    MessageListElement[] newMessages;
 
+    if (msgResult.getMessages() != null) {
+      newMessages = msgResult
+              .getMessages()
+              .toArray(new MessageListElement[msgResult.getMessages().size()]);
+    } else {
+      newMessages = new MessageListElement[0];
+    }
+
+    MessageListResult.ResultType resultType = msgResult.getResultType();
 
     if (resultType.equals(MessageListResult.ResultType.MERGE_DELETE)) {
       reMatchMessages(newMessages);
@@ -187,6 +242,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
 
     boolean sendBC = false;
+
     for (MessageListElement m : newMessages) {
       if (!m.isUpdateFlags() && m.getMessageType().equals(MessageProvider.Type.FACEBOOK) && m.isGroupMessage()) {
         sendBC = true;
@@ -199,8 +255,8 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     }
 
     TreeMap<Long, MessageListElement> allStoredMessages = MessageListDAO.getInstance(mContext).getAllMessagesMap(mAccountsIntegerKey);
-    mergeMessages(newMessages, allStoredMessages, loadMore, resultType);
-
+    TreeMap<String, MessageListElement> splittedMessages = mergeMessages(newMessages, allStoredMessages, mLoadMore, resultType);
+    msgResult.setSplittedMessages(splittedMessages);
     if (ThreadDisplayerActivity.actViewingMessage != null) {
       long accountId = mAccountsAccountKey.get(ThreadDisplayerActivity.actViewingMessage.getAccount());
       long storedMessageId = MessageListDAO.getInstance(mContext).getMessageRawId(ThreadDisplayerActivity.actViewingMessage,
@@ -216,7 +272,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     if (etalonMessages != null && etalonMessages.length > 0) {
       Account a = etalonMessages[0].getAccount();
       TreeSet<MessageListElement> storedMessages = MessageListDAO.getInstance(mContext).getAllMessagesToAccount(a);
-      List<MessageListElement> messagesToRemove = new LinkedList<MessageListElement>();
+      List<MessageListElement> messagesToRemove = new LinkedList<>();
       for (MessageListElement stored : storedMessages) {
         boolean found = false;
         for (MessageListElement etalonMessage : etalonMessages) {
@@ -233,7 +289,7 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       // associated with the given account
       if (!messagesToRemove.isEmpty()) {
         try {
-          MessageListDAO.getInstance(mContext).removeMessages(mContext, a.getDatabaseId(), messagesToRemove);
+          MessageListDAO.getInstance(mContext).deleteMessages(mContext, a.getDatabaseId(), messagesToRemove);
         } catch (Exception e) {
           Log.d("rgai", "", e);
         }
@@ -248,9 +304,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
    * @param loadMoreRequest true if result of "load more" action, false otherwise, which
    *                        means this is a refresh action
    */
-  private void mergeMessages(MessageListElement[] newMessages, TreeMap<Long, MessageListElement> storedMessages,
+  private TreeMap<String, MessageListElement> mergeMessages(MessageListElement[] newMessages, TreeMap<Long, MessageListElement> storedMessages,
                              boolean loadMoreRequest, MessageListResult.ResultType resultType) {
     // TODO: optimize message merge
+
+    TreeMap<String, MessageListElement> splittedMessages = new TreeMap<>();
     for (MessageListElement newMessage : newMessages) {
 //        MessageListElement storedFoundMessage = null;
       // .contains not work, because the date of new item != date of old item
@@ -260,13 +318,21 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
       long accountId = mAccountsAccountKey.get(newMessage.getAccount());
       long storedMessageRawId = MessageListDAO.getInstance(mContext).getMessageRawId(newMessage, accountId);
 
-      // if message is not stored in database
       Person searchedFrom = Person.searchPersonAndr(mContext, newMessage.getFrom());
       if (searchedFrom != null && !searchedFrom.equals(newMessage.getFrom())) {
         newMessage.setFrom(searchedFrom);
       }
+
+      // if message is not stored in database
       if (storedMessageRawId == -1) {
-        MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
+//        boolean isImportant = MessagePredictionProvider.Helper.isImportant(mpp.predictMessage(mContext, newMessage));
+        boolean isImportant = false;
+        newMessage.setIsImportant(isImportant);
+        long rawId = MessageListDAO.getInstance(mContext).insertMessage(mContext, newMessage, mAccountsAccountKey);
+        newMessage.setRawId(rawId);
+        if (newMessage.isSplittedMessage()) {
+          splittedMessages.put(newMessage.getId(), newMessage);
+        }
 
         if ((ThreadDisplayerActivity.actViewingMessage != null && newMessage.equals(ThreadDisplayerActivity.actViewingMessage))
                 || (ThreadDisplayerActivity.actViewingMessage == null && MainActivity.isMainActivityVisible())) {
@@ -309,8 +375,24 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
     }
 
     // checking for deleted messages here
-    if (resultType == MessageListResult.ResultType.CHANGED && !loadMoreRequest) {
+    if ((resultType == MessageListResult.ResultType.CHANGED)
+            && !loadMoreRequest) {
       deleteMergeMessages(newMessages);
+    }
+
+    return splittedMessages;
+  }
+
+  private static void searchPersonAndrInRecipients(Context context, MessageListElement mle) {
+    if (mle != null && mle.getRecipientsList() != null) {
+      List<Person> andrPerson = new LinkedList<>();
+      for (Person p : mle.getRecipientsList()) {
+        Person searchedFrom = Person.searchPersonAndr(context, p);
+        if (searchedFrom != null && !searchedFrom.equals(p)) {
+          andrPerson.add(searchedFrom);
+        }
+      }
+      mle.setRecipients(andrPerson);
     }
   }
 
@@ -318,7 +400,9 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
   private void deleteMergeMessages(MessageListElement[] newMessages) {
     if (newMessages.length > 0) {
       long accountId = mAccountsAccountKey.get(newMessages[0].getAccount());
-      TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(mContext).getAllMessages(mAccountsIntegerKey, accountId);
+      TreeSet<MessageListElement> msgs = MessageListDAO
+              .getInstance(mContext)
+              .getAllMessages(mAccountsIntegerKey, accountId);
 
       SortedSet<MessageListElement> messagesToRemove;
       messagesToRemove = msgs.headSet(newMessages[newMessages.length - 1]);
@@ -332,7 +416,11 @@ public class MessageListerAsyncTask extends BatchedTimeoutAsyncTask<String, Inte
 
       for (MessageListElement mle : messagesToRemove) {
         long accId = mAccountsAccountKey.get(mle.getAccount());
-        MessageListDAO.getInstance(mContext).removeMessage(mle, accId);
+        try {
+          MessageListDAO.getInstance(mContext).deleteMessage(mContext, mle, accId);
+        } catch (Exception e) {
+          Log.d("yako", "", e);
+        }
       }
     }
   }

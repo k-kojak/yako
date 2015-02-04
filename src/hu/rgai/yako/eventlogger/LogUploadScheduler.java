@@ -25,7 +25,7 @@ public enum LogUploadScheduler {
   public synchronized void startRepeatingTask() {
     mStatusChecker.setRepeatTask(true);
     scheduler = new Thread(mStatusChecker);
-    scheduler.start();
+    //scheduler.start();
     isRunning = true;
   }
 

@@ -21,6 +21,7 @@ import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.BatchedProcessState;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -33,6 +34,7 @@ import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
+import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
 import hu.rgai.yako.workers.BatchedTimeoutAsyncTask;
@@ -75,9 +77,6 @@ public class MainActivityFragment extends Fragment {
     mContextBarTimerHandler = new Handler();
 
 
-//    mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
-    Log.d("rgai3", "QUERIING accounts: " + mAccounts);
-
     View mRootView = inflater.inflate(R.layout.main, container, false);
     mMainActivity = (MainActivity)getActivity();
     mSwipeRefreshLayout = (SwipeRefreshLayout) mRootView.findViewById(R.id.SwipeRefreshLayout);
@@ -103,7 +102,7 @@ public class MainActivityFragment extends Fragment {
         }
         if (contextSelectedElements.size() > 0) {
           startContextualActionbarTimer();
-          mode.setTitle(contextSelectedElements.size() + " selected");
+          mode.setTitle(contextSelectedElements.size() + " " + mMainActivity.getString(R.string.selected));
           if (contextSelectedElements.size() == 1) {
             mode.getMenu().findItem(R.id.reply).setVisible(true);
             Context c = MainActivityFragment.this.getActivity();
@@ -184,7 +183,7 @@ public class MainActivityFragment extends Fragment {
 
     loadMoreButton = new Button(mMainActivity);
     loadMoreButton.setVisibility(View.GONE);
-    loadMoreButton.setText("Load more ...");
+    loadMoreButton.setText(R.string.load_more);
     loadMoreButton.getBackground().setAlpha(0);
     loadMoreButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -208,7 +207,6 @@ public class MainActivityFragment extends Fragment {
         Cursor cursorOfMessage = (Cursor)av.getItemAtPosition(itemIndex);
         MessageListElement message = MessageListDAO.cursorToMessageListElement(cursorOfMessage, mAccounts);
         Account a = message.getAccount();
-        Log.d("rgai3", "message's account after click: " + a);
         Class classToLoad = Settings.getAccountTypeToMessageDisplayer().get(a.getAccountType());
         Intent intent = new Intent(mMainActivity, classToLoad);
 //        intent.putExtra(IntentStrings.Params.MESSAGE_ID, message.getId());
@@ -250,7 +248,6 @@ public class MainActivityFragment extends Fragment {
   @Override
   public void onResume() {
     super.onResume();
-    Log.d("rgai3", "ONRESUME CALLED");
     mAccounts = AccountDAO.getInstance(getActivity()).getIdToAccountsMap();
     updateAdapter();
     setLoadMoreButtonVisibility();
@@ -286,11 +283,10 @@ public class MainActivityFragment extends Fragment {
   private void contextActionDeleteMessage() {
     cancelContextualActionbarTimer();
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+    builder.setPositiveButton(mMainActivity.getString(R.string.yes), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
-      Log.d("rgai", "contextSelectedElements: " + contextSelectedElements);
-      
-      LinkedList<MessageListElement> deletemessages = new LinkedList<MessageListElement>();
+
+      LinkedList<MessageListElement> deletemessages = new LinkedList<>();
       MessageListElement mle;
       
       for (Long idx : contextSelectedElements) {        
@@ -320,7 +316,7 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         public void onTimeout(Context context) {
-          Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
+          Toast.makeText(mContext, context.getString(R.string.timeout_while_deleting_msg), Toast.LENGTH_LONG).show();
           mTopProgressBar.setVisibility(View.GONE);
         }
       };      
@@ -335,13 +331,15 @@ public class MainActivityFragment extends Fragment {
       hideContextualActionbar();
       }
     });
-    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+    builder.setNegativeButton(mMainActivity.getString(R.string.no), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int which) {
         startContextualActionbarTimer();
       }
     }); 
-    builder.setTitle("Delete message");
-    builder.setMessage("Delete selected message"+ (contextSelectedElements.size() == 1 ? "" : "s") +"?").show();
+    builder.setTitle(mMainActivity.getString(R.string.delete_message));
+    builder.setMessage(mMainActivity
+            .getResources()
+            .getQuantityString(R.plurals.delete_selected_msg, contextSelectedElements.size())).show();
     
   }
   
@@ -417,7 +415,6 @@ public class MainActivityFragment extends Fragment {
       if (!contextSelectedElements.isEmpty()) {
         startContextualActionbarTimer();
       }
-      // TODO Auto-generated method stub
       StringBuilder builder = new StringBuilder();
 
       builder.append(EventLogger.LOGGER_STRINGS.MAINPAGE.STR);
@@ -454,11 +451,6 @@ public class MainActivityFragment extends Fragment {
     updateAdapter();
     setLoadMoreButtonVisibility();
     if (mAdapter != null) {
-//      if (!mAdapter.isEmpty() && !loadMoreButtonVisible) {
-//        loadMoreButton.setVisibility(View.VISIBLE);
-//        loadMoreButtonVisible = true;
-//      }
-
       if (!contextSelectedElements.isEmpty()) {
         for (int i = 1; i < mAdapter.getCount(); i++) {
           long rawId = ((Cursor) (mAdapter.getItem(i))).getLong(0);
@@ -480,26 +472,32 @@ public class MainActivityFragment extends Fragment {
 
 
   private void updateAdapter() {
-    Log.d("rgai4", "@@ @@ update adapter....");
-    
-    LinkedList<Long> accountIds = new LinkedList<Long>();        
+
+    LinkedList<Long> accountIds = new LinkedList<>();
     
     if (!MainActivity.selectedAccounts.isEmpty()) {
       for (int i=0; i < MainActivity.selectedAccounts.size(); i++) {
         accountIds.add(MainActivity.selectedAccounts.get(i).getDatabaseId());
       }
     }
-    if (mAdapter == null) {
-      mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity,
-              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true), mAccounts);
 
+    boolean zoneActivated = StoreHandler.isZoneStateActivated(getActivity());
+    GpsZone closestZone = GpsZone.getClosest(YakoApp.getSavedGpsZones(getActivity()));
+    int importantDrawable = closestZone != null ? closestZone.getZoneType().getDrawable() : R.drawable.ic_important;
+    if (mAdapter == null) {
+      mAdapter = new MainListAdapter((YakoApp)getActivity().getApplication(), mMainActivity, importantDrawable,
+              zoneActivated, closestZone,
+              MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null), mAccounts);
     } else {
-      mAdapter.changeCursor(MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true));
+      Cursor newCursor = MessageListDAO.getInstance(getActivity()).getAllMessagesCursor(accountIds, true, zoneActivated && closestZone != null);
+      mAdapter.changeCursor(newCursor);
+      mAdapter.setImportantDrawable(importantDrawable);
+      mAdapter.setZoneActivity(zoneActivated);
+      mAdapter.setClosestZone(closestZone);
       mAdapter.setAccounts(mAccounts);
       mAdapter.notifyDataSetChanged();
     }
-    long e = System.currentTimeMillis();
-//    Log.d("rgai", "time to query the main list: " + (e - s) + " ms");
+
     if (mListView.getAdapter() == null) {
       mListView.setAdapter(mAdapter);
     }

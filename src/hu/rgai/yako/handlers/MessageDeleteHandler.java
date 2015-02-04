@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 
@@ -23,7 +24,7 @@ public abstract class MessageDeleteHandler extends TimeoutHandler {
  
   @Override
   public void onTimeout(Context context) {
-    Toast.makeText(mContext, "Timeout while deleting message", Toast.LENGTH_LONG).show();
+    Toast.makeText(mContext, R.string.timeout_while_deleting_msg, Toast.LENGTH_LONG).show();
   }
   
   public void toastMessage(String s) {

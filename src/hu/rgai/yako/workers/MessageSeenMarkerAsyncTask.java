@@ -2,6 +2,7 @@
 package hu.rgai.yako.workers;
 
 import android.util.Log;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.handlers.MessageSeenMarkerHandler;
 import hu.rgai.yako.messageproviders.MessageProvider;
 
@@ -54,7 +55,7 @@ public class MessageSeenMarkerAsyncTask extends BatchedTimeoutAsyncTask<Void, Vo
       if (success) {
         mHandler.success();
       } else {
-        mHandler.toastMessage("Unable to mark message status.");
+        mHandler.toastMessage(R.string.uanble_to_mark_msg_status);
       }
     }
   }

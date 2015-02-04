@@ -1,65 +1,175 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:background="#ffffffff">
-  
-  <RelativeLayout
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:background="#68A4CC"
-    android:padding="1dip" >
-    
-    <ImageView
-      android:id="@+id/avatar"
-      android:layout_width="wrap_content"
-      android:layout_height="45dip" />
-    
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="#ffffffff">
 
-    <TextView
-      android:id="@+id/from_name"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text=""
-      android:textSize="16dip"
-      android:textStyle="bold"
-      android:layout_toRightOf="@id/avatar"
-    />
-    
-<!--    <TextView
-      android:id="@+id/email"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text=""
-      android:textSize="12dip"
-      android:layout_toRightOf="@id/from_name"
-    />-->
+    <RelativeLayout
+        android:id="@+id/header"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:padding="6dip"
+        android:orientation="horizontal"
+        android:background="#EDEAE8">
 
-    <TextView
-      android:id="@+id/date"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text=""
-      android:textSize="13dip"
-      android:layout_toRightOf="@id/avatar"
-      android:layout_below="@id/from_name"
-    />
-    
-  </RelativeLayout>
-    
-  
-<!--  <ScrollView
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="#ffffffff" >-->
-    <WebView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/email_content"
-            android:layout_width="fill_parent" 
-            android:layout_height="fill_parent"
-            android:scrollbarStyle="outsideOverlay"
-            android:padding="10dip" > 
-    </WebView>
-  <!--</ScrollView>-->
+        <ImageView
+            android:id="@+id/avatar"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            />
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/info_layout"
+            android:layout_toRightOf="@id/avatar">
+
+            <TextView
+                android:id="@+id/from_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/from_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/email_header_text_bg"
+                android:padding="1dp"
+                android:clickable="true"
+                android:text=""
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/recipients"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:clickable="true"
+                android:text=""
+                android:background="@drawable/email_header_text_bg"
+                android:textSize="12sp"
+                android:padding="1dp"/>
+
+            <TextView
+                android:id="@+id/recipients_expanded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:text=""
+                android:background="@drawable/email_header_text_bg"
+                android:textSize="12sp"
+                android:padding="1dp"
+                android:visibility="gone"/>
+
+
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:layout_alignParentRight="true" />
+
+    </RelativeLayout>
+
+
+    <View
+        android:id="@+id/separator"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#c0c0c0"
+        android:layout_below="@id/header"/>
+
+    <!--<ScrollView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_below="@id/separator">-->
+
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:orientation="vertical">-->
+
+            <!--<TextView-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam id mi ac nisl euismod semper. Donec gravida sagittis risus dictum ornare. Nullam ut diam gravida, varius nibh non, faucibus sem. Donec nec vehicula diam. Nulla orci urna, lobortis ac libero fringilla, gravida euismod turpis. Nulla quis aliquam turpis, non consectetur diam. In ac justo dui. Vivamus massa enim, tempor id faucibus ac, convallis ac neque. Sed in enim eu orci sollicitudin gravida. "/>-->
+
+            <WebView
+                android:id="@+id/email_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/separator"
+                android:scrollbarStyle="outsideOverlay"
+                android:paddingTop="6dip"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip"
+                android:paddingBottom="24dip">
+            </WebView>
+
+        <!--</LinearLayout>-->
+
+    <!--</ScrollView>-->
+
+    <LinearLayout
+        android:id="@+id/quick_answer_footer"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/quick_answer_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/quick_answers"
+            android:textSize="18sp"
+            android:textColor="#ffaaaaaa"
+            android:paddingLeft="14dp"
+            android:paddingRight="21dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:clickable="true"
+            android:background="@drawable/quick_answer_btn_bg" />
+
+        <HorizontalScrollView
+            android:id="@+id/quick_answers"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#ff222222">
+
+            <LinearLayout
+                android:id="@+id/quick_answer_inner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/info_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textSize="18sp"
+                    android:textColor="#ffaaaaaa"
+                    android:clickable="true"
+                    android:paddingLeft="14dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp" />
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

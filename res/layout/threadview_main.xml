@@ -14,6 +14,7 @@
         android:dividerHeight="0dp">
     </ListView>
 
+
     <RelativeLayout
         android:id="@+id/message_form"
         android:layout_width="fill_parent"
@@ -55,5 +56,48 @@
           
         </Button>
     </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/quick_answer_caret"
+        android:layout_width="fill_parent"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"
+        android:orientation="horizontal"
+        android:background="#ee000000">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="8dp"
+            android:layout_gravity="center"
+            android:clickable="true"
+            android:onClick="closeQuickAnsers"
+            android:src="@drawable/ic_action_cancel"
+            android:background="@drawable/quick_answer_item_bg"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:background="#22ffffff"
+            />
+
+
+        <HorizontalScrollView
+            android:id="@+id/quick_answers"
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:background="#ee000000" >
+
+            <LinearLayout
+                android:id="@+id/quick_answers_inner"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
 
 </RelativeLayout>

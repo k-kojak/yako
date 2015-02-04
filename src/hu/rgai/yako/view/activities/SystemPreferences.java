@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import hu.rgai.android.test.MainActivity;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.config.Settings;
 
 /**
  *
@@ -24,10 +25,8 @@ public class SystemPreferences extends PreferenceActivity {
 
   @Override
   public void finish() {
-    setResult(MainActivity.PREFERENCES_REQUEST_CODE);
+    setResult(Settings.ActivityRequestCodes.PREFERENCES_REQUEST_CODE);
     super.finish();
   }
-  
-  
-  
+
 }

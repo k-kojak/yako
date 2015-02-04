@@ -23,6 +23,7 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.GmailAccount;
 import hu.rgai.android.test.R;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.regex.Pattern;
 
@@ -30,7 +31,7 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class InfEmailSettingActivity extends ActionBarActivity implements TextWatcher {
+public class InfEmailSettingActivity extends ZoneDisplayActionBarActivity implements TextWatcher {
 
   private EditText email;
   private EditText pass;
@@ -40,7 +41,7 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
 
   @Override
   public void onCreate(Bundle bundle) {
-    super.onCreate(bundle); //To change body of generated methods, choose Tools | Templates.
+    super.onCreate(bundle, true, false, false); //To change body of generated methods, choose Tools | Templates.
   
     setContentView(R.layout.account_settings_infmail_layout);
     
@@ -137,7 +138,7 @@ public class InfEmailSettingActivity extends ActionBarActivity implements TextWa
 
   private void validateInfField(TextView tv, String text) {
     if (text.contains("@")) {
-      tv.setError("Invalid username");
+      tv.setError(getString(R.string.invalid_username));
     } else {
       tv.setError(null);
     }

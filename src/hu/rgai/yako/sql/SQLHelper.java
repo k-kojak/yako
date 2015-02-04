@@ -3,9 +3,7 @@ package hu.rgai.yako.sql;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Message;
 import android.util.Log;
-import hu.rgai.yako.beens.FullSimpleMessage;
 import hu.rgai.yako.beens.MessageListElement;
 
 import java.text.ParseException;
@@ -25,7 +23,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase;
 
   private static final String DATABASE_NAME = "yako_messages";
-  private static final int DATABASE_VERSION = 3;
+  private static final int DATABASE_VERSION = 4;
 
 
   public static synchronized SQLHelper getInstance(Context context) {
@@ -60,15 +58,7 @@ public class SQLHelper extends SQLiteOpenHelper {
   public void onCreate(SQLiteDatabase db) {
     Log.d("rgai", "CREATING TABLES AND INDICES");
     db.execSQL(AccountDAO.TABLE_CREATE);
-    db.execSQL(MessageListDAO.TABLE_CREATE);
-    db.execSQL(PersonSenderDAO.TABLE_CREATE);
-    db.execSQL(FullMessageDAO.TABLE_CREATE);
-    db.execSQL(AttachmentDAO.TABLE_CREATE);
-
-
-    db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
-    db.execSQL(AttachmentDAO.CREATE_INDEX_ON_FILENAME);
-    db.execSQL(PersonSenderDAO.CREATE_INDEX_ON_KEY_TYPE);
+    createAllExceptAccounts(db);
   }
 
   @Override
@@ -80,45 +70,61 @@ public class SQLHelper extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    Log.d("yako", "onUpgrade");
-    if (oldVersion == 1 || oldVersion == 2) {
-      // dropping indexes, tables...
-      db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
-      db.execSQL("DROP INDEX IF EXISTS " + PersonSenderDAO.INDEX_ON_KEY_TYPE);
-      db.execSQL("DROP INDEX IF EXISTS " + AttachmentDAO.INDEX_ON_FILENAME);
-
-      db.execSQL("DROP TABLE IF EXISTS " + AttachmentDAO.TABLE_ATTACHMENTS);
-      db.execSQL("DROP TABLE IF EXISTS " + FullMessageDAO.TABLE_MESSAGE_CONTENT);
-      db.execSQL("DROP TABLE IF EXISTS " + MessageListDAO.TABLE_MESSAGES);
-      db.execSQL("DROP TABLE IF EXISTS " + PersonSenderDAO.TABLE_PERSON);
-
-
-
-      // recreating them...
-      db.execSQL(PersonSenderDAO.TABLE_CREATE);
-      db.execSQL(FullMessageDAO.TABLE_CREATE);
-      db.execSQL(MessageListDAO.TABLE_CREATE);
-      db.execSQL(AttachmentDAO.TABLE_CREATE);
-
-      db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
-      db.execSQL(PersonSenderDAO.CREATE_INDEX_ON_KEY_TYPE);
-      db.execSQL(AttachmentDAO.CREATE_INDEX_ON_FILENAME);
+    if (oldVersion == 1 || oldVersion == 2 || oldVersion == 3) {
+      dropAllAndCreateExceptAccounts(db);
     } else {
       dropAll(db);
       onCreate(db);
     }
   }
 
-  private void dropAll(SQLiteDatabase db) {
+  private void dropAllExceptAccounts(SQLiteDatabase db) {
+    // dropping indexes, tables...
     db.execSQL("DROP INDEX IF EXISTS " + MessageListDAO.INDEX_ON_MSG_TYPE);
+    db.execSQL("DROP INDEX IF EXISTS " + PersonDAO.INDEX_ON_KEY_TYPE);
     db.execSQL("DROP INDEX IF EXISTS " + AttachmentDAO.INDEX_ON_FILENAME);
-    db.execSQL("DROP INDEX IF EXISTS " + PersonSenderDAO.INDEX_ON_KEY_TYPE);
+    db.execSQL("DROP INDEX IF EXISTS " + MessageRecipientDAO.INDEX_ON_MSG_ID);
 
-
+    db.execSQL("DROP TABLE IF EXISTS " + ZoneNotificationDAO.TABLE_ZONE_NOTIFICATIONS);
+    db.execSQL("DROP TABLE IF EXISTS " + MessageRecipientDAO.TABLE_MESSAGE_RECIPIENT);
     db.execSQL("DROP TABLE IF EXISTS " + AttachmentDAO.TABLE_ATTACHMENTS);
     db.execSQL("DROP TABLE IF EXISTS " + FullMessageDAO.TABLE_MESSAGE_CONTENT);
-    db.execSQL("DROP TABLE IF EXISTS " + PersonSenderDAO.TABLE_PERSON);
     db.execSQL("DROP TABLE IF EXISTS " + MessageListDAO.TABLE_MESSAGES);
+    db.execSQL("DROP TABLE IF EXISTS " + PersonDAO.TABLE_PERSON);
+    db.execSQL("DROP TABLE IF EXISTS " + GpsZoneDAO.TABLE_GPS_ZONES);
+  }
+
+  private void createAllExceptAccounts(SQLiteDatabase db) {
+    // recreating them...
+    db.execSQL(PersonDAO.TABLE_CREATE);
+    db.execSQL(FullMessageDAO.TABLE_CREATE);
+    db.execSQL(MessageListDAO.TABLE_CREATE);
+    db.execSQL(AttachmentDAO.TABLE_CREATE);
+    db.execSQL(MessageRecipientDAO.TABLE_CREATE);
+    db.execSQL(GpsZoneDAO.TABLE_CREATE);
+    db.execSQL(ZoneNotificationDAO.TABLE_CREATE);
+
+    db.execSQL(MessageListDAO.CREATE_INDEX_ON_MSG_TYPE);
+    db.execSQL(PersonDAO.CREATE_INDEX_ON_KEY_TYPE);
+    db.execSQL(AttachmentDAO.CREATE_INDEX_ON_FILENAME);
+    db.execSQL(MessageRecipientDAO.CREATE_INDEX_ON_MSG_ID);
+
+  }
+
+
+//  private void createTableMapZones(SQLiteDatabase db) {
+//    db.execSQL(GpsZoneDAO.TABLE_CREATE);
+//    db.execSQL(ZoneNotificationDAO.TABLE_CREATE);
+//  }
+
+  private void dropAllAndCreateExceptAccounts(SQLiteDatabase db) {
+    dropAllExceptAccounts(db);
+    createAllExceptAccounts(db);
+  }
+
+
+  private void dropAll(SQLiteDatabase db) {
+    dropAllExceptAccounts(db);
     db.execSQL("DROP TABLE IF EXISTS " + AccountDAO.TABLE_ACCOUNTS);
   }
 
@@ -145,11 +151,11 @@ public class SQLHelper extends SQLiteOpenHelper {
       return sb.toString();
     }
     
-    public static String getInClosure(Collection<Long> collection, boolean isString) {
+    public static<T> String getInClosure(Collection<T> collection, boolean isString) {
       StringBuilder sb = new StringBuilder();
       sb.append("(");
       int i = 0;
-      for (Long s : collection) {
+      for (T s : collection) {
         if (i > 0) {
           sb.append(",");
         }
@@ -170,7 +176,7 @@ public class SQLHelper extends SQLiteOpenHelper {
       return getInClosureFromListElement(collection, false);
     }
     
-    public static String getInClosure(Collection<Long> collection) {
+    public static<T> String getInClosure(Collection<T> collection) {
       return getInClosure(collection, false);
     }
 

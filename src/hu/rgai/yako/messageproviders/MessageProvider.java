@@ -49,7 +49,8 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException,
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest) throws CertPathValidatorException,
           SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
           IOException, MessagingException, AuthenticationFailedException;
   
@@ -70,9 +71,10 @@ public interface MessageProvider {
    * @throws MessagingException
    * @throws AuthenticationFailedException 
    */
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength) throws CertPathValidatorException,
-          SSLHandshakeException, ConnectException, NoSuchProviderException, UnknownHostException,
-          IOException, MessagingException, AuthenticationFailedException;
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException;
   
   /**
    * Returns a single message.
@@ -159,6 +161,12 @@ public interface MessageProvider {
    */
   public boolean isMessageDeletable();
 
+
+  /**
+   * Tests if a connection is possible to establish with the account.
+   * @return true if connection is possible, false otherwise
+   */
+  public boolean testConnection() throws MessagingException;
 
   /**
    * Retrieves a MessageListResult with a list of minimal MessageListElement objects, where only the UID is used for

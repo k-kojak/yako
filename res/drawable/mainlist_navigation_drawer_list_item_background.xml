@@ -16,6 +16,6 @@ limitations under the License.
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!--<item android:drawable="@drawable/list_background" />-->
-    <item android:state_activated="false" android:drawable="@drawable/navigation_drawer_list_background" />
+    <!--<item android:state_activated="false" android:drawable="@drawable/navigation_drawer_list_background" />-->
     <item android:state_activated="true" android:drawable="@drawable/navigation_drawer_list_activated" />
 </selector>

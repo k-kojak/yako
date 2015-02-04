@@ -10,20 +10,29 @@ package hu.rgai.yako;
 
 import android.app.Application;
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Telephony;
+import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.maps.model.LatLng;
 import hu.rgai.android.test.BuildConfig;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MessageListElement;
+import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.GpsZoneDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.workers.MyAsyncTask;
@@ -32,6 +41,7 @@ import hu.rgai.yako.workers.MyAsyncTask;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 
 import java.util.concurrent.BlockingQueue;
@@ -46,10 +56,15 @@ public class YakoApp extends Application {
 
   private Tracker tracker = null;
 
+  private static LatLng fakeLocation = null;
+
   private volatile static HashMap<Account, Date> lastNotificationDates = null;
   public volatile static MessageListElement mLastNotifiedMessage = null;
   public volatile static Boolean isRaedyForSms = null;
   public static volatile Date lastFullMessageUpdate = null;
+  public static volatile List<GpsZone> gpsZones = null;
+
+  private static int mPreviousActionbarColor = Settings.DEFAULT_ACTIONBAR_COLOR;
 
   private static void initLastNotificationDates(Context c) {
     if (lastNotificationDates == null) {
@@ -58,6 +73,14 @@ public class YakoApp extends Application {
         lastNotificationDates = new HashMap<Account, Date>();
       }
     }
+  }
+
+  public static LatLng getFakeLocation() {
+    return fakeLocation;
+  }
+
+  public static void setFakeLocation(LatLng location) {
+    fakeLocation = location;
   }
 
   /**
@@ -104,7 +127,7 @@ public class YakoApp extends Application {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       String thisPackageName = getPackageName();
       if (!Telephony.Sms.getDefaultSmsPackage(this).equals(thisPackageName)) {
-        Toast.makeText(this, "Yako is not the default SMS provider. Please set as default at default applications.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.yako_is_not_the_def_sms_prov), Toast.LENGTH_LONG).show();
         return false;
       }
     }
@@ -124,6 +147,7 @@ public class YakoApp extends Application {
   public static MessageListElement getLastNotifiedMessage() {
     return mLastNotifiedMessage;
   }
+
   public synchronized Tracker getTracker() {
     if (tracker == null) {
       GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
@@ -151,6 +175,89 @@ public class YakoApp extends Application {
       Log.d("yako", " - - - - - - - ");
     }
   }
+
+
+  /**
+   * Returns all of the gps zones with distance and proximity information (if have).
+   * @param context
+   * @return
+   */
+  public static List<GpsZone> getSavedGpsZones (Context context) {
+    return getSavedGpsZones(context, false);
+  }
+
+
+  /**
+   * Returns all of the gps zones with distance and proximity information (if have).
+   * @param context
+   * @param forceLoadFromDatabase if true, function will load zone values from database
+   * @return
+   */
+  public static List<GpsZone> getSavedGpsZones (Context context, boolean forceLoadFromDatabase) {
+    if (gpsZones == null || forceLoadFromDatabase) {
+      gpsZones = GpsZoneDAO.getInstance(context).getAllZones();
+    }
+    return gpsZones;
+  }
+
+  public static GpsZone getClosestZone(Context context, boolean forceLoadFromDatabase) {
+    GpsZone closest = null;
+    if (StoreHandler.isZoneStateActivated(context)) {
+      List<GpsZone> gpsZones = YakoApp.getSavedGpsZones(context, forceLoadFromDatabase);
+      closest = GpsZone.getClosest(gpsZones);
+    }
+    return closest;
+  }
+
+  public static void setActionBarColor(ActionBarActivity aba, GpsZone closest) {
+    int targetColor;
+
+    if (closest != null) {
+      targetColor = 0xff << 24 | closest.getZoneType().getColor();
+    } else {
+      targetColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
+    }
+
+    String device = getDeviceName();
+    ColorDrawable targetColorDr = new ColorDrawable(targetColor);
+    if (device.startsWith("htc")) {
+      aba.getSupportActionBar().setBackgroundDrawable(targetColorDr);
+    } else {
+      TransitionDrawable titleAnimation = new TransitionDrawable(
+              new ColorDrawable[]{new ColorDrawable(mPreviousActionbarColor), targetColorDr});
+      aba.getSupportActionBar().setBackgroundDrawable(titleAnimation);
+      titleAnimation.startTransition(1000);
+    }
+
+
+    mPreviousActionbarColor = targetColor;
+  }
+
+  public static String getDeviceName() {
+    String manufacturer = Build.MANUFACTURER.toLowerCase();
+    String model = Build.MODEL.toLowerCase();
+    if (model.startsWith(manufacturer)) {
+      return model;
+    } else {
+      return manufacturer + " " + model;
+    }
+  }
+
+  public static void setActionBarTitle(ActionBarActivity aba, GpsZone closest, boolean setTitle, boolean setSubtitle) {
+    String title = "";
+    String subTitle = "";
+    if (closest != null) {
+      title = "@ " + closest.getAlias();
+      subTitle = closest.getZoneType().getDisplayName(aba);
+    }
+    if (setTitle) {
+      aba.getSupportActionBar().setTitle(title);
+    }
+    if (setSubtitle) {
+      aba.getSupportActionBar().setSubtitle(subTitle.toUpperCase());
+    }
+  }
+
 
   @Override
   public void onCreate() {

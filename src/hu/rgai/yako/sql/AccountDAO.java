@@ -34,7 +34,7 @@ public class AccountDAO  {
   private static final String COL_FB_UNIQUE_NAME = "fb_unique_name";
 
 
-  public static final String TABLE_CREATE = "CREATE TABLE " + TABLE_ACCOUNTS + "("
+  public static final String TABLE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_ACCOUNTS + "("
           + COL_ID + " integer primary key autoincrement, "
           + COL_TYPE + " text not null, "
           + COL_UNIQUE_NAME + " text, "
@@ -100,13 +100,14 @@ public class AccountDAO  {
     else if (_id == -1 && readyForSms) {
       Log.d("rgai", "case 3");
       long rawId = addAccount(SmsAccount.getInstance());
+      ZoneNotificationDAO.getInstance(context).saveNotificationSettingByAccount(rawId);
       SmsAccount.getInstance().setId(rawId);
     }
   }
 
 
   public TreeMap<Account, Long> getAccountToIdMap() {
-    TreeMap<Account, Long> accounts = new TreeMap<Account, Long>();
+    TreeMap<Account, Long> accounts = new TreeMap<>();
     Cursor cursor = mDbHelper.getDatabase().query(TABLE_ACCOUNTS, allColumns, null, null, null, null, null);
 
     cursor.moveToFirst();
@@ -137,7 +138,9 @@ public class AccountDAO  {
 
   public synchronized void modifyAccount(Context context, Account oldAccount, Account newAccount) {
     removeAccountWithCascade(context, oldAccount.getDatabaseId());
-    addAccount(newAccount);
+    long rawId = addAccount(newAccount);
+    ZoneNotificationDAO.getInstance(context).saveNotificationSettingByAccount(rawId);
+    
   }
 
 
@@ -223,6 +226,7 @@ public class AccountDAO  {
   public void removeAccountWithCascade(Context context, long accountId) {
     try {
       MessageListDAO.getInstance(context).removeMessages(context, accountId);
+      ZoneNotificationDAO.getInstance(context).removeByAccounts(accountId);
     } catch (Exception e) {
       Log.d("rgai", "", e);
     }

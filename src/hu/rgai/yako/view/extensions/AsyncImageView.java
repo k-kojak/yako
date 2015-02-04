@@ -1,13 +1,13 @@
 
 package hu.rgai.yako.view.extensions;
 
+import hu.kojak.android.circularimageview.CircularImageView;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.AsyncImageLoadProvider;
 import hu.rgai.yako.beens.Person;
 import hu.rgai.yako.workers.AsyncImageLoader;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 import hu.rgai.yako.tools.AndroidUtils;
 
 import java.lang.ref.WeakReference;
@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference;
  *
  * @author Tamas Kojedzinszky
  */
-public class AsyncImageView extends ImageView {
+public class AsyncImageView extends CircularImageView {
 
   private WeakReference<AsyncImageLoader> mLoader = null;
   

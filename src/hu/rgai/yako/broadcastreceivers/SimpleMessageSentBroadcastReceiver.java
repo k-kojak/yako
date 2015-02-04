@@ -60,20 +60,20 @@ public class SimpleMessageSentBroadcastReceiver extends BroadcastReceiver {
     String title;
     switch(resultType) {
       case MessageSentBroadcastReceiver.MESSAGE_DELIVERED:
-        ticker = "Message delivered";
-        title = "Message delivered to";
+        ticker = context.getString(R.string.message_delivered);
+        title = context.getString(R.string.message_delivered_to);
         break;
       case MessageSentBroadcastReceiver.MESSAGE_DELIVER_FAILED:
-        ticker = "Deliver failed";
-        title = "Failed to deliver message to";
+        ticker = context.getString(R.string.deliver_failed);
+        title = context.getString(R.string.failed_to_deliver_msg_to);
         break;
       case MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS:
-        ticker = "Message sent";
-        title = "Message sent to";
+        ticker = context.getString(R.string.message_sent);
+        title = context.getString(R.string.message_sent_to);
         break;
       case MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED:
-        ticker = "Sending failed";
-        title = "Failed to send message to:";
+        ticker = context.getString(R.string.send_failed);
+        title = context.getString(R.string.failed_to_send_msg);
         break;
       default:
         ticker = null;

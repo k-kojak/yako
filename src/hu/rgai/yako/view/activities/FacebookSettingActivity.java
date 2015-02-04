@@ -30,6 +30,7 @@ import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 import com.facebook.widget.ProfilePictureView;
 
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.FacebookIntegratorAsyncTask;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
  * @author Tamas Kojedzinszky
  
  */
-public class FacebookSettingActivity extends ActionBarActivity {
+public class FacebookSettingActivity extends ZoneDisplayActionBarActivity {
 
   private Menu menu;
   private ProfilePictureView profilePictureView;
@@ -91,7 +92,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
               }
               syncFacebookContactList(null);
               try {
-              setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
+                setFieldsByAccount(gu.getName(), gu.getUsername(), null, gu.getId());
               } catch (Exception ex) {
                 Log.d("rgai", "", ex);
               }
@@ -124,7 +125,7 @@ public class FacebookSettingActivity extends ActionBarActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    super.onCreate(savedInstanceState, true, false, false);
     setContentView(R.layout.account_settings_facebook_layout);
 
     
@@ -252,14 +253,14 @@ public class FacebookSettingActivity extends ActionBarActivity {
   public void syncFacebookContactList(View view) {
     if (user != null) {
       if (FacebookIntegratorAsyncTask.isRunning) {
-        Toast.makeText(this, "Synchronization is running", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.fb_sync_is_running), Toast.LENGTH_LONG).show();
       } else {
-        Toast.makeText(FacebookSettingActivity.this, "Syncing contact list...", Toast.LENGTH_LONG).show();
+        Toast.makeText(FacebookSettingActivity.this, getString(R.string.syncing_contact_list), Toast.LENGTH_LONG).show();
         FacebookIntegratorAsyncTask integrator = new FacebookIntegratorAsyncTask(FacebookSettingActivity.this);
         integrator.executeTask(this, new String[]{user.getId()});
       }
     } else {
-      Toast.makeText(this, "Facebook session problem", Toast.LENGTH_LONG).show();
+      Toast.makeText(this, getString(R.string.fb_session_problem), Toast.LENGTH_LONG).show();
     }
   }
   

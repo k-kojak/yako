@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the theme applied to the application or activity -->
+    <style
+        name="CustomActionBarTheme"
+        parent="@style/Theme.AppCompat.Light.DarkActionBar">
+
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+    </style>
+
+    <style name="MyActionBar"
+           parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:titleTextStyle">@style/MyTitleActionBar</item>
+        <item name="android:subtitleTextStyle">@style/MySubtitleActionBar</item>
+    </style>
+
+
+    <style name="MyTitleActionBar"
+           parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title.Inverse">
+        <!--<item name="android:textSize">28sp</item>-->
+    </style>
+
+
+    <style name="MySubtitleActionBar"
+           parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Subtitle.Inverse">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+
+
+
+    <!--<style-->
+        <!--name="CustomDialogTheme"-->
+        <!--parent="@style/Theme.AppCompat.Light.DarkActionBar">-->
+
+        <!--<item name="android:spinnerItemStyle">@style/CustomSpinnerItem</item>-->
+    <!--</style>-->
+
+    <!--<style name="CustomSpinnerItem"-->
+           <!--parent="@style/Widget.AppCompat.Spinner">-->
+        <!--<item name="android:textAppearance">@style/CustomSpinnerItemAppearance</item>-->
+    <!--</style>-->
+
+
+    <!--<style name="CustomSpinnerItemAppearance"-->
+           <!--parent="@style/Base.Widget.AppCompat.DropDownItem.Spinner">-->
+        <!--<item name="android:textColor">#ff444444</item>-->
+        <!--<item name="android:textSize">16sp</item>-->
+        <!--<item name="android:clickable">true</item>-->
+    <!--</style>-->
+
+</resources>

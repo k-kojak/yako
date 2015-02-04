@@ -24,8 +24,10 @@ import android.widget.TextView;
 
 import com.facebook.Session;
 
+import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
+import hu.rgai.yako.beens.GpsZone;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -33,10 +35,12 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.messageproviders.MessageProvider;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
+import hu.rgai.yako.sql.ZoneNotificationDAO;
 import hu.rgai.android.test.R;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.adapters.AccountListAdapter;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,15 +49,14 @@ import java.util.regex.Pattern;
  *
  * @author Tamas Kojedzinszky
  */
-public class AccountSettingsListActivity extends ActionBarActivity {
+public class AccountSettingsListActivity extends ZoneDisplayActionBarActivity {
 
   boolean fbAdded = false;
   boolean stillAddingFacebookAccount = false;
-  FacebookSettingActivity fbFragment = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    super.onCreate(savedInstanceState, true, false, true);
   }
 
   @Override
@@ -157,7 +160,8 @@ public class AccountSettingsListActivity extends ActionBarActivity {
       try {
         if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_NEW) {
           Account newAccount = data.getParcelableExtra("new_account");
-          AccountDAO.getInstance(this).addAccount(newAccount);
+          long rawId = AccountDAO.getInstance(this).addAccount(newAccount);
+          ZoneNotificationDAO.getInstance(this).saveNotificationSettingByAccount(rawId);
           Log.d("rgai3", "NEW ACCOUNT SAVED ");
           getMessagesToNewAccount(newAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_MODIFY) {
@@ -166,7 +170,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 
           // TODO: only run code below if any change really made on accounts (pass, name, other, etc.)
 
-//          YakoApp.removeMessages(oldAccount);
+//          YakoApp.deleteMessages(oldAccount);
           AccountDAO.getInstance(this).modifyAccount(this, oldAccount, newAccount);
 
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
@@ -174,7 +178,7 @@ public class AccountSettingsListActivity extends ActionBarActivity {
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_DELETE) {
           Account oldAccount = (Account) data.getParcelableExtra("old_account");
           AccountDAO.getInstance(this).removeAccountWithCascade(this, oldAccount.getDatabaseId());
-//          YakoApp.removeMessages(oldAccount);
+//          YakoApp.deleteMessages(oldAccount);
           
           AndroidUtils.stopReceiversForAccount(oldAccount, this);
         } else if (resultCode == Settings.ActivityResultCodes.ACCOUNT_SETTING_CANCEL) {
@@ -251,21 +255,21 @@ public class AccountSettingsListActivity extends ActionBarActivity {
 
   }
 
-  public static void validateEmailField(TextView tv, String text) {
-    validatePatternAndShowErrorOnField(tv, text,
+  public static void validateEmailField(Context context, TextView tv, String text) {
+    validatePatternAndShowErrorOnField(context, tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9\\-]+)*(\\.[A-Za-z]{2,})$"));
 
   }
 
-  public static void validateUriField(TextView tv, String text) {
-    validatePatternAndShowErrorOnField(tv, text,
+  public static void validateUriField(Context context, TextView tv, String text) {
+    validatePatternAndShowErrorOnField(context, tv, text,
             Pattern.compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"));
   }
 
-  protected static void validatePatternAndShowErrorOnField(TextView tv, String text, Pattern p) {
+  protected static void validatePatternAndShowErrorOnField(Context context, TextView tv, String text, Pattern p) {
     Matcher matcher = p.matcher(text);
     if (!matcher.matches()) {
-      tv.setError("Invalid email address");
+      tv.setError(context.getString(R.string.invalid_email_address));
     } else {
       tv.setError(null);
     }

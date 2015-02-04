@@ -54,7 +54,8 @@ public class StoreHandler {
   private static final String SELECTED_FILTER_ACCOUNT = "selected_filter_account";
   private static final String MAIN_MESSAGE_LIST = "main_message_list";
   private static final String IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED = "IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED";
-  
+  private static final String IS_ZONE_STATE_ACTIVATED = "IS_ZONE_STATE_ACTIVATED";
+
   public static class SystemSettings {
     
     public static boolean isNotificationTurnedOn(Context context) {
@@ -74,6 +75,19 @@ public class StoreHandler {
       Boolean not = prefs.getBoolean(SystemPreferences.KEY_PREF_NOTIFICATION_VIBRATION, true);
       return not;
     }
+  }
+
+  public static void setZoneActivityState(Context context, boolean active) {
+    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = prefs.edit();
+    editor.putBoolean(IS_ZONE_STATE_ACTIVATED, active);
+    editor.apply();
+  }
+
+  public static boolean isZoneStateActivated(Context context) {
+    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
+    boolean zone = prefs.getBoolean(IS_ZONE_STATE_ACTIVATED, true);
+    return zone;
   }
   
   
@@ -253,28 +267,6 @@ public class StoreHandler {
   }
 
 
-  /**
-   * At some point, the storage of accounts at shared preferences was replaced by database store, at that point
-   * the accounts were lost. Thats why at this version we display a message about this issue, but only once...
-   *
-   * @param context
-   * @return
-   */
-  public static boolean isMessageForDatabaseSorryDisplayed(Context context) {
-    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
-    boolean displayed = prefs.getBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, false);
-    return displayed;
-  }
-
-
-  public static void setIsMessageForDatabaseSorryDisplayed(Context context) {
-    SharedPreferences prefs = context.getSharedPreferences(StoreHandler.class.getSimpleName(), Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = prefs.edit();
-    editor.putBoolean(IS_MESSAGE_FOR_DATABASE_SORRY_DISPLAYED, true);
-    editor.commit();
-  }
-
-
   public static boolean saveByteArrayToDownloadFolder(Context context, byte[] data, String fileName) {
     return saveByteArray(context, data, null, fileName);
   }
@@ -333,7 +325,7 @@ public class StoreHandler {
     editor.putString(context.getString(R.string.settings_fb_access_token_exp_date), df.format(expirationDate));
 //    Log.d("rgai", df.format(expirationDate));
     
-    editor.commit();
+    editor.apply();
   }
   
   
@@ -342,7 +334,7 @@ public class StoreHandler {
     SharedPreferences.Editor editor = prefs.edit();
     editor.remove(context.getString(R.string.settings_fb_access_token));
     editor.remove(context.getString(R.string.settings_fb_access_token_exp_date));
-    editor.commit();
+    editor.apply();
   }
   
   

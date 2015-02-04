@@ -28,26 +28,32 @@ public class MainListAdapter extends CursorAdapter {
   private final Context mContext;
   private static LayoutInflater inflater = null;
   private TreeMap<Long, Account> mAccounts = null;
+  private boolean mIsZonesActivated = false;
+  private int mImportantDrawable = R.drawable.ic_important;
+  private GpsZone mClosestZone;
 
 
-
-  public MainListAdapter(YakoApp yakoApp, Context context, Cursor cursor, TreeMap<Long, Account> accounts) {
+  public MainListAdapter(YakoApp yakoApp, Context context, int importantDrawable, boolean isZonesActivated,
+                         GpsZone closestZone, Cursor cursor, TreeMap<Long, Account> accounts) {
     super(context, cursor, false);
     mYakoApp = yakoApp;
     mContext = context;
-    inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    mImportantDrawable = importantDrawable;
+    mIsZonesActivated = isZonesActivated;
+    mClosestZone = closestZone;
     mAccounts = accounts;
+    inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
   }
 
 
   public void bindView(View view, Context context, Cursor cursor) {
-    
 
-      ViewHolder holder = (ViewHolder)view.getTag();
 
-      MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
+    ViewHolder holder = (ViewHolder) view.getTag();
 
-      // dealing with attachment display
+    MessageListElement message = MessageListDAO.cursorToMessageListElement(cursor, mAccounts);
+
+    // dealing with attachment display
 //      boolean hasAttachment;
 //      if (message.getFullMessage() != null && message.getFullMessage() instanceof FullSimpleMessage) {
 //        FullSimpleMessage fsmp = (FullSimpleMessage)message.getFullMessage();
@@ -59,34 +65,36 @@ public class MainListAdapter extends CursorAdapter {
 //      } else {
 //        hasAttachment = false;
 //      }
-      if (message.getAttachmentCount() != 0) {
-        holder.attachment.setVisibility(View.VISIBLE);
-      } else {
-        holder.attachment.setVisibility(View.GONE);
+    if (message.getAttachmentCount() != 0) {
+      holder.attachment.setVisibility(View.VISIBLE);
+    } else {
+      holder.attachment.setVisibility(View.GONE);
+    }
+
+
+    // Setting all values in listview
+    // TODO: itt null pointer exceptionnel elszallunk olykor
+    String subjectText = "?";
+    if (message.getTitle() == null) {
+      if (message.getSubTitle() != null) {
+        subjectText = message.getSubTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
       }
+    } else {
+      subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
+    }
 
+    if (message.getUnreadCount() > 0) {
+      subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
+    }
 
-      // Setting all values in listview
-      // TODO: itt null pointer exceptionnel elszallunk olykor
-      String subjectText = "?";
-      if (message.getTitle() == null) {
-        if (message.getSubTitle() != null) {
-          subjectText = message.getSubTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-        }
-      } else {
-        subjectText = message.getTitle().replaceAll("\n", " ").replaceAll(" {2,}", " ");
-      }
+    holder.subject.setText(subjectText);
 
-      if (subjectText.length() > Settings.MAX_SNIPPET_LENGTH) {
-        subjectText = subjectText.substring(0, Settings.MAX_SNIPPET_LENGTH) + "...";
-      }
-      if (message.getUnreadCount() > 0) {
-        subjectText = "(" + message.getUnreadCount() + ") " + subjectText;
-      }
-
-      holder.subject.setText(subjectText);
-
-
+//    if (message.isImportant() && mIsZonesActivated && mClosestZone != null) {
+//      holder.important.setVisibility(View.VISIBLE);
+//      holder.important.setImageDrawable(mContext.getResources().getDrawable(mImportantDrawable));
+//    } else {
+      holder.important.setVisibility(View.GONE);
+//    }
 
 
 
@@ -145,7 +153,7 @@ public class MainListAdapter extends CursorAdapter {
         }, null);
       }
 
-    YakoApp.printAsyncTasks(true);
+//    YakoApp.printAsyncTasks(true);
 
 
       if (message.getMessageType().equals(MessageProvider.Type.FACEBOOK)) {
@@ -187,6 +195,7 @@ public class MainListAdapter extends CursorAdapter {
     holder.msgType = (ImageView) view.findViewById(R.id.list_acc_type);
     holder.attachment = (ImageView) view.findViewById(R.id.attachment);
     holder.accountName = (TextView) view.findViewById(R.id.account_name);
+    holder.important = (ImageView) view.findViewById(R.id.important);
 
     view.setTag(holder);
 
@@ -244,6 +253,18 @@ public class MainListAdapter extends CursorAdapter {
     this.mAccounts = mAccounts;
   }
 
+  public void setZoneActivity(boolean isZonesActivated) {
+    mIsZonesActivated = isZonesActivated;
+  }
+
+  public void setImportantDrawable(int drawable) {
+    mImportantDrawable = drawable;
+  }
+
+  public void setClosestZone(GpsZone closestZone) {
+    mClosestZone = closestZone;
+  }
+
   public static int getSimpleMailIcon(EmailAccount acc) {
     String dom = acc.getEmail().substring(acc.getEmail().indexOf("@") + 1);
     if (dom.contains(".")) {
@@ -262,6 +283,7 @@ public class MainListAdapter extends CursorAdapter {
     ImageView msgType;
     ImageView attachment;
     TextView accountName;
+    ImageView important;
   }
   
 }

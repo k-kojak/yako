@@ -1,8 +1,8 @@
 package hu.rgai.yako.workers;
 
 import android.content.Context;
-import android.content.Intent;
 import android.widget.Toast;
+import hu.rgai.android.test.R;
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.EmailAccount;
 import hu.rgai.yako.beens.EmailMessageRecipient;
@@ -10,9 +10,6 @@ import hu.rgai.yako.beens.FacebookAccount;
 import hu.rgai.yako.beens.FacebookMessageRecipient;
 import hu.rgai.yako.beens.MessageRecipient;
 import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
-import hu.rgai.yako.eventlogger.EventLogger;
-import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
-import hu.rgai.yako.eventlogger.rsa.RSAENCODING;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.messageproviders.FacebookMessageProvider;
 import hu.rgai.yako.messageproviders.MessageProvider;
@@ -20,6 +17,7 @@ import hu.rgai.yako.messageproviders.SimpleEmailMessageProvider;
 import hu.rgai.yako.messageproviders.SmsMessageProvider;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,20 +27,23 @@ import java.util.Set;
 public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   private final Context mContext;
-  private final MessageRecipient mRecipient;
+  private final List<MessageRecipient> mRecipients;
   private final SentMessageBroadcastDescriptor mSentMessageData;
   private final Account mFromAccount;
   private final String mContent;
   private final String mSubject;
+  private final MessageProvider.Type mRecipientsType;
   // private String recipients;
   
 
-  public MessageSender(MessageRecipient recipient, Account fromAccount, SentMessageBroadcastDescriptor sentMessageData,
-          TimeoutHandler timeoutHandler, String subject, String content, Context context) {
+  public MessageSender(MessageProvider.Type recipientsType, List<MessageRecipient> recipients,
+                       Account fromAccount, SentMessageBroadcastDescriptor sentMessageData,
+                       TimeoutHandler timeoutHandler, String subject, String content, Context context) {
     
     super(timeoutHandler);
-    
-    this.mRecipient = recipient;
+
+    this.mRecipientsType = recipientsType;
+    this.mRecipients = recipients;
     this.mFromAccount = fromAccount;
     this.mSentMessageData = sentMessageData;
     this.mSubject = subject;
@@ -51,8 +52,8 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
   }
 
   private boolean isValidContent() {
-    if ( mRecipient.getType().equals( MessageProvider.Type.FACEBOOK)
-        || mRecipient.getType().equals( MessageProvider.Type.SMS) ) {
+    if ( mRecipientsType.equals( MessageProvider.Type.FACEBOOK)
+        || mRecipientsType.equals(MessageProvider.Type.SMS) ) {
       if ( mContent.length() == 0 )
         return false;
     }
@@ -63,23 +64,24 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
   protected Integer doInBackground(Void... params) {
     if ( mFromAccount != null && isValidContent() ) {
       MessageProvider mp = null;
-      Set<MessageRecipient> recipients = null;
-      if (mRecipient.getType().equals(MessageProvider.Type.FACEBOOK)) {
+//      Set<MessageRecipient> recipients = null;
+      if (mRecipientsType.equals(MessageProvider.Type.FACEBOOK)) {
         mp = new FacebookMessageProvider((FacebookAccount) mFromAccount);
-        recipients = new HashSet<MessageRecipient>();
-        recipients.add(new FacebookMessageRecipient(mRecipient.getData()));
-      } else if (mRecipient.getType().equals(MessageProvider.Type.EMAIL) || mRecipient.getType().equals(MessageProvider.Type.GMAIL)) {
+//        recipients = new HashSet<>();
+//        recipients.add(new FacebookMessageRecipient(mRecipients.getData()));
+      } else if (mRecipientsType.equals(MessageProvider.Type.EMAIL) || mRecipientsType.equals(MessageProvider.Type.GMAIL)) {
         publishProgress(mFromAccount.getDisplayName());
         mp = SimpleEmailMessageProvider.getInstance((EmailAccount) mFromAccount);
-        recipients = new HashSet<MessageRecipient>();
-        recipients.add(new EmailMessageRecipient(mRecipient.getDisplayName(), mRecipient.getData()));
-      } else if (mRecipient.getType().equals(MessageProvider.Type.SMS)) {
+//        recipients = new HashSet<>();
+//        recipients.add(new EmailMessageRecipient(mRecipients.getDisplayName(), mRecipients.getData()));
+      } else if (mRecipientsType.equals(MessageProvider.Type.SMS)) {
         mp = new SmsMessageProvider(mContext);
-        recipients = new HashSet<MessageRecipient>();
-        recipients.add(mRecipient);
+//        recipients = new HashSet<>();
+//        recipients.add(mRecipients);
       }
-      if (mp != null && recipients != null) {
-        mp.sendMessage(mContext, mSentMessageData, recipients, mContent, mSubject);
+      if (mp != null && mRecipients != null) {
+        Set<MessageRecipient> mr = new HashSet<>(mRecipients);
+        mp.sendMessage(mContext, mSentMessageData, mr, mContent, mSubject);
         loggingSendMessage();
       }
     }
@@ -87,7 +89,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
   }
 
   private void loggingSendMessage() {
-    StringBuilder builder = new StringBuilder();
+    /*StringBuilder builder = new StringBuilder();
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SENDMESSAGE_STR);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(mRecipient.getType());
@@ -96,8 +98,8 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
     builder.append(mRecipient.getContactId());
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    builder.append(RSAENCODING.INSTANCE.encodingString(mRecipient.getData()));
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);
+    builder.append(RSAENCODING.INSTANCE.encryptString(mRecipient.getData()));
+    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_MESSAGES_PATH, builder.toString(), true);*/
   }
 
   @Override
@@ -113,7 +115,7 @@ public class MessageSender extends TimeoutAsyncTask<Void, String, Integer> {
 
   @Override
   protected void onProgressUpdate(String... values) {
-    Toast.makeText(mContext, "Sending message ...", Toast.LENGTH_SHORT).show();
+    Toast.makeText(mContext, mContext.getString(R.string.sending_msg), Toast.LENGTH_SHORT).show();
   }
 
 }

@@ -1,21 +1,16 @@
 package hu.rgai.yako.view.activities;
 
-import static android.app.Activity.RESULT_OK;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.os.Handler;
 import android.provider.ContactsContract;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
-import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -27,29 +22,10 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.webkit.WebView;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.MultiAutoCompleteTextView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import hu.rgai.android.test.R;
-import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.ContactListAdapter;
-import hu.rgai.yako.beens.Account;
-import hu.rgai.yako.beens.EmailMessageRecipient;
-import hu.rgai.yako.beens.FacebookMessageRecipient;
-import hu.rgai.yako.beens.FullSimpleMessage;
-import hu.rgai.yako.beens.MainServiceExtraParams;
-import hu.rgai.yako.beens.MessageListElement;
-import hu.rgai.yako.beens.MessageRecipient;
-import hu.rgai.yako.beens.Person;
-import hu.rgai.yako.beens.SentMessageBroadcastDescriptor;
-import hu.rgai.yako.beens.SimpleSentMessageData;
-import hu.rgai.yako.beens.SentMessageData;
-import hu.rgai.yako.beens.SmsAccount;
-import hu.rgai.yako.beens.SmsMessageRecipient;
-import hu.rgai.yako.beens.SmsSentMessageData;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.broadcastreceivers.SimpleMessageSentBroadcastReceiver;
 import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.eventlogger.EventLogger;
@@ -57,13 +33,13 @@ import hu.rgai.yako.eventlogger.EventLogger.LogFilePaths;
 import hu.rgai.yako.handlers.TimeoutHandler;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.MessageProvider;
-import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.FullMessageDAO;
 import hu.rgai.yako.sql.MessageListDAO;
-import hu.rgai.yako.store.StoreHandler;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.tools.AndroidUtils;
 import hu.rgai.yako.view.extensions.ChipsMultiAutoCompleteTextView;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.workers.MessageSeenMarkerAsyncTask;
 import hu.rgai.yako.workers.MessageSender;
 
@@ -72,25 +48,23 @@ import java.net.URLDecoder;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
-import net.htmlparser.jericho.Source;
-
 /**
  *
  * @author Tamas Kojedzinszky
  */
-public class MessageReplyActivity extends ActionBarActivity {
+public class MessageReplyActivity extends ZoneDisplayActionBarActivity {
 
   public static final int MESSAGE_SENT_OK = 1;
 
   public static final int MESSAGE_SENT_FAILED = 2;
 
-  private int messageResult;
   private TextView mContent;
   private TextView mCharCount;
   private ChipsMultiAutoCompleteTextView recipients;
   private Account mAccount;
   private WebView mQuotedMessage = null;
   private CheckBox mQuoteCheckbox = null;
+  private View mQuotedSeparator = null;
   private EditText mSubject = null;
   private MessageListElement mMessage = null;
   private FullSimpleMessage mFullMessage = null;
@@ -109,26 +83,34 @@ public class MessageReplyActivity extends ActionBarActivity {
    */
   @Override
   public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
+    super.onCreate(icicle, true, true, true);
 
     ActionBar actionBar = getSupportActionBar();
-    actionBar.setDisplayShowTitleEnabled(false);
+    actionBar.setDisplayShowTitleEnabled(true);
     actionBar.setDisplayHomeAsUpEnabled(true);
 
     setContentView(R.layout.message_reply);
-    
+
     
     mSubject = (EditText) findViewById(R.id.subject);
     mCharCount = (TextView) findViewById(R.id.char_count);
     mContent = (TextView) findViewById(R.id.message_content);
-    mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
-    mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
 
+    mQuotedMessage = (WebView) findViewById(R.id.quoted_message);
+    mQuotedMessage.getSettings().setBuiltInZoomControls(true);
+    mQuotedMessage.getSettings().setDisplayZoomControls(false);
+
+    mQuoteCheckbox = (CheckBox) findViewById(R.id.quote_origi);
+    mQuotedSeparator = findViewById(R.id.quoted_separator);
+
+    List<Person> sendTo = new ArrayList<>();
+    boolean replyToAll = false;
 
     if (getIntent().getExtras() != null) {
+      if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_REPLY_TO_ALL)) {
+        replyToAll = getIntent().getExtras().getBoolean(IntentStrings.Params.MESSAGE_REPLY_TO_ALL, false);
+      }
       if (getIntent().getExtras().containsKey(IntentStrings.Params.MESSAGE_RAW_ID)) {
-//        String msgId = getIntent().getExtras().getString(IntentStrings.Params.MESSAGE_ID);
-//        Account acc = getIntent().getExtras().getParcelable(IntentStrings.Params.MESSAGE_ACCOUNT);
         long rawId = getIntent().getExtras().getLong(IntentStrings.Params.MESSAGE_RAW_ID);
         TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
         mMessage = MessageListDAO.getInstance(this).getMessageByRawId(rawId, accounts);
@@ -148,12 +130,16 @@ public class MessageReplyActivity extends ActionBarActivity {
           // TODO: check if message is set to read remotely in this case or not
           MessageListDAO.getInstance(this).updateMessageToSeen(mMessage.getRawId(), true);
           MessageProvider provider = AndroidUtils.getMessageProviderInstanceByAccount(mMessage.getAccount(), this);
-          TreeSet<String> messagesToMark = new TreeSet<String>();
+          TreeSet<String> messagesToMark = new TreeSet<>();
           messagesToMark.add(mMessage.getId());
           MessageSeenMarkerAsyncTask marker = new MessageSeenMarkerAsyncTask(provider, messagesToMark, true, null);
           marker.executeTask(this, null);
         }
-        
+      }
+      if (getIntent().getAction() != null) {
+        if (getIntent().getAction().equals(IntentStrings.Actions.DIRECT_EMAIL)) {
+          sendTo.add((Person)getIntent().getExtras().getParcelable(IntentStrings.Params.PERSON));
+        }
       }
     }
     
@@ -192,17 +178,39 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (mMessage != null) {
       if (mMessage.getFrom() != null && mAccount != null
               && (mAccount.getAccountType().equals(MessageProvider.Type.EMAIL) || mAccount.getAccountType().equals(MessageProvider.Type.GMAIL))) {
-
-        MessageRecipient ri = new EmailMessageRecipient(mMessage.getFrom().getName(), mMessage.getFrom().getId(), mMessage.getFrom().getName(),
-                null, (int) mMessage.getFrom().getContactId());
-        recipients.addRecipient(ri);
+        sendTo.add(mMessage.getFrom());
+        if (replyToAll) {
+          String myEmail = mAccount.getAccountType().equals(MessageProvider.Type.GMAIL)
+                  ? ((GmailAccount)mAccount).getEmail() + "@gmail.com"
+                  : ((EmailAccount)mAccount).getEmail();
+          List<Person> recs = MessageRecipientDAO.getInstance(this).getRecipientsToMessageId(this, mMessage);
+          for (Person p : recs) {
+            if (!p.getId().equals(myEmail)) {
+              sendTo.add(p);
+            }
+          }
+        }
       }
     } else {
       mQuotedMessage.setVisibility(View.GONE);
       mQuoteCheckbox.setVisibility(View.GONE);
+      mQuotedSeparator.setVisibility(View.GONE);
     }
-    showHideSubjectField();
-    showHideCharacterCountField();
+
+    if (!sendTo.isEmpty()) {
+      for (int i = 0; i < sendTo.size(); i++) {
+        Person sendToAndr = Person.searchPersonAndr(this, sendTo.get(i));
+        if (sendToAndr != null && !sendTo.get(i).equals(sendToAndr)) {
+          sendTo.set(i, sendToAndr);
+        }
+      }
+      for (Person p : sendTo) {
+        MessageRecipient rec = new EmailMessageRecipient(p.getName(), p.getId(), p.getName(), null,
+                (int) p.getContactId());
+        recipients.addRecipient(rec);
+      }
+    }
+
 
     Cursor c = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, null, null, null);
     ContactListAdapter adapter = new ContactListAdapter(this, c);
@@ -218,6 +226,20 @@ public class MessageReplyActivity extends ActionBarActivity {
     if (getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_SENDTO)) {
       processImplicitIntent(getIntent());
     }
+
+    showHideCharacterCountField();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    new Handler().postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        showHideSubjectField();
+      }
+    }, 300);
+
   }
 
   private void showHideSubjectField() {
@@ -292,24 +314,11 @@ public class MessageReplyActivity extends ActionBarActivity {
 
   private void searchUserAndInsertAsRecipient(MessageProvider.Type type, String id) {
     Person pa = Person.searchPersonAndr(this, new Person(id, id, type));
-
     if (pa != null) {
-      MessageRecipient ri = null;
-      switch (type) {
-        case FACEBOOK:
-          ri = new FacebookMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        case SMS:
-          ri = new SmsMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        case EMAIL:
-        case GMAIL:
-          ri = new EmailMessageRecipient(pa.getName(), pa.getId(), pa.getName(), null, (int) pa.getContactId());
-          break;
-        default:
-          break;
+      MessageRecipient ri = MessageRecipient.Helper.personToRecipient(pa);
+      if (ri != null) {
+        recipients.addRecipient(ri);
       }
-      recipients.addRecipient(ri);
     }
   }
 
@@ -337,6 +346,7 @@ public class MessageReplyActivity extends ActionBarActivity {
           if (mContent.getText().toString().trim().length() == 0) {
             Toast.makeText(this, R.string.empty_message, Toast.LENGTH_SHORT).show();
           } else {
+//            prepareSend(to);
             prepareMessageSending(to);
           }
         }
@@ -347,7 +357,16 @@ public class MessageReplyActivity extends ActionBarActivity {
   }
 
 
-  public void sendMessage(MessageRecipient recipient, Account from, List<MessageRecipient> recipients) {
+  public static String getDesignedQuotedText(String s) {
+    return "<br /><br />"
+            + " <blockquote"
+            + " style=\"color: #666; padding-left: 1ex; margin: 0px 0px 0px 0.8ex; border-left: 1px solid rgb(204, 204, 204);\">"
+            + s
+            + "</blockquote>";
+  }
+
+  public void sendMessage(MessageProvider.Type sendType, List<MessageRecipient> toSend,
+                          Account from, List<MessageRecipient> recipients) {
     if (from == null) {
       return;
     }
@@ -364,19 +383,18 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
     
     if (mQuotedMessage.getVisibility() == View.VISIBLE) {
-      Source source = new Source("<br /><br />" + mFullMessage.getContent().getContent());
-      content += source.getRenderer().toString();
+      content += getDesignedQuotedText(mFullMessage.getContent().getContent().toString());
     }
     
     
     // setting intent data for handling returning result
     SentMessageBroadcastDescriptor sentMessBroadcD = new SentMessageBroadcastDescriptor(SimpleMessageSentBroadcastReceiver.class,
             IntentStrings.Actions.MESSAGE_SENT_BROADCAST);
-    SentMessageData smd = getSentMessageDataToAccount(recipient.getDisplayName(), from);
+    SentMessageData smd = getSentMessageDataToAccount(recipients, from);
     sentMessBroadcD.setMessageData(smd);
     
     
-    MessageSender rs = new MessageSender(recipient, from, sentMessBroadcD,
+    MessageSender rs = new MessageSender(sendType, toSend, from, sentMessBroadcD,
             new TimeoutHandler() {
               @Override
               public void onTimeout(Context context) {
@@ -390,45 +408,32 @@ public class MessageReplyActivity extends ActionBarActivity {
     
     // this means this was the last call of sendMessage
     if (recipients.isEmpty()) {
-      // request a message list for the instance we sent the message with
-//      int threadAccountCount = 0;
-//      Account threadAccount = null;
-//      for (Account a : mChoosenAccountsToSend) {
-//        if (a.isThreadAccount()) {
-//          threadAccountCount++;
-//          threadAccount = a;
-//        }
-//      }
-//      Log.d("rgai", "thread instance count: " + threadAccountCount);
-//      Log.d("rgai", "thread instance: " + threadAccount);
-//      if (!mChoosenAccountsToSend.isEmpty()) {
-//        Log.d("rgai", "sending request to get messages");
-//        MainServiceExtraParams eParams = new MainServiceExtraParams();
-//        if (threadAccountCount == 1) {
-//          eParams.setAccount(threadAccount);
-//        }
-//        eParams.setForceQuery(true);
-//        Intent intent = new Intent(this, MainScheduler.class);
-//        intent.setAction(Context.ALARM_SERVICE);
-//        intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
-//        this.sendBroadcast(intent);
-//      }
       finish();
     } else {
       prepareMessageSending(recipients);
     }
   }
   
-  private SentMessageData getSentMessageDataToAccount(String recipientName, Account from) {
-  
+  public static SentMessageData getSentMessageDataToAccount(List<MessageRecipient> recipients, Account from) {
+
+    StringBuilder recName = new StringBuilder();
+    int i = 0;
+    for (MessageRecipient mr : recipients) {
+      if (i > 0) {
+        recName.append(", ");
+      }
+      recName.append(mr.getDisplayData());
+      i++;
+    }
+
     if (from.getAccountType().equals(MessageProvider.Type.SMS)) {
-      SmsSentMessageData smsData = new SmsSentMessageData(recipientName);
+      SmsSentMessageData smsData = new SmsSentMessageData(recName.toString());
       if (from.isThreadAccount()) {
         smsData.setAccountToLoad(from);
       }
       return smsData;
     } else {
-      SimpleSentMessageData simpleData = new SimpleSentMessageData(recipientName);
+      SimpleSentMessageData simpleData = new SimpleSentMessageData(recName.toString());
       if (from.isThreadAccount()) {
         simpleData.setAccountToLoad(from);
       }
@@ -443,7 +448,7 @@ public class MessageReplyActivity extends ActionBarActivity {
     TreeSet<Account> accounts = AccountDAO.getInstance(this).getAllAccounts();
 
     MessageRecipient ri = recipients.remove(0);
-    List<Account> availableAccounts = new LinkedList<Account>();
+    List<Account> availableAccounts = new LinkedList<>();
 
     for (Account actAcc : accounts) {
       if (((ri.getType().equals(MessageProvider.Type.EMAIL) || ri.getType().equals(MessageProvider.Type.GMAIL))
@@ -455,14 +460,26 @@ public class MessageReplyActivity extends ActionBarActivity {
         }
       }
     }
+
+    List<MessageRecipient> allRecipients = new LinkedList<>();
+    allRecipients.add(ri);
+    Iterator<MessageRecipient> it = recipients.iterator();
+    while (it.hasNext()) {
+      MessageRecipient mr = it.next();
+      if (mr.getType().equals(ri.getType())) {
+        allRecipients.add(mr);
+        it.remove();
+      }
+    }
+
     if (availableAccounts.isEmpty()) {
       Toast.makeText(this,
               "Cannot send message to " + ri.getDisplayData() + ". A " + ri.getType().toString() + " instance required for that.",
               Toast.LENGTH_LONG).show();
     } else if (availableAccounts.size() == 1) {
-      sendMessage(ri, availableAccounts.get(0), recipients);
+      sendMessage(ri.getType(), allRecipients, availableAccounts.get(0), recipients);
     } else {
-      chooseAccount(ri, availableAccounts, recipients);
+      chooseAccount(ri.getType(), allRecipients, availableAccounts, recipients);
     }
     
   }
@@ -521,8 +538,8 @@ public class MessageReplyActivity extends ActionBarActivity {
     v.startAnimation(a);
   }
 
-  private void chooseAccount(final MessageRecipient recipient, final List<Account> accs,
-          final List<MessageRecipient> recipients) {
+  private void chooseAccount(final MessageProvider.Type sendType, final List<MessageRecipient> toSend,
+                             final List<Account> accs, final List<MessageRecipient> recipients) {
 
     String[] items = new String[accs.size()];
     int i = 0;
@@ -531,11 +548,11 @@ public class MessageReplyActivity extends ActionBarActivity {
     }
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Send message to " + recipient.getDisplayName() + " from:");
+    builder.setTitle("Send " + toSend.get(0).getType() + " message with:");
     builder.setItems(items, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        sendMessage(recipient, accs.get(which), recipients);
+        sendMessage(sendType, toSend, accs.get(which), recipients);
       }
     });
 
@@ -545,7 +562,6 @@ public class MessageReplyActivity extends ActionBarActivity {
 
   @Override
   public void finish() {
-    setResult(messageResult);
     super.finish();
   }
 

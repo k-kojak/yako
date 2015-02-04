@@ -81,6 +81,8 @@ public class AttachmentAdapter extends BaseAdapter {
     holder.fileName.setText(attachment.getFileName());
     holder.fileSize.setText(Utils.getPrettyFileSize(attachment.getSize()));
 
+    holder.fileName.setText("Hardcoded string...talalj meg...");
+
     if (downloaders.containsKey(attachment.getRawId())) {
       AttachmentDownloader ad = downloaders.get(attachment.getRawId());
       if (ad.isRunning()) {
@@ -103,7 +105,7 @@ public class AttachmentAdapter extends BaseAdapter {
             downloaders.put(attachment.getRawId(), downloader);
             new Thread(downloader).start();
           } else if (attachment.isDownloaded()) {
-            Toast.makeText(mContext, "The file is in the Download folder.", Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext, mContext.getString(R.string.dl_file_is_in_download_folder), Toast.LENGTH_LONG).show();
           }
         }
       }
@@ -177,7 +179,7 @@ public class AttachmentAdapter extends BaseAdapter {
     try {
       mContext.startActivity(intent);
     } catch (ActivityNotFoundException e) {
-      Toast.makeText(mContext, "Can't open the file.", Toast.LENGTH_SHORT).show();
+      Toast.makeText(mContext, mContext.getString(R.string.cant_open_file), Toast.LENGTH_SHORT).show();
     }
     
   }

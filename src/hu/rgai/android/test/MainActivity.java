@@ -1,12 +1,13 @@
 package hu.rgai.android.test;
 
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.*;
 import android.content.res.Configuration;
 import android.database.Cursor;
-import android.hardware.Sensor;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -16,13 +17,11 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.*;
-import android.widget.AdapterView;
-import android.widget.FrameLayout;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.*;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenSource;
@@ -31,10 +30,13 @@ import com.facebook.SessionState;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
-import hu.rgai.yako.eventlogger.AccelerometerListener;
+import com.google.android.gms.maps.model.LatLng;
+import hu.rgai.yako.adapters.ZoneListAdapter;
+import hu.rgai.yako.beens.*;
 import hu.rgai.yako.YakoApp;
 import hu.rgai.yako.adapters.MainListAdapter;
 import hu.rgai.yako.adapters.MainListDrawerFilterAdapter;
+
 import hu.rgai.yako.beens.Account;
 import hu.rgai.yako.beens.MainServiceExtraParams;
 import hu.rgai.yako.beens.MessageListElement;
@@ -45,39 +47,55 @@ import hu.rgai.yako.eventlogger.LogUploadScheduler;
 import hu.rgai.yako.eventlogger.ScreenReceiver;
 import hu.rgai.yako.handlers.MessageListerHandler;
 import hu.rgai.yako.intents.IntentStrings;
+import hu.rgai.yako.services.LocationService;
 import hu.rgai.yako.services.MainService;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
 import hu.rgai.yako.sql.AccountDAO;
 import hu.rgai.yako.sql.MessageListDAO;
 import hu.rgai.yako.store.StoreHandler;
 import hu.rgai.yako.tools.AndroidUtils;
-import hu.rgai.yako.view.activities.AccountSettingsListActivity;
-import hu.rgai.yako.view.activities.MessageReplyActivity;
-import hu.rgai.yako.view.activities.SystemPreferences;
+import hu.rgai.yako.view.activities.*;
+import hu.rgai.yako.view.extensions.LinearListView;
+import hu.rgai.yako.view.extensions.ZoneDisplayActionBarActivity;
 import hu.rgai.yako.view.fragments.MainActivityFragment;
 import hu.rgai.yako.workers.BatchedAsyncTaskExecutor;
+import hu.rgai.yako.workers.SmartPredictionAsyncTask;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 
 /**
  * @author Tamas Kojedzinszky
  */
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ZoneDisplayActionBarActivity {
+
+  private static final long MY_LOCATION_LIFE_LENGTH = 5 * 60 * 1000; // in millisec
+
+//  private static List<GpsZone> mGpsZones = null;
+//  private Location mMyLastLocation = null;
+
+  private int mPreviousDrawerColor = Settings.DEFAULT_ACTIONBAR_COLOR;
 
   private DrawerLayout mDrawerLayout;
-  private ListView mDrawerList;
+  private LinearListView mAccountHolder;
+  private CompoundButton mZonesToggle;
+  private CompoundButton mFakeZoneToggle;
+  private View mZonesContainer;
+  private LinearListView mZoneHolder;
+  private MainListDrawerFilterAdapter mAccountFilterAdapter = null;
+  private ZoneListAdapter mZoneListAdapter = null;
+
+  private MainActivityFragment mMainFragment;
+  private static final String MAIN_FRAGMENT_TAG = "main_fragment";
+
+  private TextView mAddGpsZone;
+  private View mDrawerWrapper;
   private ActionBarDrawerToggle mDrawerToggle;
-  private MainActivityFragment mFragment = null;
-  private MainListDrawerFilterAdapter mDrawerFilterAdapter = null;
+
   private boolean mDrawerIsVisible = false;
   private ProgressDialog pd = null;
   private MessageLoadedReceiver mMessageLoadedReceiver = null;
-  private Menu mMenu;
+  private ZoneListChangedReceiver mLocationChangeReceiver = null;
   private ScreenReceiver screenReceiver;
   private TextView mEmptyListText = null;
   private TreeMap<Long, Account> mAccountsLongKey = null;
@@ -87,27 +105,30 @@ public class MainActivity extends ActionBarActivity {
   private static volatile String fbToken = null;
   private static volatile boolean is_activity_visible = false;
   public static final String BATCHED_MESSAGE_MARKER_KEY = "batched_message_marker_key";
-  public static final int PREFERENCES_REQUEST_CODE = 1;
+
+  private LayoutInflater mInflater;
   
   
   
 
   @Override
   public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
-    
-    Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName());
+    super.onCreate(icicle, true, true, true);
+
+    Tracker t = ((YakoApp) getApplication()).getTracker();
+    t.setScreenName(((Object) this).getClass().getName());
     t.send(new HitBuilders.AppViewBuilder().build());
-    
-    
+
+
+    mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
     // LOGGING
     setUpAndRegisterScreenReceiver();
     if (!EventLogger.INSTANCE.isLogFileOpen()) {
       EventLogger.INSTANCE.setContext(this);
       EventLogger.INSTANCE.openAllLogFile();
     }
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH , APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
+    EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, APPLICATION_START_STR + " " + EventLogger.INSTANCE.getAppVersion() + " " + android.os.Build.VERSION.RELEASE, true);
     LogUploadScheduler.INSTANCE.setContext(this);
     if (!LogUploadScheduler.INSTANCE.isRunning) {
       LogUploadScheduler.INSTANCE.startRepeatingTask();
@@ -115,33 +136,79 @@ public class MainActivity extends ActionBarActivity {
 //    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 //    sensorManager.registerListener(new AccelerometerListener(),
 //    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-    
-    
-    
+    mLocationChangeReceiver = new ZoneListChangedReceiver();
+
+
     setContentView(R.layout.mainlist_navigation_drawer);
-    
+
     mEmptyListText = new TextView(this);
-    mEmptyListText.setText(this.getString(R.string.empty_list));
+    mEmptyListText.setText(this.getString(R.string.no_account_set));
     mEmptyListText.setGravity(Gravity.CENTER);
     mEmptyListText.setVisibility(View.GONE);
-    ((FrameLayout)findViewById(R.id.content_frame)).addView(mEmptyListText);
-    
+    ((FrameLayout) findViewById(R.id.content_frame)).addView(mEmptyListText);
+
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     getSupportActionBar().setHomeButtonEnabled(true);
 
-    
+
     selectedAccounts = StoreHandler.getSelectedFilterAccount(this);
-    
+
     if (selectedAccounts == null) {
-    selectedAccounts = new LinkedList<Account>();
+      selectedAccounts = new LinkedList<>();
     }
-    
-    mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+    mDrawerWrapper = findViewById(R.id.drawer_wrapper);
+    mAccountHolder = (LinearListView) findViewById(R.id.account_holder);
+    mAccountHolder.setIsSingleSelect(false);
+
+    mZonesToggle = (CompoundButton) findViewById(R.id.zone_on_off);
+    mFakeZoneToggle = (CompoundButton) findViewById(R.id.fake_zone);
+    mZoneHolder = (LinearListView) findViewById(R.id.zone_holder);
+    mZonesContainer = findViewById(R.id.zones_container);
+    mAddGpsZone = (TextView) findViewById(R.id.add_gps_zone);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-       
-    mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+
+    mAccountHolder.setOnItemClickListener(new AccountFilterClickListener());
+    mZoneHolder.setOnItemClickListener(new ZoneListClickListener());
+
+    boolean isZonesActivated = StoreHandler.isZoneStateActivated(this);
+    if (!isZonesActivated) {
+      mZonesContainer.setVisibility(View.GONE);
+    }
+    mZonesToggle.setChecked(isZonesActivated);
+    mZonesToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        animateZoneList(isChecked);
+        boolean isOn = mZonesToggle.isChecked();
+        StoreHandler.setZoneActivityState(MainActivity.this, isOn);
+        redisplayMessages();
+        loadZoneListAdapter(false);
+      }
+    });
+
+    mFakeZoneToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (!isChecked) {
+          YakoApp.setFakeLocation(null);
+          startLocationService(true);
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(MainActivity.this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
+        } else {
+          startFakeMapActivity();
+        }
+      }
+    });
+
+    mAddGpsZone.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        startMapActivity(null);
+      }
+    });
 
     // ActionBarDrawerToggle ties together the proper interactions
     // between the sliding drawer and the action bar app icon
@@ -151,9 +218,7 @@ public class MainActivity extends ActionBarActivity {
             R.drawable.ic_drawer, /* nav drawer image to replace 'Up' caret */
             R.string.mainlist_open_drawer, /* "open drawer" description for accessibility */
             R.string.mainlist_close_drawer /* "close drawer" description for accessibility */) {
-              
-      float mPreviousOffset = 0f;
-              
+
       @Override
       public void onDrawerClosed(View view) {
         super.onDrawerClosed(view);
@@ -165,7 +230,7 @@ public class MainActivity extends ActionBarActivity {
         super.onDrawerOpened(drawerView);
         showHideMenuBarIcons(true);
       }
-      
+
       @Override
       public void onDrawerSlide(View arg0, float slideOffset) {
         super.onDrawerSlide(arg0, slideOffset);
@@ -175,70 +240,89 @@ public class MainActivity extends ActionBarActivity {
           showHideMenuBarIcons(false);
         }
       }
-      
+
       private void showHideMenuBarIcons(boolean hide) {
         if (hide) {
           mDrawerIsVisible = true;
-          getSupportActionBar().setTitle(getString(R.string.filter_list));
+//          getSupportActionBar().setTitle(getString(R.string.filter_list));
           invalidateOptionsMenu();
         } else {
           mDrawerIsVisible = false;
-          setTitleByFilter();
+//          setActionbar();
           invalidateOptionsMenu();
         }
       }
     };
 
     mDrawerLayout.setDrawerListener(mDrawerToggle);
-    
+
+  }
+
+  private void animateZoneList(final boolean isActivated) {
+    Animation fadeAnim = AnimationUtils.loadAnimation(this, isActivated ? R.anim.fade_in : R.anim.fade_out);
+    fadeAnim.setAnimationListener(new Animation.AnimationListener() {
+      @Override
+      public void onAnimationStart(Animation animation) {
+        if (isActivated) {
+          mZonesContainer.setVisibility(View.VISIBLE);
+        }
+      }
+
+      @Override
+      public void onAnimationEnd(Animation animation) {
+        if (!isActivated) {
+          mZonesContainer.setVisibility(View.GONE);
+        }
+      }
+
+      @Override
+      public void onAnimationRepeat(Animation animation) {
+      }
+    });
+    mZonesContainer.startAnimation(fadeAnim);
   }
 
 
   @Override
   protected void onResume() {
     super.onResume();
+
     is_activity_visible = true;
     removeNotificationIfExists();
 
     mAccountsLongKey = AccountDAO.getInstance(this).getIdToAccountsMap();
-    
-    
-    // setting filter adapter onResume, because it might change at settings panel
-    TreeSet<Account> accounts = new TreeSet<Account>(mAccountsLongKey.values());
-    mDrawerFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
-    mDrawerList.setAdapter(mDrawerFilterAdapter);
-    mDrawerList.clearChoices();
-    
-    LinkedList<Integer> indexOfAccounts = null;
-    if (!selectedAccounts.isEmpty()) {
 
-      indexOfAccounts = new LinkedList<Integer>();     
-      indexOfAccounts = AndroidUtils.getIndexOfAccount(accounts, selectedAccounts);
-      // the saved selected instance is not available anymore...
-      if (indexOfAccounts.isEmpty()) {
-        selectedAccounts.clear();
-      }
-    }  
-
-    if (selectedAccounts.isEmpty()) {
-      mDrawerList.setItemChecked(0, true);
-    } else {
-      for (int i=0; i < indexOfAccounts.size(); i++) {
-        // +1 needed because 0th element in adapter is "all instance"
-        mDrawerList.setItemChecked(indexOfAccounts.get(i) + 1, true);
-      }     
-    }    
+    setContent(MessageListDAO.getInstance(this).getAllMessagesCount() != 0 ? true : null);
     
+    // setting zone list
+    loadZoneListAdapter(false);
+//    setZoneActivityStates();
+
+
+//    // setting filter adapter onResume, because it might change at settings panel
+    setAccountList();
+
+
     // setting title
-    setTitleByFilter();
+    setActionBar();
+    
 
     // register broadcast receiver for new message load
+    LocalBroadcastManager localManager = LocalBroadcastManager.getInstance(this);
     mMessageLoadedReceiver = new MessageLoadedReceiver();
     IntentFilter filter = new IntentFilter(MainService.BATCHED_MESSAGE_LIST_TASK_DONE_INTENT);
     filter.addAction(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT);
+    filter.addAction(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT);
     filter.addAction(MainService.NO_TASK_AVAILABLE_TO_PROCESS);
-    LocalBroadcastManager.getInstance(this).registerReceiver(mMessageLoadedReceiver, filter);
-    
+    localManager.registerReceiver(mMessageLoadedReceiver, filter);
+
+
+
+    // register broadcast for receive location change pending intents
+    IntentFilter locFilter = new IntentFilter(LocationService.ACTION_ZONE_LIST_MUST_REFRESH);
+    localManager.registerReceiver(mLocationChangeReceiver, locFilter);
+    startLocationService(false);
+
     
     // loading messages
     if (!MainService.RUNNING) {
@@ -257,30 +341,62 @@ public class MainActivity extends ActionBarActivity {
     
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.RESUME_STR);
 
+  }
 
-    if (!StoreHandler.isMessageForDatabaseSorryDisplayed(this)) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-          StoreHandler.setIsMessageForDatabaseSorryDisplayed(MainActivity.this);
-        }
-      });
-      builder.setTitle("Backend changes");
-      builder.setMessage("Due to a bigger code refactor, your account settings are lost.\n" +
-              "Please set them again and apologize for the inconvenience.").show();
+  private void setAccountList() {
+    TreeSet<Account> accounts = new TreeSet<>(mAccountsLongKey.values());
+    mAccountFilterAdapter = new MainListDrawerFilterAdapter(this, accounts);
+    mAccountHolder.setAdapter(mAccountFilterAdapter);
+//    mAccountHolder.clearChoices();
+
+    LinkedList<Integer> indexOfAccounts = null;
+    if (!selectedAccounts.isEmpty()) {
+
+      indexOfAccounts = AndroidUtils.getIndexOfAccount(accounts, selectedAccounts);
+      // the saved selected instance is not available anymore...
+      if (indexOfAccounts.isEmpty()) {
+        selectedAccounts.clear();
+      }
+    }
+
+    if (selectedAccounts.isEmpty()) {
+      mAccountHolder.setItemChecked(0, true);
+    } else {
+      for (int i=0; i < indexOfAccounts.size(); i++) {
+        // +1 needed because 0th element in adapter is "all instance"
+        mAccountHolder.setItemChecked(indexOfAccounts.get(i) + 1, true);
+      }
     }
   }
-  
+
+  public void loadZoneListAdapter(boolean refreshFromDatabase) {
+    List<GpsZone> zones = YakoApp.getSavedGpsZones(this, refreshFromDatabase);
+    boolean zoneActivated = StoreHandler.isZoneStateActivated(this);
+    mZoneListAdapter = new ZoneListAdapter(this, zones, zoneActivated);
+    mZoneHolder.setAdapter(mZoneListAdapter);
+    setActionBar();
+  }
+
+  public void startLocationService(boolean forceUpdateZones) {
+    Intent i = new Intent(this, LocationService.class);
+    if (forceUpdateZones) {
+      i.putExtra(LocationService.EXTRA_FORCE_UPDATE_ZONES, true);
+    }
+    startService(i);
+  }
+
   @Override
   protected void onPause() {
-    
+
     is_activity_visible = false;
     logActivityEvent(EventLogger.LOGGER_STRINGS.MAINPAGE.PAUSE_STR);
-    
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageLoadedReceiver);
-    
+
+    LocalBroadcastManager localManager = LocalBroadcastManager.getInstance(this);
+    localManager.unregisterReceiver(mMessageLoadedReceiver);
+    localManager.unregisterReceiver(mLocationChangeReceiver);
+
     Tracker t = ((YakoApp)getApplication()).getTracker();
-    t.setScreenName(this.getClass().getName() + " - pause");
+    t.setScreenName(((Object)this).getClass().getName() + " - pause");
     t.send(new HitBuilders.AppViewBuilder().build());
     
 // refreshing last notification date when closing activity
@@ -301,8 +417,12 @@ public class MainActivity extends ActionBarActivity {
   
   @Override
   public void onBackPressed() {
-    EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
-    super.onBackPressed();
+    if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+      mDrawerLayout.closeDrawer(GravityCompat.START);
+    } else {
+//      EventLogger.INSTANCE.writeToLogFile(LogFilePaths.FILE_TO_UPLOAD_PATH, EventLogger.LOGGER_STRINGS.MAINPAGE.BACKBUTTON_STR, true);
+      super.onBackPressed();
+    }
   }
 
   
@@ -315,6 +435,7 @@ public class MainActivity extends ActionBarActivity {
         if (refreshNeeded) {
           Log.d("rgai", "REFRESH NEEDED!!!!!");
           List<Account> a = data.getParcelableArrayListExtra(IntentStrings.Params.ACCOUNT);
+
           Intent intent = new Intent(this, MainScheduler.class);
           intent.setAction(Context.ALARM_SERVICE);
           MainServiceExtraParams eParams = new MainServiceExtraParams();
@@ -334,52 +455,119 @@ public class MainActivity extends ActionBarActivity {
 //          Log.d("rgai", "refresh not .... needed!!!!!");
         }
       }
-    }
-  }
-  
-  
-  private void setTitleByFilter() {
-    if (selectedAccounts.isEmpty()) {
-      getSupportActionBar().setTitle("");
-    } else {
-      getSupportActionBar().setTitle("Filter on");
-    }
+    } else if (requestCode == Settings.ActivityRequestCodes.GOOGLE_MAPS_ACTIVITY_RESULT) {
+      if (data != null && data.getAction() != null) {
+        if (data.getAction().equals(GoogleMapsActivity.ACTION_REFRESH_ZONE_LIST)) {
+          loadZoneListAdapter(true);
+          startLocationService(true);
 
-    sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-    sensorManager.registerListener(new AccelerometerListener(),
-            sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-    
-    
-  }
-  
-  
-  private void setContent(Boolean hasData) {
-    // null means we dont know yet: called on onCreate
-    if (hasData == null) {
-      toggleProgressDialog(true);
-    } else {
-      toggleProgressDialog(false);
-      if (hasData) {
-        mEmptyListText.setVisibility(View.GONE);
-        mFragment = loadFragment();
-      } else {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
-          FragmentTransaction ft = fragmentManager.beginTransaction();
-          for (Fragment f : fragmentManager.getFragments()) {
-            if (f != null) {
-              ft.remove(f);
-            }
-          }
-          ft.commit();
-          fragmentManager.executePendingTransactions();
+          // run prediction again, since the zone type might changed...and need to recategorize messages...
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
+
+          Toast.makeText(this, "Zone saved.", Toast.LENGTH_SHORT).show();
         }
-        mEmptyListText.setVisibility(View.VISIBLE);
-        mFragment = null;
+      }
+    } else if (requestCode == Settings.ActivityRequestCodes.FAKE_GOOGLE_MAPS_ACTIVITY_RESULT) {
+      if (data != null && data.getAction() != null) {
+        if (data.getAction().equals(FakeGoogleMapsActivity.ACTION_FAKE_ZONE_SET)) {
+          startLocationService(true);
+//          loadZoneListAdapter(false);
+          SmartPredictionAsyncTask smartPred = new SmartPredictionAsyncTask(this, false);
+          AndroidUtils.startTimeoutAsyncTask(smartPred);
+          mFakeZoneToggle.setChecked(true);
+        }
+      } else {
+        mFakeZoneToggle.setChecked(false);
       }
     }
   }
   
+  
+  protected void setActionBar() {
+    super.setActionBar();
+
+    GpsZone closest = YakoApp.getClosestZone(this, false);
+    setNavigationDrawerColor(closest);
+  }
+
+
+  private void setNavigationDrawerColor(GpsZone closest) {
+    int drawerBgColor;
+
+    if (closest != null) {
+      drawerBgColor = 0xff << 24 | halfOfColor(closest.getZoneType().getColor());
+    } else {
+      drawerBgColor =  Settings.DEFAULT_ACTIONBAR_COLOR;
+    }
+
+    TransitionDrawable drawerAnimation = new TransitionDrawable(
+            new Drawable[]{new ColorDrawable(mPreviousDrawerColor), new ColorDrawable(drawerBgColor)});
+    mDrawerWrapper.setBackground(drawerAnimation);
+    drawerAnimation.startTransition(1000);
+
+    mPreviousDrawerColor = drawerBgColor;
+  }
+
+  private static int halfOfColor(int c) {
+    int redMask   = 0xff0000;
+    int greenMask = 0x00ff00;
+    int blueMask  = 0x0000ff;
+    int shift = 1;
+
+    int r = ((c & redMask) >> shift) & redMask;
+    int g = ((c & greenMask) >> shift) & greenMask;
+    int b = ((c & blueMask) >> shift) & blueMask;
+
+    return r | g | b;
+  }
+
+  private void setContent(Boolean hasData) {
+    // null means we dont know yet: called on onCreate
+    if (hasData == null) {
+      if (mAccountsLongKey.isEmpty()) {
+        toggleProgressDialog(false);
+        mEmptyListText.setVisibility(View.VISIBLE);
+        removeFragment();
+      } else {
+        toggleProgressDialog(true);
+        mEmptyListText.setVisibility(View.GONE);
+      }
+    } else {
+      toggleProgressDialog(false);
+      if (hasData) {
+        mEmptyListText.setVisibility(View.GONE);
+        loadFragment();
+      } else {
+        removeFragment();
+        mEmptyListText.setVisibility(View.VISIBLE);
+      }
+    }
+  }
+
+  private void removeFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    Fragment f = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
+    if (f != null) {
+      FragmentTransaction ft = fragmentManager.beginTransaction();
+      ft.remove(f);
+      ft.commit();
+      mMainFragment = null;
+    }
+  }
+
+  private void loadFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    Fragment f = fragmentManager.findFragmentByTag(MAIN_FRAGMENT_TAG);
+    if (f == null) {
+      mMainFragment = MainActivityFragment.getInstance();
+      fragmentManager.beginTransaction().replace(R.id.content_frame, mMainFragment, MAIN_FRAGMENT_TAG).commit();
+      fragmentManager.executePendingTransactions();
+    } else {
+      mMainFragment = (MainActivityFragment)f;
+    }
+  }
+
   
   public void loadMoreMessage() {
     Intent service = new Intent(this, MainScheduler.class);
@@ -402,8 +590,7 @@ public class MainActivity extends ActionBarActivity {
   public static boolean isMainActivityVisible() {
     return is_activity_visible;
   }
-  
-  
+
   /**
    * Removes the notification from statusbar if exists.
    */
@@ -428,30 +615,8 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  private MainActivityFragment loadFragment() {
-    
-    MainActivityFragment fragment = null;
-    
-      FragmentManager fragmentManager = getSupportFragmentManager();
-      boolean makeTransaction = false;
-      if (fragmentManager.getFragments() != null && !fragmentManager.getFragments().isEmpty()) {
-        makeTransaction = false;
-      } else {
-        makeTransaction = true;
-      }
-      
-      if (makeTransaction) {
-        fragment = MainActivityFragment.getInstance();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
-        fragmentManager.executePendingTransactions();
-      } else {
-        fragment = (MainActivityFragment) fragmentManager.getFragments().get(0);
-      }
-      
-      return fragment;
-  }
 
-  
+
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
     for (int i = 0; i < menu.size(); i++) {
@@ -465,7 +630,6 @@ public class MainActivity extends ActionBarActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_settings_menu, menu);
-    mMenu = menu;
     refreshLoadingIndicatorState();
     return true;
   }
@@ -507,7 +671,7 @@ public class MainActivity extends ActionBarActivity {
         return true;
       case R.id.system_preferences:
         Intent i = new Intent(this, SystemPreferences.class);
-        startActivityForResult(i, PREFERENCES_REQUEST_CODE);
+        startActivityForResult(i, Settings.ActivityRequestCodes.PREFERENCES_REQUEST_CODE);
         return true;
       default:
         return super.onOptionsItemSelected(item);
@@ -520,34 +684,13 @@ public class MainActivity extends ActionBarActivity {
       setRefreshActionButtonState(false);
     } else {
       setRefreshActionButtonState(true);
-//      if (mMenu != null) {
-//        MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
-//        if (refreshItem != null && refreshItem.getActionView() != null) {
-//          BatchedProcessState ps = BatchedAsyncTaskExecutor.getProgressState(MainService.MESSAGE_LIST_QUERY_KEY);
-//          ((TextView)refreshItem.getActionView().findViewById(R.id.refresh_stat)).setText(ps.getProcessDone()+"/"+ps.getTotalProcess());
-//        }
-//      }
     }
   }
   
   
   public void setRefreshActionButtonState(boolean refreshInProgress) {
-//    if (mMenu != null) {
-//      MenuItem refreshItem = mMenu.findItem(R.id.refresh_message_list);
-//      if (refreshItem != null) {
-//        if (refreshInProgress) {
-//          if (refreshItem.getActionView() == null) {
-//            refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
-//          } else {
-//            // do nothing, since we already displaying the progressbar
-//          }
-//        } else {
-//          refreshItem.setActionView(null);
-//        }
-//      }
-//    }
-    if (mFragment != null) {
-      mFragment.loadStateChanged(refreshInProgress);
+    if (mMainFragment != null) {
+      mMainFragment.loadStateChanged(refreshInProgress);
     }
   }
 
@@ -576,10 +719,10 @@ public class MainActivity extends ActionBarActivity {
   }
   
   
-  private void messegasArrivedToDisplay() {
+  private void redisplayMessages() {
     setContent(true);
     toggleProgressDialog(false);
-    mFragment.notifyAdapterChange();
+    mMainFragment.notifyAdapterChange();
   }
 
 
@@ -602,6 +745,80 @@ public class MainActivity extends ActionBarActivity {
     intent.putExtra(IntentStrings.Params.EXTRA_PARAMS, eParams);
     this.sendBroadcast(intent);
   }
+
+//  private void setZoneActivityStates() {
+//    boolean zoneChanged = true;
+//    if (mMyLastLocation != null) {
+//      Log.d("yako", "lat, long: " + mMyLastLocation.getLatitude() + ", " + mMyLastLocation.getLongitude());
+//      Log.d("yako", "time: " + new Date(mMyLastLocation.getTime()));
+//
+//      Set<String> nearLocationList = new TreeSet<String>();
+//      String closestLoc = null;
+//      float closest = Float.MAX_VALUE;
+//      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
+//        int distance = Math.round(getDist((float) zone.getLat(), (float) zone.getLong(),
+//                (float) mMyLastLocation.getLatitude(), (float) mMyLastLocation.getLongitude()));
+//        zone.setDistance(distance);
+//        zone.setProximity(GpsZone.Proximity.UNKNOWN);
+//        if (distance <= zone.getRadius()) {
+//          nearLocationList.add(zone.getAlias());
+//          if (distance < closest) {
+//            closest = distance;
+//            closestLoc = zone.getAlias();
+//          }
+//        }
+//      }
+//
+//      for (GpsZone zone : YakoApp.getSavedGpsZones(this)) {
+//        if (zone.getAlias().equals(closestLoc)) {
+//          zone.setProximity(GpsZone.Proximity.CLOSEST);
+//        } else if (nearLocationList.contains(zone.getAlias())) {
+//          zone.setProximity(GpsZone.Proximity.NEAR);
+//        } else {
+//          zone.setProximity(GpsZone.Proximity.FAR);
+//        }
+//      }
+//    }
+//    if (zoneChanged) {
+//      predictMessages();
+//    }
+//  }
+
+//  private void predictMessages() {
+//    TreeMap<Long, Account> accounts = AccountDAO.getInstance(this).getIdToAccountsMap();
+//    TreeSet<MessageListElement> msgs = MessageListDAO.getInstance(this).getAllMessages(accounts);
+//    if (msgs != null && !msgs.isEmpty()) {
+//      MessagePredictionProvider msgPredProvider = new DummyMessagePredictionProvider();
+//      double val = msgPredProvider.predictMessage(this, msgs.first());
+//      Toast.makeText(this, "predicted dummy value: " + val, Toast.LENGTH_LONG).show();
+//    }
+//  }
+
+//  private float getDist(float x1, float y1, float x2, float y2) {
+//    float[] dist = new float[2];
+//    Location.distanceBetween(x1, y1, x2, y2, dist);
+//    return dist[0];
+//  }
+
+  private void startFakeMapActivity() {
+    Intent i = new Intent(MainActivity.this, FakeGoogleMapsActivity.class);
+    LatLng latLng = LocationService.mMyLastLocation != null
+            ? new LatLng(LocationService.mMyLastLocation.getLatitude(), LocationService.mMyLastLocation.getLongitude()) : null;
+    i.putExtra(FakeGoogleMapsActivity.EXTRA_START_LOC, latLng);
+    startActivityForResult(i, Settings.ActivityRequestCodes.FAKE_GOOGLE_MAPS_ACTIVITY_RESULT);
+  }
+
+  private void startMapActivity(GpsZone zone) {
+    Intent i = new Intent(MainActivity.this, GoogleMapsActivity.class);
+    if (zone != null) {
+      i.putExtra(GoogleMapsActivity.EXTRA_GPS_ZONE_DATA, zone);
+    } else {
+      LatLng latLng = LocationService.mMyLastLocation != null
+              ? new LatLng(LocationService.mMyLastLocation.getLatitude(), LocationService.mMyLastLocation.getLongitude()) : null;
+      i.putExtra(GoogleMapsActivity.EXTRA_START_LOC, latLng);
+    }
+    startActivityForResult(i, Settings.ActivityRequestCodes.GOOGLE_MAPS_ACTIVITY_RESULT);
+  }
   
   
   private class MessageLoadedReceiver extends BroadcastReceiver {
@@ -612,8 +829,9 @@ public class MainActivity extends ActionBarActivity {
         MainActivity.this.refreshLoadingIndicatorState();
       }
       // this one is responsible for list/data updates
-      else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)) {
-        MainActivity.this.messegasArrivedToDisplay();
+      else if (intent.getAction().equals(MessageListerHandler.MESSAGE_PACK_LOADED_INTENT)
+              || intent.getAction().equals(MessageListerHandler.SPLITTED_PACK_LOADED_INTENT)) {
+        MainActivity.this.redisplayMessages();
       }
       // if no task available to do at service
       else if (intent.getAction().equals(MainService.NO_TASK_AVAILABLE_TO_PROCESS)) {
@@ -622,45 +840,61 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
-  
-  
-  
-  
 
-  private class DrawerItemClickListener implements ListView.OnItemClickListener {
+  private class ZoneListChangedReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getAction().equals(LocationService.ACTION_ZONE_LIST_MUST_REFRESH)) {
+        boolean reloadMainList = intent.getBooleanExtra(LocationService.EXTRA_RELOAD_MAINLIST, true);
+        loadZoneListAdapter(false);
+        if (reloadMainList) {
+          MainActivity.this.redisplayMessages();
+        } else {
+          // skipping main list load, because with this change we started a new prediction to messages, so
+          // the end of that process will result a list reload anyway...
+
+          // do nothing...wait for async task to finish and refresh message list at the end of that process
+        }
+      }
+    }
+  }
+
+
+
+  private class AccountFilterClickListener implements LinearListView.OnItemClickListener {
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(Object item, int position) {
+      Account a = (Account)item;
+      mAccountHolder.setItemChecked(position, !mAccountHolder.isItemChecked(position));
 
-      
-        if (position == 0 || mDrawerList.getCheckedItemCount() == 0 
-            || mDrawerList.getCheckedItemCount() == mDrawerList.getCount() - 1 
-            && !mDrawerList.isItemChecked(0)) {
-          
-          mDrawerList.clearChoices();
+
+        if (position == 0 || mAccountHolder.getCheckedItemCount() == 0
+            || mAccountHolder.getCheckedItemCount() == mAccountHolder.getCount() - 1
+            && !mAccountHolder.isItemChecked(0)) {
+
+          mAccountHolder.clearChoices();
           //mDrawerList.requestLayout();
-          mDrawerList.setItemChecked(0, true);
+          mAccountHolder.setItemChecked(0, true);
           selectedAccounts.clear();
-          
+
         } else {
-          mDrawerList.setItemChecked(0, false);
-          
-          if (mDrawerList.isItemChecked(position)) {
-            selectedAccounts.add((Account)parent.getItemAtPosition(position));
+          mAccountHolder.setItemChecked(0, false);
+          if (mAccountHolder.isItemChecked(position)) {
+            selectedAccounts.add(a);
           } else {
-            selectedAccounts.remove((Account)parent.getItemAtPosition(position));
+            selectedAccounts.remove(a);
           }
-        }        
-     
-      //actSelectedFilter = (Account)parent.getItemAtPosition(position);
-      
+        }
+
+
       StoreHandler.saveSelectedFilterAccount(MainActivity.this, selectedAccounts);
-      if (mFragment != null) {
-        mFragment.hideContextualActionbar();
-        mFragment.notifyAdapterChange();
+      if (mMainFragment != null) {
+        mMainFragment.hideContextualActionbar();
+        mMainFragment.notifyAdapterChange();
       }
-      
-      // run query for selected filter only if list is empty OR selected all accounts     
+
+
       LinkedList<Long> accountIds = new LinkedList<Long>();
 
       if (!selectedAccounts.isEmpty()) {
@@ -671,6 +905,7 @@ public class MainActivity extends ActionBarActivity {
         }
       }
 
+      // run query for selected filter only if list is empty OR all accounts are selected
       if (selectedAccounts.isEmpty()
               || !selectedAccounts.isEmpty() && MessageListDAO.getInstance(MainActivity.this).getAllMessagesCount(accountIds) == 0) {
         reloadMessages(false);
@@ -678,8 +913,16 @@ public class MainActivity extends ActionBarActivity {
     }
   }
 
+  private class ZoneListClickListener implements LinearListView.OnItemClickListener {
 
+    @Override
+    public void onItemClick(Object item, int position) {
+      GpsZone zone = (GpsZone)item;
+      startMapActivity(zone);
+    }
+  }
 
+  
   // LOGGING EVENTS
   public void appendVisibleElementToStringBuilder(StringBuilder builder, ListView lv, MainListAdapter adapter) {
     if (lv == null || adapter == null) {
@@ -717,8 +960,8 @@ public class MainActivity extends ActionBarActivity {
     StringBuilder builder = new StringBuilder();
     builder.append(event);
     builder.append(EventLogger.LOGGER_STRINGS.OTHER.SPACE_STR);
-    if (mFragment != null) {
-      appendVisibleElementToStringBuilder(builder, mFragment.getListView(), mFragment.getAdapter());
+    if (mMainFragment != null) {
+      appendVisibleElementToStringBuilder(builder, mMainFragment.getListView(), mMainFragment.getAdapter());
     }
     Log.d("willrgai", builder.toString());
     EventLogger.INSTANCE.writeToLogFile( LogFilePaths.FILE_TO_UPLOAD_PATH, builder.toString(), true);

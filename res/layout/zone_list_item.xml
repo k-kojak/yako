@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/active_status"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:background="@drawable/ic_offline"
+        android:layout_marginLeft="6dp"
+        android:layout_centerVertical="true"/>
+
+    <TableRow
+        android:id="@+id/texts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/active_status"
+        android:layout_toLeftOf="@+id/discard"
+        android:orientation="horizontal"
+        android:padding="5dip"
+        android:background="@drawable/zone_list_selector">
+
+        <TextView
+            android:id="@+id/alias"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:layout_marginLeft="6dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:maxWidth="160dp"
+            android:textColor="#aaaaaa"
+            android:typeface="sans"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/distance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:layout_marginLeft="6dp"
+            android:gravity="right"
+            android:textColor="#464646"
+            android:textSize="12sp"
+            android:textStyle="italic" />
+
+
+    </TableRow>
+
+    <ImageView
+        android:id="@+id/discard"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:padding="4dp"
+        android:layout_marginRight="6dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:clickable="true"
+        android:src="@drawable/ic_action_discard"
+        android:background="@drawable/zone_list_selector"/>
+
+</RelativeLayout>

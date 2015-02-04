@@ -227,15 +227,5 @@ public class FacebookIdSaver {
     }
   }
   
-  private String replaceAccents(String val) {
-    char[] replaces = new char[]{
-      'ö','ü','ó','ő','ú','é','á','ű','í',
-      'Ö','Ü','Ó','Ő','Ú','É','Á','Ű','Í'};
-    for (char c : replaces) {
-      val = val.replaceAll(c+"", "_");
-    }
-    
-    return val;
-  }
-  
+
 }

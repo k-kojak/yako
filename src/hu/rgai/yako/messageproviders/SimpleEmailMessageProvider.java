@@ -6,7 +6,6 @@ package hu.rgai.yako.messageproviders;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import com.google.android.gms.internal.fo;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPInputStream;
 import com.sun.mail.smtp.SMTPTransport;
@@ -30,8 +29,8 @@ import hu.rgai.yako.config.Settings;
 import hu.rgai.yako.intents.IntentStrings;
 import hu.rgai.yako.messageproviders.socketfactory.MySSLSocketFactory;
 import hu.rgai.yako.services.schedulestarters.MainScheduler;
+import hu.rgai.yako.sql.MessageRecipientDAO;
 import hu.rgai.yako.view.activities.InfEmailSettingActivity;
-import hu.rgai.yako.view.activities.SystemPreferences;
 import hu.rgai.yako.workers.TimeoutAsyncTask;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -46,8 +45,6 @@ import java.net.UnknownHostException;
 import java.security.Security;
 import java.security.cert.CertPathValidatorException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.mail.Address;
@@ -69,7 +66,6 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import javax.mail.search.FlagTerm;
 import javax.net.ssl.SSLHandshakeException;
-import net.htmlparser.jericho.Source;
 
 /**
  * Implements a simple email message providing via IMAP protocol.
@@ -78,7 +74,7 @@ import net.htmlparser.jericho.Source;
  * 
  * @author Tamas Kojedzinszky
  */
-public class SimpleEmailMessageProvider implements MessageProvider {
+public class SimpleEmailMessageProvider implements MessageProvider, SplittedMessageProvider {
 
   private final AccountFolder accountFolder;
   private final EmailAccount account;
@@ -214,7 +210,11 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       Store store = getStore(account);
       if (store != null) {
         if (store.isConnected()) {
-          folder = (IMAPFolder)store.getFolder(accountFolder.folder);
+          try {
+            folder = (IMAPFolder) store.getFolder(accountFolder.folder);
+          } catch (IllegalStateException e) {
+            return null;
+          }
         } else {
           return null;
         }
@@ -271,29 +271,56 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   
 
   @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages) throws CertPathValidatorException, SSLHandshakeException,
-          ConnectException, NoSuchProviderException, UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
-    return getMessageList(offset, limit, loadedMessages, 20);
-  }
-  
-  @Override
-  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages, int snippetMaxLength)
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          boolean isNewMessageArrivedRequest)
           throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
           UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
-    
-    try {
-      List<MessageListElement> emails = new LinkedList<MessageListElement>();
 
-      IMAPFolder imapFolder = (IMAPFolder)getStore().getFolder("Inbox");
+    return getMessageList(offset, limit, loadedMessages, 20, isNewMessageArrivedRequest);
+  }
+
+  private void putTime(HashMap<String, Long> map, String s, long startTime) {
+    if (!map.containsKey(s)) {
+      map.put(s, 0l);
+    }
+    map.put(s, map.get(s) + (System.currentTimeMillis() - startTime));
+  }
+
+  @Override
+  public MessageListResult getMessageList(int offset, int limit, TreeSet<MessageListElement> loadedMessages,
+                                          int snippetMaxLength, boolean isNewMessageArrivedRequest)
+          throws CertPathValidatorException, SSLHandshakeException, ConnectException, NoSuchProviderException,
+          UnknownHostException, IOException, MessagingException, AuthenticationFailedException {
+
+    long s1 = System.currentTimeMillis();
+    HashMap<String, Long> times = new HashMap<>();
+    try {
+      List<MessageListElement> emails = new LinkedList<>();
+
+      long s3 = System.currentTimeMillis();
+      IMAPFolder imapFolder = null;
+      try {
+        imapFolder = (IMAPFolder) getStore(account).getFolder("Inbox");
+      } catch (AuthenticationFailedException e) {
+        Log.d("kojak", "", e);
+      }
       if (imapFolder == null) {
         return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
       }
+      putTime(times, "getStoreGetFolder", s3);
       
-      
+      long s4 = System.currentTimeMillis();
       imapFolder.open(Folder.READ_ONLY);
       UIDFolder uidImapFolder = imapFolder;
+
+
       int messageCount = imapFolder.getMessageCount();
+      putTime(times, "openFolderGetMsgCount", s4);
+      long s5 = System.currentTimeMillis();
+
+
       long nextUID = getNextUID(imapFolder, uidImapFolder, messageCount);
+      putTime(times, "getNextUID", s5);
       if (offset == 0 && !hasNewMail(nextUID, messageCount) && !loadedMessages.isEmpty()) {
         Log.d("rgai", "NO NEW MAIL AND NO DELETION AND VALID KEY");
         if (MainActivity.isMainActivityVisible()) {
@@ -305,21 +332,34 @@ public class SimpleEmailMessageProvider implements MessageProvider {
         Log.d("rgai", "NEW MAIL OR DELETION OR VALIDITY KEY");
       }
 
+
       int start = Math.max(1, messageCount - limit - offset + 1);
       int end = start + limit > messageCount ? messageCount : start + limit;
 
       Message[] messages;
       List<MessageListElement> flagMessages = null;
       if (offset == 0 && !loadedMessages.isEmpty()) {
+        long s6 = System.currentTimeMillis();
         messages = uidImapFolder.getMessagesByUID(getSmallestUID(loadedMessages), UIDFolder.LASTUID);
+        putTime(times, "getMessagesByUid", s6);
+
+        s6 = System.currentTimeMillis();
         MessageListResult mlr = getFlagChangesOfMessages(loadedMessages);
+        putTime(times, "getFlagChanges", s6);
+
+        s6 = System.currentTimeMillis();
         flagMessages = mlr.getMessages();
+        putTime(times, "getMessages", s6);
       } else {
         messages = imapFolder.getMessages(start, end);
       }
+      long s2 = System.currentTimeMillis();
       for (int i = messages.length - 1; i >= 0; i--) {
+
+        long s7 = System.currentTimeMillis();
         Message m = messages[i];
         long uid = uidImapFolder.getUID(m);
+        putTime(times, "getUID", s7);
 
 
         if (flagMessages != null) {
@@ -337,17 +377,30 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           }
         }
 
+        boolean seen = true;
+        List<Person> allRecipients = null;
+        if (isNewMessageArrivedRequest) {
+          Flags flags = m.getFlags();
+          seen = flags.contains(Flags.Flag.SEEN);
 
-        Flags flags = m.getFlags();
-        boolean seen = flags.contains(Flags.Flag.SEEN);
+          Address[] recAddresses = m.getAllRecipients();
+          allRecipients = getAllRecipients(recAddresses);
+        }
 
+
+
+        s7 = System.currentTimeMillis();
         Date date = m.getSentDate();
+        putTime(times, "getSentDate", s7);
 
         // Skipping email from listing, because it is a spam probably,
         // ...at least citromail does not give any information about the email in some cases,
         // and in web browsing it displays an "x" sign before the title, which may indicate
         // that this is a spam
+
+        s7 = System.currentTimeMillis();
         Person fromPerson = getSenderPersonObject(m);
+        putTime(times, "getFrom", s7);
         if (fromPerson == null) {
           // skipping email
         } else {
@@ -363,9 +416,16 @@ public class SimpleEmailMessageProvider implements MessageProvider {
             System.out.println("adding: new Date("+ date.getTime() +"l), \""+ fromEmail +"\")");
           }*/
 
-          EmailContent content = getMessageContent(m);
 
+          EmailContent content = null;
+          if (isNewMessageArrivedRequest) {
+            content = getMessageContent(m);
+          }
+
+
+          s7 = System.currentTimeMillis();
           String subject = m.getSubject();
+          putTime(times, "getSubject", s7);
           if (subject != null) {
             subject = prepareMimeFieldToDecode(subject);
             try {
@@ -374,50 +434,149 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               Log.d("rgai", "", ex);
             }
           } else {
-            try {
-              Source source = new Source(content.getContent().getContent());
-              String decoded = source.getRenderer().toString();
-              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
-              subject = snippet;
-            } catch (StackOverflowError so) {
-              Log.d("rgai", "", so);
-            }
-            if (subject == null) {
+//            try {
+//              Source source = new Source(content.getContent().getContent());
+//              String decoded = source.getRenderer().toString();
+////              String snippet = decoded.substring(0, Math.min(snippetMaxLength, decoded.length()));
+//              String snippet = decoded;
+//              subject = snippet;
+//            } catch (StackOverflowError so) {
+//              Log.d("rgai", "", so);
+//            }
+//            if (subject == null) {
               subject = "<No subject>";
-            }
+//            }
           }
 
-          int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
-          MessageListElement mle = new MessageListElement(-1, uid + "", seen, subject, "", attachSize,
-                  fromPerson, null, date, account, Type.EMAIL);
-          FullSimpleMessage fsm = new FullSimpleMessage(-1, uid + "", subject,
-                  content.getContent(), date, fromPerson, false, Type.EMAIL, content.getAttachmentList());
+          int attachSize = 0;
+          FullSimpleMessage fsm = null;
+
+          if (isNewMessageArrivedRequest) {
+            attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
+            fsm = new FullSimpleMessage(-1, uid + "", subject, content.getContent(), date, fromPerson,
+                    false, Type.EMAIL, content.getAttachmentList());
+          }
+
+          boolean splittedMessage = !isNewMessageArrivedRequest;
+          MessageListElement mle = new MessageListElement(splittedMessage, -1, String.valueOf(uid),
+                  seen, subject, "", attachSize, fromPerson, null, date, account, Type.EMAIL, false);
+
           mle.setFullMessage(fsm);
+          mle.setRecipients(allRecipients);
           emails.add(mle);
         }
       }
+      Log.d("yako", "total for cycle time -> " + (System.currentTimeMillis() - s2));
 
 
       imapFolder.close(false);
-      
+      Log.d("yako", "total time -> " + (System.currentTimeMillis() - s1));
+
+      long sum = 0;
+      for (Long e : times.values()) {
+        sum += e;
+      }
+      Log.d("yako", "total for cycle time based on times map-> " + sum);
+      for (Map.Entry<String, Long> e : times.entrySet()) {
+        Formatter f = new Formatter().format("%.2f", (e.getValue() * 100.0 / sum));
+        Log.d("yako", "\t" + e.getKey() + " -> " + e.getValue() + " -> "+ f.toString() +" %");
+      }
+
       return new MessageListResult(emails, MessageListResult.ResultType.CHANGED);
     } catch (AuthenticationFailedException ex) {
       throw ex;
-    } catch (SSLHandshakeException ex) {
-      throw ex;
-    } catch (ConnectException ex) {
-      throw ex;
     } catch (NoSuchProviderException ex) {
-      throw ex;
-    } catch (UnknownHostException ex) {
-      throw ex;
-    } catch (IOException ex) {
       throw ex;
     } catch (MessagingException ex) {
       throw ex;
     } finally {
       
-//      setFolderIdleBlocked(instance, false);
+    }
+  }
+
+  private static List<Person> getAllRecipients(Address[] recs) {
+    if (recs == null) {
+      return null;
+    }
+
+    List<Person> recipients = new ArrayList<>(recs.length);
+    for (Address a : recs) {
+      recipients.add(getPersonFromAddress(a));
+    }
+
+    return recipients;
+  }
+
+  @Override
+  public MessageListResult loadDataToMessages(TreeMap<String, MessageListElement> messagesToLoad) throws CertPathValidatorException, IOException, MessagingException {
+
+    long s1 = System.currentTimeMillis();
+    HashMap<String, Long> times = new HashMap<>();
+    try {
+      List<MessageListElement> emails = new LinkedList<>();
+
+      long s3 = System.currentTimeMillis();
+      IMAPFolder imapFolder = (IMAPFolder)getStore(account).getFolder("Inbox");
+      putTime(times, "getStoreGetFolder", s3);
+      if (imapFolder == null) {
+        return new MessageListResult(emails, MessageListResult.ResultType.ERROR);
+      }
+
+      imapFolder.open(Folder.READ_ONLY);
+      UIDFolder uidImapFolder = imapFolder;
+
+      String uidsString[] = messagesToLoad.keySet().toArray(new String[messagesToLoad.keySet().size()]);
+      long uids[] = new long[uidsString.length];
+      for (int i = 0; i < uidsString.length; i++) {
+        uids[i] = Long.parseLong(uidsString[i]);
+      }
+
+      Message[] messages = uidImapFolder.getMessagesByUID(uids);
+
+      for (int i = messages.length - 1; i >= 0; i--) {
+
+        Message m = messages[i];
+        if (m == null) continue;
+
+        long uid = uidImapFolder.getUID(m);
+
+        MessageListElement mle = messagesToLoad.get(String.valueOf(uid));
+
+        Address[] recAddresses = m.getAllRecipients();
+        List<Person> allRecipients = getAllRecipients(recAddresses);
+
+        Flags flags = m.getFlags();
+        boolean seen = flags.contains(Flags.Flag.SEEN);
+        EmailContent content = getMessageContent(m);
+        int attachSize = content.getAttachmentList() != null ? content.getAttachmentList().size() : 0;
+
+        mle.setSeen(seen);
+        mle.setAttachmentCount(attachSize);
+        mle.setRecipients(allRecipients);
+
+        FullSimpleMessage fsm = new FullSimpleMessage(-1, String.valueOf(uid), mle.getTitle(),
+                content.getContent(), mle.getDate(), mle.getFrom(), false, Type.EMAIL, content.getAttachmentList());
+        mle.setFullMessage(fsm);
+        emails.add(mle);
+      }
+
+
+      imapFolder.close(false);
+      Log.d("yako", "total time -> " + (System.currentTimeMillis() - s1));
+
+      long sum = 0;
+      for (Long e : times.values()) {
+        sum += e;
+      }
+      Log.d("yako", "total for cycle time based on times map-> " + sum);
+      for (Map.Entry<String, Long> e : times.entrySet()) {
+        Formatter f = new Formatter().format("%.2f", (e.getValue() * 100.0 / sum));
+        Log.d("yako", "\t" + e.getKey() + " -> " + e.getValue() + " -> "+ f.toString() +" %");
+      }
+
+      return new MessageListResult(emails, MessageListResult.ResultType.SPLITTED_RESULT_SECOND_PART);
+    } catch (AuthenticationFailedException ex) {
+      throw ex;
     }
   }
   
@@ -519,47 +678,57 @@ public class SimpleEmailMessageProvider implements MessageProvider {
 
 
   private Person getSenderPersonObject(Message m) throws MessagingException {
-    String from = null;
     if (m.getFrom() != null) {
-      from = m.getFrom()[0].toString();
-      from = prepareMimeFieldToDecode(from);
+      return getPersonFromAddress(m.getFrom()[0]);
+    } else {
+      return null;
     }
+  }
+
+  /**
+   * Extracts the person information from Address object.
+   *
+   * @param address the raw input Address object from the email
+   * @return Person object
+   */
+  private static Person getPersonFromAddress(Address address) {
+
+    if (address == null) {
+      return null;
+    }
+
+    String from = address.toString();
+    from = prepareMimeFieldToDecode(from);
+
     if (from != null) {
       try {
         from = MimeUtility.decodeText(from);
       } catch (java.io.UnsupportedEncodingException ex) {
         Log.d("rgai", "", ex);
       }
+    } else {
+      return null;
     }
 
-    // Skipping email from listing, because it is a spam probably,
-    // ...at least citromail does not give any information about the email in some cases,
-    // and in web browsing it displays an "x" sign before the title, which may indicate
-    // that this is a spam
-    if (from == null) {
-      // skipping email
-      return null;
+    String fromName;
+    String fromEmail;
+    String regex = "(.*)<([^<>]*)>";
+
+    if (from.matches(regex)) {
+      Pattern pattern = Pattern.compile(regex);
+      Matcher matcher = pattern.matcher(from);
+      matcher.find();
+      fromName = matcher.group(1);
+      fromEmail = matcher.group(2);
     } else {
-      String fromName = null;
-      String fromEmail = null;
-      String regex = "(.*)<([^<>]*)>";
-//        System.out.println("SimpleEmailMessageProvider: from -> " + from);
-      if (from.matches(regex)) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(from);
-        while(matcher.find()) {
-          fromName = matcher.group(1);
-          fromEmail = matcher.group(2);
-          break;
-        }
-      } else {
-        fromName = from;
-        fromEmail = from;
-      }
-      return new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+      fromName = from;
+      fromEmail = from;
     }
+    return new Person(fromEmail.trim(), fromName.trim(), MessageProvider.Type.EMAIL);
+
   }
-  
+
+
   /**
    * Replaces the "x-unknown" encoding type with "iso-8859-2" to be able to decode the mime
    * string and removes the quotation marks if there is any.
@@ -595,7 +764,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
    * @throws IOException 
    */
   protected EmailContent getMessageContent(Message fullMessage) throws MessagingException, IOException {
-    
+//    return new EmailContent(new HtmlContent("test", HtmlContent.ContentType.TEXT), null);
 //    System.setProperty("javax.activation.debug", "true");
     HtmlContent content = new HtmlContent();
     List<Attachment> attachments = null;
@@ -609,9 +778,9 @@ public class SimpleEmailMessageProvider implements MessageProvider {
               HtmlContent.ContentType.TEXT_HTML);
       return new EmailContent(hc, null);
     }
-    
+
     if (fullMessage.isMimeType("text/*")) {
-      
+
       if (fullMessage.isMimeType("text/html")) {
         content = new HtmlContent((String) msg, HtmlContent.ContentType.TEXT_HTML);
       } else if (fullMessage.isMimeType("text/plain")) {
@@ -619,20 +788,20 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       } else {
         content = new HtmlContent((String) msg, HtmlContent.ContentType.TEXT);
       }
-        
+
     } else if (fullMessage.isMimeType("multipart/*")) {
-      
+
       if (msg instanceof Multipart) {
         Multipart mp = (Multipart) msg;
         content = getContentOfMultipartMessage(mp, 0);
         attachments = getAttachmentsOfMultipartMessage(mp, true, 0);
-        
+
       }
-        
+
     } else if (msg instanceof IMAPInputStream) {
       IMAPInputStream imapIs = (IMAPInputStream) msg;
       InputStream dis = MimeUtility.decode(imapIs, "binary");
-      
+
       BufferedReader br = new BufferedReader(new InputStreamReader(dis));
       String line;
       while ((line = br.readLine()) != null) {
@@ -729,34 +898,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return content;
   }
   
-  /**
-   * Extracts the person information from Address object.
-   * 
-   * @param a the raw input Address object from the email
-   * @return Person object
-   */
-  private static Person getPersonFromAddress(Address a) {
-    String ad = a.toString();
-    
-    ad = prepareMimeFieldToDecode(ad);
-    try {
-      ad = MimeUtility.decodeText(ad);
-    } catch (UnsupportedEncodingException ex) {
-      Log.d("rgai", "", ex);
-    }
-    
-    int mailOp = ad.indexOf("<");
-    int mailCl = ad.indexOf(">");
-    String name = null;
-    String email;
-    if (mailOp != -1 && mailOp + 1 < mailCl) {
-      email = ad.substring(mailOp + 1, mailCl);
-      name = ad.substring(0, mailOp).trim();
-    } else {
-      email = ad.trim();
-    }
-    return new Person(email, name, MessageProvider.Type.EMAIL);
-  }
+
 
   @Override
   public FullMessage getMessage(String id) throws NoSuchProviderException, MessagingException, IOException {
@@ -770,7 +912,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     Message ms = queryFolder.getMessage(Integer.parseInt(id));
 //    ms.s
     
-    List<Person> to = new LinkedList<Person>();
+    List<Person> to = new LinkedList<>();
     
     Address[] addr = ms.getAllRecipients();
     for (Address a : addr) {
@@ -844,8 +986,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
   }
 
   @Override
-  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData, Set<? extends MessageRecipient> to,
-          String content, String subject) {
+  public void sendMessage(Context context, SentMessageBroadcastDescriptor sentMessageData,
+                          Set<? extends MessageRecipient> to, String content, String subject) {
     
     Properties props = System.getProperties();
     this.setProperties(props);
@@ -870,7 +1012,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       msg.setRecipients(javax.mail.Message.RecipientType.TO, InternetAddress.parse(addressList));
       msg.setSubject(subject);
       msg.setText(content);
-  //    msg.setHeader("X-Mailer", "");
+      msg.setHeader("Content-Type", "text/html; charset=UTF-8");
       msg.setSentDate(new Date());
       SMTPTransport t;
       if (account.isSsl()) {
@@ -885,7 +1027,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
       Log.d("rgai", "", ex);
       success = false;
     }
-    
+
     MessageProvider.Helper.sendMessageSentBroadcast(context, sentMessageData,
             success ? MessageSentBroadcastReceiver.MESSAGE_SENT_SUCCESS : MessageSentBroadcastReceiver.MESSAGE_SENT_FAILED);
     
@@ -900,7 +1042,13 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           sb.append(", ");
         }
         if (er.getName() != null && er.getName().length() > 0) {
-          sb.append(er.getName());
+          String name = er.getName();
+          try {
+            name = MimeUtility.encodeText(name);
+          } catch (UnsupportedEncodingException e) {
+            Log.d("yako", "", e);
+          }
+          sb.append(name);
         }
         sb.append("<").append(er.getEmail()).append(">");
       }
@@ -979,6 +1127,7 @@ public class SimpleEmailMessageProvider implements MessageProvider {
           service.setAction(Context.ALARM_SERVICE);
           
           MainServiceExtraParams eParams = new MainServiceExtraParams();
+          eParams.setOnNewMessageArrived(true);
           eParams.addAccount(account);
           eParams.setQueryOffset(0);
           eParams.setQueryLimit(messages.length);
@@ -1068,6 +1217,12 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     return true;
   }
 
+  @Override
+  public boolean testConnection() throws MessagingException {
+    getStore(account);
+    return true;
+  }
+
 
   @Override
   public MessageListResult getUIDListForMerge(String lowestStoredMessageUID) throws MessagingException {
@@ -1102,6 +1257,8 @@ public class SimpleEmailMessageProvider implements MessageProvider {
     }
     folder.close(true);
   }
+
+
 
   public interface AttachmentProgressUpdate {
     public void onProgressUpdate(int progress);
