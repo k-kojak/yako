@@ -36,7 +36,7 @@
     <string name="failed_to_download_x">Sikertelen fájl letöltés: %s</string>
     <string name="failed_to_save_x">Sikertelen fájl mentés: %s</string>
     <string name="failed_to_send_msg">Sikertelen üzenetküldés</string>
-    <string name="fake_zone">Kamu zóna</string>
+    <string name="fake_zone">Hamis zóna</string>
     <string name="fb_session_problem">Facebook session hiba</string>
     <string name="fb_sync_is_running">A szinkronizáció fut</string>
     <string name="filter">SZŰRÉS</string>

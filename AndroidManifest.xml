@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="hu.rgai.android.test"
-          android:versionCode="98"
-          android:versionName="1.2">
+          android:versionCode="99"
+          android:versionName="1.2.1">
 
-    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="19"/>
+    <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="21"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -268,6 +268,10 @@
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyDf8Wt5FF74Iw2a-LUqj1aK2cz0loEZjEQ"/>
+
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyC5-bEC0xSjKXoKWuZ9KPIiNufdJhbnqzM"/>
 
     </application>
 </manifest>
